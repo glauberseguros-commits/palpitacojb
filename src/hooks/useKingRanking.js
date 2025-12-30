@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getKingResultsByDate } from "../services/kingResultsService";
 import { buildRanking } from "../utils/buildRanking";
 
@@ -16,11 +16,19 @@ export function useKingRanking({ uf, date, closeHour = null, positions = null })
   // ✅ meta com top3 e total
   const [meta, setMeta] = useState({ top3: [], totalOcorrencias: 0 });
 
-  // evita render loop quando positions é array
-  const positionsKey = useMemo(
-    () => (Array.isArray(positions) && positions.length ? positions.join(",") : ""),
-    [positions]
-  );
+  // evita render loop quando positions é array (dep estável)
+  const positionsKey = useMemo(() => {
+    return Array.isArray(positions) && positions.length ? positions.join(",") : "";
+  }, [positions]);
+
+  // ✅ array estável derivado do positionsKey (não depende do array original)
+  const positionsArr = useMemo(() => {
+    if (!positionsKey) return null;
+    return positionsKey
+      .split(",")
+      .map((n) => Number(n))
+      .filter(Number.isFinite);
+  }, [positionsKey]);
 
   useEffect(() => {
     let mounted = true;
@@ -34,7 +42,7 @@ export function useKingRanking({ uf, date, closeHour = null, positions = null })
           uf,
           date,
           closeHour: closeHour || null,
-          positions: Array.isArray(positions) && positions.length ? positions : null,
+          positions: positionsArr, // ✅ usa a versão estável
         });
 
         const built = buildRanking(draws);
@@ -67,7 +75,7 @@ export function useKingRanking({ uf, date, closeHour = null, positions = null })
     return () => {
       mounted = false;
     };
-  }, [uf, date, closeHour, positionsKey]);
+  }, [uf, date, closeHour, positionsKey, positionsArr]);
 
   return { loading, error, data, meta };
 }

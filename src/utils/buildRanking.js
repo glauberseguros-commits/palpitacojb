@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Constrói ranking a partir dos draws KingApostas
  *
  * Entrada:

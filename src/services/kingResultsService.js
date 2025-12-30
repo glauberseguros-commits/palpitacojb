@@ -1,4 +1,4 @@
-﻿// src/services/kingResultsService.js
+// src/services/kingResultsService.js
 import {
   collection,
   query,
