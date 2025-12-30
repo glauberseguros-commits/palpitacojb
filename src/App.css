@@ -1,0 +1,32 @@
+/* src/App.css */
+
+/* =========================
+   APP GLOBAL (clean & neutral)
+   - NÃO define layout
+   - NÃO interfere no Dashboard
+   - NÃO carrega legado
+========================= */
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+/*
+  IMPORTANTE:
+  As classes abaixo foram REMOVIDAS propositalmente:
+
+  .app-container
+  .tabela-ranking
+  .linha-ranking
+  .filtros-abaixo
+  estilos globais de img
+
+  Motivo:
+  - pertenciam ao layout antigo
+  - causavam conflitos invisíveis
+  - hoje o layout é controlado por:
+    - dashboard.css
+    - index.css
+    - estilos dos componentes
+*/

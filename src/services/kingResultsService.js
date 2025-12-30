@@ -1,0 +1,91 @@
+﻿// src/services/kingResultsService.js
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  getDocs,
+} from "firebase/firestore";
+
+import { db } from "./firebase";
+
+/**
+ * Lê draws e prizes (KingApostas) do Firestore
+ *
+ * Params:
+ *  - uf (obrigatório) ex "PT_RIO"
+ *  - date (obrigatório)  YYYY-MM-DD
+ *  - closeHour (opcional) ex "14:00" ou "14:09"
+ *  - positions (opcional) array de números ex [1,2,3]
+ */
+export async function getKingResultsByDate({
+  uf,
+  date,
+  closeHour = null,
+  positions = null,
+}) {
+  if (!uf || !date) throw new Error("Parâmetros obrigatórios: uf e date");
+
+  // 1) Query de draws do dia (com filtro opcional por close_hour)
+  const whereClauses = [where("uf", "==", uf), where("date", "==", date)];
+
+  if (closeHour) whereClauses.push(where("close_hour", "==", closeHour));
+
+  const qDraws = query(
+    collection(db, "draws"),
+    ...whereClauses,
+    orderBy("close_hour", "asc")
+  );
+
+  const snapDraws = await getDocs(qDraws);
+
+  const results = [];
+
+  // 2) Para cada draw, buscar prizes (com filtro opcional por position)
+  // Observação Firestore: "in" suporta no máximo 10 itens.
+  const positionsArr =
+    Array.isArray(positions) && positions.length
+      ? positions
+          .map((n) => Number(n))
+          .filter((n) => Number.isFinite(n))
+      : null;
+
+  for (const docSnap of snapDraws.docs) {
+    const draw = docSnap.data();
+
+    let prizesDocs = [];
+
+    if (positionsArr && positionsArr.length && positionsArr.length <= 10) {
+      const qPrizes = query(
+        collection(db, "draws", docSnap.id, "prizes"),
+        where("position", "in", positionsArr)
+      );
+      const snapPrizes = await getDocs(qPrizes);
+      prizesDocs = snapPrizes.docs;
+    } else {
+      const snapPrizes = await getDocs(
+        collection(db, "draws", docSnap.id, "prizes")
+      );
+      prizesDocs = snapPrizes.docs;
+    }
+
+    let prizes = prizesDocs.map((p) => p.data());
+
+    // Se positions > 10 ou veio sujo, garante filtro aqui (client-side)
+    if (positionsArr && positionsArr.length) {
+      prizes = prizes.filter((p) => positionsArr.includes(Number(p.position)));
+    }
+
+    prizes.sort((a, b) => Number(a.position) - Number(b.position));
+
+    results.push({
+      drawId: docSnap.id,
+      date: draw.date,
+      close_hour: draw.close_hour,
+      prizesCount: draw.prizesCount,
+      prizes,
+    });
+  }
+
+  return results;
+}

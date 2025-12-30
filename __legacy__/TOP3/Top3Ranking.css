@@ -1,0 +1,33 @@
+.top3-container {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+}
+
+.top3-card {
+  background-color: black;
+  border: 2px solid yellow;
+  border-radius: 12px;
+  padding: 10px;
+  text-align: center;
+  width: 150px;
+  box-shadow: 0 0 15px yellow;
+}
+
+.top3-image {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+.top3-animal {
+  color: yellow;
+  font-weight: bold;
+  font-size: 18px;
+  margin-top: 8px;
+}
+
+.top3-valor {
+  color: yellow;
+  font-size: 16px;
+}

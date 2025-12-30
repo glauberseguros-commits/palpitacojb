@@ -1,0 +1,60 @@
+/* src/index.css */
+
+/* =========================
+   GLOBAL RESET (premium-safe)
+   - não “briga” com os CSS do Dashboard
+   - remove scroll acidental (vertical e lateral)
+   - melhora tipografia/render
+========================= */
+
+html, body, #root{
+  height: 100%;
+}
+
+*{
+  box-sizing: border-box;
+}
+
+body{
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* evita “flash” de branco e garante fundo premium */
+  background: #050505;
+  color: rgba(255,255,255,0.95);
+
+  /* trava scroll acidental no desktop (vertical + lateral) */
+  overflow: hidden;
+}
+
+/* Em telas menores, permitir rolagem (responsivo) */
+@media (max-width: 980px){
+  body{
+    overflow: auto;
+  }
+}
+
+/* Links e botões (neutro) */
+a{
+  color: inherit;
+  text-decoration: none;
+}
+
+button{
+  font-family: inherit;
+}
+
+/* Se o Chrome aplicar autofill no login, não “quebra” o tema escuro */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus{
+  -webkit-text-fill-color: rgba(255,255,255,0.95);
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Mantém code legível, mas sem interferir no resto */
+code{
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
