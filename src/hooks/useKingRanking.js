@@ -1,27 +1,56 @@
+// src/hooks/useKingRanking.js
 import { useEffect, useMemo, useState } from "react";
-import { getKingResultsByDate } from "../services/kingResultsService";
+import {
+  getKingResultsByDate,
+  getKingResultsByRange,
+} from "../services/kingResultsService";
 import { buildRanking } from "../utils/buildRanking";
 
 /**
  * Hook central do Palpitaco (King)
- * Retorna ranking agregado a partir dos prizes (grupo+animal).
+ *
+ * Modos suportados (sem quebrar compatibilidade):
+ * - Dia único:   { uf, date: "YYYY-MM-DD" }
+ * - Intervalo:  { uf, dateFrom: "YYYY-MM-DD", dateTo: "YYYY-MM-DD" }
+ *
+ * Filtros:
+ * - closeHour (opcional) ex "14:00"
+ * - positions (opcional) array ex [1,2,3]
  */
-export function useKingRanking({ uf, date, closeHour = null, positions = null }) {
+export function useKingRanking({
+  uf,
+  date,
+  dateFrom,
+  dateTo,
+  closeHour = null,
+  positions = null,
+}) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // ✅ data agora é ARRAY (ranking)
+  // ranking (array)
   const [data, setData] = useState([]);
 
-  // ✅ meta com top3 e total
-  const [meta, setMeta] = useState({ top3: [], totalOcorrencias: 0 });
+  // meta (top3 + total + info útil para auditoria/KPIs)
+  const [meta, setMeta] = useState({
+    top3: [],
+    totalOcorrencias: 0,
+    totalDraws: 0,
+    mode: "none",
+    date: null,
+    dateFrom: null,
+    dateTo: null,
+  });
+
+  // ✅ draws brutos para auditoria/validação
+  const [drawsRaw, setDrawsRaw] = useState([]);
 
   // evita render loop quando positions é array (dep estável)
   const positionsKey = useMemo(() => {
     return Array.isArray(positions) && positions.length ? positions.join(",") : "";
   }, [positions]);
 
-  // ✅ array estável derivado do positionsKey (não depende do array original)
+  // array estável derivado do positionsKey (não depende do array original)
   const positionsArr = useMemo(() => {
     if (!positionsKey) return null;
     return positionsKey
@@ -29,6 +58,13 @@ export function useKingRanking({ uf, date, closeHour = null, positions = null })
       .map((n) => Number(n))
       .filter(Number.isFinite);
   }, [positionsKey]);
+
+  // modo: range tem prioridade se vier completo
+  const mode = useMemo(() => {
+    if (uf && dateFrom && dateTo) return "range";
+    if (uf && date) return "day";
+    return "none";
+  }, [uf, date, dateFrom, dateTo]);
 
   useEffect(() => {
     let mounted = true;
@@ -38,24 +74,42 @@ export function useKingRanking({ uf, date, closeHour = null, positions = null })
         setError(null);
         setLoading(true);
 
-        const draws = await getKingResultsByDate({
-          uf,
-          date,
-          closeHour: closeHour || null,
-          positions: positionsArr, // ✅ usa a versão estável
-        });
+        let draws = [];
+
+        if (mode === "range") {
+          draws = await getKingResultsByRange({
+            uf,
+            dateFrom,
+            dateTo,
+            closeHour: closeHour || null,
+            positions: positionsArr,
+          });
+        } else if (mode === "day") {
+          draws = await getKingResultsByDate({
+            uf,
+            date,
+            closeHour: closeHour || null,
+            positions: positionsArr,
+          });
+        } else {
+          draws = [];
+        }
 
         const built = buildRanking(draws);
 
         if (!mounted) return;
 
-        // ✅ data (array) para tabelas/KPIs
+        setDrawsRaw(Array.isArray(draws) ? draws : []);
         setData(built.ranking || []);
 
-        // ✅ meta para Top3/KPIs avançados
         setMeta({
           top3: built.top3 || [],
           totalOcorrencias: Number(built.totalOcorrencias || 0),
+          totalDraws: Array.isArray(draws) ? draws.length : 0,
+          mode,
+          date: mode === "day" ? date : null,
+          dateFrom: mode === "range" ? dateFrom : null,
+          dateTo: mode === "range" ? dateTo : null,
         });
       } catch (e) {
         if (mounted) setError(e);
@@ -64,18 +118,28 @@ export function useKingRanking({ uf, date, closeHour = null, positions = null })
       }
     }
 
-    // só carrega se tiver uf+date
-    if (uf && date) load();
-    else {
+    if (mode === "none") {
+      setDrawsRaw([]);
       setData([]);
-      setMeta({ top3: [], totalOcorrencias: 0 });
+      setMeta({
+        top3: [],
+        totalOcorrencias: 0,
+        totalDraws: 0,
+        mode: "none",
+        date: null,
+        dateFrom: null,
+        dateTo: null,
+      });
       setLoading(false);
+      return;
     }
+
+    load();
 
     return () => {
       mounted = false;
     };
-  }, [uf, date, closeHour, positionsKey, positionsArr]);
+  }, [mode, uf, date, dateFrom, dateTo, closeHour, positionsKey, positionsArr]);
 
-  return { loading, error, data, meta };
+  return { loading, error, data, meta, drawsRaw };
 }

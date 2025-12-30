@@ -7,7 +7,7 @@
  *     drawId,
  *     close_hour,
  *     prizes: [
- *       { group|grupo, animal, number?, position? }
+ *       { grupo|group, animal, position? }
  *     ]
  *   }
  * ]
@@ -22,29 +22,51 @@
  * }
  */
 
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
+
+// Normaliza texto para evitar split indevido (ÁGUIA vs AGUIA etc.)
+function normalizeAnimal(a) {
+  return String(a || "")
+    .trim()
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // remove acentos
+    .replace(/\s+/g, " "); // colapsa espaços
+}
+
 export function buildRanking(draws) {
-  const map = new Map();
+  const map = new Map(); // key = "01".."25"
   let totalOcorrencias = 0;
 
   for (const draw of draws || []) {
     const prizes = Array.isArray(draw?.prizes) ? draw.prizes : [];
 
     for (const prize of prizes) {
-      const grupoRaw = prize?.grupo ?? prize?.group; // aceita ambos
+      const grupoRaw = prize?.grupo ?? prize?.group;
       const animalRaw = prize?.animal;
 
-      if (!grupoRaw || !animalRaw) continue;
+      if (grupoRaw == null) continue;
 
-      const grupo = String(grupoRaw).padStart(2, "0");
-      const animal = String(animalRaw).toUpperCase();
+      const grupoNum = Number(grupoRaw);
+      if (!Number.isFinite(grupoNum)) continue;
+      if (grupoNum < 1 || grupoNum > 25) continue;
 
-      const key = `${grupo}|${animal}`;
+      const grupo = pad2(grupoNum);
 
-      if (!map.has(key)) {
-        map.set(key, { grupo, animal, total: 0 });
+      // animal é “label”; se não vier, não impede contar o grupo
+      const animal = animalRaw ? normalizeAnimal(animalRaw) : "";
+
+      if (!map.has(grupo)) {
+        map.set(grupo, { grupo, animal, total: 0 });
+      } else {
+        // Se o animal vier em branco num prize e preenchido em outro, preserva o preenchido.
+        const curr = map.get(grupo);
+        if (!curr.animal && animal) curr.animal = animal;
       }
 
-      map.get(key).total += 1;
+      map.get(grupo).total += 1;
       totalOcorrencias += 1;
     }
   }

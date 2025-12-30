@@ -1,5 +1,5 @@
 // src/pages/Dashboard/Dashboard.jsx
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import "./dashboard.css";
 
 import LeftRankingTable from "./components/LeftRankingTable";
@@ -76,6 +76,85 @@ function buildDateFromFilters({ mes, diaMes }, year = 2025) {
   return `${year}-${mm}-${dd}`;
 }
 
+// monta {dateFrom,dateTo} a partir de "Mês + Ano" (para modo range)
+// OBS: por enquanto dateTo vai até 29 para bater com a base que você importou (01..29).
+function buildRangeFromMonth(mes, year = 2025) {
+  if (!mes || mes === "Todos") return null;
+
+  const monthMap = {
+    Janeiro: "01",
+    Fevereiro: "02",
+    Março: "03",
+    Abril: "04",
+    Maio: "05",
+    Junho: "06",
+    Julho: "07",
+    Agosto: "08",
+    Setembro: "09",
+    Outubro: "10",
+    Novembro: "11",
+    Dezembro: "12",
+  };
+
+  const mm = monthMap[String(mes)] || null;
+  if (!mm) return null;
+
+  return {
+    dateFrom: `${year}-${mm}-01`,
+    dateTo: `${year}-${mm}-29`,
+  };
+}
+
+// auditoria: conta occurrences por grupo diretamente dos drawsRaw
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
+
+function countByGrupoFromDraws(draws) {
+  const map = new Map();
+  let total = 0;
+
+  for (const d of draws || []) {
+    const prizes = Array.isArray(d?.prizes) ? d.prizes : [];
+    for (const p of prizes) {
+      const gRaw = p?.grupo ?? p?.group;
+      const gNum = Number(gRaw);
+      if (!Number.isFinite(gNum) || gNum < 1 || gNum > 25) continue;
+      const g = pad2(gNum);
+      map.set(g, (map.get(g) || 0) + 1);
+      total += 1;
+    }
+  }
+
+  const rows = Array.from({ length: 25 }, (_, i) => {
+    const g = pad2(i + 1);
+    return { grupo: g, raw: map.get(g) || 0 };
+  });
+
+  return { rows, total };
+}
+
+function diffBuiltVsRaw(rankingRows, rawRows) {
+  const builtMap = new Map();
+  for (const r of rankingRows || []) {
+    const g = pad2(Number(r.grupo));
+    builtMap.set(g, Number(r.total || 0));
+  }
+
+  const rawMap = new Map();
+  for (const r of rawRows || []) {
+    rawMap.set(String(r.grupo), Number(r.raw || 0));
+  }
+
+  return Array.from({ length: 25 }, (_, i) => {
+    const grupo = pad2(i + 1);
+    const built = builtMap.get(grupo) ?? 0;
+    const raw = rawMap.get(grupo) ?? 0;
+    const delta = built - raw;
+    return { grupo, built, raw, delta, status: delta === 0 ? "OK" : "DIF" };
+  });
+}
+
 export default function Dashboard() {
   // ✅ já nasce casando com o que foi importado (Dez/29)
   const [filters, setFilters] = useState({
@@ -108,6 +187,15 @@ export default function Dashboard() {
     [filters, activeYear]
   );
 
+  // range entra automaticamente quando diaMes for "Todos"
+  const monthRange = useMemo(
+    () => buildRangeFromMonth(filters.mes, activeYear),
+    [filters.mes, activeYear]
+  );
+
+  const dateFrom = filters.diaMes === "Todos" ? monthRange?.dateFrom || null : null;
+  const dateTo = filters.diaMes === "Todos" ? monthRange?.dateTo || null : null;
+
   const closeHour = useMemo(
     () => normalizeCloseHour(filters.horario),
     [filters.horario]
@@ -122,28 +210,68 @@ export default function Dashboard() {
     loading: rankingLoading,
     error: rankingError,
     data: rankingData,
+    meta: rankingMeta,
+    drawsRaw,
   } = useKingRanking({
     uf,
-    date: queryDate,
+    date: queryDate,     // mantém compatibilidade (dia único)
+    dateFrom,            // ativa range quando diaMes === "Todos"
+    dateTo,
     closeHour,
     positions,
   });
 
+  // ✅ AUDITORIA (linha a linha 01..25)
+  useEffect(() => {
+    if (rankingLoading || rankingError) return;
+    if (!Array.isArray(drawsRaw) || !drawsRaw.length) return;
+
+    const raw = countByGrupoFromDraws(drawsRaw);
+    const diffs = diffBuiltVsRaw(rankingData, raw.rows);
+
+    console.group("AUDITORIA — Contagem por Grupo (01..25)");
+    console.log("mode:", rankingMeta?.mode);
+    console.log(
+      "period:",
+      rankingMeta?.mode === "range"
+        ? `${rankingMeta?.dateFrom} -> ${rankingMeta?.dateTo}`
+        : rankingMeta?.date
+    );
+    console.log("totalDraws(meta):", rankingMeta?.totalDraws, "drawsRaw:", drawsRaw.length);
+    console.log("meta.totalOcorrencias:", rankingMeta?.totalOcorrencias);
+    console.log("raw.total:", raw.total);
+    console.table(diffs);
+    console.log("DIFs:", diffs.filter((d) => d.status === "DIF").length);
+    console.groupEnd();
+  }, [rankingLoading, rankingError, drawsRaw, rankingData, rankingMeta]);
+
   const kpiItems = useMemo(() => {
+    // Agora já dá para ter KPIs reais usando meta
+    const totalDraws = Number(rankingMeta?.totalDraws || 0);
+
+    // "dias" real (simplificado): quantidade de dias distintos nos drawsRaw
+    const dias =
+      Array.isArray(drawsRaw) && drawsRaw.length
+        ? new Set(drawsRaw.map((d) => d?.date).filter(Boolean)).size
+        : 0;
+
     if (!Array.isArray(rankingData) || !rankingData.length) {
       return [
-        { key: "dias", title: "Qtde Dias de sorteio", value: 0, icon: "calendar" },
-        { key: "sorteios", title: "Qtde de sorteios", value: 0, icon: "ticket" },
+        { key: "dias", title: "Qtde Dias de sorteio", value: dias || 0, icon: "calendar" },
+        { key: "sorteios", title: "Qtde de sorteios", value: totalDraws || 0, icon: "ticket" },
       ];
     }
 
-    // Por ora: não-zero quando houver retorno.
-    // (Depois a gente calcula “dias” e “sorteios” reais quando o hook devolver também os draws.)
     return [
-      { key: "dias", title: "Qtde Dias de sorteio", value: 1, icon: "calendar" },
-      { key: "sorteios", title: "Qtde de sorteios", value: 1, icon: "ticket" },
+      { key: "dias", title: "Qtde Dias de sorteio", value: dias || 0, icon: "calendar" },
+      { key: "sorteios", title: "Qtde de sorteios", value: totalDraws || 0, icon: "ticket" },
     ];
-  }, [rankingData]);
+  }, [rankingData, rankingMeta, drawsRaw]);
+
+  const dateLabel =
+    filters.diaMes === "Todos"
+      ? (dateFrom && dateTo ? `${dateFrom} → ${dateTo}` : "Selecione Mês")
+      : (queryDate || "Selecione Mês + Dia");
 
   return (
     <div className="dashRoot">
@@ -176,7 +304,7 @@ export default function Dashboard() {
 
           <div className="dashTopRight">
             <div className="dashDateRow">
-              <div className="dashDateBox">{queryDate || "Selecione Mês + Dia"}</div>
+              <div className="dashDateBox">{dateLabel}</div>
               <div className="dashDateBox">{closeHour || "Todos horários"}</div>
 
               <div className="dashYearButtons">
