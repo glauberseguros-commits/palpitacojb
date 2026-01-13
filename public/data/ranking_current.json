@@ -1,0 +1,348 @@
+{
+  "meta": {
+    "uf": "PT_RIO",
+    "d1": "2025-07-01",
+    "d2": "2025-12-31",
+    "positionFilter": "1,2,3",
+    "generatedAt": "2025-12-31T17:18:10.522Z"
+  },
+  "totals": {
+    "draws": 152,
+    "ocorrencias": 456,
+    "prizesRead": 1064,
+    "prizesFiltered": 456
+  },
+  "ranking": [
+    {
+      "rank": 1,
+      "grupo": "15",
+      "animal": "Jacaré",
+      "apar": 27,
+      "share": "5.92%"
+    },
+    {
+      "rank": 2,
+      "grupo": "05",
+      "animal": "Cachorro",
+      "apar": 25,
+      "share": "5.48%"
+    },
+    {
+      "rank": 3,
+      "grupo": "20",
+      "animal": "Peru",
+      "apar": 24,
+      "share": "5.26%"
+    },
+    {
+      "rank": 4,
+      "grupo": "14",
+      "animal": "Gato",
+      "apar": 22,
+      "share": "4.82%"
+    },
+    {
+      "rank": 5,
+      "grupo": "23",
+      "animal": "Urso",
+      "apar": 22,
+      "share": "4.82%"
+    },
+    {
+      "rank": 6,
+      "grupo": "18",
+      "animal": "Porco",
+      "apar": 21,
+      "share": "4.61%"
+    },
+    {
+      "rank": 7,
+      "grupo": "24",
+      "animal": "Veado",
+      "apar": 21,
+      "share": "4.61%"
+    },
+    {
+      "rank": 8,
+      "grupo": "06",
+      "animal": "Cabra",
+      "apar": 20,
+      "share": "4.39%"
+    },
+    {
+      "rank": 9,
+      "grupo": "02",
+      "animal": "Águia",
+      "apar": 19,
+      "share": "4.17%"
+    },
+    {
+      "rank": 10,
+      "grupo": "01",
+      "animal": "Avestruz",
+      "apar": 18,
+      "share": "3.95%"
+    },
+    {
+      "rank": 11,
+      "grupo": "12",
+      "animal": "Elefante",
+      "apar": 18,
+      "share": "3.95%"
+    },
+    {
+      "rank": 12,
+      "grupo": "25",
+      "animal": "Vaca",
+      "apar": 18,
+      "share": "3.95%"
+    },
+    {
+      "rank": 13,
+      "grupo": "03",
+      "animal": "Burro",
+      "apar": 17,
+      "share": "3.73%"
+    },
+    {
+      "rank": 14,
+      "grupo": "09",
+      "animal": "Cobra",
+      "apar": 17,
+      "share": "3.73%"
+    },
+    {
+      "rank": 15,
+      "grupo": "13",
+      "animal": "Galo",
+      "apar": 17,
+      "share": "3.73%"
+    },
+    {
+      "rank": 16,
+      "grupo": "04",
+      "animal": "Borboleta",
+      "apar": 16,
+      "share": "3.51%"
+    },
+    {
+      "rank": 17,
+      "grupo": "10",
+      "animal": "Coelho",
+      "apar": 16,
+      "share": "3.51%"
+    },
+    {
+      "rank": 18,
+      "grupo": "17",
+      "animal": "Macaco",
+      "apar": 16,
+      "share": "3.51%"
+    },
+    {
+      "rank": 19,
+      "grupo": "21",
+      "animal": "Touro",
+      "apar": 16,
+      "share": "3.51%"
+    },
+    {
+      "rank": 20,
+      "grupo": "07",
+      "animal": "Carneiro",
+      "apar": 15,
+      "share": "3.29%"
+    },
+    {
+      "rank": 21,
+      "grupo": "11",
+      "animal": "Cavalo",
+      "apar": 15,
+      "share": "3.29%"
+    },
+    {
+      "rank": 22,
+      "grupo": "16",
+      "animal": "Leão",
+      "apar": 15,
+      "share": "3.29%"
+    },
+    {
+      "rank": 23,
+      "grupo": "22",
+      "animal": "Tigre",
+      "apar": 15,
+      "share": "3.29%"
+    },
+    {
+      "rank": 24,
+      "grupo": "08",
+      "animal": "Camelo",
+      "apar": 13,
+      "share": "2.85%"
+    },
+    {
+      "rank": 25,
+      "grupo": "19",
+      "animal": "Pavão",
+      "apar": 13,
+      "share": "2.85%"
+    }
+  ],
+  "byGrupo": [
+    {
+      "grupo": "01",
+      "animal": "Avestruz",
+      "apar": 18,
+      "share": "3.95%"
+    },
+    {
+      "grupo": "02",
+      "animal": "Águia",
+      "apar": 19,
+      "share": "4.17%"
+    },
+    {
+      "grupo": "03",
+      "animal": "Burro",
+      "apar": 17,
+      "share": "3.73%"
+    },
+    {
+      "grupo": "04",
+      "animal": "Borboleta",
+      "apar": 16,
+      "share": "3.51%"
+    },
+    {
+      "grupo": "05",
+      "animal": "Cachorro",
+      "apar": 25,
+      "share": "5.48%"
+    },
+    {
+      "grupo": "06",
+      "animal": "Cabra",
+      "apar": 20,
+      "share": "4.39%"
+    },
+    {
+      "grupo": "07",
+      "animal": "Carneiro",
+      "apar": 15,
+      "share": "3.29%"
+    },
+    {
+      "grupo": "08",
+      "animal": "Camelo",
+      "apar": 13,
+      "share": "2.85%"
+    },
+    {
+      "grupo": "09",
+      "animal": "Cobra",
+      "apar": 17,
+      "share": "3.73%"
+    },
+    {
+      "grupo": "10",
+      "animal": "Coelho",
+      "apar": 16,
+      "share": "3.51%"
+    },
+    {
+      "grupo": "11",
+      "animal": "Cavalo",
+      "apar": 15,
+      "share": "3.29%"
+    },
+    {
+      "grupo": "12",
+      "animal": "Elefante",
+      "apar": 18,
+      "share": "3.95%"
+    },
+    {
+      "grupo": "13",
+      "animal": "Galo",
+      "apar": 17,
+      "share": "3.73%"
+    },
+    {
+      "grupo": "14",
+      "animal": "Gato",
+      "apar": 22,
+      "share": "4.82%"
+    },
+    {
+      "grupo": "15",
+      "animal": "Jacaré",
+      "apar": 27,
+      "share": "5.92%"
+    },
+    {
+      "grupo": "16",
+      "animal": "Leão",
+      "apar": 15,
+      "share": "3.29%"
+    },
+    {
+      "grupo": "17",
+      "animal": "Macaco",
+      "apar": 16,
+      "share": "3.51%"
+    },
+    {
+      "grupo": "18",
+      "animal": "Porco",
+      "apar": 21,
+      "share": "4.61%"
+    },
+    {
+      "grupo": "19",
+      "animal": "Pavão",
+      "apar": 13,
+      "share": "2.85%"
+    },
+    {
+      "grupo": "20",
+      "animal": "Peru",
+      "apar": 24,
+      "share": "5.26%"
+    },
+    {
+      "grupo": "21",
+      "animal": "Touro",
+      "apar": 16,
+      "share": "3.51%"
+    },
+    {
+      "grupo": "22",
+      "animal": "Tigre",
+      "apar": 15,
+      "share": "3.29%"
+    },
+    {
+      "grupo": "23",
+      "animal": "Urso",
+      "apar": 22,
+      "share": "4.82%"
+    },
+    {
+      "grupo": "24",
+      "animal": "Veado",
+      "apar": 21,
+      "share": "4.61%"
+    },
+    {
+      "grupo": "25",
+      "animal": "Vaca",
+      "apar": 18,
+      "share": "3.95%"
+    }
+  ],
+  "inconsistencias": {
+    "total": 0,
+    "items": []
+  }
+}

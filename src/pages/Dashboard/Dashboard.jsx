@@ -1,4 +1,52 @@
 // src/pages/Dashboard/Dashboard.jsx
+/**
+ * ============================================================
+ * DASHBOARD — BASELINE CONGELADA (freeze)
+ * ============================================================
+ * Ajuste de arquitetura (UX/Produto) — ATUALIZADO:
+ *
+ * ✅ REGRA (conforme combinado AGORA):
+ * - Ranking lateral (LeftRankingTable) DEVE obedecer filtros locais
+ *   (mes/diaMes/diaSemana/horário/posição/animal).
+ *
+ * - Card "Quantidade de Aparições (Geral)" deve ser PERMANENTE:
+ *   usa dataset GLOBAL do período (drawsForUi), sem filtros locais.
+ *
+ * - KPIs/Gráficos seguem filtros locais (drawsForView), incluindo Animal/grupo.
+ *
+ * - ✅ NOVO: Palpite acompanha filtros locais (drawsForView) usando buildPalpiteV2.
+ *
+ * Contratos (NÃO QUEBRAR):
+ * 1) Bounds (min/max) vêm do Firestore e são a "fonte da verdade" do período disponível.
+ *    - UI bloqueia até bounds estarem prontos (evita zeros mentirosos).
+ *
+ * 2) Range controla a consulta remota (hook useKingRanking):
+ *    - Se range for 1 dia (from === to), usamos `date` (queryDate).
+ *    - Se range for intervalo, usamos `dateFrom` e `dateTo`.
+ *
+ * 3) Filtros locais são aplicados DEPOIS do hook:
+ *    - drawsForView: recorte final p/ VISUALIZAÇÃO (KPIs/Charts) — inclui Animal/grupo.
+ *
+ * 4) GLOBAL do período (sem filtros locais):
+ *    - drawsForUi = fsDrawsRaw (do hook, sem filtros locais)
+ *    - ChartsGrid.drawsRawGlobal = drawsForUi ✅ (Aparições (Geral) sempre estável)
+ *
+ * ✅ REGRA NOVA (pedido do usuário):
+ * - No dashboard/tela principal, "Todos" deve usar TODO o período disponível (desde 2022),
+ *   ou seja: MIN_DATE → MAX_DATE.
+ * - Sem trava de 180 dias.
+ *
+ * ✅ NOVO (UX/Consistência):
+ * - Quando o hook estiver em `hydratando` (serviceMode agregado + hidratação),
+ *   BLOQUEAMOS KPIs/Charts/Ranking filtrado para não exibir dados “meio certos”.
+ *
+ * ✅ NOVO (UX solicitado):
+ * - Filtros NÃO podem resetar ao trocar de página.
+ * - Persistência dos filtros: FEITA NO App.js (pp_dashboard_filters_v1).
+ * - Este arquivo persiste apenas estado auxiliar (range/anos/grupo) em pp_dash_state_v1.
+ * ============================================================
+ */
+
 import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import "./dashboard.css";
 
@@ -9,17 +57,66 @@ import ChartsGrid from "./components/ChartsGrid";
 import DateRangeControl from "./components/DateRangeControl";
 
 import { useKingRanking } from "../../hooks/useKingRanking";
-import { getAnimalLabel as getAnimalLabelFromMap } from "../../constants/bichoMap";
-import { buildRanking } from "../../utils/buildRanking";
+import {
+  BICHO_MAP,
+  getAnimalLabel as getAnimalLabelFromMap,
+  getImgFromGrupo as getImgFromGrupoFromMap,
+} from "../../constants/bichoMap";
 
-// ✅ bounds reais da base (min/max)
+import { buildPalpiteV2 } from "../../utils/buildPalpites";
 import { getKingBoundsByUf } from "../../services/kingResultsService";
+import { buildRanking } from "../../utils/buildRanking";
 
 /* =========================
    DATA MODE
 ========================= */
 const DATA_MODE = "firestore";
 const RANKING_JSON_URL = "/data/ranking_current.json";
+
+const ALL_POSITIONS = [1, 2, 3, 4, 5, 6, 7];
+
+/* =========================
+   Persistência (Dashboard State)
+   - Não inclui filtros (filtros ficam no App.js)
+========================= */
+const DASH_STATE_KEY = "pp_dash_state_v1";
+
+/* =========================
+   Banner
+========================= */
+const DEFAULT_BANNER_SRC =
+  "https://images.unsplash.com/photo-1546182990-dffeafbe841d?auto=format&fit=crop&w=1400&q=80";
+
+function safeReadJSON(key) {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function safeWriteJSON(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {}
+}
+
+function isValidGrupo(g) {
+  const n = Number(g);
+  return Number.isFinite(n) && n >= 1 && n <= 25;
+}
+
+function preloadImage(src) {
+  return new Promise((resolve, reject) => {
+    if (!src) return reject(new Error("src vazio"));
+    const img = new Image();
+    img.onload = () => resolve(true);
+    img.onerror = () => reject(new Error("falha ao carregar"));
+    img.src = src;
+  });
+}
 
 /* =========================
    Helpers (UI -> Bucket)
@@ -38,25 +135,16 @@ function normalizeHourBucket(h) {
   return null;
 }
 
-/**
- * ✅ POSIÇÃO (UI -> hook)
- * Regras:
- * - "Todos" => [1..7] (escopo do produto)
- * - "1º" => [1], "2º" => [2], ...
- * - ✅ robusto: aceita "1" também
- */
 function normalizePositions(pos) {
   const s = String(pos || "").trim();
   if (!s || s.toLowerCase() === "todos") return [1, 2, 3, 4, 5, 6, 7];
 
-  // aceita "1º" e "1"
-  const m = s.match(/^(\d+)\s*º?$/);
+  const m = s.match(/^(\d+)/);
   if (m) {
     const n = Number(m[1]);
-    return Number.isFinite(n) ? [n] : [1];
+    if (Number.isFinite(n) && n >= 1 && n <= 7) return [n];
   }
 
-  // fallback seguro
   return [1, 2, 3, 4, 5, 6, 7];
 }
 
@@ -64,7 +152,6 @@ function pad2(n) {
   return String(n).padStart(2, "0");
 }
 
-/** ✅ valida YYYY-MM-DD */
 function isISODate(s) {
   return /^(\d{4})-(\d{2})-(\d{2})$/.test(String(s || ""));
 }
@@ -115,7 +202,13 @@ function normalizeToYMD(input) {
 function getDrawDate(d) {
   if (!d) return null;
   const raw =
-    d.date ?? d.ymd ?? d.draw_date ?? d.close_date ?? d.data ?? d.dt ?? null;
+    d.date ??
+    d.ymd ??
+    d.draw_date ??
+    d.close_date ??
+    d.data ??
+    d.dt ??
+    null;
   return normalizeToYMD(raw);
 }
 
@@ -168,9 +261,10 @@ function ymdToWeekdayShortPT(ymd) {
   const y = Number(m[1]);
   const mo = Number(m[2]);
   const d = Number(m[3]);
+  if (!y || !mo || !d) return null;
 
-  const dt = new Date(y, mo - 1, d);
-  const idx = dt.getDay();
+  const dt = new Date(Date.UTC(y, mo - 1, d));
+  const idx = dt.getUTCDay();
 
   const arr = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
   return arr[idx] || null;
@@ -185,6 +279,26 @@ function normalizeKey(s) {
     .replace(/\s+/g, " ");
 }
 
+function getLabelByGrupo(g) {
+  const n = Number(g);
+  if (!Number.isFinite(n) || n < 1 || n > 25) return "";
+  try {
+    if (typeof getAnimalLabelFromMap === "function") {
+      const a = getAnimalLabelFromMap({ grupo: n, animal: "" });
+      const sa = String(a ?? "").trim();
+      if (sa) return sa;
+    }
+  } catch {}
+  try {
+    if (typeof getAnimalLabelFromMap === "function") {
+      const b = getAnimalLabelFromMap(n);
+      const sb = String(b ?? "").trim();
+      if (sb) return sb;
+    }
+  } catch {}
+  return "";
+}
+
 function safeAnimalLabel({ grupo, animal }) {
   try {
     if (typeof getAnimalLabelFromMap === "function") {
@@ -193,6 +307,8 @@ function safeAnimalLabel({ grupo, animal }) {
       if (s) return s;
     }
   } catch {}
+  const byGrupo = getLabelByGrupo(grupo);
+  if (byGrupo) return byGrupo;
   return String(animal || "").trim();
 }
 
@@ -309,13 +425,8 @@ function PremiumTopRightSkeleton({ message }) {
   );
 }
 
-/* =========================
-   Index detection (mensagem)
-========================= */
-
 function isIndexErrorMessage(err) {
   const msg = String(err?.message || err || "").toLowerCase();
-
   return (
     msg.includes("failed-precondition") ||
     msg.includes("failed_precondition") ||
@@ -337,26 +448,52 @@ function clampRangeToBounds(next, minDate, maxDate) {
   const to = t < minDate ? minDate : t > maxDate ? maxDate : t;
 
   if (from > to) return { from: to, to: to };
-
   return { from, to };
 }
 
-export default function Dashboard() {
-  const [filters, setFilters] = useState({
-    mes: "Todos",
-    diaMes: "Todos",
-    diaSemana: "Todos",
-    horario: "Todos",
-    animal: "Todos",
-    posicao: "Todos", // ✅ não trava mais em 1º
+/**
+ * ✅ Dashboard recebe filtros do App.js
+ * - filters: objeto
+ * - setFilters: setter
+ */
+export default function Dashboard(props) {
+  const externalFilters =
+    props && typeof props === "object" ? props.filters : null;
+  const externalSetFilters =
+    props && typeof props === "object" ? props.setFilters : null;
+
+  const fallbackFilters = useMemo(
+    () => ({
+      mes: "Todos",
+      diaMes: "Todos",
+      diaSemana: "Todos",
+      horario: "Todos",
+      animal: "Todos",
+      posicao: "Todos",
+    }),
+    []
+  );
+
+  // ✅ filtros estáveis
+  const filters = useMemo(() => {
+    return externalFilters && typeof externalFilters === "object"
+      ? externalFilters
+      : fallbackFilters;
+  }, [externalFilters, fallbackFilters]);
+
+  // ✅ setter estável (elimina warning do eslint)
+  const noopSetFilters = useCallback(() => {}, []);
+  const setFilters = useMemo(() => {
+    return typeof externalSetFilters === "function" ? externalSetFilters : noopSetFilters;
+  }, [externalSetFilters, noopSetFilters]);
+
+  // ✅ restaura apenas estado auxiliar (range/anos/grupo) do localStorage
+  const savedDashState = useMemo(() => safeReadJSON(DASH_STATE_KEY), []);
+
+  const [selectedGrupo, setSelectedGrupo] = useState(() => {
+    const g = Number(savedDashState?.selectedGrupo);
+    return Number.isFinite(g) && g >= 1 && g <= 25 ? g : null;
   });
-
-  const [selectedGrupo, setSelectedGrupo] = useState(null);
-
-  const handleFilterChange = useCallback((name, value) => {
-    setFilters((prev) => ({ ...prev, [name]: value }));
-    if (name === "animal") setSelectedGrupo(null);
-  }, []);
 
   const locationLabel = "Rio de Janeiro, RJ, Brasil";
   const uf = "PT_RIO";
@@ -369,8 +506,36 @@ export default function Dashboard() {
   });
 
   const didInitRangeFromBoundsRef = useRef(false);
-  const [dateRange, setDateRange] = useState(null);
-  const [selectedYears, setSelectedYears] = useState([]);
+
+  const [dateRange, setDateRange] = useState(() => {
+    const dr = savedDashState?.dateRange;
+    if (dr?.from && dr?.to && isISODate(dr.from) && isISODate(dr.to)) {
+      return { from: dr.from, to: dr.to };
+    }
+    return null;
+  });
+
+  const [dateRangeQuery, setDateRangeQuery] = useState(() => {
+    const dr = savedDashState?.dateRangeQuery;
+    if (dr?.from && dr?.to && isISODate(dr.from) && isISODate(dr.to)) {
+      return { from: dr.from, to: dr.to };
+    }
+    return null;
+  });
+
+  const debounceTimerRef = useRef(null);
+
+  const [selectedYears, setSelectedYears] = useState(() => {
+    const arr = Array.isArray(savedDashState?.selectedYears)
+      ? savedDashState.selectedYears
+      : [];
+    return arr
+      .map((y) => Number(y))
+      .filter((y) => Number.isFinite(y));
+  });
+
+  const [bannerSrc, setBannerSrc] = useState(DEFAULT_BANNER_SRC);
+  const bannerReqIdRef = useRef(0);
 
   useEffect(() => {
     if (DATA_MODE !== "firestore") return;
@@ -406,7 +571,24 @@ export default function Dashboard() {
 
         if (!didInitRangeFromBoundsRef.current) {
           didInitRangeFromBoundsRef.current = true;
-          setDateRange({ from: maxYmd, to: maxYmd });
+
+          const hasRestoredRange =
+            dateRange?.from &&
+            dateRange?.to &&
+            isISODate(dateRange.from) &&
+            isISODate(dateRange.to);
+
+          const hasRestoredQuery =
+            dateRangeQuery?.from &&
+            dateRangeQuery?.to &&
+            isISODate(dateRangeQuery.from) &&
+            isISODate(dateRangeQuery.to);
+
+          if (hasRestoredRange && hasRestoredQuery) return;
+
+          const init = { from: minYmd, to: maxYmd };
+          setDateRange(init);
+          setDateRangeQuery(init);
           setSelectedYears([]);
         }
       } catch (e) {
@@ -424,6 +606,7 @@ export default function Dashboard() {
     return () => {
       alive = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uf]);
 
   const MIN_DATE = bounds.minDate;
@@ -437,8 +620,10 @@ export default function Dashboard() {
     const t = dateRange?.to;
 
     if (!isISODate(f) || !isISODate(t)) {
-      if (f !== MAX_DATE || t !== MAX_DATE) {
-        setDateRange({ from: MAX_DATE, to: MAX_DATE });
+      if (MIN_DATE && MAX_DATE) {
+        const fix = { from: MIN_DATE, to: MAX_DATE };
+        setDateRange(fix);
+        setDateRangeQuery(fix);
       }
       return;
     }
@@ -448,66 +633,72 @@ export default function Dashboard() {
 
     if (clamped.from !== f || clamped.to !== t) {
       setDateRange(clamped);
+      setDateRangeQuery(clamped);
     }
   }, [boundsReady, MIN_DATE, MAX_DATE, dateRange?.from, dateRange?.to]);
 
   const applyDateRange = useCallback(
     (next) => {
-      if (!boundsReady || !MIN_DATE || !MAX_DATE) {
-        setDateRange(next);
-        return;
+      if (!next) return;
+
+      setDateRange(next);
+
+      let clampedNext = next;
+      if (boundsReady && MIN_DATE && MAX_DATE) {
+        const c = clampRangeToBounds(next, MIN_DATE, MAX_DATE);
+        clampedNext = c || { from: MIN_DATE, to: MAX_DATE };
       }
 
-      const clamped = clampRangeToBounds(next, MIN_DATE, MAX_DATE);
-      if (!clamped) {
+      if (
+        clampedNext?.from &&
+        clampedNext?.to &&
+        clampedNext.from === clampedNext.to
+      ) {
         setSelectedYears([]);
-        setDateRange({ from: MAX_DATE, to: MAX_DATE });
-        return;
       }
 
-      if (clamped.from === clamped.to) setSelectedYears([]);
-
-      setDateRange(clamped);
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = setTimeout(() => {
+        setDateRangeQuery(clampedNext);
+      }, 250);
     },
     [boundsReady, MIN_DATE, MAX_DATE]
   );
 
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    };
+  }, []);
+
   const queryDate = useMemo(() => {
-    if (dateRange?.from && dateRange?.to && dateRange.from === dateRange.to) {
-      return dateRange.from;
-    }
+    if (
+      dateRangeQuery?.from &&
+      dateRangeQuery?.to &&
+      dateRangeQuery.from === dateRangeQuery.to
+    )
+      return dateRangeQuery.from;
     return null;
-  }, [dateRange]);
+  }, [dateRangeQuery]);
 
   const dateFrom = useMemo(() => {
-    if (!dateRange?.from || !dateRange?.to) return null;
-    if (dateRange.from === dateRange.to) return null;
-    return dateRange.from;
-  }, [dateRange]);
+    if (!dateRangeQuery?.from || !dateRangeQuery?.to) return null;
+    if (dateRangeQuery.from === dateRangeQuery.to) return null;
+    return dateRangeQuery.from;
+  }, [dateRangeQuery]);
 
   const dateTo = useMemo(() => {
-    if (!dateRange?.from || !dateRange?.to) return null;
-    if (dateRange.from === dateRange.to) return null;
-    return dateRange.to;
-  }, [dateRange]);
-
-  const closeHourBucket = useMemo(
-    () => normalizeHourBucket(filters.horario),
-    [filters.horario]
-  );
-
-  const positions = useMemo(
-    () => normalizePositions(filters.posicao),
-    [filters.posicao]
-  );
+    if (!dateRangeQuery?.from || !dateRangeQuery?.to) return null;
+    if (dateRangeQuery.from === dateRangeQuery.to) return null;
+    return dateRangeQuery.to;
+  }, [dateRangeQuery]);
 
   const canQueryFirestore =
-    DATA_MODE === "firestore" ? !!(boundsReady && dateRange) : true;
+    DATA_MODE === "firestore" ? !!(boundsReady && dateRangeQuery) : true;
 
   const {
     loading: fsLoading,
     error: fsError,
-    data: fsRankingData,
     meta: fsRankingMeta,
     drawsRaw: fsDrawsRaw,
   } = useKingRanking({
@@ -515,8 +706,8 @@ export default function Dashboard() {
     date: canQueryFirestore ? queryDate : null,
     dateFrom: canQueryFirestore ? dateFrom : null,
     dateTo: canQueryFirestore ? dateTo : null,
-    closeHourBucket,
-    positions,
+    closeHourBucket: null,
+    positions: ALL_POSITIONS,
   });
 
   const [jsonState, setJsonState] = useState({
@@ -537,9 +728,10 @@ export default function Dashboard() {
         setJsonState((s) => ({ ...s, loading: true, error: null }));
 
         const res = await fetch(RANKING_JSON_URL, { cache: "no-store" });
-        if (!res.ok) {
-          throw new Error(`Falha ao carregar JSON: ${res.status} ${res.statusText}`);
-        }
+        if (!res.ok)
+          throw new Error(
+            `Falha ao carregar JSON: ${res.status} ${res.statusText}`
+          );
 
         const json = await res.json();
         const mapped = mapRankingJsonToApp(json);
@@ -569,29 +761,78 @@ export default function Dashboard() {
     };
   }, []);
 
+  const isHydrating = useMemo(() => {
+    if (DATA_MODE !== "firestore") return false;
+    return !!fsRankingMeta?.hydrating;
+  }, [fsRankingMeta]);
+
   const rankingLoading = DATA_MODE === "json" ? jsonState.loading : fsLoading;
   const rankingError = DATA_MODE === "json" ? jsonState.error : fsError;
-  const rankingData = DATA_MODE === "json" ? jsonState.rankingData : fsRankingData;
-  const rankingMeta = DATA_MODE === "json" ? jsonState.rankingMeta : fsRankingMeta;
-  const drawsRaw = DATA_MODE === "json" ? jsonState.drawsRaw : fsDrawsRaw;
 
-  const drawsForUi = useMemo(() => {
-    return Array.isArray(drawsRaw) ? drawsRaw : [];
-  }, [drawsRaw]);
+  const rankingMeta =
+    DATA_MODE === "json" ? jsonState.rankingMeta : fsRankingMeta;
+
+  const loadingEffective = !!rankingLoading || !!isHydrating;
+
+  const drawsRaw = DATA_MODE === "json" ? jsonState.drawsRaw : fsDrawsRaw;
+  const drawsForUi = useMemo(() => (Array.isArray(drawsRaw) ? drawsRaw : []), [
+    drawsRaw,
+  ]);
 
   const dataReady = useMemo(() => {
     if (DATA_MODE === "json") return true;
-    if (!boundsReady || !dateRange) return false;
-    if (rankingLoading) return false;
+    if (!boundsReady || !dateRangeQuery) return false;
+    if (loadingEffective) return false;
     if (rankingError) return false;
     return true;
-  }, [boundsReady, dateRange, rankingLoading, rankingError]);
+  }, [boundsReady, dateRangeQuery, loadingEffective, rankingError]);
 
-  /**
-   * ✅ FILTROS LOCAIS (Mês/Dia do mês/Dia semana)
-   * Importante: isso precisa refletir em KPIs, EmptyState e Charts.
-   */
+  const closeHourBucketLocal = useMemo(
+    () => normalizeHourBucket(filters.horario),
+    [filters.horario]
+  );
+  const positionsLocal = useMemo(
+    () => normalizePositions(filters.posicao),
+    [filters.posicao]
+  );
+
+  const findGrupoByAnimalLabel = useCallback((animalLabel) => {
+    const label = String(animalLabel || "").trim();
+    if (!label || label.toLowerCase() === "todos") return null;
+
+    const target = normalizeKey(label);
+
+    for (const b of Array.isArray(BICHO_MAP) ? BICHO_MAP : []) {
+      const g = Number(b?.grupo);
+      if (!Number.isFinite(g)) continue;
+
+      const lbl = safeAnimalLabel({ grupo: g, animal: b?.animal || "" });
+      if (normalizeKey(lbl) === target) return g;
+    }
+
+    for (let g = 1; g <= 25; g += 1) {
+      const lbl = getLabelByGrupo(g);
+      if (lbl && normalizeKey(lbl) === target) return g;
+    }
+
+    return null;
+  }, []);
+
+  const handleFilterChange = useCallback(
+    (name, value) => {
+      setFilters((prev) => ({ ...prev, [name]: value }));
+
+      if (name === "animal") {
+        const g = findGrupoByAnimalLabel(value);
+        setSelectedGrupo(g);
+      }
+    },
+    [findGrupoByAnimalLabel, setFilters]
+  );
+
   const drawsForView = useMemo(() => {
+    if (!dataReady) return [];
+
     const list = Array.isArray(drawsForUi) ? drawsForUi : [];
     if (!list.length) return [];
 
@@ -610,63 +851,155 @@ export default function Dashboard() {
     const wantDiaSemana =
       fDiaSemana && fDiaSemana.toLowerCase() !== "todos" ? fDiaSemana : null;
 
-    return list.filter((d) => {
-      const ymd = getDrawDate(d);
-      if (!ymd) return false;
+    const wantBucket = closeHourBucketLocal;
 
-      const mm = ymd.slice(5, 7);
-      const dd = ymd.slice(8, 10);
+    const posSet =
+      Array.isArray(positionsLocal) && positionsLocal.length
+        ? new Set(
+            positionsLocal
+              .map((n) => Number(n))
+              .filter((n) => Number.isFinite(n))
+          )
+        : null;
 
-      if (wantMes && mm !== wantMes) return false;
-      if (wantDiaMes && dd !== wantDiaMes) return false;
+    const grupoTarget = Number.isFinite(Number(selectedGrupo))
+      ? Number(selectedGrupo)
+      : null;
 
-      if (wantDiaSemana) {
-        const wd = ymdToWeekdayShortPT(ymd);
-        if (wd !== wantDiaSemana) return false;
-      }
+    const wantsPositionFilter =
+      String(filters.posicao || "").trim().toLowerCase() !== "todos";
+    const wantsGrupoFilter = !!grupoTarget;
+    const requiresPrizes = wantsPositionFilter || wantsGrupoFilter;
 
-      return true;
-    });
-  }, [drawsForUi, filters.mes, filters.diaMes, filters.diaSemana]);
+    return list
+      .filter((d) => {
+        const ymd = getDrawDate(d);
+        if (!ymd) return false;
+
+        const mm = ymd.slice(5, 7);
+        const dd = ymd.slice(8, 10);
+
+        if (wantMes && mm !== wantMes) return false;
+        if (wantDiaMes && dd !== wantDiaMes) return false;
+
+        if (wantDiaSemana) {
+          const wd = ymdToWeekdayShortPT(ymd);
+          if (wd !== wantDiaSemana) return false;
+        }
+
+        if (wantBucket) {
+          const b = normalizeHourBucket(getDrawCloseHour(d));
+          if (b !== wantBucket) return false;
+        }
+
+        return true;
+      })
+      .map((d) => {
+        const prizes = Array.isArray(d?.prizes) ? d.prizes : null;
+
+        if (requiresPrizes && !prizes) return null;
+        if (!prizes) return d;
+
+        let next = prizes;
+
+        if (posSet && posSet.size) {
+          next = next.filter((p) =>
+            posSet.has(Number(p?.position ?? p?.pos ?? p?.colocacao))
+          );
+        }
+
+        if (grupoTarget) {
+          next = next.filter((p) => {
+            const g =
+              Number(p?.grupo) ||
+              Number(String(p?.group || p?.grupo2 || "").replace(/^0/, "")) ||
+              null;
+            return Number(g) === Number(grupoTarget);
+          });
+        }
+
+        if (!next.length) return null;
+
+        return { ...d, prizes: next };
+      })
+      .filter(Boolean);
+  }, [
+    dataReady,
+    drawsForUi,
+    filters.mes,
+    filters.diaMes,
+    filters.diaSemana,
+    filters.posicao,
+    closeHourBucketLocal,
+    positionsLocal,
+    selectedGrupo,
+  ]);
 
   const hasAnyDrawsView = drawsForView.length > 0;
 
-  const rankingDataForTable = useMemo(() => {
+  const rankingDataGlobalForLabels = useMemo(() => {
+    if (!Array.isArray(drawsForUi) || !drawsForUi.length) return [];
+    try {
+      const built = buildRanking(drawsForUi);
+      const arr = Array.isArray(built?.byGrupo)
+        ? built.byGrupo
+        : Array.isArray(built?.ranking)
+        ? built.ranking
+        : [];
+
+      return arr.map((r) => ({
+        grupo: String(r?.grupo ?? r?.group ?? "").replace(/^0/, ""),
+        animal: r?.animal ?? r?.label ?? "",
+        total: Number(r?.apar ?? r?.total ?? r?.count ?? 0),
+      }));
+    } catch {
+      return [];
+    }
+  }, [drawsForUi]);
+
+  const rankingDataForLeftTable = useMemo(() => {
+    if (!Array.isArray(drawsForView) || !drawsForView.length) return [];
+    try {
+      const built = buildRanking(drawsForView);
+      const arr = Array.isArray(built?.byGrupo)
+        ? built.byGrupo
+        : Array.isArray(built?.ranking)
+        ? built.ranking
+        : [];
+
+      return arr.map((r) => ({
+        grupo: String(r?.grupo ?? r?.group ?? "").replace(/^0/, ""),
+        animal: r?.animal ?? r?.label ?? "",
+        total: Number(r?.apar ?? r?.total ?? r?.count ?? 0),
+      }));
+    } catch {
+      return [];
+    }
+  }, [drawsForView]);
+
+  const rankingDataForCharts = useMemo(() => {
     const built = buildRanking(drawsForView);
-    const base = Array.isArray(built?.ranking) ? built.ranking : [];
+    return Array.isArray(built?.ranking) ? built.ranking : [];
+  }, [drawsForView]);
 
-    const fAnimal = String(filters.animal || "").trim();
-    if (!fAnimal || fAnimal.toLowerCase() === "todos") return base;
+  const palpitesByGrupo = useMemo(() => {
+    if (!dataReady || !hasAnyDrawsView) return {};
+    try {
+      const out = buildPalpiteV2(drawsForView, { closeHourBucket: null });
 
-    const target = normalizeKey(fAnimal);
-
-    const match = base.find((r) => {
-      const gNum = Number(String(r?.grupo || "").replace(/^0/, ""));
-      const grupo = Number.isFinite(gNum) ? gNum : 0;
-
-      const label = safeAnimalLabel({ grupo, animal: r?.animal });
-      return normalizeKey(label) === target;
-    });
-
-    if (!match) return [];
-
-    const gMatch = String(match.grupo || "").replace(/^0/, "");
-    return base.filter((r) => String(r?.grupo || "").replace(/^0/, "") === gMatch);
-  }, [drawsForView, filters.animal]);
+      return out?.palpitesByGrupo && typeof out.palpitesByGrupo === "object"
+        ? out.palpitesByGrupo
+        : {};
+    } catch {
+      return {};
+    }
+  }, [drawsForView, dataReady, hasAnyDrawsView]);
 
   const options = useMemo(() => {
-    const list = Array.isArray(rankingData) ? rankingData : [];
-
-    const setAnimais = new Set();
-    for (const r of list) {
-      const gNum = Number(r?.grupo);
-      const grupo = Number.isFinite(gNum)
-        ? gNum
-        : Number(String(r?.grupo || "").replace(/^0/, ""));
-
-      const label = safeAnimalLabel({ grupo, animal: r?.animal });
-      const clean = String(label || "").trim();
-      if (clean) setAnimais.add(clean);
+    const animais = ["Todos"];
+    for (let g = 1; g <= 25; g += 1) {
+      const lbl = getLabelByGrupo(g);
+      animais.push(lbl || `Grupo ${pad2(g)}`);
     }
 
     const setBuckets = new Set();
@@ -684,15 +1017,14 @@ export default function Dashboard() {
     const diasSemana = [
       { label: "Todos", value: "Todos" },
       { label: "Domingo", value: "Dom" },
-      { label: "Segunda", value: "Seg" },
-      { label: "Terça", value: "Ter" },
-      { label: "Quarta", value: "Qua" },
-      { label: "Quinta", value: "Qui" },
-      { label: "Sexta", value: "Sex" },
+      { label: "Segunda-Feira", value: "Seg" },
+      { label: "Terça-Feira", value: "Ter" },
+      { label: "Quarta-Feira", value: "Qua" },
+      { label: "Quinta-Feira", value: "Qui" },
+      { label: "Sexta-Feira", value: "Sex" },
       { label: "Sábado", value: "Sáb" },
     ];
 
-    // ✅ UI coerente: "Todos" + 1º..7º
     const posicoes = [
       { label: "Todos", value: "Todos" },
       { label: "1º", value: "1º" },
@@ -705,12 +1037,12 @@ export default function Dashboard() {
     ];
 
     return {
-      animais: Array.from(setAnimais),
+      animais,
       horarios: [{ label: "Todos", value: "Todos" }, ...horarios],
       diasSemana,
       posicoes,
     };
-  }, [rankingData, drawsForUi]);
+  }, [drawsForUi]);
 
   const yearsAvailable = useMemo(() => {
     const fromDraws = extractYearsFromDraws(drawsForUi);
@@ -723,20 +1055,23 @@ export default function Dashboard() {
     if (!Number.isFinite(yMin) || !Number.isFinite(yMax)) return [];
 
     const out = [];
-    for (let y = Math.min(yMin, yMax); y <= Math.max(yMin, yMax); y += 1) out.push(y);
+    for (let y = Math.min(yMin, yMax); y <= Math.max(yMin, yMax); y += 1)
+      out.push(y);
     return out;
   }, [drawsForUi, MIN_DATE, MAX_DATE]);
 
-  const onClearYears = useCallback(() => {
-    if (!MAX_DATE) return;
+  const applyAllYearsFull = useCallback(() => {
+    if (!MIN_DATE || !MAX_DATE) return;
     setSelectedYears([]);
-    setDateRange({ from: MAX_DATE, to: MAX_DATE });
-  }, [MAX_DATE]);
+    applyDateRange({ from: MIN_DATE, to: MAX_DATE });
+  }, [MIN_DATE, MAX_DATE, applyDateRange]);
+
+  const onClearYears = useCallback(() => {
+    applyAllYearsFull();
+  }, [applyAllYearsFull]);
 
   const onToggleYear = useCallback(
     (year) => {
-      if (!MIN_DATE || !MAX_DATE) return;
-
       const y = Number(year);
       if (!Number.isFinite(y)) return;
 
@@ -746,30 +1081,25 @@ export default function Dashboard() {
         next.sort((a, b) => a - b);
 
         if (!next.length) {
-          setDateRange({ from: MAX_DATE, to: MAX_DATE });
+          applyAllYearsFull();
           return [];
         }
 
         const minY = next[0];
         const maxY = next[next.length - 1];
         const yr = yearRangeToDates(minY, maxY);
-
         if (yr) applyDateRange(yr);
 
         return next;
       });
     },
-    [MIN_DATE, MAX_DATE, applyDateRange]
+    [applyAllYearsFull, applyDateRange]
   );
 
-  /**
-   * ✅ KPIs devem refletir o MESMO recorte de visualização (drawsForView)
-   * - (Hook já filtrou por período/hora/posição; aqui aplicamos mês/dia/diaSemana)
-   */
   const kpiItems = useMemo(() => {
     if (!dataReady || !hasAnyDrawsView) {
       return [
-        { key: "dias", title: "Qtde Dias de sorteio", value: null, icon: "calendar" },
+        { key: "dias", title: "Qtde Dias de sorteios", value: null, icon: "calendar" },
         { key: "sorteios", title: "Qtde de sorteios", value: null, icon: "ticket" },
       ];
     }
@@ -781,32 +1111,56 @@ export default function Dashboard() {
     const totalDrawsFromDraws = drawsForView.length;
 
     return [
-      { key: "dias", title: "Qtde Dias de sorteio", value: diasFromDraws, icon: "calendar" },
+      { key: "dias", title: "Qtde Dias de sorteios", value: diasFromDraws, icon: "calendar" },
       { key: "sorteios", title: "Qtde de sorteios", value: totalDrawsFromDraws, icon: "ticket" },
     ];
   }, [drawsForView, dataReady, hasAnyDrawsView]);
 
-  const onSelectGrupo = useCallback((grupoNum) => {
-    const g = Number(grupoNum);
-    if (!Number.isFinite(g) || g < 1 || g > 25) {
-      setSelectedGrupo(null);
-      return;
-    }
-    setSelectedGrupo((prev) => (prev === g ? null : g));
-  }, []);
+  const onSelectGrupo = useCallback(
+    (grupoNum) => {
+      const g = Number(grupoNum);
+      if (!Number.isFinite(g) || g < 1 || g > 25) {
+        setSelectedGrupo(null);
+        setFilters((prev) => ({ ...prev, animal: "Todos" }));
+        return;
+      }
 
-  /**
-   * ✅ Clique no gráfico de "Posição" (ChartsGrid)
-   * ✅ robusto: aceita "1" e "1º" e limita 1..7
-   */
-  const onSelectPosicao = useCallback((posNumberString) => {
-    const raw = String(posNumberString ?? "").trim();
-    const m = raw.match(/^(\d+)\s*º?$/);
-    const n = m ? Number(m[1]) : NaN;
+      setSelectedGrupo((prev) => {
+        const next = prev === g ? null : g;
 
-    if (!Number.isFinite(n) || n < 1 || n > 7) return;
-    setFilters((prev) => ({ ...prev, posicao: `${n}º` }));
-  }, []);
+        if (!next) {
+          setFilters((p) => ({ ...p, animal: "Todos" }));
+        } else {
+          const row = Array.isArray(rankingDataGlobalForLabels)
+            ? rankingDataGlobalForLabels.find(
+                (r) => Number(String(r?.grupo || "").replace(/^0/, "")) === next
+              )
+            : null;
+
+          const label = safeAnimalLabel({ grupo: next, animal: row?.animal || "" });
+          setFilters((p) => ({
+            ...p,
+            animal: label || getLabelByGrupo(next) || "Todos",
+          }));
+        }
+
+        return next;
+      });
+    },
+    [rankingDataGlobalForLabels, setFilters]
+  );
+
+  const onSelectPosicao = useCallback(
+    (posNumberString) => {
+      const raw = String(posNumberString ?? "").trim();
+      const m = raw.match(/^(\d+)/);
+      const n = m ? Number(m[1]) : NaN;
+
+      if (!Number.isFinite(n) || n < 1 || n > 7) return;
+      setFilters((prev) => ({ ...prev, posicao: `${n}º` }));
+    },
+    [setFilters]
+  );
 
   const boundsMessage = useMemo(() => {
     if (bounds.loading) return "Carregando período disponível...";
@@ -816,7 +1170,6 @@ export default function Dashboard() {
 
   const uiBlockedByBounds = DATA_MODE === "firestore" ? !boundsReady : false;
 
-  // ✅ Agora o "vazio" respeita filtros locais (mês/dia/diaSemana)
   const emptyForRange = useMemo(() => {
     if (!dataReady) return false;
     return !hasAnyDrawsView;
@@ -832,56 +1185,146 @@ export default function Dashboard() {
     );
   }, []);
 
+  const selectedPosition = useMemo(() => {
+    const n = Number(String(filters.posicao || "").replace(/\D/g, ""));
+    return Number.isFinite(n) && n >= 1 && n <= 7 ? n : null;
+  }, [filters.posicao]);
+
+  useEffect(() => {
+    const reqId = (bannerReqIdRef.current += 1);
+
+    const run = async () => {
+      if (!isValidGrupo(selectedGrupo)) {
+        setBannerSrc(DEFAULT_BANNER_SRC);
+        return;
+      }
+
+      const cand128 =
+        typeof getImgFromGrupoFromMap === "function"
+          ? getImgFromGrupoFromMap(Number(selectedGrupo), 128)
+          : "";
+
+      const candBase =
+        typeof getImgFromGrupoFromMap === "function"
+          ? getImgFromGrupoFromMap(Number(selectedGrupo))
+          : "";
+
+      try {
+        if (cand128) {
+          await preloadImage(cand128);
+          if (bannerReqIdRef.current === reqId) setBannerSrc(cand128);
+          return;
+        }
+      } catch {}
+
+      try {
+        if (candBase) {
+          await preloadImage(candBase);
+          if (bannerReqIdRef.current === reqId) setBannerSrc(candBase);
+          return;
+        }
+      } catch {}
+
+      if (bannerReqIdRef.current === reqId) setBannerSrc(DEFAULT_BANNER_SRC);
+    };
+
+    run();
+  }, [selectedGrupo]);
+
+  useEffect(() => {
+    safeWriteJSON(DASH_STATE_KEY, {
+      selectedGrupo,
+      selectedYears,
+      dateRange,
+      dateRangeQuery,
+    });
+  }, [selectedGrupo, selectedYears, dateRange, dateRangeQuery]);
+
+  const hydratingBox = useMemo(() => {
+    if (!isHydrating) return null;
+
+    const from = dateFrom || queryDate || MIN_DATE || "";
+    const to = dateTo || queryDate || MAX_DATE || "";
+
+    return (
+      <PremiumInfoBox
+        title="Carregando detalhes do período"
+        description='Você selecionou um intervalo grande ("Todos"). O sistema está hidratando os prizes para garantir estatística correta (sem “meio certo”).'
+        extra={`Intervalo: ${from} → ${to}\nAguarde concluir para liberar KPIs, ranking filtrado e gráficos.`}
+      />
+    );
+  }, [isHydrating, dateFrom, dateTo, queryDate, MIN_DATE, MAX_DATE]);
+
   return (
     <div className="dashRoot">
       <aside className="dashLeft">
         <LeftRankingTable
           locationLabel={locationLabel}
-          loading={uiBlockedByBounds ? true : rankingLoading}
+          loading={uiBlockedByBounds ? true : loadingEffective}
           error={uiBlockedByBounds ? null : rankingError}
-          data={uiBlockedByBounds ? [] : rankingDataForTable}
+          data={uiBlockedByBounds || !dataReady ? [] : rankingDataForLeftTable}
           selectedGrupo={selectedGrupo}
           onSelectGrupo={onSelectGrupo}
+          palpitesByGrupo={uiBlockedByBounds || !dataReady ? {} : palpitesByGrupo}
         />
       </aside>
 
       <main className="dashMain">
-        <section className="dashTop">
-          <div className="dashBanner">
+        <section className="dashTop" style={{ position: "relative", zIndex: 1 }}>
+          <div
+            className="dashBanner"
+            style={{ position: "relative", zIndex: 1, pointerEvents: "none" }}
+          >
             <img
-              src="https://images.unsplash.com/photo-1546182990-dffeafbe841d?auto=format&fit=crop&w=1400&q=80"
+              src={bannerSrc}
               alt="Banner"
-              loading="lazy"
+              loading="eager"
+              decoding="async"
+              style={{ pointerEvents: "none" }}
+              onError={() => setBannerSrc(DEFAULT_BANNER_SRC)}
             />
           </div>
 
-          <div className="dashTopRight">
+          <div
+            className="dashTopRight"
+            style={{ position: "relative", zIndex: 5, pointerEvents: "auto" }}
+          >
             {uiBlockedByBounds ? (
               <PremiumTopRightSkeleton message={boundsMessage} />
             ) : (
               <>
                 {MIN_DATE && MAX_DATE && dateRange ? (
-                  <DateRangeControl
-                    value={dateRange}
-                    onChange={applyDateRange}
-                    minDate={MIN_DATE}
-                    maxDate={MAX_DATE}
-                    years={yearsAvailable}
-                    selectedYears={selectedYears}
-                    onToggleYear={onToggleYear}
-                    onClearYears={onClearYears}
-                  />
+                  <div style={{ position: "relative", zIndex: 10, pointerEvents: "auto" }}>
+                    <DateRangeControl
+                      value={dateRange}
+                      onChange={applyDateRange}
+                      minDate={MIN_DATE}
+                      maxDate={MAX_DATE}
+                      years={yearsAvailable}
+                      selectedYears={selectedYears}
+                      onToggleYear={onToggleYear}
+                      onClearYears={onClearYears}
+                    />
+                  </div>
                 ) : (
                   <PremiumInfoBox
                     title="Período indisponível"
-                    description={
-                      boundsMessage || "Não foi possível resolver o intervalo de datas."
-                    }
+                    description={boundsMessage || "Não foi possível resolver o intervalo de datas."}
                     extra="Se isso persistir, valide se todos os docs possuem o campo 'ymd' e se a coleção consultada é a mesma do app."
                   />
                 )}
 
-                <KpiCards items={kpiItems} drawsRaw={dataReady ? drawsForView : []} />
+                {isHydrating ? (
+                  hydratingBox
+                ) : (
+                  <KpiCards
+                    items={kpiItems}
+                    drawsRaw={dataReady ? drawsForView : []}
+                    selectedGrupo={selectedGrupo}
+                    selectedAnimalLabel={filters.animal}
+                    selectedPosition={selectedPosition}
+                  />
+                )}
               </>
             )}
           </div>
@@ -904,6 +1347,8 @@ export default function Dashboard() {
               description="O Firestore retornou um erro típico de índice/consulta composta. Como os índices já estão criados, este erro costuma ser cache, query antiga ou divergência de campos."
               extra={indexErrorHint}
             />
+          ) : isHydrating ? (
+            hydratingBox
           ) : emptyForRange ? (
             <PremiumInfoBox
               title="Sem registros no período / filtro atual"
@@ -913,10 +1358,11 @@ export default function Dashboard() {
           ) : (
             <ChartsGrid
               drawsRaw={drawsForView}
-              rankingData={rankingDataForTable}
+              drawsRawGlobal={drawsForUi}
+              rankingData={rankingDataForCharts}
               rankingMeta={rankingMeta}
               filters={filters}
-              loading={rankingLoading}
+              loading={loadingEffective}
               error={rankingError}
               selectedGrupo={selectedGrupo}
               onSelectPosicao={onSelectPosicao}

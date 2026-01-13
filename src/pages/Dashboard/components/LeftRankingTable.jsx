@@ -1,50 +1,335 @@
 // src/pages/Dashboard/components/LeftRankingTable.jsx
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
+
+import {
+  getAnimalLabel as getAnimalLabelFn,
+  getImgFromGrupo as getImgFromGrupoFn,
+  guessPalpiteFromGrupo as guessPalpiteFromGrupoFn,
+} from "../../../constants/bichoMap";
 
 /**
- * ESCOLHA 1 (RECOMENDADO SE EXISTE /src/constants/bichoMap.js):
- * Descomente este e comente o outro.
+ * LeftRankingTable
+ * - Ordenável: Grupo | Animal | Apar.
+ * - Não ordenável: Imagem | Palpite
+ * - Premium safe: Palpite NÃO pode cortar
+ *
+ * ✅ Integração segura do Palpite:
+ *   1) palpitesByGrupo[grupo2] (se existir)
+ *   2) palpite que venha no `data` (row.palpite / row.palpite4 / row.milhar / etc.)
+ *   3) fallback guessPalpiteFromGrupo(grupo)
+ *
+ * ✅ REGRA ATUAL (conforme Dashboard.jsx):
+ * - O ranking da esquerda OBEDECE filtros locais.
+ * - Portanto, por padrão, este componente NÃO “completa 01..25”.
+ *
+ * ✅ Opcional (se você quiser o comportamento antigo):
+ * - fillMissingGroups=true => completa 01..25 e evita “buracos”.
+ *
+ * ✅ Contrato opcional:
+ * - aparGlobalByGrupo (opcional): { "01": 1911, "02": 1758, ... }
+ *   Se enviado, a coluna "Apar." usa SEMPRE o valor global (independente de filtros).
  */
-// import { getImgFromGrupo, guessPalpiteFromGrupo } from "../../../constants/bichoMap";
+
+function digitsOnly(v) {
+  const s = String(v ?? "").trim();
+  if (!s) return "";
+  return s.replace(/\D+/g, "");
+}
+
+function toMilhar4(v) {
+  const d = digitsOnly(v);
+  if (!d) return null;
+  return d.length >= 4 ? d.slice(-4).padStart(4, "0") : d.padStart(4, "0");
+}
+
+function safeNumber(n) {
+  const x = Number(n);
+  return Number.isFinite(x) ? x : 0;
+}
+
+// ✅ fallback robusto para "Apar." (evita zerar por diferença de fonte)
+function pickAparCount(r) {
+  return safeNumber(
+    r?.total ??
+      r?.apar ??
+      r?.aparicoes ??
+      r?.aparições ??
+      r?.count ??
+      r?.value ??
+      0
+  );
+}
+
+function fmtIntPT(n) {
+  const x = safeNumber(n);
+  try {
+    return new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 }).format(x);
+  } catch {
+    return String(x);
+  }
+}
+
+function normalizeGrupoNumber(v) {
+  const n = Number(String(v ?? "").trim());
+  return Number.isFinite(n) ? n : 0;
+}
+
+function grupoTo2(g) {
+  const n = normalizeGrupoNumber(g);
+  return String(n).padStart(2, "0");
+}
+
+function uniq(arr) {
+  return Array.from(new Set(arr.filter(Boolean)));
+}
 
 /**
- * ESCOLHA 2 (SE O SEU bichoMap.js ESTÁ NA MESMA PASTA components):
- * Descomente este e comente o de cima.
+ * ✅ Gera candidatos de imagem (robusto)
+ * - tenta 96/128/64
+ * - tenta png/jpg/jpeg
+ * - remove duplicatas
  */
-import { getImgFromGrupo, guessPalpiteFromGrupo } from "./bichoMap";
+function buildImgCandidates(getImgFromGrupo, grupo) {
+  const base96 = safeStr(getImgFromGrupo(grupo, 96));
+  const base128 = safeStr(getImgFromGrupo(grupo, 128));
+  const base64 = safeStr(getImgFromGrupo(grupo, 64));
 
-/**
- * LeftRankingTable (Premium Fit Desktop - FIX)
- * - Consome ranking real do Dashboard: props { loading, error, data }
- * - data esperado: [{ grupo, animal, total }]
- * - Apar. = total
- * - Palpite = guessPalpiteFromGrupo(grupo)
- * - Imagem = getImgFromGrupo(grupo, 64) -> /img/<slug>_64.png
- */
+  const bases = [base96, base128, base64].filter(Boolean);
+
+  const out = [];
+  for (const src of bases) {
+    out.push(src);
+
+    // se vier png, tenta jpg/jpeg também
+    if (/\.png(\?|#|$)/i.test(src)) {
+      out.push(src.replace(/\.png(\?|#|$)/i, ".jpg$1"));
+      out.push(src.replace(/\.png(\?|#|$)/i, ".jpeg$1"));
+    }
+
+    // se vier jpg, tenta png
+    if (/\.jpe?g(\?|#|$)/i.test(src)) {
+      out.push(src.replace(/\.jpe?g(\?|#|$)/i, ".png$1"));
+    }
+  }
+
+  return uniq(out);
+}
+
+function safeStr(v) {
+  return String(v ?? "").trim();
+}
 
 export default function LeftRankingTable({
   locationLabel = "Rio de Janeiro, RJ, Brasil",
   loading = false,
   error = null,
   data = [],
+  selectedGrupo = null,
+  onSelectGrupo = null,
+
+  // ✅ palpites
+  palpitesByGrupo = {},
+
+  // ✅ override GLOBAL para a coluna "Apar."
+  // Formato: { "01": 1911, "02": 1758, ... }
+  aparGlobalByGrupo = null,
+
+  // ✅ NOVO: se true, completa 01..25 (comportamento antigo)
+  fillMissingGroups = false,
 }) {
+  const [sort, setSort] = useState({ key: "apar", dir: "desc" }); // padrão
+
+  const getAnimalLabel = useMemo(() => {
+    return typeof getAnimalLabelFn === "function"
+      ? getAnimalLabelFn
+      : ({ animal }) => String(animal || "");
+  }, []);
+
+  const getImgFromGrupo = useMemo(() => {
+    return typeof getImgFromGrupoFn === "function" ? getImgFromGrupoFn : () => "";
+  }, []);
+
+  const guessPalpiteFromGrupo = useMemo(() => {
+    return typeof guessPalpiteFromGrupoFn === "function"
+      ? guessPalpiteFromGrupoFn
+      : () => "----";
+  }, []);
+
   const rows = useMemo(() => {
-    if (Array.isArray(data) && data.length) {
-      return data.map((r) => {
-        const gNum = Number(r.grupo);
-        return {
-          grupo: gNum,
-          animal: r.animal || "",
-          apar: Number(r.total || 0),
-          palpite: guessPalpiteFromGrupo(gNum),
-          img: getImgFromGrupo(gNum, 64),
-        };
+    const arr = Array.isArray(data) ? data : [];
+    const hasGlobal = aparGlobalByGrupo && typeof aparGlobalByGrupo === "object";
+
+    // Indexa o que veio do pai por grupo2
+    // ✅ Se houver duplicata do mesmo grupo, mantemos a linha com MAIOR apar.
+    const byGrupo2 = new Map();
+    for (const r of arr) {
+      const grupo = normalizeGrupoNumber(r?.grupo);
+      if (!Number.isFinite(grupo) || grupo <= 0) continue;
+      const g2 = grupoTo2(grupo);
+
+      const prev = byGrupo2.get(g2);
+      if (!prev) {
+        byGrupo2.set(g2, r);
+        continue;
+      }
+
+      const prevA = pickAparCount(prev);
+      const curA = pickAparCount(r);
+      if (curA >= prevA) byGrupo2.set(g2, r);
+    }
+
+    // ✅ Base de grupos:
+    // - padrão: somente grupos presentes no data (obedece filtros)
+    // - opcional: 01..25 (fillMissingGroups)
+    let gruposBase = [];
+
+    if (fillMissingGroups) {
+      gruposBase = Array.from({ length: 25 }, (_, i) => i + 1);
+    } else {
+      const keys = Array.from(byGrupo2.keys());
+      if (!keys.length) return [];
+
+      gruposBase = keys
+        .map((g2) => Number(g2))
+        .filter((n) => Number.isFinite(n) && n >= 1 && n <= 25)
+        .sort((a, b) => a - b);
+    }
+
+    const out = [];
+    for (const g of gruposBase) {
+      const grupo = Number(g);
+      const grupo2 = grupoTo2(grupo);
+      const srcRow = byGrupo2.get(grupo2) || null;
+
+      const animalRaw =
+        (srcRow?.animal ?? srcRow?.label ?? srcRow?.animalLabel ?? "") || "";
+
+      // label: tenta usar função do mapa; se vier vazio, cai pro raw
+      let animalLabel = "";
+      try {
+        animalLabel = getAnimalLabel({ grupo, animal: animalRaw }) || "";
+      } catch {
+        animalLabel = "";
+      }
+      animalLabel = String(animalLabel || animalRaw || "").trim();
+
+      // 1) prioridade: palpitesByGrupo (integração externa/motor)
+      const palpiteFromByGrupo =
+        palpitesByGrupo && typeof palpitesByGrupo === "object"
+          ? toMilhar4(palpitesByGrupo[grupo2])
+          : null;
+
+      // 2) prioridade: palpite que já venha no `data`
+      const palpiteFromRow =
+        toMilhar4(
+          srcRow?.palpite ??
+            srcRow?.palpite4 ??
+            srcRow?.milhar ??
+            srcRow?.milhar4 ??
+            srcRow?.palpiteMilhar ??
+            srcRow?.palpite_milhar ??
+            srcRow?.p ??
+            null
+        ) || null;
+
+      // 3) fallback: guess
+      const palpiteFallback = toMilhar4(guessPalpiteFromGrupo(grupo)) || "----";
+      const palpite = palpiteFromByGrupo || palpiteFromRow || palpiteFallback;
+
+      // ✅ Apar:
+      const aparFromGlobal = hasGlobal ? safeNumber(aparGlobalByGrupo[grupo2]) : NaN;
+      const apar = Number.isFinite(aparFromGlobal)
+        ? aparFromGlobal
+        : pickAparCount(srcRow);
+
+      const imgCandidates = buildImgCandidates(getImgFromGrupo, grupo);
+
+      out.push({
+        grupo,
+        grupo2,
+        animalRaw,
+        animalLabel,
+        apar,
+        palpite,
+
+        // ✅ lista de candidatos (primeiro é o src inicial)
+        imgCandidates,
       });
     }
-    return [];
-  }, [data]);
+
+    return out;
+  }, [
+    data,
+    getAnimalLabel,
+    getImgFromGrupo,
+    guessPalpiteFromGrupo,
+    palpitesByGrupo,
+    aparGlobalByGrupo,
+    fillMissingGroups,
+  ]);
+
+  const sortedRows = useMemo(() => {
+    const list = Array.isArray(rows) ? [...rows] : [];
+    if (!list.length) return list;
+
+    const dirMul = sort.dir === "asc" ? 1 : -1;
+
+    const cmpText = (a, b) =>
+      String(a || "").localeCompare(String(b || ""), "pt-BR", {
+        sensitivity: "base",
+      });
+
+    list.sort((A, B) => {
+      let vA;
+      let vB;
+
+      switch (sort.key) {
+        case "grupo":
+          vA = Number(A.grupo || 0);
+          vB = Number(B.grupo || 0);
+          return (vA - vB) * dirMul;
+
+        case "animal":
+          vA = String(A.animalLabel || A.animalRaw || "");
+          vB = String(B.animalLabel || B.animalRaw || "");
+          return cmpText(vA, vB) * dirMul;
+
+        case "apar":
+        default:
+          vA = Number(A.apar || 0);
+          vB = Number(B.apar || 0);
+          return (vA - vB) * dirMul;
+      }
+    });
+
+    return list;
+  }, [rows, sort.key, sort.dir]);
 
   const formatGrupo2 = (n) => String(Number(n || 0)).padStart(2, "0");
+
+  const toggleSort = (key) => {
+    if (!["grupo", "animal", "apar"].includes(key)) return;
+
+    setSort((prev) => {
+      if (prev.key === key) {
+        return { key, dir: prev.dir === "asc" ? "desc" : "asc" };
+      }
+      const defaultDir = key === "animal" ? "asc" : "desc";
+      return { key, dir: defaultDir };
+    });
+  };
+
+  const sortArrow = (key) => {
+    if (sort.key === key) return sort.dir === "asc" ? "▲" : "▼";
+    return "▼";
+  };
+
+  const arrowOpacity = (key) => (sort.key === key ? 1 : 0.28);
+
+  const hasSelection =
+    Number.isFinite(Number(selectedGrupo)) &&
+    Number(selectedGrupo) >= 1 &&
+    Number(selectedGrupo) <= 25;
 
   const renderBody = () => {
     if (loading) {
@@ -67,52 +352,152 @@ export default function LeftRankingTable({
       );
     }
 
-    if (!rows.length) {
+    if (!sortedRows.length) {
       return (
         <div style={ui.emptyWrap}>
           <div style={ui.emptyTitle}>Sem dados</div>
-          <div style={ui.emptyHint}>Selecione filtros para exibir o ranking.</div>
+          <div style={ui.emptyHint}>
+            Nenhum registro disponível para o filtro/período atual.
+          </div>
         </div>
       );
     }
 
     return (
-      <div style={ui.bodyNoScroll}>
-        {rows.map((r) => (
-          <div key={`g_${formatGrupo2(r.grupo)}`} style={ui.row}>
-            <div style={ui.cellImg}>
-              <div style={ui.imgFrame}>
-                <img
-                  src={r.img}
-                  alt={r.animal || `Grupo ${formatGrupo2(r.grupo)}`}
-                  style={ui.img}
-                  loading="lazy"
-                  onError={(e) => {
-                    e.currentTarget.style.display = "none";
+      <div style={ui.bodyScroll} className="pp_left_scroll">
+        {sortedRows.map((r) => {
+          const isSel = Number(selectedGrupo) === Number(r.grupo);
+          const clickable = typeof onSelectGrupo === "function";
+          const dim = hasSelection && !isSel;
+
+          const initialSrc =
+            Array.isArray(r.imgCandidates) && r.imgCandidates.length
+              ? r.imgCandidates[0]
+              : "";
+
+          return (
+            <div
+              key={`g_${formatGrupo2(r.grupo)}`}
+              data-dim={dim ? "1" : "0"}
+              style={{
+                ...ui.row,
+                ...(isSel ? ui.rowSelected : null),
+                ...(dim ? ui.rowDim : null),
+                ...(clickable ? ui.rowClickable : null),
+                cursor: clickable ? "pointer" : "default",
+              }}
+              onClick={clickable ? () => onSelectGrupo(r.grupo) : undefined}
+              title={clickable ? "Clique para selecionar (toggle)" : undefined}
+            >
+              <div style={ui.cellImg}>
+                <div
+                  style={{
+                    ...ui.imgFrame,
+                    ...(isSel ? ui.imgFrameSelected : null),
+                    ...(dim ? ui.imgFrameDim : null),
                   }}
-                />
+                >
+                  {initialSrc ? (
+                    <img
+                      src={initialSrc}
+                      alt={r.animalLabel || `Grupo ${formatGrupo2(r.grupo)}`}
+                      style={{ ...ui.img, ...(dim ? ui.imgDim : null) }}
+                      loading="lazy"
+                      data-idx="0"
+                      onError={(e) => {
+                        const imgEl = e.currentTarget;
+                        const list = Array.isArray(r.imgCandidates) ? r.imgCandidates : [];
+                        const cur = Number(imgEl.dataset.idx || "0");
+                        const next = cur + 1;
+
+                        if (list[next]) {
+                          imgEl.dataset.idx = String(next);
+                          imgEl.src = list[next];
+                          imgEl.style.visibility = "visible";
+                          return;
+                        }
+
+                        // esgotou candidatos => placeholder
+                        imgEl.style.visibility = "hidden";
+                        const wrap = imgEl.parentElement;
+                        if (wrap && wrap instanceof HTMLElement) {
+                          wrap.dataset.noimg = "1";
+                        }
+                      }}
+                      onLoad={(e) => {
+                        const imgEl = e.currentTarget;
+                        imgEl.style.visibility = "visible";
+                        const wrap = imgEl.parentElement;
+                        if (wrap && wrap instanceof HTMLElement) {
+                          wrap.dataset.noimg = "0";
+                        }
+                      }}
+                    />
+                  ) : null}
+
+                  {/* placeholder (aparece quando falhar tudo) */}
+                  <div style={ui.imgPlaceholder} aria-hidden="true">
+                    {formatGrupo2(r.grupo)}
+                  </div>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  ...ui.td,
+                  ...ui.cellCenter,
+                  ...ui.numCell,
+                  ...(dim ? ui.tdDim : null),
+                }}
+              >
+                {formatGrupo2(r.grupo)}
+              </div>
+
+              <div
+                style={{
+                  ...ui.animalTxt,
+                  ...ui.animalCell,
+                  ...(isSel ? ui.animalTxtSelected : null),
+                  ...(dim ? ui.textDim : null),
+                }}
+                title={String(r.animalLabel || "").toUpperCase()}
+              >
+                {String(r.animalLabel || "").toUpperCase()}
+              </div>
+
+              <div
+                style={{
+                  ...ui.td,
+                  ...ui.cellCenter,
+                  ...ui.numCell,
+                  ...(dim ? ui.tdDim : null),
+                }}
+              >
+                {fmtIntPT(r.apar || 0)}
+              </div>
+
+              <div
+                style={{
+                  ...ui.td,
+                  ...ui.right,
+                  ...ui.numCell,
+                  ...ui.palpiteCell,
+                  ...(dim ? ui.tdDim : null),
+                }}
+              >
+                {String(r.palpite || "----")}
               </div>
             </div>
-
-            <div style={{ ...ui.td, ...ui.center }}>{formatGrupo2(r.grupo)}</div>
-
-            <div style={ui.animalTxt} title={String(r.animal || "").toUpperCase()}>
-              {String(r.animal || "").toUpperCase()}
-            </div>
-
-            <div style={{ ...ui.td, ...ui.right }}>{Number(r.apar || 0)}</div>
-
-            <div style={{ ...ui.td, ...ui.right }}>
-              {String(r.palpite || "----").padStart(4, "0")}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     );
   };
 
   return (
     <div style={ui.wrap}>
+      <style>{ui._styleTag}</style>
+
       <div style={ui.locationRow}>
         <span style={ui.locationDot} aria-hidden="true" />
         <div style={ui.locationText} title={locationLabel}>
@@ -122,11 +507,49 @@ export default function LeftRankingTable({
 
       <div style={ui.tableShell}>
         <div style={ui.headerRow}>
-          <div style={{ ...ui.th, ...ui.hLeft }}>Imagem</div>
-          <div style={{ ...ui.th, ...ui.hCenter }}>Grupo</div>
-          <div style={{ ...ui.th, ...ui.hLeft }}>Animal</div>
-          <div style={{ ...ui.th, ...ui.hRight }}>Apar.</div>
-          <div style={{ ...ui.th, ...ui.hRight }}>Palpite</div>
+          <div style={{ ...ui.th, ...ui.hLeft }} title="Imagem">
+            Imagem
+          </div>
+
+          <button
+            type="button"
+            style={{ ...ui.thBtn, ...ui.hCenter }}
+            onClick={() => toggleSort("grupo")}
+            title="Ordenar por Grupo"
+          >
+            <span style={ui.thLabel}>Grupo</span>
+            <span style={{ ...ui.sortIcon, opacity: arrowOpacity("grupo") }}>
+              {sortArrow("grupo")}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            style={{ ...ui.thBtn, ...ui.hLeft, ...ui.animalCell }}
+            onClick={() => toggleSort("animal")}
+            title="Ordenar por Animal"
+          >
+            <span style={ui.thLabel}>Animal</span>
+            <span style={{ ...ui.sortIcon, opacity: arrowOpacity("animal") }}>
+              {sortArrow("animal")}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            style={{ ...ui.thBtn, ...ui.hCenter }}
+            onClick={() => toggleSort("apar")}
+            title="Ordenar por Aparições"
+          >
+            <span style={ui.thLabel}>Apar.</span>
+            <span style={{ ...ui.sortIcon, opacity: arrowOpacity("apar") }}>
+              {sortArrow("apar")}
+            </span>
+          </button>
+
+          <div style={{ ...ui.th, ...ui.hRight, ...ui.palpiteHeader }} title="Palpite">
+            Palpite
+          </div>
         </div>
 
         {renderBody()}
@@ -135,7 +558,9 @@ export default function LeftRankingTable({
   );
 }
 
-/* Compact Premium (desktop fit) — tuned for 5 columns in ~380px panel */
+const GRID_COLS =
+  "58px minmax(46px, 56px) minmax(120px, 1fr) minmax(46px, 56px) minmax(50px, 66px)";
+
 const ui = {
   wrap: {
     padding: 10,
@@ -144,6 +569,7 @@ const ui = {
     flexDirection: "column",
     gap: 8,
     minWidth: 0,
+    boxSizing: "border-box",
   },
 
   locationRow: {
@@ -155,6 +581,7 @@ const ui = {
     letterSpacing: 0.15,
     opacity: 0.98,
     minWidth: 0,
+    boxSizing: "border-box",
   },
 
   locationDot: {
@@ -183,16 +610,19 @@ const ui = {
     flexDirection: "column",
     minHeight: 0,
     flex: 1,
+    boxSizing: "border-box",
   },
 
   headerRow: {
     display: "grid",
-    gridTemplateColumns: "46px 44px minmax(96px, 1fr) 64px 66px",
+    gridTemplateColumns: GRID_COLS,
     alignItems: "end",
-    padding: "7px 8px 6px 8px",
+    padding: "7px 5px 6px 6px",
     borderBottom: "2px solid rgba(255,255,255,0.55)",
     background: "rgba(0,0,0,0.35)",
     columnGap: 6,
+    boxSizing: "border-box",
+    flex: "0 0 auto",
   },
 
   th: {
@@ -201,23 +631,84 @@ const ui = {
     letterSpacing: 0.12,
     opacity: 0.95,
     whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    minWidth: 0,
   },
 
-  hLeft: { textAlign: "left" },
-  hCenter: { textAlign: "center" },
-  hRight: { textAlign: "right" },
-
-  bodyNoScroll: {
+  thBtn: {
+    width: "100%",
+    minWidth: 0,
+    appearance: "none",
+    border: "none",
+    background: "transparent",
+    color: "inherit",
+    padding: 0,
+    margin: 0,
+    display: "flex",
+    alignItems: "baseline",
+    gap: 4,
+    fontWeight: 800,
+    fontSize: 12,
+    letterSpacing: 0.12,
+    opacity: 0.95,
+    whiteSpace: "nowrap",
+    cursor: "pointer",
+    userSelect: "none",
     overflow: "hidden",
+  },
+
+  thLabel: {
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    minWidth: 0,
+  },
+
+  sortIcon: {
+    width: 10,
+    flex: "0 0 10px",
+    textAlign: "center",
+    fontSize: 12,
+    transform: "translateY(-0.5px)",
+  },
+
+  hLeft: { textAlign: "left", justifyContent: "flex-start" },
+  hCenter: { textAlign: "center", justifyContent: "center" },
+  hRight: { textAlign: "right", justifyContent: "flex-end" },
+
+  bodyScroll: {
+    overflowY: "auto",
+    overflowX: "hidden",
+    minHeight: 0,
+    flex: "1 1 auto",
+    WebkitOverflowScrolling: "touch",
   },
 
   row: {
     display: "grid",
-    gridTemplateColumns: "46px 44px minmax(96px, 1fr) 64px 66px",
+    gridTemplateColumns: GRID_COLS,
     alignItems: "center",
-    padding: "3px 8px",
+    padding: "3px 5px 3px 6px",
     borderTop: "1px solid rgba(255,255,255,0.28)",
     columnGap: 6,
+    transition:
+      "background 160ms ease, transform 160ms ease, opacity 160ms ease, filter 160ms ease",
+    boxSizing: "border-box",
+  },
+
+  rowClickable: { userSelect: "none" },
+
+  rowSelected: {
+    background: "rgba(201,168,62,0.10)",
+    boxShadow: "inset 0 0 0 1px rgba(201,168,62,0.24)",
+    opacity: 1,
+    filter: "none",
+  },
+
+  rowDim: {
+    opacity: 0.58,
+    filter: "grayscale(0.18)",
   },
 
   td: {
@@ -226,6 +717,13 @@ const ui = {
     letterSpacing: 0.1,
     minWidth: 0,
     lineHeight: 1.0,
+  },
+
+  tdDim: { opacity: 0.78 },
+
+  numCell: {
+    fontVariantNumeric: "tabular-nums",
+    fontFeatureSettings: '"tnum" 1, "lnum" 1',
   },
 
   animalTxt: {
@@ -238,8 +736,25 @@ const ui = {
     minWidth: 0,
   },
 
-  center: { textAlign: "center" },
+  textDim: { opacity: 0.86 },
+
+  animalTxtSelected: {
+    color: "rgba(201,168,62,0.95)",
+    textShadow: "0 8px 18px rgba(0,0,0,0.55)",
+  },
+
+  animalCell: { paddingLeft: 8, boxSizing: "border-box" },
+
+  cellCenter: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
   right: { textAlign: "right" },
+
+  palpiteCell: { paddingRight: 2 },
+  palpiteHeader: { paddingRight: 2 },
 
   cellImg: { display: "flex", alignItems: "center" },
 
@@ -252,28 +767,57 @@ const ui = {
     overflow: "hidden",
     boxShadow: "0 10px 26px rgba(0,0,0,0.55)",
     flex: "0 0 auto",
+    position: "relative",
   },
+
+  imgFrameSelected: {
+    boxShadow:
+      "0 14px 34px rgba(201,168,62,0.22), 0 10px 26px rgba(0,0,0,0.55)",
+    border: "2px solid rgba(201,168,62,0.95)",
+  },
+
+  imgFrameDim: {
+    border: "2px solid rgba(201,168,62,0.42)",
+    boxShadow: "0 10px 26px rgba(0,0,0,0.50)",
+  },
+
+  imgDim: { opacity: 0.92 },
 
   img: {
     width: "100%",
     height: "100%",
     objectFit: "cover",
     display: "block",
+    position: "relative",
+    zIndex: 2,
   },
 
-  emptyWrap: {
-    padding: 14,
+  imgPlaceholder: {
+    position: "absolute",
+    inset: 0,
     display: "grid",
-    gap: 6,
-  },
-  emptyTitle: {
-    fontWeight: 900,
+    placeItems: "center",
+    fontWeight: 950,
+    fontSize: 10,
     letterSpacing: 0.2,
-    opacity: 0.95,
+    color: "rgba(201,168,62,0.85)",
+    background: "rgba(0,0,0,0.20)",
+    zIndex: 1,
+    pointerEvents: "none",
   },
-  emptyHint: {
-    fontSize: 12.5,
-    opacity: 0.75,
-    lineHeight: 1.35,
-  },
+
+  emptyWrap: { padding: 14, display: "grid", gap: 6 },
+  emptyTitle: { fontWeight: 900, letterSpacing: 0.2, opacity: 0.95 },
+  emptyHint: { fontSize: 12.5, opacity: 0.75, lineHeight: 1.35 },
+
+  _styleTag: `
+    .pp_left_scroll::-webkit-scrollbar { width: 10px; }
+    .pp_left_scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 999px; }
+    .pp_left_scroll::-webkit-scrollbar-thumb { background: rgba(200,178,90,0.30); border-radius: 999px; border: 2px solid rgba(0,0,0,0.35); }
+    .pp_left_scroll::-webkit-scrollbar-thumb:hover { background: rgba(200,178,90,0.45); }
+
+    .pp_left_scroll > div[title][data-dim="0"]:hover {
+      background: rgba(255,255,255,0.04);
+    }
+  `,
 };

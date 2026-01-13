@@ -5,28 +5,20 @@
    - NÃO define layout
    - NÃO interfere no Dashboard
    - NÃO carrega legado
+   - Mantido propositalmente "sem regras ativas"
+     para evitar conflitos globais silenciosos.
 ========================= */
-
-body {
-  margin: 0;
-  padding: 0;
-}
 
 /*
   IMPORTANTE:
-  As classes abaixo foram REMOVIDAS propositalmente:
+  - Reset global e tipografia ficam em: src/index.css
+  - Layout e estrutura do Dashboard ficam em: src/pages/Dashboard/dashboard.css (ou equivalente)
+  - Componentes usam estilos isolados (inline + styleTag local)
 
+  As classes abaixo foram REMOVIDAS propositalmente (legado):
   .app-container
   .tabela-ranking
   .linha-ranking
   .filtros-abaixo
   estilos globais de img
-
-  Motivo:
-  - pertenciam ao layout antigo
-  - causavam conflitos invisíveis
-  - hoje o layout é controlado por:
-    - dashboard.css
-    - index.css
-    - estilos dos componentes
 */

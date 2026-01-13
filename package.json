@@ -6,12 +6,15 @@
     "axios": "^1.13.2",
     "cra-template-pwa": "2.0.0",
     "firebase": "^12.7.0",
+    "jspdf": "^4.0.0",
+    "jspdf-autotable": "^5.0.7",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-scripts": "5.0.1",
     "react-tsparticles": "^2.12.2",
     "recharts": "^3.0.2",
-    "web-vitals": "^5.0.3"
+    "web-vitals": "^5.0.3",
+    "xlsx": "^0.18.5"
   },
   "scripts": {
     "start": "react-scripts start",
