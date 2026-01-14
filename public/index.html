@@ -5,7 +5,14 @@
 
     <!-- Viewport / Theme -->
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+    <meta name="msapplication-TileColor" content="#000000" />
+
+    <!-- App name (PWA / iOS / Windows) -->
+    <meta name="application-name" content="Palpitaco JB" />
+    <meta name="apple-mobile-web-app-title" content="Palpitaco JB" />
 
     <!-- Primary SEO -->
     <title>Palpitaco JB — Estatísticas do Jogo do Bicho</title>
@@ -46,27 +53,23 @@
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Palpitaco JB" />
     <meta property="og:locale" content="pt_BR" />
-    <meta
-      property="og:title"
-      content="Palpitaco JB — Estatísticas do Jogo do Bicho"
-    />
+    <meta property="og:title" content="Palpitaco JB — Estatísticas do Jogo do Bicho" />
     <meta
       property="og:description"
       content="Painéis premium com estatísticas, frequências e rankings do Jogo do Bicho."
     />
     <meta property="og:url" content="https://palpitacojb.com.br/" />
 
-    <!-- IMPORTANTE: URL ABSOLUTA para crawlers -->
+    <!-- OG image (compatível com crawlers + fallback seguro) -->
     <meta property="og:image" content="https://palpitacojb.com.br/og-image.png" />
+    <meta property="og:image:secure_url" content="https://palpitacojb.com.br/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+    <meta property="og:image:type" content="image/png" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta
-      name="twitter:title"
-      content="Palpitaco JB — Estatísticas do Jogo do Bicho"
-    />
+    <meta name="twitter:title" content="Palpitaco JB — Estatísticas do Jogo do Bicho" />
     <meta
       name="twitter:description"
       content="Painéis premium com estatísticas, frequências e rankings do Jogo do Bicho."
