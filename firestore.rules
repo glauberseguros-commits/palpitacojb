@@ -10,6 +10,7 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // Admin = existe doc /admins/{uid} e active == true
     function isAdmin() {
       return signedIn()
         && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
@@ -20,43 +21,89 @@ service cloud.firestore {
       return signedIn() && request.auth.uid == uid;
     }
 
-    // Aceita apenas FREE/TRIAL vindo do client (sem PRO/VIP na marra)
-    function planIsSafe() {
-      return !("plan" in request.resource.data)
-        || request.resource.data.plan in ["FREE", "TRIAL"];
-    }
-
     /**
      * ✅ Campos permitidos para o PRÓPRIO usuário (client)
-     * - inclui variações de nomes para não quebrar builds antigos
-     * - inclui campos de trial mais comuns
+     * - inclui variações antigas para compatibilidade
      */
     function allowedUserKeys() {
       return [
+        // identity/basic
+        "uid",
+        "email",
+        "createdAt",
+        "updatedAt",
+
+        // profile
         "name",
         "phoneDigits",
-        "phone",          // compat
+        "phone",        // compat legado
         "photoUrl",
-        "photoURL",       // compat
-        "updatedAt",
-        "createdAt",
+        "photoURL",     // compat legado
+
+        // trial (compat + atual)
+        "trialStartAt",
+        "trialEndAt",
+        "trialActive",
         "trialStart",
         "trialEnd",
-        "trialStartAt",   // compat
-        "trialEndsAt",    // compat
-        "plan"            // mas somente FREE/TRIAL (planIsSafe)
+        "trialEndsAt",
+
+        // plan (mas com regras abaixo)
+        "plan"
       ];
     }
 
     /**
-     * ✅ Regra segura para CREATE/UPDATE
-     * - update: só pode mudar campos dentro do allowlist
-     * - create: doc inteiro também precisa estar no allowlist
+     * ✅ No CREATE, o doc inteiro precisa estar dentro do allowlist
      */
-    function userWriteIsSafe() {
+    function createKeysAreSafe() {
+      return request.resource.data.keys().hasOnly(allowedUserKeys());
+    }
+
+    /**
+     * ✅ No UPDATE, só pode MUDAR campos dentro do allowlist
+     */
+    function updateKeysAreSafe() {
       return request.resource.data.diff(resource.data).changedKeys()
-        .hasOnly(allowedUserKeys())
-        && planIsSafe();
+        .hasOnly(allowedUserKeys());
+    }
+
+    /**
+     * ✅ PLAN: regras seguras
+     * - CREATE: só aceita FREE/TRIAL (ou sem plan)
+     * - UPDATE: permite qualquer plan EXISTENTE (FREE/TRIAL/PRO/VIP),
+     *           mas o usuário NÃO pode ALTERAR o plan.
+     */
+    function planSafeForCreate() {
+      return !("plan" in request.resource.data)
+        || request.resource.data.plan in ["FREE", "TRIAL"];
+    }
+
+    function planNotChangedOnUpdate() {
+      return !("plan" in request.resource.data)
+        || resource.data.plan == request.resource.data.plan;
+    }
+
+    /**
+     * ✅ TRIAL: usuário pode setar no CREATE (porque seu client cria trial),
+     * mas NÃO pode alterar depois (somente admin).
+     */
+    function trialNotChangedOnUpdate() {
+      return
+        (!("trialStartAt" in request.resource.data) || request.resource.data.trialStartAt == resource.data.trialStartAt) &&
+        (!("trialEndAt"   in request.resource.data) || request.resource.data.trialEndAt   == resource.data.trialEndAt) &&
+        (!("trialActive"  in request.resource.data) || request.resource.data.trialActive  == resource.data.trialActive) &&
+        (!("trialStart"   in request.resource.data) || request.resource.data.trialStart   == resource.data.trialStart) &&
+        (!("trialEnd"     in request.resource.data) || request.resource.data.trialEnd     == resource.data.trialEnd) &&
+        (!("trialEndsAt"  in request.resource.data) || request.resource.data.trialEndsAt  == resource.data.trialEndsAt);
+    }
+
+    function userCreateIsSafe() {
+      return createKeysAreSafe() && planSafeForCreate();
+    }
+
+    function userUpdateIsSafe() {
+      return updateKeysAreSafe() && planNotChangedOnUpdate() && trialNotChangedOnUpdate();
     }
 
     /* =========================================================
@@ -66,7 +113,7 @@ service cloud.firestore {
     match /admins/{uid} {
       allow get: if isOwner(uid) || isAdmin();
       allow list: if isAdmin();
-      allow create, update, delete: if false;
+      allow create, update, delete: if false; // somente via Console (por enquanto)
     }
 
     /* =========================================================
@@ -77,11 +124,11 @@ service cloud.firestore {
       allow get: if isOwner(uid) || isAdmin();
       allow list: if isAdmin();
 
-      // ✅ usuário pode criar o próprio doc (primeiro SALVAR)
-      allow create: if isOwner(uid) && userWriteIsSafe();
+      // ✅ usuário pode criar o próprio doc (primeiro login/primeiro salvar)
+      allow create: if isOwner(uid) && userCreateIsSafe();
 
-      // ✅ usuário pode atualizar apenas campos seguros
-      allow update: if (isOwner(uid) && userWriteIsSafe()) || isAdmin();
+      // ✅ usuário pode atualizar perfil com segurança (sem mexer plan/trial)
+      allow update: if (isOwner(uid) && userUpdateIsSafe()) || isAdmin();
 
       // delete: só admin
       allow delete: if isAdmin();
@@ -92,12 +139,12 @@ service cloud.firestore {
     ========================================================= */
 
     match /draws/{drawId} {
-      allow read: if signedIn();
+      allow read: if signedIn();  // troque por true se quiser público
       allow write: if isAdmin();
     }
 
     match /draws/{drawId}/prizes/{prizeId} {
-      allow read: if signedIn();
+      allow read: if signedIn();  // troque por true se quiser público
       allow write: if isAdmin();
     }
 
