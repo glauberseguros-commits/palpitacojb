@@ -3,6 +3,10 @@ import React, { useEffect, useMemo, useState } from "react";
 import Icon from "./Icon";
 import MiniLogo from "./MiniLogo";
 
+// ✅ Sync com Firebase Auth
+import { auth } from "../../../services/firebase";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+
 const ROUTES = {
   DASHBOARD: "dashboard",
   ACCOUNT: "account",
@@ -16,6 +20,7 @@ const ROUTES = {
 };
 
 const ACCOUNT_SESSION_KEY = "pp_session_v1";
+const LS_GUEST_ACTIVE_KEY = "pp_guest_active_v1";
 
 function safeReadLS(key) {
   try {
@@ -23,6 +28,18 @@ function safeReadLS(key) {
   } catch {
     return null;
   }
+}
+
+function safeWriteLS(key, val) {
+  try {
+    localStorage.setItem(key, val);
+  } catch {}
+}
+
+function safeRemoveLS(key) {
+  try {
+    localStorage.removeItem(key);
+  } catch {}
 }
 
 function safeParseJson(raw) {
@@ -64,6 +81,20 @@ function readSession() {
   return { ok: true, type: "user", plan: "FREE" };
 }
 
+function writeSession(obj) {
+  safeWriteLS(ACCOUNT_SESSION_KEY, JSON.stringify(obj));
+  // avisa o próprio tab (storage não dispara no mesmo tab)
+  window.dispatchEvent(new Event("pp_session_changed"));
+}
+
+function readGuestActive() {
+  try {
+    return localStorage.getItem(LS_GUEST_ACTIVE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
 function MoreDotsIcon() {
   return (
     <svg
@@ -86,8 +117,6 @@ export default function AppShell({
   onNavigate,
   onLogout,
   children,
-
-  // compat (mantém assinatura, mas não usamos)
   planLoading: _planLoading = false,
   isFree: _isFree = true,
   isTrial: _isTrial = false,
@@ -95,8 +124,52 @@ export default function AppShell({
 }) {
   const [moreOpen, setMoreOpen] = useState(false);
 
-  // ✅ sessão (guest/user/plan)
-  const session = useMemo(() => readSession(), []);
+  // ✅ sessão REATIVA (não congela)
+  const [session, setSession] = useState(() => readSession());
+
+  // ✅ refaz leitura quando localStorage mudar (outros tabs) OU evento interno
+  useEffect(() => {
+    const sync = () => setSession(readSession());
+
+    const onStorage = (e) => {
+      if (!e) return;
+      if (e.key === ACCOUNT_SESSION_KEY || e.key === LS_GUEST_ACTIVE_KEY) sync();
+    };
+
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("pp_session_changed", sync);
+
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("pp_session_changed", sync);
+    };
+  }, []);
+
+  // ✅ Sync com Firebase Auth:
+  // - se tem user => força session type:"user"
+  // - se não tem user => se guestActive => session guest
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      if (user?.uid) {
+        writeSession({ ok: true, type: "user", plan: "FREE", uid: user.uid });
+        setSession(readSession());
+        return;
+      }
+
+      // sem user: se guest ativo, vira guest; senão limpa
+      if (readGuestActive()) {
+        writeSession({ ok: true, type: "guest", plan: "FREE" });
+        setSession(readSession());
+      } else {
+        safeRemoveLS(ACCOUNT_SESSION_KEY);
+        window.dispatchEvent(new Event("pp_session_changed"));
+        setSession(readSession());
+      }
+    });
+
+    return () => unsub?.();
+  }, []);
+
   const isGuest = !!session?.ok && session?.type === "guest";
   const plan = String(session?.plan || "FREE").toUpperCase();
   const isPro = plan === "PRO" || plan === "VIP";
@@ -129,11 +202,8 @@ export default function AppShell({
           --pp_border:${BORDER2};
           --pp_borderStrong:${BORDER};
           --pp_gold:${GOLD};
-
           --pp_sidebar_w:86px;
           --pp_sidebar_pad:10px;
-
-          /* bottom bar (mobile) */
           --pp_bottom_h:74px;
         }
 
@@ -142,7 +212,6 @@ export default function AppShell({
           min-height: 100vh;
           background: var(--pp_bg);
           color: var(--pp_text);
-
           display: grid;
           grid-template-columns: var(--pp_sidebar_w) 1fr;
           overflow: hidden;
@@ -207,11 +276,9 @@ export default function AppShell({
           border-radius: 12px;
           background: rgba(0,0,0,0.38);
           padding: 10px;
-
           display: grid;
           gap: 8px;
           align-content: start;
-
           overflow: auto;
           scrollbar-gutter: stable;
           -webkit-overflow-scrolling: touch;
@@ -269,13 +336,8 @@ export default function AppShell({
           box-shadow: 0 0 0 3px rgba(201,168,62,0.10);
         }
 
-        /* =========================
-           Mobile premium: Bottom Bar (FIXED)
-        ========================= */
         @media (max-width: 820px){
-          .pp_shell{
-            grid-template-columns: 1fr;
-          }
+          .pp_shell{ grid-template-columns: 1fr; }
 
           .pp_sidebar{
             position: fixed;
@@ -283,14 +345,11 @@ export default function AppShell({
             right: 0;
             bottom: 0;
             z-index: 50;
-
             height: calc(var(--pp_bottom_h) + env(safe-area-inset-bottom, 0px));
             border-right: none;
             border-top: 1px solid var(--pp_border);
             border-radius: 14px 14px 0 0;
-
             padding: 10px 10px calc(12px + env(safe-area-inset-bottom, 0px));
-
             grid-template-rows: 1fr;
             grid-template-columns: 1fr;
           }
@@ -301,11 +360,9 @@ export default function AppShell({
           .pp_nav{
             border-radius: 12px;
             padding: 8px;
-
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             gap: 10px;
-
             overflow: hidden;
           }
 
@@ -315,9 +372,7 @@ export default function AppShell({
             border-radius: 12px;
           }
 
-          .pp_activePip{
-            bottom: 7px;
-          }
+          .pp_activePip{ bottom: 7px; }
 
           .pp_main{
             padding-bottom: calc(var(--pp_bottom_h) + 12px + env(safe-area-inset-bottom, 0px));
@@ -327,99 +382,10 @@ export default function AppShell({
         @media (min-width: 821px) and (max-width: 1080px){
           :root{ --pp_sidebar_w:78px; }
         }
-
-        /* =========================
-           Mobile "Mais" (Bottom Sheet)
-        ========================= */
-        .pp_moreOverlay{
-          position: fixed;
-          inset: 0;
-          z-index: 80;
-          background: rgba(0,0,0,0.62);
-          backdrop-filter: blur(6px);
-          display: grid;
-          align-items: end;
-        }
-
-        .pp_moreSheet{
-          border-top-left-radius: 14px;
-          border-top-right-radius: 14px;
-          border: 1px solid rgba(255,255,255,0.10);
-          border-bottom: none;
-          background:
-            radial-gradient(900px 260px at 20% 0%, rgba(201,168,62,0.10), transparent 55%),
-            rgba(0,0,0,0.82);
-          box-shadow: 0 -22px 60px rgba(0,0,0,0.70);
-          padding: 12px 12px calc(12px + env(safe-area-inset-bottom, 0px));
-        }
-
-        .pp_moreGrab{
-          width: 54px;
-          height: 6px;
-          border-radius: 999px;
-          background: rgba(255,255,255,0.18);
-          margin: 2px auto 10px;
-        }
-
-        .pp_moreTitle{
-          font-weight: 900;
-          font-size: 13px;
-          letter-spacing: 0.4px;
-          color: rgba(255,255,255,0.86);
-          margin: 0 0 10px;
-          text-transform: uppercase;
-          text-align: center;
-        }
-
-        .pp_moreGrid{
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 10px;
-        }
-
-        .pp_moreBtn{
-          border-radius: 12px;
-          border: 1px solid rgba(255,255,255,0.10);
-          background: rgba(0,0,0,0.35);
-          padding: 10px 10px;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          cursor: pointer;
-          box-shadow: 0 14px 34px rgba(0,0,0,0.45);
-          color: inherit;
-        }
-        .pp_moreBtn:active{ transform: translateY(1px); }
-        .pp_moreBtn .t{
-          font-weight: 900;
-          font-size: 12px;
-          color: rgba(255,255,255,0.90);
-          line-height: 1.1;
-        }
-        .pp_moreBtn .s{
-          font-size: 10px;
-          color: rgba(255,255,255,0.60);
-          margin-top: 2px;
-        }
-        .pp_moreBtn .ic{
-          width: 34px;
-          height: 34px;
-          border-radius: 12px;
-          border: 1px solid rgba(201,168,62,0.22);
-          background: rgba(0,0,0,0.35);
-          display: grid;
-          place-items: center;
-          flex: 0 0 auto;
-        }
-
-        .pp_moreDanger{
-          border-color: rgba(255,90,90,0.22);
-        }
       `,
     };
   }, []);
 
-  // ✅ nomes dinâmicos (preview)
   const accountTitle = isGuest ? "Entrar / Minha Conta" : "Minha Conta";
   const logoutTitle = isGuest ? "Sair do Preview" : "Sair";
 
@@ -442,7 +408,6 @@ export default function AppShell({
     { key: "__MORE__", title: "Mais", icon: "__MORE_DOTS__" },
   ];
 
-  // ✅ “Mais” adaptado para guest: empurra Planos e Login como coisas principais
   const menuMore = [
     ...(isGuest
       ? [
@@ -457,7 +422,7 @@ export default function AppShell({
     { key: "__LOGOUT__", title: logoutTitle, icon: "logout", danger: true },
   ];
 
-  const handleNavigate = (routeKey) => {
+  const handleNavigate = async (routeKey) => {
     if (!routeKey) return;
 
     if (routeKey === "__MORE__") {
@@ -467,6 +432,17 @@ export default function AppShell({
 
     if (routeKey === "__LOGOUT__") {
       setMoreOpen(false);
+
+      // ✅ logout real do Firebase
+      try {
+        await signOut(auth);
+      } catch {}
+
+      // ✅ limpa sessão local
+      safeRemoveLS(ACCOUNT_SESSION_KEY);
+      safeRemoveLS(LS_GUEST_ACTIVE_KEY);
+      window.dispatchEvent(new Event("pp_session_changed"));
+
       onLogout?.();
       return;
     }
@@ -512,7 +488,6 @@ export default function AppShell({
         <span className="pp_nav_icon" aria-hidden="true">
           {isMore ? <MoreDotsIcon /> : <Icon name={icon} />}
         </span>
-
         {isActive ? <span className="pp_activePip" /> : null}
       </button>
     );
@@ -533,9 +508,7 @@ export default function AppShell({
       >
         <div className="pp_moreSheet" onClick={stop}>
           <div className="pp_moreGrab" aria-hidden="true" />
-          <div className="pp_moreTitle">
-            {isGuest ? "Modo Preview" : "Mais opções"}
-          </div>
+          <div className="pp_moreTitle">{isGuest ? "Modo Preview" : "Mais opções"}</div>
 
           <div className="pp_moreGrid">
             {menuMore.map((it) => (
@@ -583,14 +556,10 @@ export default function AppShell({
           <div className="pp_brandDot" aria-hidden="true">
             <MiniLogo />
           </div>
-
-          <div className={`pp_planPill ${planLabel !== "FREE" ? "isGold" : ""}`}>
-            {planLabel}
-          </div>
+          <div className={`pp_planPill ${planLabel !== "FREE" ? "isGold" : ""}`}>{planLabel}</div>
         </div>
 
         <nav className="pp_nav" aria-label="Menu">
-          {/* Desktop/tablet */}
           <div className="pp_desktopNav" style={{ display: "contents" }}>
             <NavButton
               title="Dashboard"
@@ -610,7 +579,6 @@ export default function AppShell({
             ))}
           </div>
 
-          {/* Mobile bottom */}
           <div className="pp_mobileNav" style={{ display: "none" }}>
             {menuMobileBottom.map((it) => (
               <NavButton
@@ -632,7 +600,6 @@ export default function AppShell({
             onClick={() => handleNavigate(ROUTES.DASHBOARD)}
           />
 
-          {/* ✅ Guest: sugere planos antes de sair */}
           {isGuest ? (
             <NavButton
               title="Ver planos (PRO/VIP)"
@@ -646,7 +613,7 @@ export default function AppShell({
             title={logoutTitle}
             icon="logout"
             isActive={false}
-            onClick={() => onLogout?.()}
+            onClick={() => handleNavigate("__LOGOUT__")}
           />
         </div>
       </aside>
