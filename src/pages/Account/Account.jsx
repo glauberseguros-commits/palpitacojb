@@ -1,25 +1,33 @@
 // src/pages/Account/Account.jsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import LoginVisual from "./LoginVisual";
 
 // Firebase
 import { auth, db, storage } from "../../services/firebase";
-import { onAuthStateChanged, signOut } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
+import { onAuthStateChanged, deleteUser } from "firebase/auth";
+import { doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
+import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 
 /**
- * Account (Minha Conta) — REAL (Firebase)
- * - Auth real (uid/email) manda no acesso
- * - Perfil persistente:
- *   Firestore: users/{uid} -> { name, phoneDigits, photoUrl, updatedAt }
- * - Foto SEM limite via Firebase Storage:
- *   Storage: users/{uid}/avatar/{timestamp}_{filename}
- *   Salva URL no Firestore
+ * Account (Minha Conta) — REAL (Firebase) + Premium UX
  *
- * Observação:
- * - Firestore tem limite ~1MB por documento -> NÃO salvar base64 lá.
- * - Guest (sem login) continua local/visual.
+ * ✅ Regras de acesso:
+ * - Auth real (uid/email) manda no acesso.
+ * - Guest só acontece quando o usuário clica "Entrar sem login".
+ *
+ * ✅ Perfil persistente:
+ * - Firestore: users/{uid} -> { name, phoneDigits, photoUrl, updatedAt }
+ *
+ * ✅ Foto SEM limite (usuário pode escolher qualquer resolução):
+ * - App converte/otimiza (client-side) e envia ao Storage
+ * - Storage: users/{uid}/avatar/{timestamp}.jpg
+ * - Firestore salva só a URL
+ *
+ * ✅ Telefone com máscara:
+ * - (xx) x xxxx-xxxx (11 dígitos) ou (xx) xxxx-xxxx (10 dígitos)
+ *
+ * ✅ Botões:
+ * - SALVAR / REMOVER FOTO / EXCLUIR CONTA
  */
 
 const LS_GUEST_KEY = "pp_guest_profile_v1";
@@ -32,6 +40,7 @@ function safeISO(s) {
   const d = new Date(s);
   return Number.isFinite(d.getTime()) ? d : null;
 }
+
 function formatBRDateTime(iso) {
   const d = safeISO(iso);
   if (!d) return "—";
@@ -42,12 +51,42 @@ function formatBRDateTime(iso) {
   }
 }
 
-function normalizePhoneBR(v) {
+function digitsOnly(v) {
   return String(v ?? "").replace(/\D+/g, "");
 }
+
+function normalizePhoneDigits(v) {
+  return digitsOnly(v).slice(0, 11);
+}
+
 function isPhoneBRValidDigits(d) {
   const s = String(d || "");
   return s.length === 10 || s.length === 11;
+}
+
+// (xx) x xxxx-xxxx (11) OR (xx) xxxx-xxxx (10)
+function formatPhoneBR(digits) {
+  const d = normalizePhoneDigits(digits);
+  if (!d) return "";
+
+  if (d.length <= 2) return `(${d}`;
+  const dd = d.slice(0, 2);
+
+  // 10 dígitos: (DD) XXXX-XXXX
+  if (d.length <= 10) {
+    const a = d.slice(2, 6);
+    const b = d.slice(6, 10);
+    if (d.length <= 6) return `(${dd}) ${a}`;
+    return `(${dd}) ${a}${b ? `-${b}` : ""}`;
+  }
+
+  // 11 dígitos: (DD) 9 XXXX-XXXX
+  const ninth = d.slice(2, 3);
+  const a = d.slice(3, 7);
+  const b = d.slice(7, 11);
+  if (d.length <= 3) return `(${dd}) ${ninth}`;
+  if (d.length <= 7) return `(${dd}) ${ninth} ${a}`;
+  return `(${dd}) ${ninth} ${a}${b ? `-${b}` : ""}`;
 }
 
 function computeInitials(name) {
@@ -59,6 +98,83 @@ function computeInitials(name) {
   return (a + b).toUpperCase();
 }
 
+/**
+ * Resize/compress image client-side (mobile-friendly)
+ * - maxSide: 768 (bom p/ avatar)
+ * - quality: 0.82 (jpeg)
+ */
+async function resizeImageToJpegBlob(file, { maxSide = 768, quality = 0.82 } = {}) {
+  const inputFile = file;
+  if (!inputFile) throw new Error("Arquivo inválido.");
+
+  // tenta createImageBitmap (rápido), fallback para <img>
+  let bitmap = null;
+  try {
+    bitmap = await createImageBitmap(inputFile);
+  } catch {
+    bitmap = null;
+  }
+
+  let w = 0;
+  let h = 0;
+
+  if (bitmap) {
+    w = bitmap.width;
+    h = bitmap.height;
+  } else {
+    // fallback
+    const dataUrl = await new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onerror = () => reject(new Error("Falha ao ler imagem."));
+      r.onload = () => resolve(String(r.result || ""));
+      r.readAsDataURL(inputFile);
+    });
+
+    const img = await new Promise((resolve, reject) => {
+      const i = new Image();
+      i.onload = () => resolve(i);
+      i.onerror = () => reject(new Error("Falha ao carregar imagem."));
+      i.src = dataUrl;
+    });
+
+    w = img.naturalWidth || img.width;
+    h = img.naturalHeight || img.height;
+
+    // cria bitmap via canvas para padronizar fluxo
+    const tmp = document.createElement("canvas");
+    tmp.width = w;
+    tmp.height = h;
+    const tctx = tmp.getContext("2d");
+    tctx.drawImage(img, 0, 0);
+    bitmap = await createImageBitmap(tmp);
+  }
+
+  const scale = Math.min(1, maxSide / Math.max(w, h));
+  const outW = Math.max(1, Math.round(w * scale));
+  const outH = Math.max(1, Math.round(h * scale));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = outW;
+  canvas.height = outH;
+
+  const ctx = canvas.getContext("2d");
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(bitmap, 0, 0, outW, outH);
+
+  // converte em jpeg (reduz MUITO tamanho)
+  const blob = await new Promise((resolve) => {
+    canvas.toBlob(
+      (b) => resolve(b),
+      "image/jpeg",
+      Math.min(0.95, Math.max(0.5, quality))
+    );
+  });
+
+  if (!blob) throw new Error("Falha ao converter imagem.");
+  return blob;
+}
+
 /* =========================
    Firestore profile
 ========================= */
@@ -67,8 +183,8 @@ async function loadUserProfile(uid) {
   const u = String(uid || "").trim();
   if (!u) return null;
   try {
-    const ref = doc(db, "users", u);
-    const snap = await getDoc(ref);
+    const r = doc(db, "users", u);
+    const snap = await getDoc(r);
     if (!snap.exists()) return null;
     const data = snap.data() || {};
     return {
@@ -85,9 +201,9 @@ async function saveUserProfile(uid, payload) {
   const u = String(uid || "").trim();
   if (!u) return false;
   try {
-    const ref = doc(db, "users", u);
+    const r = doc(db, "users", u);
     await setDoc(
-      ref,
+      r,
       {
         name: String(payload?.name || "").trim(),
         phoneDigits: String(payload?.phoneDigits || "").trim(),
@@ -136,6 +252,12 @@ function saveGuestProfile(p) {
   } catch {}
 }
 
+function clearGuestProfile() {
+  try {
+    localStorage.removeItem(LS_GUEST_KEY);
+  } catch {}
+}
+
 /* =========================
    Component
 ========================= */
@@ -143,22 +265,26 @@ function saveGuestProfile(p) {
 export default function Account({ onClose = null }) {
   const [vw, setVw] = useState(typeof window !== "undefined" ? window.innerWidth : 1200);
 
-  // sessão atual (real)
-  const [isGuest, setIsGuest] = useState(false);
+  // auth state (real)
+  const [authReady, setAuthReady] = useState(false);
+  const [isGuest, setIsGuest] = useState(false); // só TRUE quando usuário clicou "Entrar sem login"
   const [uid, setUid] = useState("");
   const [email, setEmail] = useState("");
   const [createdAtIso, setCreatedAtIso] = useState("");
 
-  // perfil (draft)
+  // profile drafts
   const [nameDraft, setNameDraft] = useState("");
-  const [phoneDraft, setPhoneDraft] = useState("");
-  const [photoUrl, setPhotoUrl] = useState(""); // URL final (storage/download) ou local (guest)
-  const [photoFile, setPhotoFile] = useState(null); // File selecionado (upload no salvar)
-  const [photoPreview, setPhotoPreview] = useState(""); // preview local
+  const [phoneDigitsDraft, setPhoneDigitsDraft] = useState(""); // sempre digits (10/11)
+  const [photoUrl, setPhotoUrl] = useState(""); // URL final (storage) ou local (guest)
+  const [photoFile, setPhotoFile] = useState(null); // file escolhido (upload no salvar)
 
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
+
+  // preview objectURL (não vazar memória)
+  const previewUrlRef = useRef("");
+  const [photoPreview, setPhotoPreview] = useState("");
 
   // responsive
   useEffect(() => {
@@ -167,7 +293,7 @@ export default function Account({ onClose = null }) {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  // fonte de verdade: auth
+  // auth listener
   useEffect(() => {
     let alive = true;
 
@@ -176,20 +302,15 @@ export default function Account({ onClose = null }) {
 
       setMsg("");
       setErr("");
+      setAuthReady(true);
 
+      // IMPORTANTE:
+      // Se NÃO tem user, NÃO vira guest automaticamente.
+      // Guest só acontece via handleSkip().
       if (!user?.uid) {
-        // sem auth => fica em modo guest (LoginVisual pode usar onSkip)
         setUid("");
         setEmail("");
         setCreatedAtIso("");
-        setIsGuest(true);
-
-        const g = loadGuestProfile();
-        setNameDraft(g.name);
-        setPhoneDraft(g.phoneDigits);
-        setPhotoUrl(g.photoUrl);
-        setPhotoFile(null);
-        setPhotoPreview("");
         return;
       }
 
@@ -197,10 +318,11 @@ export default function Account({ onClose = null }) {
       setIsGuest(false);
       setUid(String(user.uid));
       setEmail(String(user.email || "").trim().toLowerCase());
-      const created = user?.metadata?.creationTime ? new Date(user.metadata.creationTime).toISOString() : "";
+
+      const created =
+        user?.metadata?.creationTime ? new Date(user.metadata.creationTime).toISOString() : "";
       setCreatedAtIso(created);
 
-      // carrega perfil do Firestore
       const remote = await loadUserProfile(user.uid);
 
       const nm = String(remote?.name || "").trim();
@@ -208,28 +330,34 @@ export default function Account({ onClose = null }) {
       const url = String(remote?.photoUrl || "").trim();
 
       setNameDraft(nm);
-      setPhoneDraft(ph);
+      setPhoneDigitsDraft(normalizePhoneDigits(ph));
       setPhotoUrl(url);
+
       setPhotoFile(null);
+      // limpa preview
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+      previewUrlRef.current = "";
       setPhotoPreview("");
     });
 
     return () => {
       alive = false;
       unsub?.();
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+      previewUrlRef.current = "";
     };
   }, []);
 
-  const isLogged = useMemo(() => !isGuest && !!uid, [isGuest, uid]);
+  const isLogged = useMemo(() => !!uid && !isGuest, [uid, isGuest]);
 
   const initials = useMemo(() => computeInitials(nameDraft), [nameDraft]);
 
   const needsProfile = useMemo(() => {
     if (!isLogged) return false;
     const nm = String(nameDraft || "").trim();
-    const ph = normalizePhoneBR(phoneDraft);
+    const ph = normalizePhoneDigits(phoneDigitsDraft);
     return nm.length < 2 || !isPhoneBRValidDigits(ph);
-  }, [isLogged, nameDraft, phoneDraft]);
+  }, [isLogged, nameDraft, phoneDigitsDraft]);
 
   const gridIsMobile = vw < 980;
 
@@ -296,17 +424,18 @@ export default function Account({ onClose = null }) {
 
       avatarRow: {
         display: "grid",
-        gridTemplateColumns: gridIsMobile ? "1fr" : "84px 1fr",
+        gridTemplateColumns: gridIsMobile ? "1fr" : "92px 1fr",
         gap: 12,
         alignItems: "center",
       },
       avatar: {
-        width: 84,
-        height: 84,
+        width: 92,
+        height: 92,
         borderRadius: 18,
         border: "1px solid rgba(201,168,62,0.35)",
-        background: "linear-gradient(180deg, rgba(201,168,62,0.12), rgba(0,0,0,0.35))",
-        boxShadow: "0 14px 34px rgba(0,0,0,0.55)",
+        background:
+          "radial-gradient(70px 70px at 30% 20%, rgba(201,168,62,0.25), rgba(0,0,0,0)), linear-gradient(180deg, rgba(201,168,62,0.10), rgba(0,0,0,0.38))",
+        boxShadow: "0 16px 40px rgba(0,0,0,0.60)",
         overflow: "hidden",
         display: "grid",
         placeItems: "center",
@@ -320,12 +449,14 @@ export default function Account({ onClose = null }) {
         height: "100%",
         display: "grid",
         placeItems: "center",
+        fontSize: 22,
+        letterSpacing: 0.4,
       },
 
       hint: { fontSize: 12.5, opacity: 0.78, lineHeight: 1.35 },
 
       input: {
-        height: 42,
+        height: 44,
         borderRadius: 12,
         border: "1px solid rgba(255,255,255,0.14)",
         background: "rgba(0,0,0,0.45)",
@@ -362,6 +493,18 @@ export default function Account({ onClose = null }) {
         padding: "0 14px",
         opacity: disabled ? 0.6 : 1,
       }),
+      dangerBtn: (disabled) => ({
+        height: 40,
+        borderRadius: 14,
+        border: "1px solid rgba(255,120,120,0.42)",
+        background: "rgba(255,120,120,0.10)",
+        color: "rgba(255,170,170,0.95)",
+        fontWeight: 950,
+        letterSpacing: 0.15,
+        cursor: disabled ? "not-allowed" : "pointer",
+        padding: "0 14px",
+        opacity: disabled ? 0.6 : 1,
+      }),
 
       msgErr: { fontSize: 12.5, fontWeight: 900, color: "rgba(255,120,120,0.95)" },
       msgOk: { fontSize: 12.5, fontWeight: 900, color: "rgba(120,255,180,0.95)" },
@@ -384,16 +527,17 @@ export default function Account({ onClose = null }) {
   }, [gridIsMobile]);
 
   /* =========================
-     Handlers
+     Guest / Login
   ========================= */
 
   const handleEnter = () => {
-    // LoginVisual deve fazer signIn/SignUp real.
-    // Se o usuário autenticou, onAuthStateChanged acima vai entrar e preencher tudo.
-    // Então aqui não precisamos fazer nada.
+    // LoginVisual faz o signIn/signup real.
+    // onAuthStateChanged acima preenche.
   };
 
   const handleSkip = () => {
+    setMsg("");
+    setErr("");
     setIsGuest(true);
     setUid("");
     setEmail("");
@@ -401,20 +545,29 @@ export default function Account({ onClose = null }) {
 
     const g = loadGuestProfile();
     setNameDraft(g.name);
-    setPhoneDraft(g.phoneDigits);
+    setPhoneDigitsDraft(normalizePhoneDigits(g.phoneDigits));
     setPhotoUrl(g.photoUrl);
     setPhotoFile(null);
+
+    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    previewUrlRef.current = "";
     setPhotoPreview("");
   };
+
+  /* =========================
+     Photo pick / upload
+  ========================= */
 
   async function handlePhotoPick(file) {
     setErr("");
     setMsg("");
     if (!file) return;
 
-    // sem "limite", mas preview local
+    // preview local (sem limite)
     try {
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
       const url = URL.createObjectURL(file);
+      previewUrlRef.current = url;
       setPhotoPreview(url);
       setPhotoFile(file);
     } catch {
@@ -439,11 +592,13 @@ export default function Account({ onClose = null }) {
     if (!photoFile) return { ok: true, url: String(photoUrl || "") };
 
     try {
-      const safeName = String(photoFile.name || "avatar").replace(/[^\w.\-]+/g, "_");
-      const path = `users/${uidLocal}/avatar/${Date.now()}_${safeName}`;
+      // otimiza para avatar (sem “limite” pro usuário, mas controlando tamanho de upload)
+      const blob = await resizeImageToJpegBlob(photoFile, { maxSide: 768, quality: 0.82 });
+
+      const path = `users/${uidLocal}/avatar/${Date.now()}.jpg`;
       const sref = storageRef(storage, path);
 
-      await uploadBytes(sref, photoFile);
+      await uploadBytes(sref, blob, { contentType: "image/jpeg" });
       const url = await getDownloadURL(sref);
 
       return { ok: true, url };
@@ -452,12 +607,16 @@ export default function Account({ onClose = null }) {
     }
   }
 
+  /* =========================
+     Actions
+  ========================= */
+
   async function saveProfile() {
     setErr("");
     setMsg("");
 
     const nm = String(nameDraft || "").trim();
-    const ph = normalizePhoneBR(phoneDraft);
+    const ph = normalizePhoneDigits(phoneDigitsDraft);
 
     if (!validateProfile(nm, ph)) return;
 
@@ -465,13 +624,11 @@ export default function Account({ onClose = null }) {
 
     try {
       if (isGuest) {
-        // guest: salva local
         const finalPhoto = photoPreview || photoUrl || "";
         saveGuestProfile({ name: nm, phoneDigits: ph, photoUrl: finalPhoto });
 
         setPhotoUrl(finalPhoto);
         setPhotoFile(null);
-        // não precisa manter preview objectURL
         setMsg("Perfil salvo.");
         return;
       }
@@ -499,11 +656,10 @@ export default function Account({ onClose = null }) {
       });
 
       if (!ok) {
-        setErr("Falha ao salvar no Firestore. Verifique as regras/permissões.");
+        setErr("Falha ao salvar no Firestore. Verifique regras/permissões.");
         return;
       }
 
-      // 3) atualiza estado local
       setPhotoUrl(finalPhotoUrl);
       setPhotoFile(null);
       setMsg("Perfil salvo.");
@@ -515,15 +671,22 @@ export default function Account({ onClose = null }) {
   async function removePhoto() {
     setErr("");
     setMsg("");
-
     if (busy) return;
 
-    // guest: só limpa local
     if (isGuest) {
       setPhotoUrl("");
       setPhotoFile(null);
+
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+      previewUrlRef.current = "";
       setPhotoPreview("");
-      saveGuestProfile({ name: nameDraft, phoneDigits: normalizePhoneBR(phoneDraft), photoUrl: "" });
+
+      saveGuestProfile({
+        name: String(nameDraft || "").trim(),
+        phoneDigits: normalizePhoneDigits(phoneDigitsDraft),
+        photoUrl: "",
+      });
+
       setMsg("Foto removida.");
       return;
     }
@@ -536,11 +699,9 @@ export default function Account({ onClose = null }) {
 
     setBusy(true);
     try {
-      // Se a fotoUrl for de storage, não tentamos deletar o arquivo aqui (opcional).
-      // (Dá pra deletar depois, mas precisa salvar o path.)
       const ok = await saveUserProfile(u, {
         name: String(nameDraft || "").trim(),
-        phoneDigits: normalizePhoneBR(phoneDraft),
+        phoneDigits: normalizePhoneDigits(phoneDigitsDraft),
         photoUrl: "",
       });
 
@@ -551,20 +712,115 @@ export default function Account({ onClose = null }) {
 
       setPhotoUrl("");
       setPhotoFile(null);
+
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+      previewUrlRef.current = "";
       setPhotoPreview("");
+
       setMsg("Foto removida.");
     } finally {
       setBusy(false);
     }
   }
 
-  // Render: se não tiver auth e não for guest => mostra login
-  // (login real: o LoginVisual deve autenticar e o onAuthStateChanged vai preencher)
-  const shouldShowLogin = !isLogged && !isGuest;
+  async function deleteAccountForever() {
+    setErr("");
+    setMsg("");
+    if (busy) return;
 
-  if (shouldShowLogin) {
+    // confirmações simples no browser
+    const ok1 = window.confirm("ATENÇÃO: Isso vai excluir sua conta e seus dados. Deseja continuar?");
+    if (!ok1) return;
+    const ok2 = window.confirm("Última confirmação: EXCLUIR CONTA definitivamente?");
+    if (!ok2) return;
+
+    setBusy(true);
+    try {
+      if (isGuest) {
+        clearGuestProfile();
+
+        setNameDraft("");
+        setPhoneDigitsDraft("");
+        setPhotoUrl("");
+        setPhotoFile(null);
+
+        if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+        previewUrlRef.current = "";
+        setPhotoPreview("");
+
+        setMsg("Dados locais removidos.");
+        // volta para login
+        setIsGuest(false);
+        return;
+      }
+
+      const user = auth.currentUser;
+      const u = String(user?.uid || uid || "").trim();
+      if (!u || !user) {
+        setErr("Sessão inválida. Faça login novamente.");
+        return;
+      }
+
+      // 1) apaga doc do Firestore
+      try {
+        await deleteDoc(doc(db, "users", u));
+      } catch {
+        // não bloqueia a tentativa de deletar auth
+      }
+
+      // 2) apaga a conta do Auth
+      try {
+        await deleteUser(user);
+      } catch (e) {
+        // Firebase pode exigir "recent login"
+        setErr(
+          "Falha ao excluir a conta (o Firebase pode exigir login recente). Saia e entre novamente e tente de novo."
+        );
+        return;
+      }
+
+      setMsg("Conta excluída.");
+      setUid("");
+      setEmail("");
+      setCreatedAtIso("");
+      setIsGuest(false);
+
+      setNameDraft("");
+      setPhoneDigitsDraft("");
+      setPhotoUrl("");
+      setPhotoFile(null);
+
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+      previewUrlRef.current = "";
+      setPhotoPreview("");
+
+      if (typeof onClose === "function") onClose();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /* =========================
+     Render
+  ========================= */
+
+  // enquanto auth não respondeu, evita flash
+  if (!authReady) {
+    return (
+      <div style={{ padding: 18, color: "rgba(255,255,255,0.78)" }}>
+        Carregando...
+      </div>
+    );
+  }
+
+  // Se não está logado e não escolheu guest => login
+  if (!isLogged && !isGuest) {
     return <LoginVisual onEnter={handleEnter} onSkip={handleSkip} />;
   }
+
+  // valores display
+  const phoneDisplay = formatPhoneBR(phoneDigitsDraft);
+  const phoneLabel = phoneDisplay || "—";
 
   return (
     <div style={ui.page}>
@@ -578,19 +834,13 @@ export default function Account({ onClose = null }) {
       <div style={ui.card}>
         <div style={ui.cardHeader}>
           <div style={ui.cardTitle}>{needsProfile ? "Completar Perfil" : "Perfil"}</div>
-          <div style={ui.badge}>
-            {needsProfile ? "Obrigatório" : isGuest ? "Opcional" : "Sessão ativa"}
-          </div>
+          <div style={ui.badge}>{needsProfile ? "Obrigatório" : isGuest ? "Opcional" : "Sessão ativa"}</div>
         </div>
 
         <div style={ui.avatarRow}>
           <div style={ui.avatar} aria-label="Foto do perfil">
             {photoPreview || photoUrl ? (
-              <img
-                src={String(photoPreview || photoUrl)}
-                alt="Foto do perfil"
-                style={ui.avatarImg}
-              />
+              <img src={String(photoPreview || photoUrl)} alt="Foto do perfil" style={ui.avatarImg} />
             ) : (
               <div style={ui.avatarFallback}>{initials}</div>
             )}
@@ -620,9 +870,9 @@ export default function Account({ onClose = null }) {
 
             <input
               style={ui.input}
-              value={phoneDraft}
-              onChange={(e) => setPhoneDraft(normalizePhoneBR(e.target.value))}
-              placeholder={isGuest ? "Telefone com DDD (opcional)" : "Telefone com DDD (obrigatório)"}
+              value={phoneDisplay}
+              onChange={(e) => setPhoneDigitsDraft(normalizePhoneDigits(e.target.value))}
+              placeholder={isGuest ? "(xx) x xxxx-xxxx (opcional)" : "(xx) x xxxx-xxxx"}
               inputMode="numeric"
               autoComplete="tel"
               disabled={busy}
@@ -644,6 +894,10 @@ export default function Account({ onClose = null }) {
 
                 <button type="button" style={ui.secondaryBtn(busy)} onClick={removePhoto} disabled={busy}>
                   REMOVER FOTO
+                </button>
+
+                <button type="button" style={ui.dangerBtn(busy)} onClick={deleteAccountForever} disabled={busy}>
+                  EXCLUIR CONTA
                 </button>
               </div>
 
@@ -668,9 +922,7 @@ export default function Account({ onClose = null }) {
 
           <div style={ui.row}>
             <div style={ui.k}>Telefone</div>
-            <div style={ui.v}>
-              {normalizePhoneBR(phoneDraft) ? `+55 ${normalizePhoneBR(phoneDraft)}` : "—"}
-            </div>
+            <div style={ui.v}>{phoneLabel}</div>
           </div>
 
           <div style={ui.row}>

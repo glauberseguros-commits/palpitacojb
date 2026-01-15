@@ -8,18 +8,34 @@ import {
 
 /**
  * LoginVisual (premium) — Firebase Auth REAL (email/senha)
- * - Enter funciona (form submit)
- * - Cadastro e login reais
- * - Retorna { uid, email, createdAtIso } para o Account salvar sessão
  *
- * Obs: login por telefone NÃO está habilitado aqui (Firebase exige flow próprio).
- * Telefone será obrigatório no perfil (Minha Conta), não no login.
+ * ✅ Ajustes aplicados:
+ * - ENTER funciona (form submit)
+ * - CTA's mais “premium” (labels consistentes, caps, feedback claro)
+ * - Mensagens de erro do Firebase mapeadas (sem vazar texto cru)
+ * - Suporte a "mostrar/ocultar senha"
+ * - "Entrar sem login" preserva fluxo (guest só via clique)
+ * - Enter/cadastro não dependem de onEnter (Account usa onAuthStateChanged),
+ *   mas mantemos callback por compatibilidade
  */
 
 function isEmailLike(v) {
   const s = String(v ?? "").trim();
   if (!s) return false;
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+}
+
+function mapFirebaseAuthError(er) {
+  const code = String(er?.code || "");
+  if (code.includes("auth/invalid-credential")) return "E-mail ou senha inválidos.";
+  if (code.includes("auth/wrong-password")) return "E-mail ou senha inválidos.";
+  if (code.includes("auth/user-not-found")) return "Usuário não encontrado. Clique em CADASTRAR.";
+  if (code.includes("auth/email-already-in-use")) return "Este e-mail já está cadastrado. Clique em ENTRAR.";
+  if (code.includes("auth/too-many-requests")) return "Muitas tentativas. Aguarde um pouco e tente novamente.";
+  if (code.includes("auth/network-request-failed")) return "Falha de rede. Verifique sua internet.";
+  if (code.includes("auth/weak-password")) return "Senha fraca. Use no mínimo 6 caracteres.";
+  if (code.includes("auth/invalid-email")) return "E-mail inválido.";
+  return "Falha ao autenticar. Tente novamente.";
 }
 
 export default function LoginVisual({ onEnter, onSkip }) {
@@ -142,6 +158,27 @@ export default function LoginVisual({ onEnter, onSkip }) {
         letterSpacing: 0.2,
       },
 
+      inputRow: {
+        display: "grid",
+        gridTemplateColumns: "1fr auto",
+        gap: 10,
+        alignItems: "center",
+      },
+
+      eyeBtn: (disabled) => ({
+        height: 44,
+        borderRadius: 12,
+        border: `1px solid ${BORDER_SOFT}`,
+        background: LAYER_2,
+        color: WHITE_70,
+        padding: "0 12px",
+        fontWeight: 900,
+        letterSpacing: 0.25,
+        cursor: disabled ? "not-allowed" : "pointer",
+        opacity: disabled ? 0.55 : 1,
+        whiteSpace: "nowrap",
+      }),
+
       hint: { opacity: 0.72, fontSize: 12, lineHeight: 1.35 },
 
       msgErr: {
@@ -200,6 +237,7 @@ export default function LoginVisual({ onEnter, onSkip }) {
 
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
+  const [showPass, setShowPass] = useState(false);
 
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
@@ -261,14 +299,7 @@ export default function LoginVisual({ onEnter, onSkip }) {
       setMsg("Acesso liberado.");
       finishEnter(cred.user, "login");
     } catch (er) {
-      const code = String(er?.code || "");
-      if (code.includes("auth/invalid-credential") || code.includes("auth/wrong-password")) {
-        setErr("E-mail ou senha inválidos.");
-      } else if (code.includes("auth/user-not-found")) {
-        setErr("Usuário não encontrado. Clique em CADASTRAR.");
-      } else {
-        setErr(er?.message || "Falha ao autenticar.");
-      }
+      setErr(mapFirebaseAuthError(er));
     } finally {
       setBusy(false);
     }
@@ -289,15 +320,10 @@ export default function LoginVisual({ onEnter, onSkip }) {
     setBusy(true);
     try {
       const cred = await createUserWithEmailAndPassword(auth, eMail, p);
-      setMsg("Cadastro criado com sucesso. Você já pode acessar.");
+      setMsg("Cadastro criado com sucesso.");
       finishEnter(cred.user, "signup");
     } catch (er) {
-      const code = String(er?.code || "");
-      if (code.includes("auth/email-already-in-use")) {
-        setErr("Este e-mail já está cadastrado. Clique em ENTRAR.");
-      } else {
-        setErr(er?.message || "Falha ao cadastrar.");
-      }
+      setErr(mapFirebaseAuthError(er));
     } finally {
       setBusy(false);
     }
@@ -327,7 +353,6 @@ export default function LoginVisual({ onEnter, onSkip }) {
           </div>
         </div>
 
-        {/* ✅ ENTER funciona aqui */}
         <form onSubmit={doLogin}>
           <div style={ui.body}>
             <div style={ui.field}>
@@ -344,19 +369,32 @@ export default function LoginVisual({ onEnter, onSkip }) {
             </div>
 
             <div style={ui.field}>
-              <div style={ui.label}>Senha</div>
-              <input
-                style={ui.input}
-                value={pass}
-                onChange={(e) => setPass(e.target.value)}
-                placeholder="Digite sua senha"
-                type="password"
-                autoComplete="current-password"
-                disabled={busy}
-              />
+              <div style={ui.label}>SENHA</div>
+
+              <div style={ui.inputRow}>
+                <input
+                  style={ui.input}
+                  value={pass}
+                  onChange={(e) => setPass(e.target.value)}
+                  placeholder="Digite sua senha"
+                  type={showPass ? "text" : "password"}
+                  autoComplete="current-password"
+                  disabled={busy}
+                />
+
+                <button
+                  type="button"
+                  style={ui.eyeBtn(busy)}
+                  onClick={() => setShowPass((v) => !v)}
+                  disabled={busy}
+                  title={showPass ? "Ocultar senha" : "Mostrar senha"}
+                >
+                  {showPass ? "OCULTAR" : "MOSTRAR"}
+                </button>
+              </div>
             </div>
 
-            <div style={ui.hint}>Se você ainda não tem conta, se CADASTRE.</div>
+            <div style={ui.hint}>Se você ainda não tem conta, clique em <b>CADASTRAR</b>.</div>
 
             {err ? <div style={ui.msgErr}>{err}</div> : null}
             {msg ? <div style={ui.msgOk}>{msg}</div> : null}
