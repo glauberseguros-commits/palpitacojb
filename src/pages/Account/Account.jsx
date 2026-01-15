@@ -23,6 +23,9 @@ import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage
  * - Storage: users/{uid}/avatar/{timestamp}.jpg
  * - Firestore salva só a URL
  *
+ * ✅ Guest:
+ * - Foto é convertida/otimizada e salva como dataURL no localStorage (persistente)
+ *
  * ✅ Telefone com máscara:
  * - (xx) x xxxx-xxxx (11 dígitos) ou (xx) xxxx-xxxx (10 dígitos)
  *
@@ -98,6 +101,19 @@ function computeInitials(name) {
   return (a + b).toUpperCase();
 }
 
+function blobToDataURL(blob) {
+  return new Promise((resolve, reject) => {
+    try {
+      const r = new FileReader();
+      r.onerror = () => reject(new Error("Falha ao ler imagem."));
+      r.onload = () => resolve(String(r.result || ""));
+      r.readAsDataURL(blob);
+    } catch (e) {
+      reject(e);
+    }
+  });
+}
+
 /**
  * Resize/compress image client-side (mobile-friendly)
  * - maxSide: 768 (bom p/ avatar)
@@ -140,7 +156,6 @@ async function resizeImageToJpegBlob(file, { maxSide = 768, quality = 0.82 } = {
     w = img.naturalWidth || img.width;
     h = img.naturalHeight || img.height;
 
-    // cria bitmap via canvas para padronizar fluxo
     const tmp = document.createElement("canvas");
     tmp.width = w;
     tmp.height = h;
@@ -162,7 +177,6 @@ async function resizeImageToJpegBlob(file, { maxSide = 768, quality = 0.82 } = {
   ctx.imageSmoothingQuality = "high";
   ctx.drawImage(bitmap, 0, 0, outW, outH);
 
-  // converte em jpeg (reduz MUITO tamanho)
   const blob = await new Promise((resolve) => {
     canvas.toBlob(
       (b) => resolve(b),
@@ -275,7 +289,7 @@ export default function Account({ onClose = null }) {
   // profile drafts
   const [nameDraft, setNameDraft] = useState("");
   const [phoneDigitsDraft, setPhoneDigitsDraft] = useState(""); // sempre digits (10/11)
-  const [photoUrl, setPhotoUrl] = useState(""); // URL final (storage) ou local (guest)
+  const [photoUrl, setPhotoUrl] = useState(""); // URL (authed) ou dataURL (guest)
   const [photoFile, setPhotoFile] = useState(null); // file escolhido (upload no salvar)
 
   const [busy, setBusy] = useState(false);
@@ -293,6 +307,14 @@ export default function Account({ onClose = null }) {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
+  function clearPreview() {
+    try {
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    } catch {}
+    previewUrlRef.current = "";
+    setPhotoPreview("");
+  }
+
   // auth listener
   useEffect(() => {
     let alive = true;
@@ -304,7 +326,6 @@ export default function Account({ onClose = null }) {
       setErr("");
       setAuthReady(true);
 
-      // IMPORTANTE:
       // Se NÃO tem user, NÃO vira guest automaticamente.
       // Guest só acontece via handleSkip().
       if (!user?.uid) {
@@ -334,18 +355,15 @@ export default function Account({ onClose = null }) {
       setPhotoUrl(url);
 
       setPhotoFile(null);
-      // limpa preview
-      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
-      previewUrlRef.current = "";
-      setPhotoPreview("");
+      clearPreview();
     });
 
     return () => {
       alive = false;
       unsub?.();
-      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
-      previewUrlRef.current = "";
+      clearPreview();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const isLogged = useMemo(() => !!uid && !isGuest, [uid, isGuest]);
@@ -549,9 +567,7 @@ export default function Account({ onClose = null }) {
     setPhotoUrl(g.photoUrl);
     setPhotoFile(null);
 
-    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
-    previewUrlRef.current = "";
-    setPhotoPreview("");
+    clearPreview();
   };
 
   /* =========================
@@ -565,7 +581,7 @@ export default function Account({ onClose = null }) {
 
     // preview local (sem limite)
     try {
-      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+      clearPreview();
       const url = URL.createObjectURL(file);
       previewUrlRef.current = url;
       setPhotoPreview(url);
@@ -592,7 +608,6 @@ export default function Account({ onClose = null }) {
     if (!photoFile) return { ok: true, url: String(photoUrl || "") };
 
     try {
-      // otimiza para avatar (sem “limite” pro usuário, mas controlando tamanho de upload)
       const blob = await resizeImageToJpegBlob(photoFile, { maxSide: 768, quality: 0.82 });
 
       const path = `users/${uidLocal}/avatar/${Date.now()}.jpg`;
@@ -624,11 +639,21 @@ export default function Account({ onClose = null }) {
 
     try {
       if (isGuest) {
-        const finalPhoto = photoPreview || photoUrl || "";
+        // ✅ guest: se escolheu nova foto, converte/otimiza e salva dataURL (persistente)
+        let finalPhoto = String(photoUrl || "");
+
+        if (photoFile) {
+          const blob = await resizeImageToJpegBlob(photoFile, { maxSide: 768, quality: 0.82 });
+          const dataUrl = await blobToDataURL(blob);
+          finalPhoto = dataUrl;
+        }
+
         saveGuestProfile({ name: nm, phoneDigits: ph, photoUrl: finalPhoto });
 
         setPhotoUrl(finalPhoto);
         setPhotoFile(null);
+        clearPreview();
+
         setMsg("Perfil salvo.");
         return;
       }
@@ -662,7 +687,10 @@ export default function Account({ onClose = null }) {
 
       setPhotoUrl(finalPhotoUrl);
       setPhotoFile(null);
+      clearPreview();
       setMsg("Perfil salvo.");
+    } catch {
+      setErr("Falha ao salvar. Tente novamente.");
     } finally {
       setBusy(false);
     }
@@ -676,10 +704,7 @@ export default function Account({ onClose = null }) {
     if (isGuest) {
       setPhotoUrl("");
       setPhotoFile(null);
-
-      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
-      previewUrlRef.current = "";
-      setPhotoPreview("");
+      clearPreview();
 
       saveGuestProfile({
         name: String(nameDraft || "").trim(),
@@ -712,11 +737,7 @@ export default function Account({ onClose = null }) {
 
       setPhotoUrl("");
       setPhotoFile(null);
-
-      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
-      previewUrlRef.current = "";
-      setPhotoPreview("");
-
+      clearPreview();
       setMsg("Foto removida.");
     } finally {
       setBusy(false);
@@ -728,7 +749,6 @@ export default function Account({ onClose = null }) {
     setMsg("");
     if (busy) return;
 
-    // confirmações simples no browser
     const ok1 = window.confirm("ATENÇÃO: Isso vai excluir sua conta e seus dados. Deseja continuar?");
     if (!ok1) return;
     const ok2 = window.confirm("Última confirmação: EXCLUIR CONTA definitivamente?");
@@ -743,13 +763,9 @@ export default function Account({ onClose = null }) {
         setPhoneDigitsDraft("");
         setPhotoUrl("");
         setPhotoFile(null);
-
-        if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
-        previewUrlRef.current = "";
-        setPhotoPreview("");
+        clearPreview();
 
         setMsg("Dados locais removidos.");
-        // volta para login
         setIsGuest(false);
         return;
       }
@@ -764,15 +780,12 @@ export default function Account({ onClose = null }) {
       // 1) apaga doc do Firestore
       try {
         await deleteDoc(doc(db, "users", u));
-      } catch {
-        // não bloqueia a tentativa de deletar auth
-      }
+      } catch {}
 
       // 2) apaga a conta do Auth
       try {
         await deleteUser(user);
-      } catch (e) {
-        // Firebase pode exigir "recent login"
+      } catch {
         setErr(
           "Falha ao excluir a conta (o Firebase pode exigir login recente). Saia e entre novamente e tente de novo."
         );
@@ -789,10 +802,7 @@ export default function Account({ onClose = null }) {
       setPhoneDigitsDraft("");
       setPhotoUrl("");
       setPhotoFile(null);
-
-      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
-      previewUrlRef.current = "";
-      setPhotoPreview("");
+      clearPreview();
 
       if (typeof onClose === "function") onClose();
     } finally {
@@ -804,7 +814,6 @@ export default function Account({ onClose = null }) {
      Render
   ========================= */
 
-  // enquanto auth não respondeu, evita flash
   if (!authReady) {
     return (
       <div style={{ padding: 18, color: "rgba(255,255,255,0.78)" }}>
@@ -813,12 +822,10 @@ export default function Account({ onClose = null }) {
     );
   }
 
-  // Se não está logado e não escolheu guest => login
   if (!isLogged && !isGuest) {
     return <LoginVisual onEnter={handleEnter} onSkip={handleSkip} />;
   }
 
-  // valores display
   const phoneDisplay = formatPhoneBR(phoneDigitsDraft);
   const phoneLabel = phoneDisplay || "—";
 
