@@ -13,21 +13,9 @@ import {
  * - Não ordenável: Imagem | Palpite
  * - Premium safe: Palpite NÃO pode cortar
  *
- * ✅ Integração segura do Palpite:
- *   1) palpitesByGrupo[grupo2] (se existir)
- *   2) palpite que venha no `data` (row.palpite / row.palpite4 / row.milhar / etc.)
- *   3) fallback guessPalpiteFromGrupo(grupo)
- *
- * ✅ REGRA ATUAL (conforme Dashboard.jsx):
- * - O ranking da esquerda OBEDECE filtros locais.
- * - Portanto, por padrão, este componente NÃO “completa 01..25”.
- *
- * ✅ Opcional (se você quiser o comportamento antigo):
- * - fillMissingGroups=true => completa 01..25 e evita “buracos”.
- *
- * ✅ Contrato opcional:
- * - aparGlobalByGrupo (opcional): { "01": 1911, "02": 1758, ... }
- *   Se enviado, a coluna "Apar." usa SEMPRE o valor global (independente de filtros).
+ * ✅ Ajuste premium:
+ * - Sem scroll interno (ranking não rola; a página que rola)
+ * - Moldura da imagem menos arredondada + padding interno (não corta foto)
  */
 
 function digitsOnly(v) {
@@ -47,7 +35,6 @@ function safeNumber(n) {
   return Number.isFinite(x) ? x : 0;
 }
 
-// ✅ fallback robusto para "Apar." (evita zerar por diferença de fonte)
 function pickAparCount(r) {
   return safeNumber(
     r?.total ??
@@ -83,40 +70,35 @@ function uniq(arr) {
   return Array.from(new Set(arr.filter(Boolean)));
 }
 
+function safeStr(v) {
+  return String(v ?? "").trim();
+}
+
 /**
  * ✅ Gera candidatos de imagem (robusto)
- * - tenta 96/128/64
- * - tenta png/jpg/jpeg
- * - remove duplicatas
  */
 function buildImgCandidates(getImgFromGrupo, grupo) {
   const base96 = safeStr(getImgFromGrupo(grupo, 96));
   const base128 = safeStr(getImgFromGrupo(grupo, 128));
   const base64 = safeStr(getImgFromGrupo(grupo, 64));
 
-  const bases = [base96, base128, base64].filter(Boolean);
+  const bases = [base128, base96, base64].filter(Boolean);
 
   const out = [];
   for (const src of bases) {
     out.push(src);
 
-    // se vier png, tenta jpg/jpeg também
     if (/\.png(\?|#|$)/i.test(src)) {
       out.push(src.replace(/\.png(\?|#|$)/i, ".jpg$1"));
       out.push(src.replace(/\.png(\?|#|$)/i, ".jpeg$1"));
     }
 
-    // se vier jpg, tenta png
     if (/\.jpe?g(\?|#|$)/i.test(src)) {
       out.push(src.replace(/\.jpe?g(\?|#|$)/i, ".png$1"));
     }
   }
 
   return uniq(out);
-}
-
-function safeStr(v) {
-  return String(v ?? "").trim();
 }
 
 export default function LeftRankingTable({
@@ -127,17 +109,11 @@ export default function LeftRankingTable({
   selectedGrupo = null,
   onSelectGrupo = null,
 
-  // ✅ palpites
   palpitesByGrupo = {},
-
-  // ✅ override GLOBAL para a coluna "Apar."
-  // Formato: { "01": 1911, "02": 1758, ... }
   aparGlobalByGrupo = null,
-
-  // ✅ NOVO: se true, completa 01..25 (comportamento antigo)
   fillMissingGroups = false,
 }) {
-  const [sort, setSort] = useState({ key: "apar", dir: "desc" }); // padrão
+  const [sort, setSort] = useState({ key: "apar", dir: "desc" });
 
   const getAnimalLabel = useMemo(() => {
     return typeof getAnimalLabelFn === "function"
@@ -159,8 +135,6 @@ export default function LeftRankingTable({
     const arr = Array.isArray(data) ? data : [];
     const hasGlobal = aparGlobalByGrupo && typeof aparGlobalByGrupo === "object";
 
-    // Indexa o que veio do pai por grupo2
-    // ✅ Se houver duplicata do mesmo grupo, mantemos a linha com MAIOR apar.
     const byGrupo2 = new Map();
     for (const r of arr) {
       const grupo = normalizeGrupoNumber(r?.grupo);
@@ -178,9 +152,6 @@ export default function LeftRankingTable({
       if (curA >= prevA) byGrupo2.set(g2, r);
     }
 
-    // ✅ Base de grupos:
-    // - padrão: somente grupos presentes no data (obedece filtros)
-    // - opcional: 01..25 (fillMissingGroups)
     let gruposBase = [];
 
     if (fillMissingGroups) {
@@ -188,7 +159,6 @@ export default function LeftRankingTable({
     } else {
       const keys = Array.from(byGrupo2.keys());
       if (!keys.length) return [];
-
       gruposBase = keys
         .map((g2) => Number(g2))
         .filter((n) => Number.isFinite(n) && n >= 1 && n <= 25)
@@ -204,7 +174,6 @@ export default function LeftRankingTable({
       const animalRaw =
         (srcRow?.animal ?? srcRow?.label ?? srcRow?.animalLabel ?? "") || "";
 
-      // label: tenta usar função do mapa; se vier vazio, cai pro raw
       let animalLabel = "";
       try {
         animalLabel = getAnimalLabel({ grupo, animal: animalRaw }) || "";
@@ -213,13 +182,11 @@ export default function LeftRankingTable({
       }
       animalLabel = String(animalLabel || animalRaw || "").trim();
 
-      // 1) prioridade: palpitesByGrupo (integração externa/motor)
       const palpiteFromByGrupo =
         palpitesByGrupo && typeof palpitesByGrupo === "object"
           ? toMilhar4(palpitesByGrupo[grupo2])
           : null;
 
-      // 2) prioridade: palpite que já venha no `data`
       const palpiteFromRow =
         toMilhar4(
           srcRow?.palpite ??
@@ -232,11 +199,9 @@ export default function LeftRankingTable({
             null
         ) || null;
 
-      // 3) fallback: guess
       const palpiteFallback = toMilhar4(guessPalpiteFromGrupo(grupo)) || "----";
       const palpite = palpiteFromByGrupo || palpiteFromRow || palpiteFallback;
 
-      // ✅ Apar:
       const aparFromGlobal = hasGlobal ? safeNumber(aparGlobalByGrupo[grupo2]) : NaN;
       const apar = Number.isFinite(aparFromGlobal)
         ? aparFromGlobal
@@ -251,8 +216,6 @@ export default function LeftRankingTable({
         animalLabel,
         apar,
         palpite,
-
-        // ✅ lista de candidatos (primeiro é o src inicial)
         imgCandidates,
       });
     }
@@ -363,8 +326,9 @@ export default function LeftRankingTable({
       );
     }
 
+    // ✅ SEM SCROLL INTERNO: corpo cresce e quem rola é a página
     return (
-      <div style={ui.bodyScroll} className="pp_left_scroll">
+      <div style={ui.bodyNoScroll}>
         {sortedRows.map((r) => {
           const isSel = Number(selectedGrupo) === Number(r.grupo);
           const clickable = typeof onSelectGrupo === "function";
@@ -417,7 +381,6 @@ export default function LeftRankingTable({
                           return;
                         }
 
-                        // esgotou candidatos => placeholder
                         imgEl.style.visibility = "hidden";
                         const wrap = imgEl.parentElement;
                         if (wrap && wrap instanceof HTMLElement) {
@@ -435,21 +398,13 @@ export default function LeftRankingTable({
                     />
                   ) : null}
 
-                  {/* placeholder (aparece quando falhar tudo) */}
                   <div style={ui.imgPlaceholder} aria-hidden="true">
                     {formatGrupo2(r.grupo)}
                   </div>
                 </div>
               </div>
 
-              <div
-                style={{
-                  ...ui.td,
-                  ...ui.cellCenter,
-                  ...ui.numCell,
-                  ...(dim ? ui.tdDim : null),
-                }}
-              >
+              <div style={{ ...ui.td, ...ui.cellCenter, ...ui.numCell, ...(dim ? ui.tdDim : null) }}>
                 {formatGrupo2(r.grupo)}
               </div>
 
@@ -465,26 +420,11 @@ export default function LeftRankingTable({
                 {String(r.animalLabel || "").toUpperCase()}
               </div>
 
-              <div
-                style={{
-                  ...ui.td,
-                  ...ui.cellCenter,
-                  ...ui.numCell,
-                  ...(dim ? ui.tdDim : null),
-                }}
-              >
+              <div style={{ ...ui.td, ...ui.cellCenter, ...ui.numCell, ...(dim ? ui.tdDim : null) }}>
                 {fmtIntPT(r.apar || 0)}
               </div>
 
-              <div
-                style={{
-                  ...ui.td,
-                  ...ui.right,
-                  ...ui.numCell,
-                  ...ui.palpiteCell,
-                  ...(dim ? ui.tdDim : null),
-                }}
-              >
+              <div style={{ ...ui.td, ...ui.right, ...ui.numCell, ...ui.palpiteCell, ...(dim ? ui.tdDim : null) }}>
                 {String(r.palpite || "----")}
               </div>
             </div>
@@ -564,7 +504,6 @@ const GRID_COLS =
 const ui = {
   wrap: {
     padding: 10,
-    height: "100%",
     display: "flex",
     flexDirection: "column",
     gap: 8,
@@ -600,6 +539,7 @@ const ui = {
     fontSize: 14,
   },
 
+  // ✅ Sem "altura fixa" com scroll interno
   tableShell: {
     border: "1px solid rgba(255,255,255,0.24)",
     borderRadius: 18,
@@ -608,8 +548,6 @@ const ui = {
     boxShadow: "0 18px 50px rgba(0,0,0,0.55)",
     display: "flex",
     flexDirection: "column",
-    minHeight: 0,
-    flex: 1,
     boxSizing: "border-box",
   },
 
@@ -677,12 +615,9 @@ const ui = {
   hCenter: { textAlign: "center", justifyContent: "center" },
   hRight: { textAlign: "right", justifyContent: "flex-end" },
 
-  bodyScroll: {
-    overflowY: "auto",
-    overflowX: "hidden",
-    minHeight: 0,
-    flex: "1 1 auto",
-    WebkitOverflowScrolling: "touch",
+  // ✅ corpo sem overflow/scroll
+  bodyNoScroll: {
+    overflow: "visible",
   },
 
   row: {
@@ -758,16 +693,19 @@ const ui = {
 
   cellImg: { display: "flex", alignItems: "center" },
 
+  // ✅ borda menos arredondada + padding interno (não corta)
   imgFrame: {
     width: 26,
     height: 26,
-    borderRadius: 9,
+    borderRadius: 6,
     border: "2px solid rgba(201,168,62,0.85)",
     background: "rgba(0,0,0,0.40)",
     overflow: "hidden",
     boxShadow: "0 10px 26px rgba(0,0,0,0.55)",
     flex: "0 0 auto",
     position: "relative",
+    padding: 2,
+    boxSizing: "border-box",
   },
 
   imgFrameSelected: {
@@ -790,6 +728,7 @@ const ui = {
     display: "block",
     position: "relative",
     zIndex: 2,
+    borderRadius: 4,
   },
 
   imgPlaceholder: {
@@ -810,14 +749,8 @@ const ui = {
   emptyTitle: { fontWeight: 900, letterSpacing: 0.2, opacity: 0.95 },
   emptyHint: { fontSize: 12.5, opacity: 0.75, lineHeight: 1.35 },
 
+  // ✅ remove estilos de scrollbar (não há mais scroll interno)
   _styleTag: `
-    .pp_left_scroll::-webkit-scrollbar { width: 10px; }
-    .pp_left_scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 999px; }
-    .pp_left_scroll::-webkit-scrollbar-thumb { background: rgba(200,178,90,0.30); border-radius: 999px; border: 2px solid rgba(0,0,0,0.35); }
-    .pp_left_scroll::-webkit-scrollbar-thumb:hover { background: rgba(200,178,90,0.45); }
-
-    .pp_left_scroll > div[title][data-dim="0"]:hover {
-      background: rgba(255,255,255,0.04);
-    }
+    .pp_left_scroll::-webkit-scrollbar { width: 0px; height: 0px; }
   `,
 };

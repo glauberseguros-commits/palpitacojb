@@ -1,35 +1,35 @@
 // src/services/firebase.js
-import { initializeApp, getApps } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { initializeApp, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
 /**
- * Firebase Web SDK config
+ * Firebase Web App — configuração OFICIAL
  * Projeto: palpitacojb-app
- * Origem: Firebase Console > Configurações do projeto > SDK Web
- *
- * Observações:
- * - Configuração direta (sem .env)
- * - Evita reinicialização em StrictMode / HMR
- * - Mantém exports consistentes: db / auth
  */
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBnbxbwpI8XSMvah7ekxA0lW0jIC0qUiU",
+  apiKey: "AIzaSyBnbxbwpI8XSMVah7ekxAo1Wy0j1C0qUiU",
   authDomain: "palpitacojb-app.firebaseapp.com",
   projectId: "palpitacojb-app",
-  storageBucket: "palpitacojb-app.appspot.com", // ✅ correção: bucket padrão do Firebase Storage
+  storageBucket: "palpitacojb-app.appspot.com", // ✅ OBRIGATÓRIO
   messagingSenderId: "884770900140",
   appId: "1:884770900140:web:dd7834c1a1fa635ce5f709",
 };
 
-// ✅ Evita reinicialização em Hot Reload / React.StrictMode
-const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+// 🔒 App nomeado (evita colisão e bug de API key)
+const APP_NAME = "palpitaco-web";
 
-// ✅ Firestore
-export const db = getFirestore(app);
+function getOrInitApp() {
+  try {
+    return getApp(APP_NAME);
+  } catch {
+    return initializeApp(firebaseConfig, APP_NAME);
+  }
+}
 
-// ✅ Auth
+export const app = getOrInitApp();
 export const auth = getAuth(app);
+export const db = getFirestore(app);
 
 export default app;

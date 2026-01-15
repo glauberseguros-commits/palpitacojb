@@ -106,7 +106,7 @@ export default function AppShell({
 
         .pp_brand{
           border: 1px solid var(--pp_border);
-          border-radius: 16px;
+          border-radius: 12px; /* 🔻 antes 16 */
           background: rgba(0,0,0,0.45);
           padding: 10px;
           display: grid;
@@ -117,7 +117,7 @@ export default function AppShell({
         .pp_brandDot{
           width: 44px;
           height: 44px;
-          border-radius: 16px;
+          border-radius: 12px; /* 🔻 antes 16 */
           border: 1px solid var(--pp_borderStrong);
           background: rgba(0,0,0,0.62);
           display: grid;
@@ -127,7 +127,7 @@ export default function AppShell({
 
         .pp_nav{
           border: 1px solid var(--pp_border);
-          border-radius: 16px;
+          border-radius: 12px; /* 🔻 antes 16 */
           background: rgba(0,0,0,0.38);
           padding: 10px;
 
@@ -142,7 +142,7 @@ export default function AppShell({
 
         .pp_footer{
           border: 1px solid var(--pp_border);
-          border-radius: 16px;
+          border-radius: 12px; /* 🔻 antes 16 */
           background: rgba(0,0,0,0.38);
           padding: 10px;
           display: grid;
@@ -157,7 +157,7 @@ export default function AppShell({
 
         .pp_nav_item{
           height: 46px;
-          border-radius: 14px;
+          border-radius: 10px; /* 🔻 antes 14 */
           border: 1px solid var(--pp_border);
           background: rgba(0,0,0,0.20);
           display: grid;
@@ -194,8 +194,6 @@ export default function AppShell({
 
         /* =========================
            Mobile premium: Bottom Bar (FIXED)
-           - sem scroll horizontal
-           - 5 itens fixos + "Mais"
         ========================= */
         @media (max-width: 820px){
           .pp_shell{
@@ -212,7 +210,7 @@ export default function AppShell({
             height: calc(var(--pp_bottom_h) + env(safe-area-inset-bottom, 0px));
             border-right: none;
             border-top: 1px solid var(--pp_border);
-            border-radius: 18px 18px 0 0;
+            border-radius: 14px 14px 0 0; /* 🔻 antes 18 */
 
             padding: 10px 10px calc(12px + env(safe-area-inset-bottom, 0px));
 
@@ -224,7 +222,7 @@ export default function AppShell({
           .pp_footer{ display: none; }
 
           .pp_nav{
-            border-radius: 16px;
+            border-radius: 12px; /* 🔻 antes 16 */
             padding: 8px;
 
             display: grid;
@@ -237,7 +235,7 @@ export default function AppShell({
           .pp_nav_item{
             width: 100%;
             height: 52px;
-            border-radius: 16px;
+            border-radius: 12px; /* 🔻 antes 16 */
           }
 
           .pp_activePip{
@@ -267,8 +265,8 @@ export default function AppShell({
         }
 
         .pp_moreSheet{
-          border-top-left-radius: 18px;
-          border-top-right-radius: 18px;
+          border-top-left-radius: 14px;  /* 🔻 antes 18 */
+          border-top-right-radius: 14px; /* 🔻 antes 18 */
           border: 1px solid rgba(255,255,255,0.10);
           border-bottom: none;
           background:
@@ -303,7 +301,7 @@ export default function AppShell({
         }
 
         .pp_moreBtn{
-          border-radius: 14px;
+          border-radius: 12px; /* 🔻 antes 14 */
           border: 1px solid rgba(255,255,255,0.10);
           background: rgba(0,0,0,0.35);
           padding: 10px 10px;
@@ -329,7 +327,7 @@ export default function AppShell({
         .pp_moreBtn .ic{
           width: 34px;
           height: 34px;
-          border-radius: 14px;
+          border-radius: 12px; /* 🔻 antes 14 */
           border: 1px solid rgba(201,168,62,0.22);
           background: rgba(0,0,0,0.35);
           display: grid;
@@ -390,12 +388,10 @@ export default function AppShell({
     onNavigate?.(routeKey);
   };
 
-  // Fecha o "Mais" ao trocar de rota externamente
   useEffect(() => {
     setMoreOpen(false);
   }, [active]);
 
-  // Fecha por ESC e bloqueia scroll do fundo quando aberto
   useEffect(() => {
     if (!moreOpen) return;
 
@@ -517,9 +513,7 @@ export default function AppShell({
                 key={it.key}
                 title={it.title}
                 icon={it.icon}
-                isActive={
-                  it.key === "__MORE__" ? moreOpen : active === it.key
-                }
+                isActive={it.key === "__MORE__" ? moreOpen : active === it.key}
                 onClick={() => handleNavigate(it.key)}
               />
             ))}
@@ -547,7 +541,6 @@ export default function AppShell({
 
       <MoreSheet />
 
-      {/* alterna menus sem depender de JS */}
       <style>{`
         @media (max-width: 820px){
           .pp_desktopNav{ display:none !important; }

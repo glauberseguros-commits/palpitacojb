@@ -8,12 +8,15 @@ import Top3Mod from "./pages/Top3/Top3";
 import LateMod from "./pages/Late/Late";
 import SearchMod from "./pages/Search/Search";
 
+// ✅ Admin (apenas UMA vez)
+import AdminMod from "./pages/Admin/Admin.jsx";
+import AdminLoginMod from "./pages/Admin/AdminLogin.jsx";
 
 // ✅ Páginas placeholder
 import PaymentsMod from "./pages/Payments/Payments";
 import DownloadsMod from "./pages/Downloads/Downloads";
 
-// ✅ NOVO: página de Centenas
+// ✅ página de Centenas
 import CentenasMod from "./pages/Centenas/Centenas.jsx";
 
 // ✅ AppShell
@@ -21,11 +24,22 @@ import AppShellMod from "./pages/Dashboard/components/Sidebar/AppShell";
 
 import LoginVisualMod from "./pages/Account/LoginVisual";
 
+// ✅ Firebase (Admin real)
+import { auth, db } from "./services/firebase";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+
 const STORAGE_KEY = "palpitaco_screen_v2";
 const ACCOUNT_SESSION_KEY = "pp_session_v1";
 
 // ✅ Persistência de filtros do Dashboard (não resetar ao trocar de página)
 const DASH_FILTERS_KEY = "pp_dashboard_filters_v1";
+
+/* =========================
+   Admin (hash gate)
+========================= */
+
+const ADMIN_HASH = "#admin";
 
 const ROUTES = {
   LOGIN: "login",
@@ -37,8 +51,6 @@ const ROUTES = {
   SEARCH: "search",
   PAYMENTS: "payments",
   DOWNLOADS: "downloads",
-
-  // ✅ NOVO
   CENTENAS: "centenas",
 };
 
@@ -49,13 +61,11 @@ function safeReadLS(key) {
     return null;
   }
 }
-
 function safeWriteLS(key, value) {
   try {
     localStorage.setItem(key, value);
   } catch {}
 }
-
 function safeRemoveLS(key) {
   try {
     localStorage.removeItem(key);
@@ -77,7 +87,6 @@ function hasActiveSession() {
       return true;
     }
   }
-
   return true;
 }
 
@@ -141,7 +150,7 @@ function loadDashboardFilters() {
 
   const base = getDefaultDashboardFilters();
 
-  const next = {
+  return {
     mes: typeof obj.mes === "string" ? obj.mes : base.mes,
     diaMes: typeof obj.diaMes === "string" ? obj.diaMes : base.diaMes,
     diaSemana: typeof obj.diaSemana === "string" ? obj.diaSemana : base.diaSemana,
@@ -149,8 +158,34 @@ function loadDashboardFilters() {
     animal: typeof obj.animal === "string" ? obj.animal : base.animal,
     posicao: typeof obj.posicao === "string" ? obj.posicao : base.posicao,
   };
+}
 
-  return next;
+/* =========================
+   Admin helpers (hash + Firestore role)
+========================= */
+
+function isAdminHashNow() {
+  try {
+    const h = String(window.location.hash || "").trim();
+    return h === ADMIN_HASH || h.startsWith(`${ADMIN_HASH}?`);
+  } catch {
+    return false;
+  }
+}
+
+// ✅ Regra Admin: existe /admins/{uid} e active !== false
+async function isUidAdmin(uid) {
+  const u = String(uid || "").trim();
+  if (!u) return false;
+  try {
+    const ref = doc(db, "admins", u);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return false;
+    const data = snap.data() || {};
+    return data.active !== false; // default true
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -221,6 +256,62 @@ export default function App() {
     []
   );
 
+  const Admin = useMemo(() => resolveComponent(AdminMod, "Admin"), []);
+  const AdminLogin = useMemo(() => resolveComponent(AdminLoginMod, "AdminLogin"), []);
+
+  // ✅ hash gate isolado
+  const [adminMode, setAdminMode] = useState(() => isAdminHashNow());
+
+  useEffect(() => {
+    const onHash = () => setAdminMode(isAdminHashNow());
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+
+  // ✅ fonte de verdade: Firebase Auth + /admins/{uid}
+  const [adminAuthed, setAdminAuthed] = useState(false);
+  const [adminBooting, setAdminBooting] = useState(false);
+
+  // ✅ re-hidrata automaticamente quando entrar no #admin
+  useEffect(() => {
+    if (!adminMode) return;
+
+    let alive = true;
+    setAdminBooting(true);
+    setAdminAuthed(false);
+
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (!alive) return;
+
+      if (!user?.uid) {
+        setAdminAuthed(false);
+        setAdminBooting(false);
+        return;
+      }
+
+      const ok = await isUidAdmin(user.uid);
+      if (!alive) return;
+
+      // se não for admin, garante logout
+      if (!ok) {
+        try {
+          await signOut(auth);
+        } catch {}
+        setAdminAuthed(false);
+        setAdminBooting(false);
+        return;
+      }
+
+      setAdminAuthed(true);
+      setAdminBooting(false);
+    });
+
+    return () => {
+      alive = false;
+      unsub?.();
+    };
+  }, [adminMode]);
+
   const [screen, setScreen] = useState(() => {
     const sessionOn = hasActiveSession();
     const saved = normalizeRoute(safeReadLS(STORAGE_KEY));
@@ -276,13 +367,72 @@ export default function App() {
         return <Downloads />;
       default:
         return (
-          <Dashboard
-            filters={dashboardFilters}
-            setFilters={setDashboardFilters}
-          />
+          <Dashboard filters={dashboardFilters} setFilters={setDashboardFilters} />
         );
     }
   };
+
+  /* =========================
+     ✅ Admin Router (isolado)
+     - AdminLogin (Firebase) -> Admin
+  ========================= */
+
+  if (adminMode) {
+    return (
+      <ErrorBoundary>
+        {adminBooting ? (
+          <div
+            style={{
+              minHeight: "100vh",
+              background: "#050505",
+              color: "rgba(255,255,255,0.85)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontFamily:
+                "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
+              padding: 18,
+            }}
+          >
+            Carregando Admin...
+          </div>
+        ) : adminAuthed ? (
+          <Admin
+            onExit={() => {
+              try {
+                window.location.hash = "";
+              } catch {}
+            }}
+            onLogout={async () => {
+              try {
+                await signOut(auth);
+              } catch {}
+              setAdminAuthed(false);
+              try {
+                window.location.hash = "";
+              } catch {}
+            }}
+          />
+        ) : (
+          <AdminLogin
+            onCancel={() => {
+              try {
+                window.location.hash = "";
+              } catch {}
+            }}
+            onAuthed={() => {
+              // ✅ AdminLogin já validou Auth + role
+              setAdminAuthed(true);
+            }}
+          />
+        )}
+      </ErrorBoundary>
+    );
+  }
+
+  /* =========================
+     App normal
+  ========================= */
 
   if (screen === ROUTES.LOGIN) {
     return (
@@ -305,10 +455,7 @@ export default function App() {
     <ErrorBoundary>
       <AppShell active={screen} onNavigate={setScreen} onLogout={logout}>
         {screen === ROUTES.DASHBOARD ? (
-          <Dashboard
-            filters={dashboardFilters}
-            setFilters={setDashboardFilters}
-          />
+          <Dashboard filters={dashboardFilters} setFilters={setDashboardFilters} />
         ) : (
           <PageRouter screen={screen} />
         )}

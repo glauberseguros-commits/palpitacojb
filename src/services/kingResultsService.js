@@ -85,6 +85,21 @@ function buildRJLockWhereIfNeeded(fieldName, ufInput) {
 }
 
 /* =========================
+   ✅ FIX silencioso: normalizar valor do WHERE por campo
+   - Firestore é case-sensitive.
+   - uf geralmente está gravado como "RJ" (upper).
+   - lottery_key geralmente "PT_RIO" (upper).
+========================= */
+
+function normalizeValueForField(fieldName, valueInput) {
+  const s = String(valueInput || "").trim();
+  if (!s) return "";
+  if (fieldName === "uf") return s.toUpperCase();
+  if (fieldName === "lottery_key") return s.toUpperCase();
+  return s;
+}
+
+/* =========================
    Utils
 ========================= */
 
@@ -110,6 +125,7 @@ function ymdToBR(ymd) {
  * - "09HS", "9 HS", "09HRS", "09HR", "09H", "9h"
  * - "09:00", "9:0", "09:00:00"
  * - "9"
+ * - "900" / "1100" etc.
  */
 function normalizeHourLike(value) {
   const s0 = String(value ?? "").trim();
@@ -125,6 +141,16 @@ function normalizeHourLike(value) {
   // "09:00" / "9:0" / "09:00:00"
   const mISO = s.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
   if (mISO) return `${pad2(mISO[1])}:${pad2(mISO[2])}`;
+
+  // "900" / "1100"
+  const mHm = s.match(/^(\d{3,4})$/);
+  if (mHm) {
+    const hh = String(mHm[1]).slice(0, -2);
+    const mm = String(mHm[1]).slice(-2);
+    if (/^\d{1,2}$/.test(hh) && /^\d{2}$/.test(mm)) {
+      return `${pad2(hh)}:${mm}`;
+    }
+  }
 
   // "9"
   const m2 = s.match(/^(\d{1,2})$/);
@@ -156,30 +182,63 @@ function toHourBucket(value) {
   const m3 = s.match(/^(\d{1,2}):(\d{2}):(\d{2})$/);
   if (m3) return `${pad2(m3[1])}h`;
 
+  // "1100"
+  const m4 = s.match(/^(\d{3,4})$/);
+  if (m4) return `${pad2(String(m4[1]).slice(0, -2))}h`;
+
   return null;
 }
 
+/* =========================
+   ✅ FIX DEFINITIVO: filtro de horário (bucket vs exato)
+========================= */
+
 /**
- * ✅ Converte um bucket "11h" para "11:00"
+ * Regra:
+ * - Se o usuário escolheu "09h/11h/14h" => FILTRO POR BUCKET (trunca minutos)
+ * - Se o usuário passou "09:20" => FILTRO EXATO (HH:MM)
+ *
+ * Também cobre caso closeHour venha como "09h" por engano.
  */
-function bucketToHHMM(bucket) {
-  const b = toHourBucket(bucket);
-  if (!b) return null;
-  return `${b.slice(0, 2)}:00`;
+function resolveHourFilter({ closeHour = null, closeHourBucket = null }) {
+  const bucket =
+    toHourBucket(closeHourBucket) ||
+    // fallback: se closeHour vier como "09h" / "9" etc.
+    (closeHour && !String(closeHour).includes(":") ? toHourBucket(closeHour) : null);
+
+  if (bucket) {
+    return { kind: "bucket", bucket, hhmm: null };
+  }
+
+  const hhmm = closeHour ? normalizeHourLike(closeHour) : null;
+  if (hhmm) return { kind: "exact", bucket: null, hhmm };
+
+  return { kind: null, bucket: null, hhmm: null };
 }
 
 /**
- * ✅ Normaliza horário preferindo closeHourBucket quando existir:
- * - se closeHourBucket existir => "HH:00"
- * - senão, usa closeHour normalizado
+ * Aplica o filtro de horário em um draw já mapeado
  */
-function resolveCloseHourNorm({ closeHour = null, closeHourBucket = null }) {
-  const byBucket = closeHourBucket ? bucketToHHMM(closeHourBucket) : null;
-  if (byBucket) return normalizeHourLike(byBucket);
+function drawPassesHourFilter(draw, hourFilter) {
+  if (!hourFilter || !hourFilter.kind) return true;
 
-  const byCloseHour = closeHour ? normalizeHourLike(closeHour) : null;
-  return byCloseHour || null;
+  const raw = draw?.close_hour ?? draw?.closeHour ?? draw?.hour ?? draw?.hora ?? "";
+  const norm = normalizeHourLike(raw);
+
+  if (hourFilter.kind === "exact") {
+    return norm === normalizeHourLike(hourFilter.hhmm);
+  }
+
+  if (hourFilter.kind === "bucket") {
+    return toHourBucket(norm) === toHourBucket(hourFilter.bucket);
+  }
+
+  return true;
 }
+
+/* =========================
+   Date utils
+========================= */
 
 function normalizeToYMD(input) {
   if (!input) return null;
@@ -197,7 +256,9 @@ function normalizeToYMD(input) {
     typeof input === "object" &&
     (Number.isFinite(Number(input.seconds)) || Number.isFinite(Number(input._seconds)))
   ) {
-    const sec = Number.isFinite(Number(input.seconds)) ? Number(input.seconds) : Number(input._seconds);
+    const sec = Number.isFinite(Number(input.seconds))
+      ? Number(input.seconds)
+      : Number(input._seconds);
     const d = new Date(sec * 1000);
     if (!Number.isNaN(d.getTime())) {
       return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
@@ -353,7 +414,9 @@ function dedupeDrawsLocal(draws) {
     const idStr = drawId != null ? String(drawId) : "";
 
     const hasLogical = !!(ymd && hour);
-    const key = hasLogical ? `${ymd}__${hour}__${idStr || "noid"}` : `id__${idStr || `idx_${i}`}`;
+    const key = hasLogical
+      ? `${ymd}__${hour}__${idStr || "noid"}`
+      : `id__${idStr || `idx_${i}`}`;
 
     const normalized = {
       ...raw,
@@ -596,7 +659,8 @@ function mapDrawDoc(doc) {
 ========================= */
 
 function buildUfWhereClauses(fieldName, uf) {
-  return [where(fieldName, "==", uf)];
+  const normalized = normalizeValueForField(fieldName, uf);
+  return [where(fieldName, "==", normalized)];
 }
 
 function normalizeOrderBys(extraOrderBy) {
@@ -642,7 +706,7 @@ async function fetchDrawDocsPreferUf({
   {
     const { snap, error } = await queryDrawsByField({
       fieldName: "uf",
-      uf: ufTrim,
+      uf: ufUp, // ✅ FIX: garante match case-sensitive
       extraWheres,
       extraOrderBy,
       extraLimit,
@@ -656,11 +720,12 @@ async function fetchDrawDocsPreferUf({
 
   // 2) fallback por lottery_key
   {
-    const lotteryKey = ufUp === RJ_STATE_CODE ? RJ_LOTTERY_KEY : resolveLotteryKeyForQuery(ufTrim);
+    const lotteryKey =
+      ufUp === RJ_STATE_CODE ? RJ_LOTTERY_KEY : resolveLotteryKeyForQuery(ufTrim);
 
     const { snap, error } = await queryDrawsByField({
       fieldName: "lottery_key",
-      uf: lotteryKey,
+      uf: String(lotteryKey).toUpperCase(), // ✅ FIX: garante match case-sensitive
       extraWheres,
       extraOrderBy,
       extraLimit,
@@ -786,12 +851,12 @@ export async function getKingBoundsByUf({ uf }) {
       return `:firstTryError=${code || "err"}`;
     })();
 
-    const a = await sampleEdgesByDocId("uf", uf);
+    const a = await sampleEdgesByDocId("uf", String(uf).toUpperCase());
 
     const ufUp = String(uf || "").trim().toUpperCase();
     const lotteryKey = ufUp === RJ_STATE_CODE ? RJ_LOTTERY_KEY : resolveLotteryKeyForQuery(uf);
 
-    const b = a.ok ? null : await sampleEdgesByDocId("lottery_key", lotteryKey);
+    const b = a.ok ? null : await sampleEdgesByDocId("lottery_key", String(lotteryKey).toUpperCase());
 
     const merged = a.ok ? a.merged : b?.merged || [];
 
@@ -813,9 +878,14 @@ export async function getKingBoundsByUf({ uf }) {
    API: Day
 ========================= */
 
-function drawsCacheKeyDay({ uf, ymd, positionsArr, closeHourNorm }) {
+function drawsCacheKeyDay({ uf, ymd, positionsArr, hourFilter }) {
   const p = positionsArr && positionsArr.length ? positionsArr.join(",") : "all";
-  const h = closeHourNorm ? String(closeHourNorm) : "all";
+  const h =
+    hourFilter?.kind === "bucket"
+      ? `bucket:${hourFilter.bucket}`
+      : hourFilter?.kind === "exact"
+      ? `exact:${hourFilter.hhmm}`
+      : "all";
   return `day::${uf}::${ymd}::pos=${p}::h=${h}`;
 }
 
@@ -823,7 +893,7 @@ export async function getKingResultsByDate({
   uf,
   date,
   closeHour = null,
-  closeHourBucket = null, // ✅ NOVO (compat)
+  closeHourBucket = null, // ✅ compat
   positions = null,
 }) {
   if (!uf || !date) throw new Error("Parâmetros obrigatórios: uf e date");
@@ -832,13 +902,13 @@ export async function getKingResultsByDate({
   const ymdDate = normalizeToYMD(date);
   if (!ymdDate) return [];
 
-  const closeHourNorm = resolveCloseHourNorm({ closeHour, closeHourBucket });
+  const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
 
   const dayKey = drawsCacheKeyDay({
     uf,
     ymd: ymdDate,
     positionsArr,
-    closeHourNorm,
+    hourFilter,
   });
   const cached = cacheGet(DRAWS_CACHE, dayKey);
   if (cached) return cached;
@@ -896,9 +966,7 @@ export async function getKingResultsByDate({
   let baseAll = dedupeDrawsLocal(docCandidates.map(mapDrawDoc));
   baseAll = baseAll.filter((x) => (x.ymd || normalizeToYMD(x.date)) === ymdDate);
 
-  const base = closeHourNorm
-    ? baseAll.filter((d) => normalizeHourLike(d.close_hour || "") === normalizeHourLike(closeHourNorm))
-    : baseAll;
+  const base = hourFilter?.kind ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter)) : baseAll;
 
   const ordered = sortDrawsLocal(base);
 
@@ -940,9 +1008,14 @@ function daysBetweenInclusiveUTC(a, b) {
   return Math.floor(ms / 86400000) + 1;
 }
 
-function drawsCacheKeyRange({ uf, from, to, positionsArr, closeHourNorm, mode }) {
+function drawsCacheKeyRange({ uf, from, to, positionsArr, hourFilter, mode }) {
   const p = positionsArr && positionsArr.length ? positionsArr.join(",") : "all";
-  const h = closeHourNorm ? String(closeHourNorm) : "all";
+  const h =
+    hourFilter?.kind === "bucket"
+      ? `bucket:${hourFilter.bucket}`
+      : hourFilter?.kind === "exact"
+      ? `exact:${hourFilter.hhmm}`
+      : "all";
   const m = mode ? String(mode) : "detailed";
   return `range::${uf}::${from}..${to}::pos=${p}::h=${h}::mode=${m}`;
 }
@@ -973,7 +1046,7 @@ export async function getKingResultsByRange({
   dateFrom,
   dateTo,
   closeHour = null,
-  closeHourBucket = null, // ✅ NOVO (compat)
+  closeHourBucket = null, // ✅ compat
   positions = null,
   mode = "detailed",
 }) {
@@ -987,7 +1060,7 @@ export async function getKingResultsByRange({
   const ymdTo = normalizeToYMD(dateTo);
   if (!ymdFrom || !ymdTo) return [];
 
-  const closeHourNorm = resolveCloseHourNorm({ closeHour, closeHourBucket });
+  const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
 
   const effectiveMode = decideKingRangeMode({
     dateFrom: ymdFrom,
@@ -1000,7 +1073,7 @@ export async function getKingResultsByRange({
     from: ymdFrom,
     to: ymdTo,
     positionsArr,
-    closeHourNorm,
+    hourFilter,
     mode: effectiveMode,
   });
   const cached = cacheGet(DRAWS_CACHE, rangeKey);
@@ -1038,17 +1111,16 @@ export async function getKingResultsByRange({
           const dayDraws = await getKingResultsByDate({
             uf,
             date: day,
-            closeHour: closeHourNorm,
+            closeHour,
+            closeHourBucket,
             positions: positionsArr,
           });
           if (Array.isArray(dayDraws) && dayDraws.length) all.push(...dayDraws);
         }
 
         const baseAll = dedupeDrawsLocal(all);
-        const base = closeHourNorm
-          ? baseAll.filter(
-              (d) => normalizeHourLike(d.close_hour || "") === normalizeHourLike(closeHourNorm)
-            )
+        const base = hourFilter?.kind
+          ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
           : baseAll;
 
         const out = dedupeDrawsLocal(sortDrawsLocal(base));
@@ -1081,17 +1153,16 @@ export async function getKingResultsByRange({
         const dayDraws = await getKingResultsByDate({
           uf,
           date: day,
-          closeHour: closeHourNorm,
+          closeHour,
+          closeHourBucket,
           positions: positionsArr,
         });
         if (Array.isArray(dayDraws) && dayDraws.length) all.push(...dayDraws);
       }
 
       const baseAll = dedupeDrawsLocal(all);
-      const base = closeHourNorm
-        ? baseAll.filter(
-            (d) => normalizeHourLike(d.close_hour || "") === normalizeHourLike(closeHourNorm)
-          )
+      const base = hourFilter?.kind
+        ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
         : baseAll;
 
       const ordered = sortDrawsLocal(base);
@@ -1123,10 +1194,8 @@ export async function getKingResultsByRange({
   }
 
   const baseAll = dedupeDrawsLocal(docs.map(mapDrawDoc));
-  const base = closeHourNorm
-    ? baseAll.filter(
-        (d) => normalizeHourLike(d.close_hour || "") === normalizeHourLike(closeHourNorm)
-      )
+  const base = hourFilter?.kind
+    ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
     : baseAll;
 
   const ordered = sortDrawsLocal(base);
