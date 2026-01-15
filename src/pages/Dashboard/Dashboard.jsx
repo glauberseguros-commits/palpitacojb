@@ -3,47 +3,11 @@
  * ============================================================
  * DASHBOARD — BASELINE CONGELADA (freeze)
  * ============================================================
- * Ajuste de arquitetura (UX/Produto) — ATUALIZADO:
- *
- * ✅ REGRA (conforme combinado AGORA):
- * - Ranking lateral (LeftRankingTable) DEVE obedecer filtros locais
- *   (mes/diaMes/diaSemana/horário/posição/animal).
- *
- * - Card "Quantidade de Aparições (Geral)" deve ser PERMANENTE:
- *   usa dataset GLOBAL do período (drawsForUi), sem filtros locais.
- *
- * - KPIs/Gráficos seguem filtros locais (drawsForView), incluindo Animal/grupo.
- *
- * - ✅ NOVO: Palpite acompanha filtros locais (drawsForView) usando buildPalpiteV2.
- *
- * Contratos (NÃO QUEBRAR):
- * 1) Bounds (min/max) vêm do Firestore e são a "fonte da verdade" do período disponível.
- *    - UI bloqueia até bounds estarem prontos (evita zeros mentirosos).
- *
- * 2) Range controla a consulta remota (hook useKingRanking):
- *    - Se range for 1 dia (from === to), usamos `date` (queryDate).
- *    - Se range for intervalo, usamos `dateFrom` e `dateTo`.
- *
- * 3) Filtros locais são aplicados DEPOIS do hook:
- *    - drawsForView: recorte final p/ VISUALIZAÇÃO (KPIs/Charts) — inclui Animal/grupo.
- *
- * 4) GLOBAL do período (sem filtros locais):
- *    - drawsForUi = fsDrawsRaw (do hook, sem filtros locais)
- *    - ChartsGrid.drawsRawGlobal = drawsForUi ✅ (Aparições (Geral) sempre estável)
- *
- * ✅ REGRA NOVA (pedido do usuário):
- * - No dashboard/tela principal, "Todos" deve usar TODO o período disponível (desde 2022),
- *   ou seja: MIN_DATE → MAX_DATE.
- * - Sem trava de 180 dias.
- *
- * ✅ NOVO (UX/Consistência):
- * - Quando o hook estiver em `hydratando` (serviceMode agregado + hidratação),
- *   BLOQUEAMOS KPIs/Charts/Ranking filtrado para não exibir dados “meio certos”.
- *
- * ✅ NOVO (UX solicitado):
- * - Filtros NÃO podem resetar ao trocar de página.
- * - Persistência dos filtros: FEITA NO App.js (pp_dashboard_filters_v1).
- * - Este arquivo persiste apenas estado auxiliar (range/anos/grupo) em pp_dash_state_v1.
+ * ✅ Ajuste de produto (Guest / Vitrine):
+ * - "Entrar sem login" = modo DEMO (guest):
+ *   - entra no Dashboard
+ *   - mostra dados gerais (Todos + período completo desde 2022)
+ *   - NÃO permite mexer em filtros/período/seleções
  * ============================================================
  */
 
@@ -80,6 +44,45 @@ const ALL_POSITIONS = [1, 2, 3, 4, 5, 6, 7];
    - Não inclui filtros (filtros ficam no App.js)
 ========================= */
 const DASH_STATE_KEY = "pp_dash_state_v1";
+
+/* =========================
+   Sessão / Guest (demo)
+========================= */
+const ACCOUNT_SESSION_KEY = "pp_session_v1";
+
+function safeParseJSON(s) {
+  try {
+    const obj = JSON.parse(s);
+    return obj && typeof obj === "object" ? obj : null;
+  } catch {
+    return null;
+  }
+}
+
+function loadSessionObj() {
+  try {
+    const raw = localStorage.getItem(ACCOUNT_SESSION_KEY);
+    if (!raw) return null;
+    const s = String(raw || "").trim();
+    if (!s.startsWith("{")) return null;
+    return safeParseJSON(s);
+  } catch {
+    return null;
+  }
+}
+
+function isGuestSession(sess) {
+  const s = sess || loadSessionObj();
+  if (!s || s.ok !== true) return false;
+  const t = String(s.loginType || "").toLowerCase();
+  const id = String(s.loginId || "").toLowerCase();
+  return (
+    t === "guest" ||
+    id === "guest" ||
+    s.skipped === true ||
+    String(s.mode || "") === "skip"
+  );
+}
 
 /* =========================
    Banner
@@ -168,8 +171,7 @@ function normalizeToYMD(input) {
 
   if (
     typeof input === "object" &&
-    (Number.isFinite(Number(input.seconds)) ||
-      Number.isFinite(Number(input._seconds)))
+    (Number.isFinite(Number(input.seconds)) || Number.isFinite(Number(input._seconds)))
   ) {
     const sec = Number.isFinite(Number(input.seconds))
       ? Number(input.seconds)
@@ -182,9 +184,7 @@ function normalizeToYMD(input) {
   }
 
   if (input instanceof Date && !Number.isNaN(input.getTime())) {
-    return `${input.getFullYear()}-${pad2(input.getMonth() + 1)}-${pad2(
-      input.getDate()
-    )}`;
+    return `${input.getFullYear()}-${pad2(input.getMonth() + 1)}-${pad2(input.getDate())}`;
   }
 
   const s = String(input).trim();
@@ -201,14 +201,7 @@ function normalizeToYMD(input) {
 
 function getDrawDate(d) {
   if (!d) return null;
-  const raw =
-    d.date ??
-    d.ymd ??
-    d.draw_date ??
-    d.close_date ??
-    d.data ??
-    d.dt ??
-    null;
+  const raw = d.date ?? d.ymd ?? d.draw_date ?? d.close_date ?? d.data ?? d.dt ?? null;
   return normalizeToYMD(raw);
 }
 
@@ -345,13 +338,7 @@ function mapRankingJsonToApp(json) {
     totalDraws: Number(totals.draws || 0),
     totalOcorrencias: Number(totals.ocorrencias || 0),
     totalDays:
-      Number(
-        totals.days ||
-          totals.dias ||
-          totals.uniqueDays ||
-          totals.unique_days ||
-          0
-      ) || 0,
+      Number(totals.days || totals.dias || totals.uniqueDays || totals.unique_days || 0) || 0,
     generatedAt: meta.generatedAt || null,
     top3,
   };
@@ -370,12 +357,8 @@ function PremiumInfoBox({ title, description, extra }) {
         boxShadow: "0 18px 45px rgba(0,0,0,0.55)",
       }}
     >
-      <div style={{ fontWeight: 1000, letterSpacing: 0.25, marginBottom: 6 }}>
-        {title}
-      </div>
-      <div style={{ opacity: 0.86, lineHeight: 1.35, fontWeight: 700 }}>
-        {description}
-      </div>
+      <div style={{ fontWeight: 1000, letterSpacing: 0.25, marginBottom: 6 }}>{title}</div>
+      <div style={{ opacity: 0.86, lineHeight: 1.35, fontWeight: 700 }}>{description}</div>
       {extra ? (
         <div
           style={{
@@ -457,10 +440,8 @@ function clampRangeToBounds(next, minDate, maxDate) {
  * - setFilters: setter
  */
 export default function Dashboard(props) {
-  const externalFilters =
-    props && typeof props === "object" ? props.filters : null;
-  const externalSetFilters =
-    props && typeof props === "object" ? props.setFilters : null;
+  const externalFilters = props && typeof props === "object" ? props.filters : null;
+  const externalSetFilters = props && typeof props === "object" ? props.setFilters : null;
 
   const fallbackFilters = useMemo(
     () => ({
@@ -474,18 +455,44 @@ export default function Dashboard(props) {
     []
   );
 
+  // ✅ sessão/guest (demo)
+  const [isGuest, setIsGuest] = useState(() => isGuestSession(loadSessionObj()));
+
+  useEffect(() => {
+    // observa alterações (caso o usuário faça login em outra aba)
+    const onStorage = (e) => {
+      if (e && e.key && e.key !== ACCOUNT_SESSION_KEY) return;
+      setIsGuest(isGuestSession(loadSessionObj()));
+    };
+    window.addEventListener("storage", onStorage);
+
+    // checagem leve no mesmo tab (storage não dispara no mesmo tab)
+    const t = setInterval(() => setIsGuest(isGuestSession(loadSessionObj())), 1000);
+
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      clearInterval(t);
+    };
+  }, []);
+
   // ✅ filtros estáveis
-  const filters = useMemo(() => {
-    return externalFilters && typeof externalFilters === "object"
-      ? externalFilters
-      : fallbackFilters;
+  const rawFilters = useMemo(() => {
+    return externalFilters && typeof externalFilters === "object" ? externalFilters : fallbackFilters;
   }, [externalFilters, fallbackFilters]);
 
-  // ✅ setter estável (elimina warning do eslint)
+  // ✅ no guest, força "Todos" (vitrine)
+  const filters = useMemo(() => {
+    if (!isGuest) return rawFilters;
+    return fallbackFilters;
+  }, [isGuest, rawFilters, fallbackFilters]);
+
+  // ✅ setter estável
   const noopSetFilters = useCallback(() => {}, []);
   const setFilters = useMemo(() => {
+    // guest: nunca persiste mudança
+    if (isGuest) return noopSetFilters;
     return typeof externalSetFilters === "function" ? externalSetFilters : noopSetFilters;
-  }, [externalSetFilters, noopSetFilters]);
+  }, [externalSetFilters, noopSetFilters, isGuest]);
 
   // ✅ restaura apenas estado auxiliar (range/anos/grupo) do localStorage
   const savedDashState = useMemo(() => safeReadJSON(DASH_STATE_KEY), []);
@@ -526,12 +533,8 @@ export default function Dashboard(props) {
   const debounceTimerRef = useRef(null);
 
   const [selectedYears, setSelectedYears] = useState(() => {
-    const arr = Array.isArray(savedDashState?.selectedYears)
-      ? savedDashState.selectedYears
-      : [];
-    return arr
-      .map((y) => Number(y))
-      .filter((y) => Number.isFinite(y));
+    const arr = Array.isArray(savedDashState?.selectedYears) ? savedDashState.selectedYears : [];
+    return arr.map((y) => Number(y)).filter((y) => Number.isFinite(y));
   });
 
   const [bannerSrc, setBannerSrc] = useState(DEFAULT_BANNER_SRC);
@@ -573,10 +576,7 @@ export default function Dashboard(props) {
           didInitRangeFromBoundsRef.current = true;
 
           const hasRestoredRange =
-            dateRange?.from &&
-            dateRange?.to &&
-            isISODate(dateRange.from) &&
-            isISODate(dateRange.to);
+            dateRange?.from && dateRange?.to && isISODate(dateRange.from) && isISODate(dateRange.to);
 
           const hasRestoredQuery =
             dateRangeQuery?.from &&
@@ -613,6 +613,22 @@ export default function Dashboard(props) {
   const MAX_DATE = bounds.maxDate;
   const boundsReady = !!(MIN_DATE && MAX_DATE && !bounds.loading);
 
+  // ✅ Guest (demo): força SEMPRE período completo e filtros "Todos"
+  useEffect(() => {
+    if (!isGuest) return;
+    if (!boundsReady || !MIN_DATE || !MAX_DATE) return;
+
+    // zera seleções e trava vitrine em "Todos"
+    setSelectedGrupo(null);
+    setSelectedYears([]);
+
+    // força range completo
+    const full = { from: MIN_DATE, to: MAX_DATE };
+    setDateRange(full);
+    setDateRangeQuery(full);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isGuest, boundsReady, MIN_DATE, MAX_DATE]);
+
   useEffect(() => {
     if (!boundsReady || !MAX_DATE) return;
 
@@ -641,6 +657,9 @@ export default function Dashboard(props) {
     (next) => {
       if (!next) return;
 
+      // guest: ignora alterações (vitrine)
+      if (isGuest) return;
+
       setDateRange(next);
 
       let clampedNext = next;
@@ -649,11 +668,7 @@ export default function Dashboard(props) {
         clampedNext = c || { from: MIN_DATE, to: MAX_DATE };
       }
 
-      if (
-        clampedNext?.from &&
-        clampedNext?.to &&
-        clampedNext.from === clampedNext.to
-      ) {
+      if (clampedNext?.from && clampedNext?.to && clampedNext.from === clampedNext.to) {
         setSelectedYears([]);
       }
 
@@ -662,7 +677,7 @@ export default function Dashboard(props) {
         setDateRangeQuery(clampedNext);
       }, 250);
     },
-    [boundsReady, MIN_DATE, MAX_DATE]
+    [boundsReady, MIN_DATE, MAX_DATE, isGuest]
   );
 
   useEffect(() => {
@@ -672,11 +687,7 @@ export default function Dashboard(props) {
   }, []);
 
   const queryDate = useMemo(() => {
-    if (
-      dateRangeQuery?.from &&
-      dateRangeQuery?.to &&
-      dateRangeQuery.from === dateRangeQuery.to
-    )
+    if (dateRangeQuery?.from && dateRangeQuery?.to && dateRangeQuery.from === dateRangeQuery.to)
       return dateRangeQuery.from;
     return null;
   }, [dateRangeQuery]);
@@ -693,22 +704,17 @@ export default function Dashboard(props) {
     return dateRangeQuery.to;
   }, [dateRangeQuery]);
 
-  const canQueryFirestore =
-    DATA_MODE === "firestore" ? !!(boundsReady && dateRangeQuery) : true;
+  const canQueryFirestore = DATA_MODE === "firestore" ? !!(boundsReady && dateRangeQuery) : true;
 
-  const {
-    loading: fsLoading,
-    error: fsError,
-    meta: fsRankingMeta,
-    drawsRaw: fsDrawsRaw,
-  } = useKingRanking({
-    uf,
-    date: canQueryFirestore ? queryDate : null,
-    dateFrom: canQueryFirestore ? dateFrom : null,
-    dateTo: canQueryFirestore ? dateTo : null,
-    closeHourBucket: null,
-    positions: ALL_POSITIONS,
-  });
+  const { loading: fsLoading, error: fsError, meta: fsRankingMeta, drawsRaw: fsDrawsRaw } =
+    useKingRanking({
+      uf,
+      date: canQueryFirestore ? queryDate : null,
+      dateFrom: canQueryFirestore ? dateFrom : null,
+      dateTo: canQueryFirestore ? dateTo : null,
+      closeHourBucket: null,
+      positions: ALL_POSITIONS,
+    });
 
   const [jsonState, setJsonState] = useState({
     loading: DATA_MODE === "json",
@@ -728,10 +734,7 @@ export default function Dashboard(props) {
         setJsonState((s) => ({ ...s, loading: true, error: null }));
 
         const res = await fetch(RANKING_JSON_URL, { cache: "no-store" });
-        if (!res.ok)
-          throw new Error(
-            `Falha ao carregar JSON: ${res.status} ${res.statusText}`
-          );
+        if (!res.ok) throw new Error(`Falha ao carregar JSON: ${res.status} ${res.statusText}`);
 
         const json = await res.json();
         const mapped = mapRankingJsonToApp(json);
@@ -769,15 +772,12 @@ export default function Dashboard(props) {
   const rankingLoading = DATA_MODE === "json" ? jsonState.loading : fsLoading;
   const rankingError = DATA_MODE === "json" ? jsonState.error : fsError;
 
-  const rankingMeta =
-    DATA_MODE === "json" ? jsonState.rankingMeta : fsRankingMeta;
+  const rankingMeta = DATA_MODE === "json" ? jsonState.rankingMeta : fsRankingMeta;
 
   const loadingEffective = !!rankingLoading || !!isHydrating;
 
   const drawsRaw = DATA_MODE === "json" ? jsonState.drawsRaw : fsDrawsRaw;
-  const drawsForUi = useMemo(() => (Array.isArray(drawsRaw) ? drawsRaw : []), [
-    drawsRaw,
-  ]);
+  const drawsForUi = useMemo(() => (Array.isArray(drawsRaw) ? drawsRaw : []), [drawsRaw]);
 
   const dataReady = useMemo(() => {
     if (DATA_MODE === "json") return true;
@@ -787,14 +787,8 @@ export default function Dashboard(props) {
     return true;
   }, [boundsReady, dateRangeQuery, loadingEffective, rankingError]);
 
-  const closeHourBucketLocal = useMemo(
-    () => normalizeHourBucket(filters.horario),
-    [filters.horario]
-  );
-  const positionsLocal = useMemo(
-    () => normalizePositions(filters.posicao),
-    [filters.posicao]
-  );
+  const closeHourBucketLocal = useMemo(() => normalizeHourBucket(filters.horario), [filters.horario]);
+  const positionsLocal = useMemo(() => normalizePositions(filters.posicao), [filters.posicao]);
 
   const findGrupoByAnimalLabel = useCallback((animalLabel) => {
     const label = String(animalLabel || "").trim();
@@ -818,8 +812,23 @@ export default function Dashboard(props) {
     return null;
   }, []);
 
+  const [guestToast, setGuestToast] = useState("");
+
+  const showGuestToast = useCallback((msg) => {
+    setGuestToast(String(msg || "Disponível no PRO/VIP."));
+    window.clearTimeout(showGuestToast._t);
+    showGuestToast._t = window.setTimeout(() => setGuestToast(""), 2400);
+  }, []);
+  // @ts-ignore
+  showGuestToast._t = showGuestToast._t || null;
+
   const handleFilterChange = useCallback(
     (name, value) => {
+      if (isGuest) {
+        showGuestToast("Modo demonstração: filtros estão bloqueados. Faça login para usar.");
+        return;
+      }
+
       setFilters((prev) => ({ ...prev, [name]: value }));
 
       if (name === "animal") {
@@ -827,7 +836,7 @@ export default function Dashboard(props) {
         setSelectedGrupo(g);
       }
     },
-    [findGrupoByAnimalLabel, setFilters]
+    [findGrupoByAnimalLabel, setFilters, isGuest, showGuestToast]
   );
 
   const drawsForView = useMemo(() => {
@@ -840,34 +849,25 @@ export default function Dashboard(props) {
     const fDiaMes = String(filters.diaMes || "").trim();
     const fDiaSemana = String(filters.diaSemana || "").trim();
 
-    const wantMes =
-      fMes && fMes !== "todos" ? MONTH_NAME_TO_MM[fMes] || null : null;
+    const wantMes = fMes && fMes !== "todos" ? MONTH_NAME_TO_MM[fMes] || null : null;
 
     const wantDiaMes =
       fDiaMes && fDiaMes.toLowerCase() !== "todos"
         ? String(Number(fDiaMes)).padStart(2, "0")
         : null;
 
-    const wantDiaSemana =
-      fDiaSemana && fDiaSemana.toLowerCase() !== "todos" ? fDiaSemana : null;
+    const wantDiaSemana = fDiaSemana && fDiaSemana.toLowerCase() !== "todos" ? fDiaSemana : null;
 
     const wantBucket = closeHourBucketLocal;
 
     const posSet =
       Array.isArray(positionsLocal) && positionsLocal.length
-        ? new Set(
-            positionsLocal
-              .map((n) => Number(n))
-              .filter((n) => Number.isFinite(n))
-          )
+        ? new Set(positionsLocal.map((n) => Number(n)).filter((n) => Number.isFinite(n)))
         : null;
 
-    const grupoTarget = Number.isFinite(Number(selectedGrupo))
-      ? Number(selectedGrupo)
-      : null;
+    const grupoTarget = Number.isFinite(Number(selectedGrupo)) ? Number(selectedGrupo) : null;
 
-    const wantsPositionFilter =
-      String(filters.posicao || "").trim().toLowerCase() !== "todos";
+    const wantsPositionFilter = String(filters.posicao || "").trim().toLowerCase() !== "todos";
     const wantsGrupoFilter = !!grupoTarget;
     const requiresPrizes = wantsPositionFilter || wantsGrupoFilter;
 
@@ -987,9 +987,7 @@ export default function Dashboard(props) {
     try {
       const out = buildPalpiteV2(drawsForView, { closeHourBucket: null });
 
-      return out?.palpitesByGrupo && typeof out.palpitesByGrupo === "object"
-        ? out.palpitesByGrupo
-        : {};
+      return out?.palpitesByGrupo && typeof out.palpitesByGrupo === "object" ? out.palpitesByGrupo : {};
     } catch {
       return {};
     }
@@ -1055,23 +1053,33 @@ export default function Dashboard(props) {
     if (!Number.isFinite(yMin) || !Number.isFinite(yMax)) return [];
 
     const out = [];
-    for (let y = Math.min(yMin, yMax); y <= Math.max(yMin, yMax); y += 1)
-      out.push(y);
+    for (let y = Math.min(yMin, yMax); y <= Math.max(yMin, yMax); y += 1) out.push(y);
     return out;
   }, [drawsForUi, MIN_DATE, MAX_DATE]);
 
   const applyAllYearsFull = useCallback(() => {
     if (!MIN_DATE || !MAX_DATE) return;
     setSelectedYears([]);
+    // guest: já está travado no full, então ignore
+    if (isGuest) return;
     applyDateRange({ from: MIN_DATE, to: MAX_DATE });
-  }, [MIN_DATE, MAX_DATE, applyDateRange]);
+  }, [MIN_DATE, MAX_DATE, applyDateRange, isGuest]);
 
   const onClearYears = useCallback(() => {
+    if (isGuest) {
+      showGuestToast("Modo demonstração: período está bloqueado. Faça login para usar.");
+      return;
+    }
     applyAllYearsFull();
-  }, [applyAllYearsFull]);
+  }, [applyAllYearsFull, isGuest, showGuestToast]);
 
   const onToggleYear = useCallback(
     (year) => {
+      if (isGuest) {
+        showGuestToast("Modo demonstração: período está bloqueado. Faça login para usar.");
+        return;
+      }
+
       const y = Number(year);
       if (!Number.isFinite(y)) return;
 
@@ -1093,7 +1101,7 @@ export default function Dashboard(props) {
         return next;
       });
     },
-    [applyAllYearsFull, applyDateRange]
+    [applyAllYearsFull, applyDateRange, isGuest, showGuestToast]
   );
 
   const kpiItems = useMemo(() => {
@@ -1104,10 +1112,7 @@ export default function Dashboard(props) {
       ];
     }
 
-    const diasFromDraws = new Set(
-      drawsForView.map((d) => getDrawDate(d)).filter(Boolean)
-    ).size;
-
+    const diasFromDraws = new Set(drawsForView.map((d) => getDrawDate(d)).filter(Boolean)).size;
     const totalDrawsFromDraws = drawsForView.length;
 
     return [
@@ -1118,6 +1123,11 @@ export default function Dashboard(props) {
 
   const onSelectGrupo = useCallback(
     (grupoNum) => {
+      if (isGuest) {
+        showGuestToast("Modo demonstração: seleção de bicho está bloqueada. Faça login para usar.");
+        return;
+      }
+
       const g = Number(grupoNum);
       if (!Number.isFinite(g) || g < 1 || g > 25) {
         setSelectedGrupo(null);
@@ -1147,11 +1157,16 @@ export default function Dashboard(props) {
         return next;
       });
     },
-    [rankingDataGlobalForLabels, setFilters]
+    [rankingDataGlobalForLabels, setFilters, isGuest, showGuestToast]
   );
 
   const onSelectPosicao = useCallback(
     (posNumberString) => {
+      if (isGuest) {
+        showGuestToast("Modo demonstração: filtro por posição está bloqueado. Faça login para usar.");
+        return;
+      }
+
       const raw = String(posNumberString ?? "").trim();
       const m = raw.match(/^(\d+)/);
       const n = m ? Number(m[1]) : NaN;
@@ -1159,7 +1174,7 @@ export default function Dashboard(props) {
       if (!Number.isFinite(n) || n < 1 || n > 7) return;
       setFilters((prev) => ({ ...prev, posicao: `${n}º` }));
     },
-    [setFilters]
+    [setFilters, isGuest, showGuestToast]
   );
 
   const boundsMessage = useMemo(() => {
@@ -1200,14 +1215,10 @@ export default function Dashboard(props) {
       }
 
       const cand128 =
-        typeof getImgFromGrupoFromMap === "function"
-          ? getImgFromGrupoFromMap(Number(selectedGrupo), 128)
-          : "";
+        typeof getImgFromGrupoFromMap === "function" ? getImgFromGrupoFromMap(Number(selectedGrupo), 128) : "";
 
       const candBase =
-        typeof getImgFromGrupoFromMap === "function"
-          ? getImgFromGrupoFromMap(Number(selectedGrupo))
-          : "";
+        typeof getImgFromGrupoFromMap === "function" ? getImgFromGrupoFromMap(Number(selectedGrupo)) : "";
 
       try {
         if (cand128) {
@@ -1232,13 +1243,16 @@ export default function Dashboard(props) {
   }, [selectedGrupo]);
 
   useEffect(() => {
+    // guest: não grava estado auxiliar (evita “sujar” demo)
+    if (isGuest) return;
+
     safeWriteJSON(DASH_STATE_KEY, {
       selectedGrupo,
       selectedYears,
       dateRange,
       dateRangeQuery,
     });
-  }, [selectedGrupo, selectedYears, dateRange, dateRangeQuery]);
+  }, [selectedGrupo, selectedYears, dateRange, dateRangeQuery, isGuest]);
 
   const hydratingBox = useMemo(() => {
     if (!isHydrating) return null;
@@ -1254,6 +1268,27 @@ export default function Dashboard(props) {
       />
     );
   }, [isHydrating, dateFrom, dateTo, queryDate, MIN_DATE, MAX_DATE]);
+
+  const demoBox = useMemo(() => {
+    if (!isGuest) return null;
+    const from = MIN_DATE || "2022-01-01";
+    const to = MAX_DATE || "—";
+
+    return (
+      <PremiumInfoBox
+        title="Modo Demonstração (sem login)"
+        description="Você está vendo o painel geral da base (desde 2022). Para proteger as funcionalidades, filtros e ações estão bloqueados."
+        extra={
+          `Período: ${from} → ${to}\n` +
+          "Bloqueado no DEMO:\n" +
+          "• Alterar filtros e período\n" +
+          "• Selecionar bicho/posição\n" +
+          "• Ações premium (Top 3 completo, Busca, Centenas+, Downloads)\n" +
+          "Faça login para liberar."
+        }
+      />
+    );
+  }, [isGuest, MIN_DATE, MAX_DATE]);
 
   return (
     <div className="dashRoot">
@@ -1271,10 +1306,7 @@ export default function Dashboard(props) {
 
       <main className="dashMain">
         <section className="dashTop" style={{ position: "relative", zIndex: 1 }}>
-          <div
-            className="dashBanner"
-            style={{ position: "relative", zIndex: 1, pointerEvents: "none" }}
-          >
+          <div className="dashBanner" style={{ position: "relative", zIndex: 1, pointerEvents: "none" }}>
             <img
               src={bannerSrc}
               alt="Banner"
@@ -1285,26 +1317,28 @@ export default function Dashboard(props) {
             />
           </div>
 
-          <div
-            className="dashTopRight"
-            style={{ position: "relative", zIndex: 5, pointerEvents: "auto" }}
-          >
+          <div className="dashTopRight" style={{ position: "relative", zIndex: 5, pointerEvents: "auto" }}>
             {uiBlockedByBounds ? (
               <PremiumTopRightSkeleton message={boundsMessage} />
             ) : (
               <>
+                {demoBox}
+
                 {MIN_DATE && MAX_DATE && dateRange ? (
                   <div style={{ position: "relative", zIndex: 10, pointerEvents: "auto" }}>
-                    <DateRangeControl
-                      value={dateRange}
-                      onChange={applyDateRange}
-                      minDate={MIN_DATE}
-                      maxDate={MAX_DATE}
-                      years={yearsAvailable}
-                      selectedYears={selectedYears}
-                      onToggleYear={onToggleYear}
-                      onClearYears={onClearYears}
-                    />
+                    {/* Guest: trava UI de período (vitrine) */}
+                    <div style={isGuest ? { pointerEvents: "none", opacity: 0.55, filter: "grayscale(0.2)" } : null}>
+                      <DateRangeControl
+                        value={dateRange}
+                        onChange={applyDateRange}
+                        minDate={MIN_DATE}
+                        maxDate={MAX_DATE}
+                        years={yearsAvailable}
+                        selectedYears={selectedYears}
+                        onToggleYear={onToggleYear}
+                        onClearYears={onClearYears}
+                      />
+                    </div>
                   </div>
                 ) : (
                   <PremiumInfoBox
@@ -1331,7 +1365,33 @@ export default function Dashboard(props) {
         </section>
 
         <section className="dashFilters">
-          <FiltersBar filters={filters} onChange={handleFilterChange} options={options} />
+          {/* Guest: trava UI de filtros (vitrine) */}
+          <div
+            style={isGuest ? { pointerEvents: "none", opacity: 0.65, filter: "grayscale(0.2)" } : null}
+            onClick={() => {
+              if (isGuest) showGuestToast("Modo demonstração: filtros bloqueados. Faça login para usar.");
+            }}
+          >
+            <FiltersBar filters={filters} onChange={handleFilterChange} options={options} />
+          </div>
+
+          {guestToast ? (
+            <div
+              style={{
+                marginTop: 10,
+                border: "1px solid rgba(201,168,62,0.25)",
+                background: "rgba(201,168,62,0.10)",
+                color: "rgba(255,255,255,0.92)",
+                borderRadius: 12,
+                padding: "10px 12px",
+                fontWeight: 850,
+                letterSpacing: 0.15,
+                boxShadow: "0 16px 44px rgba(0,0,0,0.55)",
+              }}
+            >
+              {guestToast}
+            </div>
+          ) : null}
         </section>
 
         <section className="dashCharts">

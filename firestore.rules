@@ -1,0 +1,98 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /* =========================================================
+       HELPERS
+    ========================================================= */
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // Admin = existe doc /admins/{uid} e active == true
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.active == true;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    // Usuário só pode alterar campos “inofensivos” do próprio perfil
+    function isSafeUserUpdate() {
+      // diffs entre doc atual (resource.data) e o novo (request.resource.data)
+      // allowed keys: name, photoURL, phone, updatedAt
+      return request.resource.data.diff(resource.data).changedKeys()
+        .hasOnly(["name", "photoURL", "phone", "updatedAt"]);
+    }
+
+    /* =========================================================
+       ADMINS
+       - App/AdminLogin precisa ler /admins/{uid}
+       - Escrita via console (ou futuramente via backend)
+    ========================================================= */
+
+    match /admins/{uid} {
+      // Admin pode ler o próprio doc (verificação) e listar (se quiser no futuro)
+      allow get: if isOwner(uid) || isAdmin();
+      allow list: if isAdmin();
+
+      // Travado no client (crie/edite pelo Console do Firebase)
+      // Se no futuro quiser editar admins pelo painel, troque para: if isAdmin()
+      allow create, update, delete: if false;
+    }
+
+    /* =========================================================
+       USERS
+       - Admin pode ler/escrever tudo
+       - Usuário lê o próprio doc
+       - Usuário só atualiza campos seguros (não pode virar VIP/PRO)
+    ========================================================= */
+
+    match /users/{uid} {
+      // leitura
+      allow get: if isOwner(uid) || isAdmin();
+      allow list: if isAdmin();
+
+      // criação: admin (recomendado). Se você cria doc user no client ao cadastrar,
+      // pode habilitar: allow create: if isOwner(uid);
+      allow create: if isAdmin();
+
+      // update: usuário só perfil básico; admin total
+      allow update: if (isOwner(uid) && isSafeUserUpdate()) || isAdmin();
+
+      // delete: só admin
+      allow delete: if isAdmin();
+    }
+
+    /* =========================================================
+       DADOS DO APP (DRAWS)
+       - leitura: por padrão, apenas logado
+       - escrita: só admin (import/audit)
+       - Se quiser público, troque signedIn() -> true
+    ========================================================= */
+
+    match /draws/{drawId} {
+      allow read: if signedIn();       // ou true se for público
+      allow write: if isAdmin();
+    }
+
+    // Se você usa subcoleção /draws/{drawId}/prizes/{prizeId}
+    match /draws/{drawId}/prizes/{prizeId} {
+      allow read: if signedIn();       // ou true se for público
+      allow write: if isAdmin();
+    }
+
+    /* =========================================================
+       DEFAULT: FECHA TUDO
+       - Garante que nenhuma coleção futura vaze por acidente
+    ========================================================= */
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

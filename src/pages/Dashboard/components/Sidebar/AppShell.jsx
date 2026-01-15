@@ -15,6 +15,55 @@ const ROUTES = {
   CENTENAS: "centenas",
 };
 
+const ACCOUNT_SESSION_KEY = "pp_session_v1";
+
+function safeReadLS(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeParseJson(raw) {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * ✅ Normaliza a sessão (guest/user/plan)
+ * Contrato aceito:
+ * - string legacy -> { ok:true, type:"user", plan:"FREE" }
+ * - json -> { ok:true, type:"guest"|"user", plan:"FREE"|"PRO"|"VIP", ... }
+ */
+function readSession() {
+  const raw = safeReadLS(ACCOUNT_SESSION_KEY);
+  if (!raw) return { ok: false, type: "none", plan: "FREE" };
+
+  const s = String(raw).trim();
+  if (!s) return { ok: false, type: "none", plan: "FREE" };
+
+  if (s.startsWith("{")) {
+    const obj = safeParseJson(s);
+    if (!obj || typeof obj !== "object") return { ok: false, type: "none", plan: "FREE" };
+
+    const ok = obj.ok === true;
+    const type = String(obj.type || "").trim().toLowerCase();
+    const plan = String(obj.plan || "").trim().toUpperCase();
+
+    const normType = type === "guest" ? "guest" : type === "user" ? "user" : "user";
+    const normPlan = plan === "VIP" ? "VIP" : plan === "PRO" ? "PRO" : "FREE";
+
+    return { ok, type: normType, plan: normPlan, raw: obj };
+  }
+
+  // fallback legacy (qualquer valor != vazio)
+  return { ok: true, type: "user", plan: "FREE" };
+}
+
 function MoreDotsIcon() {
   return (
     <svg
@@ -45,6 +94,13 @@ export default function AppShell({
   isPremium: _isPremium = false,
 }) {
   const [moreOpen, setMoreOpen] = useState(false);
+
+  // ✅ sessão (guest/user/plan)
+  const session = useMemo(() => readSession(), []);
+  const isGuest = !!session?.ok && session?.type === "guest";
+  const plan = String(session?.plan || "FREE").toUpperCase();
+  const isPro = plan === "PRO" || plan === "VIP";
+  const isVip = plan === "VIP";
 
   const ui = useMemo(() => {
     const BORDER = "rgba(255,255,255,0.12)";
@@ -106,18 +162,20 @@ export default function AppShell({
 
         .pp_brand{
           border: 1px solid var(--pp_border);
-          border-radius: 12px; /* 🔻 antes 16 */
+          border-radius: 12px;
           background: rgba(0,0,0,0.45);
           padding: 10px;
           display: grid;
           place-items: center;
           box-shadow: 0 12px 30px rgba(0,0,0,0.55);
+          position: relative;
+          overflow: hidden;
         }
 
         .pp_brandDot{
           width: 44px;
           height: 44px;
-          border-radius: 12px; /* 🔻 antes 16 */
+          border-radius: 12px;
           border: 1px solid var(--pp_borderStrong);
           background: rgba(0,0,0,0.62);
           display: grid;
@@ -125,9 +183,28 @@ export default function AppShell({
           box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
         }
 
+        .pp_planPill{
+          margin-top: 8px;
+          border-radius: 999px;
+          border: 1px solid rgba(255,255,255,0.14);
+          background: rgba(0,0,0,0.40);
+          padding: 5px 8px;
+          font-size: 10px;
+          font-weight: 1000;
+          letter-spacing: 0.35px;
+          color: rgba(255,255,255,0.82);
+          text-transform: uppercase;
+        }
+
+        .pp_planPill.isGold{
+          border-color: rgba(201,168,62,0.38);
+          background: rgba(201,168,62,0.14);
+          color: rgba(201,168,62,0.98);
+        }
+
         .pp_nav{
           border: 1px solid var(--pp_border);
-          border-radius: 12px; /* 🔻 antes 16 */
+          border-radius: 12px;
           background: rgba(0,0,0,0.38);
           padding: 10px;
 
@@ -142,7 +219,7 @@ export default function AppShell({
 
         .pp_footer{
           border: 1px solid var(--pp_border);
-          border-radius: 12px; /* 🔻 antes 16 */
+          border-radius: 12px;
           background: rgba(0,0,0,0.38);
           padding: 10px;
           display: grid;
@@ -157,7 +234,7 @@ export default function AppShell({
 
         .pp_nav_item{
           height: 46px;
-          border-radius: 10px; /* 🔻 antes 14 */
+          border-radius: 10px;
           border: 1px solid var(--pp_border);
           background: rgba(0,0,0,0.20);
           display: grid;
@@ -210,7 +287,7 @@ export default function AppShell({
             height: calc(var(--pp_bottom_h) + env(safe-area-inset-bottom, 0px));
             border-right: none;
             border-top: 1px solid var(--pp_border);
-            border-radius: 14px 14px 0 0; /* 🔻 antes 18 */
+            border-radius: 14px 14px 0 0;
 
             padding: 10px 10px calc(12px + env(safe-area-inset-bottom, 0px));
 
@@ -222,7 +299,7 @@ export default function AppShell({
           .pp_footer{ display: none; }
 
           .pp_nav{
-            border-radius: 12px; /* 🔻 antes 16 */
+            border-radius: 12px;
             padding: 8px;
 
             display: grid;
@@ -235,7 +312,7 @@ export default function AppShell({
           .pp_nav_item{
             width: 100%;
             height: 52px;
-            border-radius: 12px; /* 🔻 antes 16 */
+            border-radius: 12px;
           }
 
           .pp_activePip{
@@ -265,8 +342,8 @@ export default function AppShell({
         }
 
         .pp_moreSheet{
-          border-top-left-radius: 14px;  /* 🔻 antes 18 */
-          border-top-right-radius: 14px; /* 🔻 antes 18 */
+          border-top-left-radius: 14px;
+          border-top-right-radius: 14px;
           border: 1px solid rgba(255,255,255,0.10);
           border-bottom: none;
           background:
@@ -301,7 +378,7 @@ export default function AppShell({
         }
 
         .pp_moreBtn{
-          border-radius: 12px; /* 🔻 antes 14 */
+          border-radius: 12px;
           border: 1px solid rgba(255,255,255,0.10);
           background: rgba(0,0,0,0.35);
           padding: 10px 10px;
@@ -327,7 +404,7 @@ export default function AppShell({
         .pp_moreBtn .ic{
           width: 34px;
           height: 34px;
-          border-radius: 12px; /* 🔻 antes 14 */
+          border-radius: 12px;
           border: 1px solid rgba(201,168,62,0.22);
           background: rgba(0,0,0,0.35);
           display: grid;
@@ -342,14 +419,18 @@ export default function AppShell({
     };
   }, []);
 
+  // ✅ nomes dinâmicos (preview)
+  const accountTitle = isGuest ? "Entrar / Minha Conta" : "Minha Conta";
+  const logoutTitle = isGuest ? "Sair do Preview" : "Sair";
+
   const menuDesktop = [
-    { key: ROUTES.ACCOUNT, title: "Minha Conta / Login", icon: "user" },
+    { key: ROUTES.ACCOUNT, title: accountTitle, icon: "user" },
     { key: ROUTES.RESULTS, title: "Resultados", icon: "calendar" },
     { key: ROUTES.TOP3, title: "Top 3", icon: "trophy" },
     { key: ROUTES.LATE, title: "Atrasados", icon: "clock" },
     { key: ROUTES.SEARCH, title: "Busca / Lupa", icon: "search" },
     { key: ROUTES.CENTENAS, title: "Centenas (40)", icon: "hash" },
-    { key: ROUTES.PAYMENTS, title: "Pagamentos", icon: "card" },
+    { key: ROUTES.PAYMENTS, title: "Planos / Pagamentos", icon: "card" },
     { key: ROUTES.DOWNLOADS, title: "Baixar Resultados", icon: "download" },
   ];
 
@@ -361,13 +442,19 @@ export default function AppShell({
     { key: "__MORE__", title: "Mais", icon: "__MORE_DOTS__" },
   ];
 
+  // ✅ “Mais” adaptado para guest: empurra Planos e Login como coisas principais
   const menuMore = [
-    { key: ROUTES.ACCOUNT, title: "Minha Conta / Login", icon: "user" },
+    ...(isGuest
+      ? [
+          { key: ROUTES.PAYMENTS, title: "Ver planos (PRO/VIP)", icon: "card" },
+          { key: ROUTES.ACCOUNT, title: "Entrar / Minha Conta", icon: "user" },
+        ]
+      : [{ key: ROUTES.ACCOUNT, title: "Minha Conta", icon: "user" }]),
     { key: ROUTES.TOP3, title: "Top 3", icon: "trophy" },
     { key: ROUTES.LATE, title: "Atrasados", icon: "clock" },
-    { key: ROUTES.PAYMENTS, title: "Pagamentos", icon: "card" },
+    ...(isGuest ? [] : [{ key: ROUTES.PAYMENTS, title: "Pagamentos", icon: "card" }]),
     { key: ROUTES.DOWNLOADS, title: "Baixar Resultados", icon: "download" },
-    { key: "__LOGOUT__", title: "Sair", icon: "logout", danger: true },
+    { key: "__LOGOUT__", title: logoutTitle, icon: "logout", danger: true },
   ];
 
   const handleNavigate = (routeKey) => {
@@ -446,7 +533,9 @@ export default function AppShell({
       >
         <div className="pp_moreSheet" onClick={stop}>
           <div className="pp_moreGrab" aria-hidden="true" />
-          <div className="pp_moreTitle">Mais opções</div>
+          <div className="pp_moreTitle">
+            {isGuest ? "Modo Preview" : "Mais opções"}
+          </div>
 
           <div className="pp_moreGrid">
             {menuMore.map((it) => (
@@ -463,7 +552,11 @@ export default function AppShell({
                 <span style={{ display: "flex", flexDirection: "column" }}>
                   <span className="t">{it.title}</span>
                   <span className="s">
-                    {it.key === "__LOGOUT__" ? "Encerrar sessão" : "Abrir"}
+                    {it.key === "__LOGOUT__"
+                      ? "Encerrar sessão"
+                      : it.key === ROUTES.PAYMENTS
+                      ? "Comparar planos"
+                      : "Abrir"}
                   </span>
                 </span>
               </button>
@@ -474,6 +567,13 @@ export default function AppShell({
     );
   };
 
+  const planLabel = useMemo(() => {
+    if (isGuest) return "PREVIEW";
+    if (isVip) return "VIP";
+    if (isPro) return "PRO";
+    return "FREE";
+  }, [isGuest, isVip, isPro]);
+
   return (
     <div className="pp_shell">
       <style>{ui.styleTag}</style>
@@ -482,6 +582,10 @@ export default function AppShell({
         <div className="pp_brand" title="Palpitaco">
           <div className="pp_brandDot" aria-hidden="true">
             <MiniLogo />
+          </div>
+
+          <div className={`pp_planPill ${planLabel !== "FREE" ? "isGold" : ""}`}>
+            {planLabel}
           </div>
         </div>
 
@@ -528,8 +632,18 @@ export default function AppShell({
             onClick={() => handleNavigate(ROUTES.DASHBOARD)}
           />
 
+          {/* ✅ Guest: sugere planos antes de sair */}
+          {isGuest ? (
+            <NavButton
+              title="Ver planos (PRO/VIP)"
+              icon="card"
+              isActive={false}
+              onClick={() => handleNavigate(ROUTES.PAYMENTS)}
+            />
+          ) : null}
+
           <NavButton
-            title="Sair"
+            title={logoutTitle}
             icon="logout"
             isActive={false}
             onClick={() => onLogout?.()}

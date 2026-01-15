@@ -22,8 +22,6 @@ import CentenasMod from "./pages/Centenas/Centenas.jsx";
 // ✅ AppShell
 import AppShellMod from "./pages/Dashboard/components/Sidebar/AppShell";
 
-import LoginVisualMod from "./pages/Account/LoginVisual";
-
 // ✅ Firebase (Admin real)
 import { auth, db } from "./services/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
@@ -72,22 +70,37 @@ function safeRemoveLS(key) {
   } catch {}
 }
 
-function hasActiveSession() {
-  const raw = safeReadLS(ACCOUNT_SESSION_KEY);
-  if (!raw) return false;
-
-  const s = String(raw).trim();
-  if (!s) return false;
-
-  if (s.startsWith("{")) {
-    try {
-      const obj = JSON.parse(s);
-      return !!(obj && (obj.ts || obj.loginId || obj.active));
-    } catch {
-      return true;
-    }
+function safeParseJson(raw) {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
   }
-  return true;
+}
+
+/** ✅ Lê o objeto de sessão (se existir) */
+function loadSessionObj() {
+  const raw = safeReadLS(ACCOUNT_SESSION_KEY);
+  if (!raw) return null;
+  const s = String(raw || "").trim();
+  if (!s) return null;
+  if (!s.startsWith("{")) return null;
+  const obj = safeParseJson(s);
+  return obj && typeof obj === "object" ? obj : null;
+}
+
+function hasActiveSession() {
+  const obj = loadSessionObj();
+  return !!(obj && obj.ok === true);
+}
+
+/** ✅ Detecção de guest (entrar sem login) */
+function isGuestSession(sess) {
+  const s = sess || loadSessionObj();
+  if (!s || !s.ok) return false;
+  const t = String(s.loginType || "").toLowerCase();
+  const id = String(s.loginId || "").toLowerCase();
+  return t === "guest" || id === "guest" || !!s.skipped === true || String(s.mode || "") === "skip";
 }
 
 function normalizeRoute(saved) {
@@ -107,12 +120,7 @@ function resolveComponent(mod, name) {
 
   if (!isProbablyReactComponent) {
     // eslint-disable-next-line no-console
-    console.error(
-      `[IMPORT INVALID] ${name} veio inválido:`,
-      c,
-      " | import raw:",
-      mod
-    );
+    console.error(`[IMPORT INVALID] ${name} veio inválido:`, c, " | import raw:", mod);
   }
 
   return c;
@@ -131,14 +139,6 @@ function getDefaultDashboardFilters() {
     animal: "Todos",
     posicao: "Todos",
   };
-}
-
-function safeParseJson(raw) {
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
 }
 
 function loadDashboardFilters() {
@@ -208,8 +208,7 @@ class ErrorBoundary extends React.Component {
 
   render() {
     if (this.state.hasError) {
-      const msg =
-        this.state.err?.message || String(this.state.err || "Erro desconhecido");
+      const msg = this.state.err?.message || String(this.state.err || "Erro desconhecido");
       return (
         <div
           style={{
@@ -217,19 +216,14 @@ class ErrorBoundary extends React.Component {
             background: "#050505",
             color: "rgba(255,255,255,0.92)",
             padding: 18,
-            fontFamily:
-              "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
+            fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
           }}
         >
-          <div style={{ fontWeight: 900, marginBottom: 8 }}>
-            Falha ao renderizar a aplicação
-          </div>
-          <div style={{ opacity: 0.85, whiteSpace: "pre-wrap", lineHeight: 1.35 }}>
-            {msg}
-          </div>
+          <div style={{ fontWeight: 900, marginBottom: 8 }}>Falha ao renderizar a aplicação</div>
+          <div style={{ opacity: 0.85, whiteSpace: "pre-wrap", lineHeight: 1.35 }}>{msg}</div>
           <div style={{ marginTop: 12, opacity: 0.7, fontSize: 12 }}>
-            Dica: abra o Console (F12). Se aparecer “[IMPORT INVALID] …”, o import
-            desse componente está errado (default vs named).
+            Dica: abra o Console (F12). Se aparecer “[IMPORT INVALID] …”, o import desse componente
+            está errado (default vs named).
           </div>
         </div>
       );
@@ -251,10 +245,6 @@ export default function App() {
   const Centenas = useMemo(() => resolveComponent(CentenasMod, "Centenas"), []);
 
   const AppShell = useMemo(() => resolveComponent(AppShellMod, "AppShell"), []);
-  const LoginVisual = useMemo(
-    () => resolveComponent(LoginVisualMod, "LoginVisual"),
-    []
-  );
 
   const Admin = useMemo(() => resolveComponent(AdminMod, "Admin"), []);
   const AdminLogin = useMemo(() => resolveComponent(AdminLoginMod, "AdminLogin"), []);
@@ -292,7 +282,6 @@ export default function App() {
       const ok = await isUidAdmin(user.uid);
       if (!alive) return;
 
-      // se não for admin, garante logout
       if (!ok) {
         try {
           await signOut(auth);
@@ -312,12 +301,20 @@ export default function App() {
     };
   }, [adminMode]);
 
+  /* ============================================================
+     ✅ FIX: usuário logou => SEMPRE começa no DASHBOARD.
+     - Ignora palpitaco_screen_v2 = "account" como default pós-login.
+     - "Minha Conta" só via clique no menu.
+  ============================================================ */
   const [screen, setScreen] = useState(() => {
     const sessionOn = hasActiveSession();
     const saved = normalizeRoute(safeReadLS(STORAGE_KEY));
 
     if (!sessionOn) return ROUTES.LOGIN;
-    if (saved && saved !== ROUTES.LOGIN) return saved;
+
+    // ✅ pós-login sempre cai no Dashboard (não reaproveita ACCOUNT)
+    if (saved && saved !== ROUTES.LOGIN && saved !== ROUTES.ACCOUNT) return saved;
+
     return ROUTES.DASHBOARD;
   });
 
@@ -325,20 +322,11 @@ export default function App() {
     safeWriteLS(STORAGE_KEY, screen);
   }, [screen]);
 
-  const [dashboardFilters, setDashboardFilters] = useState(() =>
-    loadDashboardFilters()
-  );
+  const [dashboardFilters, setDashboardFilters] = useState(() => loadDashboardFilters());
 
   useEffect(() => {
     safeWriteLS(DASH_FILTERS_KEY, JSON.stringify(dashboardFilters));
   }, [dashboardFilters]);
-
-  const ensureSession = (payload = {}) => {
-    safeWriteLS(
-      ACCOUNT_SESSION_KEY,
-      JSON.stringify({ active: true, ts: Date.now(), ...payload })
-    );
-  };
 
   const logout = () => {
     safeRemoveLS(STORAGE_KEY);
@@ -346,6 +334,48 @@ export default function App() {
     safeRemoveLS(DASH_FILTERS_KEY);
     setScreen(ROUTES.LOGIN);
   };
+
+  /** ✅ Enquanto estiver no LOGIN, assim que o Account salvar ok:true, vamos para o Dashboard */
+  useEffect(() => {
+    if (adminMode) return;
+    if (screen !== ROUTES.LOGIN) return;
+
+    let timer = null;
+
+    const goDashboard = () => {
+      setScreen(ROUTES.DASHBOARD);
+      // ✅ garante que não “volta” para account por storage antigo
+      safeWriteLS(STORAGE_KEY, ROUTES.DASHBOARD);
+    };
+
+    const tick = () => {
+      const sess = loadSessionObj();
+      if (sess?.ok === true) {
+        // ✅ entrou (login ou guest) -> Dashboard
+        goDashboard();
+      }
+    };
+
+    // checa imediatamente
+    tick();
+
+    // e mantém uma checagem leve enquanto estiver na tela de login
+    timer = setInterval(tick, 450);
+
+    // reforço: quando volta o foco / muda visibilidade
+    const onFocus = () => tick();
+    const onVis = () => tick();
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVis);
+
+    return () => {
+      try {
+        if (timer) clearInterval(timer);
+      } catch {}
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [screen, adminMode]);
 
   const PageRouter = ({ screen: s }) => {
     switch (s) {
@@ -366,15 +396,12 @@ export default function App() {
       case ROUTES.DOWNLOADS:
         return <Downloads />;
       default:
-        return (
-          <Dashboard filters={dashboardFilters} setFilters={setDashboardFilters} />
-        );
+        return <Dashboard filters={dashboardFilters} setFilters={setDashboardFilters} />;
     }
   };
 
   /* =========================
      ✅ Admin Router (isolado)
-     - AdminLogin (Firebase) -> Admin
   ========================= */
 
   if (adminMode) {
@@ -389,8 +416,7 @@ export default function App() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontFamily:
-                "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
+              fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
               padding: 18,
             }}
           >
@@ -421,7 +447,6 @@ export default function App() {
               } catch {}
             }}
             onAuthed={() => {
-              // ✅ AdminLogin já validou Auth + role
               setAdminAuthed(true);
             }}
           />
@@ -432,19 +457,16 @@ export default function App() {
 
   /* =========================
      App normal
+     ✅ LOGIN agora é o Account (ele renderiza LoginVisual internamente)
   ========================= */
 
   if (screen === ROUTES.LOGIN) {
     return (
       <ErrorBoundary>
-        <LoginVisual
-          onEnter={({ loginId }) => {
-            ensureSession({ loginId });
-            setScreen(ROUTES.DASHBOARD);
-          }}
-          onSkip={() => {
-            ensureSession({ loginId: "" });
-            setScreen(ROUTES.DASHBOARD);
+        <Account
+          onClose={() => {
+            // se o usuário clicar SAIR/FECHAR na tela de login, mantém no login
+            setScreen(ROUTES.LOGIN);
           }}
         />
       </ErrorBoundary>

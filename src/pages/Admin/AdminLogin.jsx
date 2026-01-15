@@ -1,5 +1,5 @@
 // src/pages/Admin/AdminLogin.jsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   signInWithEmailAndPassword,
   signOut,
@@ -7,7 +7,7 @@ import {
 } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "../../services/firebase";
-import { ADMINS_COLLECTION } from "./adminKeys";
+import { ADMINS_COLLECTION as ADMINS_COLLECTION_RAW } from "./adminKeys";
 
 const GOLD = "rgba(202,166,75,1)";
 const GOLD_SOFT = "rgba(202,166,75,0.16)";
@@ -18,6 +18,28 @@ const BORDER = "rgba(202,166,75,0.35)";
 const SHADOW = "0 18px 45px rgba(0,0,0,0.55)";
 
 const LS_ADMIN_EMAIL = "pp_admin_email_v1";
+const LS_ADMIN_LAST_UID = "pp_admin_uid_v1";
+
+// ✅ não assume que adminKeys sempre vem limpo
+const ADMINS_COLLECTION = String(ADMINS_COLLECTION_RAW || "").trim() || "admins";
+
+/* =========================
+   Helpers
+========================= */
+
+function safeStr(v) {
+  return String(v ?? "").trim();
+}
+
+function normEmail(v) {
+  return safeStr(v).toLowerCase();
+}
+
+function isEmailLike(v) {
+  const s = String(v ?? "").trim();
+  if (!s) return false;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+}
 
 function humanizeFirebaseAuthError(error) {
   const code = String(error?.code || "");
@@ -79,6 +101,11 @@ function safeWriteLS(key, value) {
     localStorage.setItem(key, value);
   } catch {}
 }
+function safeRemoveLS(key) {
+  try {
+    localStorage.removeItem(key);
+  } catch {}
+}
 
 export default function AdminLogin({ onAuthed, onCancel }) {
   const [email, setEmail] = useState(() => safeReadLS(LS_ADMIN_EMAIL) || "");
@@ -88,27 +115,56 @@ export default function AdminLogin({ onAuthed, onCancel }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
 
+  const lockRef = useRef(false);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  const setSafeErr = (text) => {
+    if (!mountedRef.current) return;
+    setErr(text);
+  };
+  const setSafeBusy = (v) => {
+    if (!mountedRef.current) return;
+    setBusy(v);
+  };
+
   // ✅ Auto-login: se já estiver logado e for admin, entra direto
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (!user) return;
+
+      // evita corrida: auth change + submit
+      if (lockRef.current) return;
+
       try {
-        setBusy(true);
-        setErr("");
+        setSafeBusy(true);
+        setSafeErr("");
+
+        // força refresh token (pega claims/estado atual)
+        await user.getIdToken(true);
+
         const ok = await isUidAdmin(user.uid);
         if (!ok) {
           await signOut(auth);
-          setErr("Acesso negado: este usuário não é Admin do Palpitaco.");
+          safeRemoveLS(LS_ADMIN_LAST_UID);
+          setSafeErr("Acesso negado: este usuário não é Admin do Palpitaco.");
           return;
         }
+
+        safeWriteLS(LS_ADMIN_LAST_UID, user.uid);
         onAuthed?.({ uid: user.uid, email: user.email || "" });
       } catch (e) {
-        // se der ruim validando, não assume admin
         // eslint-disable-next-line no-console
         console.error("[AdminLogin] auto-check admin error:", e?.__raw || e);
-        setErr(String(e?.message || "Falha ao validar Admin."));
+        setSafeErr(String(e?.message || "Falha ao validar Admin."));
       } finally {
-        setBusy(false);
+        setSafeBusy(false);
       }
     });
 
@@ -121,19 +177,24 @@ export default function AdminLogin({ onAuthed, onCancel }) {
   }, []);
 
   const canSubmit = useMemo(() => {
-    const e = String(email || "").trim();
-    const p = String(pass || "").trim();
-    return e.includes("@") && p.length >= 6 && !busy;
+    const e = normEmail(email);
+    const p = safeStr(pass);
+    return isEmailLike(e) && p.length >= 6 && !busy;
   }, [email, pass, busy]);
 
   const submit = async (e) => {
     e?.preventDefault?.();
     if (busy) return;
+
+    const eMail = normEmail(email);
+    const pWord = safeStr(pass);
+
+    if (!isEmailLike(eMail)) return setErr("Informe um e-mail válido.");
+    if (pWord.length < 6) return setErr("Senha deve ter pelo menos 6 caracteres.");
+
     setErr("");
     setBusy(true);
-
-    const eMail = String(email || "").trim();
-    const pWord = String(pass || "").trim();
+    lockRef.current = true;
 
     try {
       const cred = await signInWithEmailAndPassword(auth, eMail, pWord);
@@ -142,20 +203,28 @@ export default function AdminLogin({ onAuthed, onCancel }) {
       safeWriteLS(LS_ADMIN_EMAIL, eMail);
 
       const uid = cred?.user?.uid;
+      if (!uid) throw new Error("Login incompleto (UID ausente).");
+
+      // força refresh token (importante quando troca de usuário)
+      await cred.user.getIdToken(true);
+
       const ok = await isUidAdmin(uid);
 
       if (!ok) {
         await signOut(auth);
+        safeRemoveLS(LS_ADMIN_LAST_UID);
         setErr("Acesso negado: este usuário não é Admin do Palpitaco.");
         return;
       }
 
+      safeWriteLS(LS_ADMIN_LAST_UID, uid);
       onAuthed?.({ uid, email: cred?.user?.email || eMail });
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error("[AdminLogin] auth error:", error?.code, error);
       setErr(humanizeFirebaseAuthError(error));
     } finally {
+      lockRef.current = false;
       setBusy(false);
     }
   };
@@ -202,6 +271,7 @@ export default function AdminLogin({ onAuthed, onCancel }) {
               placeholder="seuemail@dominio.com"
               autoComplete="username"
               disabled={busy}
+              inputMode="email"
               style={{
                 height: 44,
                 borderRadius: 12,
@@ -274,6 +344,11 @@ export default function AdminLogin({ onAuthed, onCancel }) {
               }}
             >
               {err}
+              {String(err || "").toLowerCase().includes("rules") ? (
+                <div style={{ marginTop: 6, color: WHITE_70, fontSize: 12 }}>
+                  Se quiser validar: o doc deve existir em <b>/{ADMINS_COLLECTION}/&lt;UID&gt;</b> e permitir leitura pelo próprio UID.
+                </div>
+              ) : null}
             </div>
           ) : null}
 
@@ -317,7 +392,7 @@ export default function AdminLogin({ onAuthed, onCancel }) {
           </div>
 
           <div style={{ marginTop: 8, fontSize: 12, color: "rgba(255,255,255,0.55)" }}>
-            Dica: no Firestore, crie o doc <b>/admins/&lt;UID&gt;</b> com <b>{`{ active: true }`}</b>.
+            Dica: no Firestore, crie o doc <b>/{ADMINS_COLLECTION}/&lt;UID&gt;</b> com <b>{`{ active: true }`}</b>.
           </div>
         </form>
       </div>
