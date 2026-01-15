@@ -1,40 +1,25 @@
 // src/pages/Account/LoginVisual.jsx
-import React, { useMemo, useState, useEffect } from "react";
-
-// ✅ Firebase Auth
+import React, { useMemo, useState, useEffect, useCallback } from "react";
 import { auth } from "../../services/firebase";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  signOut,
 } from "firebase/auth";
 
 /**
- * LoginVisual (premium) — AGORA COM AUTH REAL
- * - Login/Cadastro: Firebase Auth (email)
- * - Telefone: por enquanto NÃO suporta Auth (apenas valida formato; exige email).
- * - NÃO escreve no Firestore (isso fica no Account.jsx / Admin)
+ * LoginVisual (premium) — Firebase Auth REAL (email/senha)
+ * - Enter funciona (form submit)
+ * - Cadastro e login reais
+ * - Retorna { uid, email, createdAtIso } para o Account salvar sessão
+ *
+ * Obs: login por telefone NÃO está habilitado aqui (Firebase exige flow próprio).
+ * Telefone será obrigatório no perfil (Minha Conta), não no login.
  */
 
 function isEmailLike(v) {
   const s = String(v ?? "").trim();
   if (!s) return false;
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
-}
-
-function isPhoneLikeBR(v) {
-  const digits = String(v ?? "").replace(/\D+/g, "");
-  return digits.length === 10 || digits.length === 11;
-}
-
-function detectLoginType(id) {
-  if (isEmailLike(id)) return "email";
-  if (isPhoneLikeBR(id)) return "phone";
-  return "unknown";
-}
-
-function normalizePhoneDigits(v) {
-  return String(v ?? "").replace(/\D+/g, "");
 }
 
 export default function LoginVisual({ onEnter, onSkip }) {
@@ -213,7 +198,7 @@ export default function LoginVisual({ onEnter, onSkip }) {
     };
   }, []);
 
-  const [loginId, setLoginId] = useState("");
+  const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
 
   const [busy, setBusy] = useState(false);
@@ -227,74 +212,92 @@ export default function LoginVisual({ onEnter, onSkip }) {
   useEffect(() => {
     setMsg("");
     setErr("");
-  }, [loginId, pass]);
+  }, [email, pass]);
 
   const canSubmit = useMemo(() => {
-    const id = String(loginId || "").trim();
+    const e = String(email || "").trim();
     const p = String(pass || "").trim();
     if (busy) return false;
-    if (!id) return false;
-    if (!isEmailLike(id) && !isPhoneLikeBR(id)) return false;
+    if (!isEmailLike(e)) return false;
     if (p.length < 6) return false;
     return true;
-  }, [loginId, pass, busy]);
+  }, [email, pass, busy]);
 
-  function humanAuthError(e) {
-    const code = String(e?.code || "");
-    if (code.includes("auth/invalid-email")) return "E-mail inválido.";
-    if (code.includes("auth/user-not-found")) return "Conta não encontrada. Verifique o e-mail.";
-    if (code.includes("auth/wrong-password")) return "Senha incorreta.";
-    if (code.includes("auth/invalid-credential")) return "Credenciais inválidas.";
-    if (code.includes("auth/email-already-in-use")) return "Este e-mail já está cadastrado.";
-    if (code.includes("auth/weak-password")) return "Senha fraca. Use pelo menos 6 caracteres.";
-    if (code.includes("auth/too-many-requests"))
-      return "Muitas tentativas. Aguarde um pouco e tente novamente.";
-    return e?.message || "Falha ao autenticar.";
-  }
+  const finishEnter = useCallback(
+    (user, mode) => {
+      const uid = user?.uid || "";
+      const userEmail = String(user?.email || "").trim().toLowerCase();
+      const createdAt = user?.metadata?.creationTime || null;
+      const createdAtIso = createdAt ? new Date(createdAt).toISOString() : null;
 
-  async function authAction(mode) {
+      onEnter?.({
+        uid,
+        email: userEmail,
+        loginId: userEmail, // compat
+        loginType: "email",
+        mode,
+        createdAtIso,
+      });
+    },
+    [onEnter]
+  );
+
+  async function doLogin(e) {
+    e?.preventDefault?.();
     setErr("");
     setMsg("");
 
-    if (!canSubmit) {
+    const eMail = String(email || "").trim().toLowerCase();
+    const p = String(pass || "").trim();
+
+    if (!isEmailLike(eMail) || p.length < 6) {
       setErr("Informe um e-mail válido e senha (mínimo 6).");
       return;
     }
 
-    const idRaw = String(loginId || "").trim();
-    const type = detectLoginType(idRaw);
+    setBusy(true);
+    try {
+      const cred = await signInWithEmailAndPassword(auth, eMail, p);
+      setMsg("Acesso liberado.");
+      finishEnter(cred.user, "login");
+    } catch (er) {
+      const code = String(er?.code || "");
+      if (code.includes("auth/invalid-credential") || code.includes("auth/wrong-password")) {
+        setErr("E-mail ou senha inválidos.");
+      } else if (code.includes("auth/user-not-found")) {
+        setErr("Usuário não encontrado. Clique em CADASTRAR.");
+      } else {
+        setErr(er?.message || "Falha ao autenticar.");
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
 
-    // ✅ Telefone (BR) ainda é “visual” (sem Auth), pois exigiria Phone Auth + reCAPTCHA
-    if (type === "phone") {
-      setErr("Login por telefone ainda não está habilitado. Use e-mail.");
+  async function doSignup() {
+    setErr("");
+    setMsg("");
+
+    const eMail = String(email || "").trim().toLowerCase();
+    const p = String(pass || "").trim();
+
+    if (!isEmailLike(eMail) || p.length < 6) {
+      setErr("Informe um e-mail válido e senha (mínimo 6).");
       return;
     }
 
-    const email = idRaw.toLowerCase();
-    const password = String(pass || "");
-
     setBusy(true);
     try {
-      // evita sessão antiga “vazar” (principalmente se trocar usuário)
-      try {
-        await signOut(auth);
-      } catch {}
-
-      if (mode === "signup") {
-        await createUserWithEmailAndPassword(auth, email, password);
-        setMsg("Cadastro criado com sucesso. Você já pode acessar.");
+      const cred = await createUserWithEmailAndPassword(auth, eMail, p);
+      setMsg("Cadastro criado com sucesso. Você já pode acessar.");
+      finishEnter(cred.user, "signup");
+    } catch (er) {
+      const code = String(er?.code || "");
+      if (code.includes("auth/email-already-in-use")) {
+        setErr("Este e-mail já está cadastrado. Clique em ENTRAR.");
       } else {
-        await signInWithEmailAndPassword(auth, email, password);
-        setMsg("Acesso liberado.");
+        setErr(er?.message || "Falha ao cadastrar.");
       }
-
-      onEnter?.({
-        loginId: email,
-        loginType: "email",
-        mode,
-      });
-    } catch (e) {
-      setErr(humanAuthError(e));
     } finally {
       setBusy(false);
     }
@@ -324,79 +327,75 @@ export default function LoginVisual({ onEnter, onSkip }) {
           </div>
         </div>
 
-        <div style={ui.body}>
-          <div style={ui.field}>
-            <div style={ui.label}>E-MAIL OU TELEFONE</div>
-            <input
-              style={ui.input}
-              value={loginId}
-              onChange={(e) => setLoginId(e.target.value)}
-              placeholder="Digite seu e-mail (telefone ainda não habilitado)"
-              inputMode="text"
-              autoComplete="username"
-              disabled={busy}
-            />
+        {/* ✅ ENTER funciona aqui */}
+        <form onSubmit={doLogin}>
+          <div style={ui.body}>
+            <div style={ui.field}>
+              <div style={ui.label}>E-MAIL</div>
+              <input
+                style={ui.input}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="seuemail@dominio.com"
+                inputMode="email"
+                autoComplete="username"
+                disabled={busy}
+              />
+            </div>
+
+            <div style={ui.field}>
+              <div style={ui.label}>Senha</div>
+              <input
+                style={ui.input}
+                value={pass}
+                onChange={(e) => setPass(e.target.value)}
+                placeholder="Digite sua senha"
+                type="password"
+                autoComplete="current-password"
+                disabled={busy}
+              />
+            </div>
+
+            <div style={ui.hint}>Se você ainda não tem conta, se CADASTRE.</div>
+
+            {err ? <div style={ui.msgErr}>{err}</div> : null}
+            {msg ? <div style={ui.msgOk}>{msg}</div> : null}
           </div>
 
-          <div style={ui.field}>
-            <div style={ui.label}>Senha</div>
-            <input
-              style={ui.input}
-              value={pass}
-              onChange={(e) => setPass(e.target.value)}
-              placeholder="Digite sua senha"
-              type="password"
-              autoComplete="current-password"
-              disabled={busy}
-            />
+          <div style={ui.actions}>
+            <div style={ui.actionsTop}>
+              <button
+                type="submit"
+                style={ui.btn("primary", busy || !canSubmit)}
+                disabled={busy || !canSubmit}
+                title={!canSubmit ? "E-mail válido + senha (mínimo 6)" : "ENTRAR"}
+              >
+                {busy ? "PROCESSANDO..." : "ENTRAR"}
+              </button>
+
+              <button
+                type="button"
+                style={ui.btn("secondary", busy || !canSubmit)}
+                onClick={doSignup}
+                disabled={busy || !canSubmit}
+                title={!canSubmit ? "E-mail válido + senha (mínimo 6)" : "CADASTRAR"}
+              >
+                {busy ? "PROCESSANDO..." : "CADASTRAR"}
+              </button>
+            </div>
+
+            <div style={ui.actionsBottom}>
+              <button
+                type="button"
+                style={ui.btn("secondary", busy)}
+                onClick={() => onSkip?.()}
+                disabled={busy}
+              >
+                ENTRAR SEM LOGIN
+              </button>
+            </div>
           </div>
-
-          <div style={ui.hint}>Se você ainda não tem conta, se CADASTRE.</div>
-
-          {err ? <div style={ui.msgErr}>{err}</div> : null}
-          {msg ? <div style={ui.msgOk}>{msg}</div> : null}
-        </div>
-
-        <div style={ui.actions}>
-          <div style={ui.actionsTop}>
-            <button
-              type="button"
-              style={ui.btn("primary", busy || !canSubmit)}
-              onClick={() => authAction("login")}
-              disabled={busy || !canSubmit}
-              title={!canSubmit ? "E-mail válido + senha (mínimo 6)" : "ENTRAR"}
-            >
-              {busy ? "PROCESSANDO..." : "ENTRAR"}
-            </button>
-
-            <button
-              type="button"
-              style={ui.btn("secondary", busy || !canSubmit)}
-              onClick={() => authAction("signup")}
-              disabled={busy || !canSubmit}
-              title={!canSubmit ? "E-mail válido + senha (mínimo 6)" : "CADASTRAR"}
-            >
-              {busy ? "PROCESSANDO..." : "CADASTRAR"}
-            </button>
-          </div>
-
-          <div style={ui.actionsBottom}>
-            <button
-              type="button"
-              style={ui.btn("secondary", busy)}
-              onClick={() =>
-                onSkip?.({
-                  loginId: "guest",
-                  loginType: "guest",
-                  mode: "skip",
-                })
-              }
-              disabled={busy}
-            >
-              ENTRAR SEM LOGIN
-            </button>
-          </div>
-        </div>
+        </form>
       </div>
     </div>
   );
