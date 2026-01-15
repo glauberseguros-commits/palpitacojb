@@ -16,24 +16,20 @@ import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage
  * - Guest só acontece quando o usuário clica "Entrar sem login".
  *
  * ✅ Perfil persistente:
- * - Firestore: users/{uid} -> { name, phoneDigits, photoUrl, updatedAt }
+ * - Firestore: users/{uid}
  *
- * ✅ Foto SEM limite (usuário pode escolher qualquer resolução):
- * - App converte/otimiza (client-side) e envia ao Storage
- * - Storage: users/{uid}/avatar/{timestamp}.jpg
- * - Firestore salva só a URL
+ * ✅ Trial 7 dias:
+ * - users/{uid}: trialStartAt, trialEndAt, trialActive
  *
- * ✅ Guest:
- * - Foto é convertida/otimizada e salva como dataURL no localStorage (persistente)
- *
- * ✅ Telefone com máscara:
- * - (xx) x xxxx-xxxx (11 dígitos) ou (xx) xxxx-xxxx (10 dígitos)
- *
- * ✅ Botões:
- * - SALVAR / REMOVER FOTO / EXCLUIR CONTA
+ * ✅ Correção de bug:
+ * - Se user = null, antes NÃO resetava isGuest => podia ficar preso em "Minha Conta".
+ * - Agora guest é explícito e persistente: pp_guest_active_v1
  */
 
 const LS_GUEST_KEY = "pp_guest_profile_v1";
+const LS_GUEST_ACTIVE_KEY = "pp_guest_active_v1";
+
+const TRIAL_DAYS = 7;
 
 /* =========================
    Helpers
@@ -114,6 +110,24 @@ function blobToDataURL(blob) {
   });
 }
 
+function isoPlusDays(iso, days) {
+  const d = safeISO(iso) || new Date();
+  const out = new Date(d.getTime() + Number(days || 0) * 86400000);
+  return out.toISOString();
+}
+
+function diffDaysCeil(fromIso, toIso) {
+  const a = safeISO(fromIso);
+  const b = safeISO(toIso);
+  if (!a || !b) return 0;
+  const ms = b.getTime() - a.getTime();
+  return Math.ceil(ms / 86400000);
+}
+
+function safeBool(v) {
+  return v === true;
+}
+
 /**
  * Resize/compress image client-side (mobile-friendly)
  * - maxSide: 768 (bom p/ avatar)
@@ -190,8 +204,99 @@ async function resizeImageToJpegBlob(file, { maxSide = 768, quality = 0.82 } = {
 }
 
 /* =========================
-   Firestore profile
+   Firestore profile + Trial
 ========================= */
+
+async function ensureUserDoc(uid, user) {
+  const u = String(uid || "").trim();
+  if (!u) return { ok: false };
+
+  try {
+    const r = doc(db, "users", u);
+    const snap = await getDoc(r);
+
+    // base timestamps
+    const createdAtIso =
+      user?.metadata?.creationTime
+        ? new Date(user.metadata.creationTime).toISOString()
+        : new Date().toISOString();
+
+    if (!snap.exists()) {
+      const trialStartAt = createdAtIso;
+      const trialEndAt = isoPlusDays(trialStartAt, TRIAL_DAYS);
+      await setDoc(
+        r,
+        {
+          uid: u,
+          email: String(user?.email || "").trim().toLowerCase(),
+          createdAt: createdAtIso,
+          updatedAt: new Date().toISOString(),
+
+          // profile
+          name: String(user?.displayName || "").trim(),
+          phoneDigits: "",
+          photoUrl: "",
+
+          // trial
+          trialStartAt,
+          trialEndAt,
+          trialActive: true,
+        },
+        { merge: true }
+      );
+      return { ok: true, created: true };
+    }
+
+    // existe: garantir campos de trial (se faltarem)
+    const data = snap.data() || {};
+    const trialStartAt = String(data.trialStartAt || "").trim() || createdAtIso;
+    const trialEndAt =
+      String(data.trialEndAt || "").trim() || isoPlusDays(trialStartAt, TRIAL_DAYS);
+
+    const nowIso = new Date().toISOString();
+    const active = safeISO(trialEndAt) ? safeISO(nowIso) < safeISO(trialEndAt) : false;
+
+    const patch = {};
+    let needPatch = false;
+
+    if (!String(data.createdAt || "").trim()) {
+      patch.createdAt = createdAtIso;
+      needPatch = true;
+    }
+    if (!String(data.email || "").trim() && user?.email) {
+      patch.email = String(user.email).trim().toLowerCase();
+      needPatch = true;
+    }
+    if (!String(data.trialStartAt || "").trim()) {
+      patch.trialStartAt = trialStartAt;
+      needPatch = true;
+    }
+    if (!String(data.trialEndAt || "").trim()) {
+      patch.trialEndAt = trialEndAt;
+      needPatch = true;
+    }
+    if (data.trialActive == null) {
+      patch.trialActive = active;
+      needPatch = true;
+    } else {
+      // se já existe, mas está inconsistente com endAt, corrigir
+      const cur = safeBool(data.trialActive);
+      if (cur !== active) {
+        patch.trialActive = active;
+        needPatch = true;
+      }
+    }
+
+    if (needPatch) {
+      patch.updatedAt = new Date().toISOString();
+      await setDoc(r, patch, { merge: true });
+    }
+
+    return { ok: true, created: false };
+  } catch {
+    return { ok: false };
+  }
+}
 
 async function loadUserProfile(uid) {
   const u = String(uid || "").trim();
@@ -205,6 +310,11 @@ async function loadUserProfile(uid) {
       name: String(data.name || "").trim(),
       phoneDigits: String(data.phoneDigits || "").trim(),
       photoUrl: String(data.photoUrl || "").trim(),
+
+      // trial
+      trialStartAt: String(data.trialStartAt || "").trim(),
+      trialEndAt: String(data.trialEndAt || "").trim(),
+      trialActive: data.trialActive === true,
     };
   } catch {
     return null;
@@ -241,7 +351,8 @@ function loadGuestProfile() {
     const raw = localStorage.getItem(LS_GUEST_KEY);
     if (!raw) return { name: "", phoneDigits: "", photoUrl: "" };
     const obj = JSON.parse(raw);
-    if (!obj || typeof obj !== "object") return { name: "", phoneDigits: "", photoUrl: "" };
+    if (!obj || typeof obj !== "object")
+      return { name: "", phoneDigits: "", photoUrl: "" };
     return {
       name: String(obj.name || "").trim(),
       phoneDigits: String(obj.phoneDigits || "").trim(),
@@ -272,6 +383,20 @@ function clearGuestProfile() {
   } catch {}
 }
 
+function setGuestActive(v) {
+  try {
+    localStorage.setItem(LS_GUEST_ACTIVE_KEY, v ? "1" : "0");
+  } catch {}
+}
+
+function isGuestActive() {
+  try {
+    return localStorage.getItem(LS_GUEST_ACTIVE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
 /* =========================
    Component
 ========================= */
@@ -285,6 +410,11 @@ export default function Account({ onClose = null }) {
   const [uid, setUid] = useState("");
   const [email, setEmail] = useState("");
   const [createdAtIso, setCreatedAtIso] = useState("");
+
+  // trial info
+  const [trialStartAt, setTrialStartAt] = useState("");
+  const [trialEndAt, setTrialEndAt] = useState("");
+  const [trialActive, setTrialActive] = useState(false);
 
   // profile drafts
   const [nameDraft, setNameDraft] = useState("");
@@ -315,6 +445,22 @@ export default function Account({ onClose = null }) {
     setPhotoPreview("");
   }
 
+  function resetAuthedState() {
+    setUid("");
+    setEmail("");
+    setCreatedAtIso("");
+    setTrialStartAt("");
+    setTrialEndAt("");
+    setTrialActive(false);
+
+    // NÃO limpa guest profile aqui; só desarma guestActive se não estiver em guest explícito
+    setNameDraft("");
+    setPhoneDigitsDraft("");
+    setPhotoUrl("");
+    setPhotoFile(null);
+    clearPreview();
+  }
+
   // auth listener
   useEffect(() => {
     let alive = true;
@@ -326,23 +472,39 @@ export default function Account({ onClose = null }) {
       setErr("");
       setAuthReady(true);
 
-      // Se NÃO tem user, NÃO vira guest automaticamente.
-      // Guest só acontece via handleSkip().
+      // ✅ Se NÃO tem user:
+      // - se guestActive estiver ligado => entra guest
+      // - senão => vai pra LoginVisual
       if (!user?.uid) {
-        setUid("");
-        setEmail("");
-        setCreatedAtIso("");
+        const ga = isGuestActive();
+        if (ga) {
+          setIsGuest(true);
+          const g = loadGuestProfile();
+          setNameDraft(g.name);
+          setPhoneDigitsDraft(normalizePhoneDigits(g.phoneDigits));
+          setPhotoUrl(g.photoUrl);
+          setPhotoFile(null);
+          clearPreview();
+        } else {
+          setIsGuest(false);
+          resetAuthedState();
+        }
         return;
       }
 
       // authed
+      setGuestActive(false);
       setIsGuest(false);
+
       setUid(String(user.uid));
       setEmail(String(user.email || "").trim().toLowerCase());
 
       const created =
         user?.metadata?.creationTime ? new Date(user.metadata.creationTime).toISOString() : "";
       setCreatedAtIso(created);
+
+      // ✅ garante doc + trial
+      await ensureUserDoc(user.uid, user);
 
       const remote = await loadUserProfile(user.uid);
 
@@ -353,6 +515,10 @@ export default function Account({ onClose = null }) {
       setNameDraft(nm);
       setPhoneDigitsDraft(normalizePhoneDigits(ph));
       setPhotoUrl(url);
+
+      setTrialStartAt(String(remote?.trialStartAt || "").trim());
+      setTrialEndAt(String(remote?.trialEndAt || "").trim());
+      setTrialActive(remote?.trialActive === true);
 
       setPhotoFile(null);
       clearPreview();
@@ -376,6 +542,14 @@ export default function Account({ onClose = null }) {
     const ph = normalizePhoneDigits(phoneDigitsDraft);
     return nm.length < 2 || !isPhoneBRValidDigits(ph);
   }, [isLogged, nameDraft, phoneDigitsDraft]);
+
+  const trialDaysLeft = useMemo(() => {
+    if (!isLogged) return 0;
+    if (!trialEndAt) return 0;
+    const nowIso = new Date().toISOString();
+    const left = diffDaysCeil(nowIso, trialEndAt);
+    return Math.max(0, left);
+  }, [isLogged, trialEndAt]);
 
   const gridIsMobile = vw < 980;
 
@@ -551,15 +725,23 @@ export default function Account({ onClose = null }) {
   const handleEnter = () => {
     // LoginVisual faz o signIn/signup real.
     // onAuthStateChanged acima preenche.
+    setGuestActive(false);
+    setIsGuest(false);
   };
 
   const handleSkip = () => {
     setMsg("");
     setErr("");
+
+    setGuestActive(true);
     setIsGuest(true);
+
     setUid("");
     setEmail("");
     setCreatedAtIso("");
+    setTrialStartAt("");
+    setTrialEndAt("");
+    setTrialActive(false);
 
     const g = loadGuestProfile();
     setNameDraft(g.name);
@@ -579,7 +761,6 @@ export default function Account({ onClose = null }) {
     setMsg("");
     if (!file) return;
 
-    // preview local (sem limite)
     try {
       clearPreview();
       const url = URL.createObjectURL(file);
@@ -639,7 +820,6 @@ export default function Account({ onClose = null }) {
 
     try {
       if (isGuest) {
-        // ✅ guest: se escolheu nova foto, converte/otimiza e salva dataURL (persistente)
         let finalPhoto = String(photoUrl || "");
 
         if (photoFile) {
@@ -664,7 +844,6 @@ export default function Account({ onClose = null }) {
         return;
       }
 
-      // 1) upload da foto (se houver)
       const up = await uploadAvatarIfNeeded(u);
       const finalPhotoUrl = String(up.url || "").trim();
 
@@ -673,7 +852,6 @@ export default function Account({ onClose = null }) {
         return;
       }
 
-      // 2) grava no Firestore
       const ok = await saveUserProfile(u, {
         name: nm,
         phoneDigits: ph,
@@ -758,6 +936,7 @@ export default function Account({ onClose = null }) {
     try {
       if (isGuest) {
         clearGuestProfile();
+        setGuestActive(false);
 
         setNameDraft("");
         setPhoneDigitsDraft("");
@@ -793,16 +972,9 @@ export default function Account({ onClose = null }) {
       }
 
       setMsg("Conta excluída.");
-      setUid("");
-      setEmail("");
-      setCreatedAtIso("");
       setIsGuest(false);
-
-      setNameDraft("");
-      setPhoneDigitsDraft("");
-      setPhotoUrl("");
-      setPhotoFile(null);
-      clearPreview();
+      setGuestActive(false);
+      resetAuthedState();
 
       if (typeof onClose === "function") onClose();
     } finally {
@@ -815,11 +987,7 @@ export default function Account({ onClose = null }) {
   ========================= */
 
   if (!authReady) {
-    return (
-      <div style={{ padding: 18, color: "rgba(255,255,255,0.78)" }}>
-        Carregando...
-      </div>
-    );
+    return <div style={{ padding: 18, color: "rgba(255,255,255,0.78)" }}>Carregando...</div>;
   }
 
   if (!isLogged && !isGuest) {
@@ -835,13 +1003,28 @@ export default function Account({ onClose = null }) {
         <div style={ui.title}>Minha Conta</div>
         <div style={ui.subtitle}>
           {isGuest ? "Modo convidado (sem login)." : "Sessão ativa. Você pode sair quando quiser."}
+          {!isGuest ? (
+            <>
+              <br />
+              <span style={{ opacity: 0.92 }}>
+                Trial:{" "}
+                {trialActive
+                  ? `ativo (${trialDaysLeft} dia(s) restante(s))`
+                  : trialEndAt
+                  ? "encerrado"
+                  : "—"}
+              </span>
+            </>
+          ) : null}
         </div>
       </div>
 
       <div style={ui.card}>
         <div style={ui.cardHeader}>
           <div style={ui.cardTitle}>{needsProfile ? "Completar Perfil" : "Perfil"}</div>
-          <div style={ui.badge}>{needsProfile ? "Obrigatório" : isGuest ? "Opcional" : "Sessão ativa"}</div>
+          <div style={ui.badge}>
+            {needsProfile ? "Obrigatório" : isGuest ? "Opcional" : "Sessão ativa"}
+          </div>
         </div>
 
         <div style={ui.avatarRow}>
@@ -936,6 +1119,20 @@ export default function Account({ onClose = null }) {
             <div style={ui.k}>Cadastro</div>
             <div style={ui.v}>{isGuest ? "—" : formatBRDateTime(createdAtIso)}</div>
           </div>
+
+          {!isGuest ? (
+            <>
+              <div style={ui.row}>
+                <div style={ui.k}>Trial início</div>
+                <div style={ui.v}>{trialStartAt ? formatBRDateTime(trialStartAt) : "—"}</div>
+              </div>
+
+              <div style={ui.row}>
+                <div style={ui.k}>Trial fim</div>
+                <div style={ui.v}>{trialEndAt ? formatBRDateTime(trialEndAt) : "—"}</div>
+              </div>
+            </>
+          ) : null}
 
           {needsProfile ? (
             <div style={ui.msgErr}>
