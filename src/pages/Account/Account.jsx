@@ -4,16 +4,16 @@ import LoginVisual from "./LoginVisual";
 
 /**
  * Account (Minha Conta) — Premium
- * - Usa LoginVisual como UI única de login/cadastro
- * - Sessão VISUAL via localStorage (pp_session_v1)
- * - ✅ Nome obrigatório APENAS para login real (email/telefone)
- * - ✅ Guest (sem login): nada obrigatório
- * - ✅ Foto opcional (local: dataURL no localStorage)
- * - ✅ Planos: FREE | PRO | VIP
- *    - VIP: só admin ativa (vip.enabled OU vipUntilMs/vipIndefinite)
- *    - PRO: pagamento ativo (pro.enabled OU proUntilMs) e mínimo 30 dias (regra do negócio)
- *    - FREE: padrão
- * - NÃO escreve no Firestore
+ *
+ * ✅ AGORA:
+ * - LoginVisual faz Auth real (email) e chama onEnter(payload)
+ * - Account grava sessão visual (pp_session_v1) apenas como cache local
+ * - Após login/cadastro (não-guest): chama onLoggedIn() -> App vai para DASHBOARD
+ * - Guest (sem login): também pode ir para DASHBOARD (onLoggedIn)
+ *
+ * IMPORTANTE:
+ * - Este componente continua NÃO escrevendo no Firestore.
+ * - Firestore/UserDoc fica para Admin e/ou um futuro sync.
  */
 
 const LS_KEY = "pp_session_v1";
@@ -95,13 +95,10 @@ function formatBRDateTime(iso) {
 
 /* =========================
    Plan engine (FREE/PRO/VIP)
-   - Compatível com 2 modelos:
-     A) antigo (session.vip/session.pro)
-     B) novo (planBase/proUntilMs/vipUntilMs/vipIndefinite/vipFlags)
 ========================= */
 
 function isStillValidIso(expiresAt) {
-  if (!expiresAt) return true; // null => indeterminado (VIP)
+  if (!expiresAt) return true;
   const d = safeISO(expiresAt);
   if (!d) return false;
   return Date.now() <= d.getTime();
@@ -115,18 +112,12 @@ function isStillValidMs(untilMs) {
 }
 
 function computePlan(session) {
-  // -------------------------
-  // Modelo NOVO (Admin):
-  // vipIndefinite/vipUntilMs + proUntilMs + planBase
-  // -------------------------
   const vipIndefinite = !!session?.vipIndefinite;
-  const vipUntilMs =
-    session?.vipUntilMs != null ? Number(session.vipUntilMs) : null;
+  const vipUntilMs = session?.vipUntilMs != null ? Number(session.vipUntilMs) : null;
   const vipFlags = session?.vipFlags || null;
 
-  const proUntilMs =
-    session?.proUntilMs != null ? Number(session.proUntilMs) : null;
-  const planBase = String(session?.planBase || "").toLowerCase(); // "free" | "pro"
+  const proUntilMs = session?.proUntilMs != null ? Number(session.proUntilMs) : null;
+  const planBase = String(session?.planBase || "").toLowerCase();
 
   const vipActiveNew = vipIndefinite || isStillValidMs(vipUntilMs);
   if (vipActiveNew) {
@@ -134,11 +125,7 @@ function computePlan(session) {
     return {
       tier: "VIP",
       scope,
-      expiresAt: vipIndefinite
-        ? null
-        : vipUntilMs
-        ? new Date(vipUntilMs).toISOString()
-        : null,
+      expiresAt: vipIndefinite ? null : vipUntilMs ? new Date(vipUntilMs).toISOString() : null,
     };
   }
 
@@ -151,10 +138,6 @@ function computePlan(session) {
     };
   }
 
-  // -------------------------
-  // Modelo ANTIGO (visual):
-  // vip.enabled / pro.enabled + expiresAt ISO
-  // -------------------------
   const vip = session?.vip;
   const pro = session?.pro;
 
@@ -170,11 +153,7 @@ function computePlan(session) {
 
   const proActiveOld = !!pro?.enabled && isStillValidIso(pro?.expiresAt);
   if (proActiveOld) {
-    return {
-      tier: "PRO",
-      scope: "FULL",
-      expiresAt: pro?.expiresAt ?? null,
-    };
+    return { tier: "PRO", scope: "FULL", expiresAt: pro?.expiresAt ?? null };
   }
 
   return { tier: "FREE", scope: "FULL", expiresAt: null };
@@ -188,10 +167,7 @@ function planLabel(plan) {
 function planSubLabel(plan) {
   if (!plan?.tier) return "";
   if (plan.tier === "VIP") {
-    if (!plan.expiresAt)
-      return plan.scope === "PARTIAL"
-        ? "VIP (parcial)"
-        : "VIP (indeterminado)";
+    if (!plan.expiresAt) return plan.scope === "PARTIAL" ? "VIP (parcial)" : "VIP (indeterminado)";
     return plan.scope === "PARTIAL"
       ? `VIP (parcial) até ${formatBRDateTime(plan.expiresAt)}`
       : `VIP até ${formatBRDateTime(plan.expiresAt)}`;
@@ -233,11 +209,9 @@ function computeInitials(name) {
    Component
 ========================= */
 
-export default function Account({ onClose = null }) {
+export default function Account({ onClose = null, onLoggedIn = null }) {
   const [session, setSession] = useState(null);
-  const [vw, setVw] = useState(
-    typeof window !== "undefined" ? window.innerWidth : 1200
-  );
+  const [vw, setVw] = useState(typeof window !== "undefined" ? window.innerWidth : 1200);
 
   // perfil (nome/foto)
   const [nameDraft, setNameDraft] = useState("");
@@ -258,7 +232,6 @@ export default function Account({ onClose = null }) {
 
   const isLogged = !!session?.ok;
 
-  // ✅ guest = sem login
   const isGuest = useMemo(() => {
     const t = String(session?.loginType || "").toLowerCase();
     const id = String(session?.loginId || "").toLowerCase();
@@ -272,19 +245,16 @@ export default function Account({ onClose = null }) {
 
   const plan = useMemo(() => computePlan(session), [session]);
 
-  // ✅ Nome obrigatório somente para login real (não-guest)
   const needsProfile = useMemo(() => {
     const nm = String(session?.name || "").trim();
     return isLogged && !isGuest && nm.length < 2;
   }, [isLogged, isGuest, session?.name]);
 
-  // iniciais: usa o rascunho quando o usuário está digitando
   const initials = useMemo(() => {
     const fromDraft = String(nameDraft || "").trim();
     return computeInitials(fromDraft || session?.name);
   }, [nameDraft, session?.name]);
 
-  // acompanha a sessão inteira
   useEffect(() => {
     if (!session?.ok) return;
     setNameDraft(String(session?.name || "").trim());
@@ -322,12 +292,7 @@ export default function Account({ onClose = null }) {
         boxShadow: SHADOW,
       },
       title: { fontSize: 18, fontWeight: 900, letterSpacing: 0.2 },
-      subtitle: {
-        marginTop: 6,
-        fontSize: 12.5,
-        opacity: 0.78,
-        lineHeight: 1.35,
-      },
+      subtitle: { marginTop: 6, fontSize: 12.5, opacity: 0.78, lineHeight: 1.35 },
 
       grid: {
         display: "grid",
@@ -441,16 +406,8 @@ export default function Account({ onClose = null }) {
 
       hint: { fontSize: 12.5, opacity: 0.78, lineHeight: 1.35 },
 
-      msgErr: {
-        fontSize: 12.5,
-        fontWeight: 900,
-        color: "rgba(255,120,120,0.95)",
-      },
-      msgOk: {
-        fontSize: 12.5,
-        fontWeight: 900,
-        color: "rgba(120,255,180,0.95)",
-      },
+      msgErr: { fontSize: 12.5, fontWeight: 900, color: "rgba(255,120,120,0.95)" },
+      msgOk: { fontSize: 12.5, fontWeight: 900, color: "rgba(120,255,180,0.95)" },
 
       avatarRow: {
         display: "grid",
@@ -464,20 +421,14 @@ export default function Account({ onClose = null }) {
         height: 84,
         borderRadius: 18,
         border: "1px solid rgba(201,168,62,0.35)",
-        background:
-          "linear-gradient(180deg, rgba(201,168,62,0.12), rgba(0,0,0,0.35))",
+        background: "linear-gradient(180deg, rgba(201,168,62,0.12), rgba(0,0,0,0.35))",
         boxShadow: "0 14px 34px rgba(0,0,0,0.55)",
         overflow: "hidden",
         display: "grid",
         placeItems: "center",
       },
 
-      avatarImg: {
-        width: "100%",
-        height: "100%",
-        objectFit: "cover",
-        display: "block",
-      },
+      avatarImg: { width: "100%", height: "100%", objectFit: "cover", display: "block" },
 
       avatarFallback: {
         fontWeight: 1000,
@@ -489,19 +440,9 @@ export default function Account({ onClose = null }) {
         placeItems: "center",
       },
 
-      list: {
-        display: "grid",
-        gap: 8,
-        fontSize: 12.5,
-        opacity: 0.85,
-        lineHeight: 1.35,
-      },
+      list: { display: "grid", gap: 8, fontSize: 12.5, opacity: 0.85, lineHeight: 1.35 },
 
-      divider: {
-        height: 1,
-        background: "rgba(255,255,255,0.10)",
-        margin: "6px 0",
-      },
+      divider: { height: 1, background: "rgba(255,255,255,0.10)", margin: "6px 0" },
 
       note: { fontSize: 12.5, opacity: 0.78, lineHeight: 1.45 },
 
@@ -534,15 +475,12 @@ export default function Account({ onClose = null }) {
       mode,
       since: new Date().toISOString(),
 
-      // ✅ Perfil (se vier do LoginVisual, preserva)
       name: payloadName,
       photoUrl: payloadPhoto,
 
-      // ✅ Modelo antigo (visual)
       pro: { enabled: false, expiresAt: null },
       vip: { enabled: false, expiresAt: null, scope: "FULL", features: {} },
 
-      // ✅ Modelo novo (Admin) — compat
       planBase: "free",
       proUntilMs: null,
       vipUntilMs: null,
@@ -552,6 +490,9 @@ export default function Account({ onClose = null }) {
 
     saveSession(next);
     setSession(next);
+
+    // ✅ pós-login: sai da tela Account (Login) e vai para DASHBOARD via App
+    if (typeof onLoggedIn === "function") onLoggedIn(next);
   };
 
   const handleSkip = () => {
@@ -577,6 +518,9 @@ export default function Account({ onClose = null }) {
     };
     saveSession(next);
     setSession(next);
+
+    // ✅ guest também entra no app (Dashboard)
+    if (typeof onLoggedIn === "function") onLoggedIn(next);
   };
 
   const handleLogout = () => {
@@ -593,9 +537,7 @@ export default function Account({ onClose = null }) {
     const maxMB = 1.8;
     const sizeMB = file.size / (1024 * 1024);
     if (sizeMB > maxMB) {
-      setProfileErr(
-        `Foto muito grande (${sizeMB.toFixed(2)} MB). Use até ${maxMB} MB.`
-      );
+      setProfileErr(`Foto muito grande (${sizeMB.toFixed(2)} MB). Use até ${maxMB} MB.`);
       return;
     }
 
@@ -613,24 +555,19 @@ export default function Account({ onClose = null }) {
 
     const nm = String(nameDraft || "").trim();
 
-    // ✅ Se for guest, NUNCA obriga
     if (!isGuest && nm.length < 2) {
       setProfileErr("Informe seu nome (obrigatório).");
       return;
     }
 
-    const next = {
-      ...session,
-      name: nm, // guest pode salvar vazio
-      photoUrl: String(photoDraft || ""),
-    };
+    const next = { ...session, name: nm, photoUrl: String(photoDraft || "") };
 
     saveSession(next);
     setSession(next);
     setProfileMsg("Perfil atualizado.");
   }
 
-  // ✅ hooks já rodaram; pode retornar condicionalmente
+  // ✅ Não logado: mostra Login
   if (!isLogged) {
     return <LoginVisual onEnter={handleEnter} onSkip={handleSkip} />;
   }
@@ -646,18 +583,12 @@ export default function Account({ onClose = null }) {
       </div>
 
       <div style={ui.grid}>
-        {/* ESQUERDA: PERFIL */}
         <div style={ui.card}>
           <div style={ui.cardHeader}>
-            <div style={ui.cardTitle}>
-              {needsProfile ? "Completar Perfil" : "Perfil"}
-            </div>
-            <div style={ui.badge}>
-              {needsProfile ? "Obrigatório" : isGuest ? "Opcional" : "Sessão ativa"}
-            </div>
+            <div style={ui.cardTitle}>{needsProfile ? "Completar Perfil" : "Perfil"}</div>
+            <div style={ui.badge}>{needsProfile ? "Obrigatório" : isGuest ? "Opcional" : "Sessão ativa"}</div>
           </div>
 
-          {/* Foto + Nome */}
           <div style={ui.avatarRow}>
             <div style={ui.avatar} aria-label="Foto do perfil">
               {session?.photoUrl || photoDraft ? (
@@ -676,13 +607,12 @@ export default function Account({ onClose = null }) {
                 <div style={ui.hint}>
                   {isGuest ? (
                     <>
-                      <b>Nome</b> e <b>foto</b> são <b>opcionais</b> (você entrou
-                      sem login). Fica só no seu dispositivo.
+                      <b>Nome</b> e <b>foto</b> são <b>opcionais</b> (você entrou sem login). Fica só no seu
+                      dispositivo.
                     </>
                   ) : (
                     <>
-                      <b>Nome</b> (obrigatório) e <b>foto</b> (opcional). Fica só
-                      no seu dispositivo.
+                      <b>Nome</b> (obrigatório) e <b>foto</b> (opcional). Fica só no seu dispositivo.
                     </>
                   )}
                 </div>
@@ -705,11 +635,7 @@ export default function Account({ onClose = null }) {
                 />
 
                 <div style={ui.actions}>
-                  <button
-                    type="button"
-                    style={ui.primaryBtn}
-                    onClick={handleSaveProfile}
-                  >
+                  <button type="button" style={ui.primaryBtn} onClick={handleSaveProfile}>
                     SALVAR PERFIL
                   </button>
 
@@ -779,7 +705,6 @@ export default function Account({ onClose = null }) {
               </button>
             </div>
 
-            {/* ✅ alerta só quando realmente obrigatório (não-guest) */}
             {needsProfile ? (
               <div style={ui.msgErr}>
                 Nome é obrigatório. Preencha e clique em <b>SALVAR PERFIL</b>.
@@ -788,7 +713,6 @@ export default function Account({ onClose = null }) {
           </div>
         </div>
 
-        {/* DIREITA: PLANO / REGRAS */}
         <div style={ui.card}>
           <div style={ui.cardHeader}>
             <div style={ui.cardTitle}>Plano & Regras</div>
@@ -796,29 +720,17 @@ export default function Account({ onClose = null }) {
           </div>
 
           <div style={ui.list}>
-            <div>
-              • <b>FREE</b>: padrão (sem pagamento).
-            </div>
-            <div>
-              • <b>PRO</b>: pagamento ativo (30 dias+), com expiração.
-            </div>
-            <div>
-              • <b>VIP</b>: somente admin ativa (pode ser parcial/total, com ou sem prazo).
-            </div>
+            <div>• <b>FREE</b>: padrão (sem pagamento).</div>
+            <div>• <b>PRO</b>: pagamento ativo (30 dias+), com expiração.</div>
+            <div>• <b>VIP</b>: somente admin ativa (pode ser parcial/total, com ou sem prazo).</div>
           </div>
 
           <div style={ui.divider} />
 
           <div style={ui.note}>
-            ✅ Implementação atual: tudo é <b>visual</b> e fica no{" "}
-            <span style={ui.mono}>localStorage</span>. <br />
-            Quando você ligar pagamento real, basta preencher{" "}
-            <span style={ui.mono}>proUntilMs</span> (ou{" "}
-            <span style={ui.mono}>session.pro.enabled/expiresAt</span>). <br />
-            Para VIP, o admin define{" "}
-            <span style={ui.mono}>vipUntilMs</span> /{" "}
-            <span style={ui.mono}>vipIndefinite</span> /{" "}
-            <span style={ui.mono}>vipFlags</span>.
+            ✅ Implementação atual: sessão local em <span style={ui.mono}>localStorage</span>. <br />
+            Quando ligar pagamento real, preencha <span style={ui.mono}>proUntilMs</span>. <br />
+            Para VIP, admin define <span style={ui.mono}>vipUntilMs</span> / <span style={ui.mono}>vipIndefinite</span>.
           </div>
         </div>
       </div>
