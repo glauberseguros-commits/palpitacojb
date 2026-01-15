@@ -3,62 +3,31 @@ import React, { useEffect, useMemo, useState } from "react";
 import LoginVisual from "./LoginVisual";
 
 // Firebase
-import { auth, db } from "../../services/firebase";
-import { signOut } from "firebase/auth";
+import { auth, db, storage } from "../../services/firebase";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
+import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 
-const LS_SESSION_KEY = "pp_session_v1";
-const LS_PROFILE_CACHE_KEY = "pp_profile_cache_v1";
+/**
+ * Account (Minha Conta) — REAL (Firebase)
+ * - Auth real (uid/email) manda no acesso
+ * - Perfil persistente:
+ *   Firestore: users/{uid} -> { name, phoneDigits, photoUrl, updatedAt }
+ * - Foto SEM limite via Firebase Storage:
+ *   Storage: users/{uid}/avatar/{timestamp}_{filename}
+ *   Salva URL no Firestore
+ *
+ * Observação:
+ * - Firestore tem limite ~1MB por documento -> NÃO salvar base64 lá.
+ * - Guest (sem login) continua local/visual.
+ */
 
-/* =========================
-   Storage helpers
-========================= */
-function safeParseJSON(s) {
-  try {
-    const obj = JSON.parse(s);
-    return obj && typeof obj === "object" ? obj : null;
-  } catch {
-    return null;
-  }
-}
-function loadSession() {
-  try {
-    const raw = localStorage.getItem(LS_SESSION_KEY);
-    if (!raw) return null;
-    return safeParseJSON(raw);
-  } catch {
-    return null;
-  }
-}
-function saveSession(session) {
-  try {
-    localStorage.setItem(LS_SESSION_KEY, JSON.stringify(session));
-  } catch {}
-}
-function clearSession() {
-  try {
-    localStorage.removeItem(LS_SESSION_KEY);
-  } catch {}
-}
-
-function loadProfileCache() {
-  try {
-    const raw = localStorage.getItem(LS_PROFILE_CACHE_KEY);
-    const obj = safeParseJSON(raw || "");
-    return obj && typeof obj === "object" ? obj : {};
-  } catch {
-    return {};
-  }
-}
-function saveProfileCache(cacheObj) {
-  try {
-    localStorage.setItem(LS_PROFILE_CACHE_KEY, JSON.stringify(cacheObj || {}));
-  } catch {}
-}
+const LS_GUEST_KEY = "pp_guest_profile_v1";
 
 /* =========================
-   Helpers / validators
+   Helpers
 ========================= */
+
 function safeISO(s) {
   const d = new Date(s);
   return Number.isFinite(d.getTime()) ? d : null;
@@ -72,6 +41,7 @@ function formatBRDateTime(iso) {
     return String(iso || "—");
   }
 }
+
 function normalizePhoneBR(v) {
   return String(v ?? "").replace(/\D+/g, "");
 }
@@ -79,6 +49,7 @@ function isPhoneBRValidDigits(d) {
   const s = String(d || "");
   return s.length === 10 || s.length === 11;
 }
+
 function computeInitials(name) {
   const nm = String(name || "").trim();
   if (!nm) return "PP";
@@ -87,23 +58,11 @@ function computeInitials(name) {
   const b = parts.length > 1 ? parts[parts.length - 1]?.[0] || "" : "";
   return (a + b).toUpperCase();
 }
-function fileToDataURL(file) {
-  return new Promise((resolve, reject) => {
-    try {
-      const reader = new FileReader();
-      reader.onerror = () => reject(new Error("Falha ao ler arquivo."));
-      reader.onload = () => resolve(String(reader.result || ""));
-      reader.readAsDataURL(file);
-    } catch (e) {
-      reject(e);
-    }
-  });
-}
 
 /* =========================
    Firestore profile
-   users/{uid} -> { name, phoneDigits, photoUrl, updatedAt }
 ========================= */
+
 async function loadUserProfile(uid) {
   const u = String(uid || "").trim();
   if (!u) return null;
@@ -144,101 +103,135 @@ async function saveUserProfile(uid, payload) {
 }
 
 /* =========================
+   Guest profile (local only)
+========================= */
+
+function loadGuestProfile() {
+  try {
+    const raw = localStorage.getItem(LS_GUEST_KEY);
+    if (!raw) return { name: "", phoneDigits: "", photoUrl: "" };
+    const obj = JSON.parse(raw);
+    if (!obj || typeof obj !== "object") return { name: "", phoneDigits: "", photoUrl: "" };
+    return {
+      name: String(obj.name || "").trim(),
+      phoneDigits: String(obj.phoneDigits || "").trim(),
+      photoUrl: String(obj.photoUrl || "").trim(),
+    };
+  } catch {
+    return { name: "", phoneDigits: "", photoUrl: "" };
+  }
+}
+
+function saveGuestProfile(p) {
+  try {
+    localStorage.setItem(
+      LS_GUEST_KEY,
+      JSON.stringify({
+        name: String(p?.name || "").trim(),
+        phoneDigits: String(p?.phoneDigits || "").trim(),
+        photoUrl: String(p?.photoUrl || "").trim(),
+        updatedAt: new Date().toISOString(),
+      })
+    );
+  } catch {}
+}
+
+/* =========================
    Component
 ========================= */
+
 export default function Account({ onClose = null }) {
-  const [session, setSession] = useState(null);
   const [vw, setVw] = useState(typeof window !== "undefined" ? window.innerWidth : 1200);
 
+  // sessão atual (real)
+  const [isGuest, setIsGuest] = useState(false);
+  const [uid, setUid] = useState("");
+  const [email, setEmail] = useState("");
+  const [createdAtIso, setCreatedAtIso] = useState("");
+
+  // perfil (draft)
   const [nameDraft, setNameDraft] = useState("");
   const [phoneDraft, setPhoneDraft] = useState("");
-  const [photoDraft, setPhotoDraft] = useState("");
+  const [photoUrl, setPhotoUrl] = useState(""); // URL final (storage/download) ou local (guest)
+  const [photoFile, setPhotoFile] = useState(null); // File selecionado (upload no salvar)
+  const [photoPreview, setPhotoPreview] = useState(""); // preview local
 
-  const [busyProfile, setBusyProfile] = useState(false);
-  const [profileMsg, setProfileMsg] = useState("");
-  const [profileErr, setProfileErr] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState("");
+  const [err, setErr] = useState("");
 
+  // responsive
   useEffect(() => {
-    const s = loadSession();
-    if (s?.ok) setSession(s);
-
     const onResize = () => setVw(window.innerWidth);
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  const isLogged = !!session?.ok;
-
-  const isGuest = useMemo(() => {
-    const t = String(session?.loginType || "").toLowerCase();
-    const id = String(session?.loginId || "").toLowerCase();
-    return t === "guest" || id === "guest" || !!session?.skipped;
-  }, [session?.loginType, session?.loginId, session?.skipped]);
-
-  const initials = useMemo(() => computeInitials(nameDraft || session?.name), [nameDraft, session?.name]);
-
-  const needsProfile = useMemo(() => {
-    if (!isLogged) return false;
-    if (isGuest) return false;
-    const nm = String(session?.name || "").trim();
-    const ph = String(session?.phoneDigits || "").trim();
-    return nm.length < 2 || !isPhoneBRValidDigits(ph);
-  }, [isLogged, isGuest, session?.name, session?.phoneDigits]);
-
-  // sempre que sessão muda, hidrata drafts
+  // fonte de verdade: auth
   useEffect(() => {
-    if (!session?.ok) return;
-
-    setNameDraft(String(session?.name || "").trim());
-    setPhoneDraft(String(session?.phoneDigits || "").trim());
-    setPhotoDraft(String(session?.photoUrl || ""));
-    setProfileMsg("");
-    setProfileErr("");
-  }, [session]);
-
-  // ✅ quando logar (uid válido), tenta carregar perfil do Firestore.
-  // fallback: cache local
-  useEffect(() => {
-    if (!session?.ok) return;
-    if (isGuest) return;
-
-    const uid = String(session?.uid || "").trim();
-    if (!uid) return;
-
     let alive = true;
 
-    (async () => {
-      // 1) tenta Firestore
-      const remote = await loadUserProfile(uid);
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (!alive) return;
 
-      // 2) fallback cache local
-      const cache = loadProfileCache();
-      const cached = cache?.[uid] || null;
+      setMsg("");
+      setErr("");
 
-      const picked = remote || cached;
-      if (!alive || !picked) return;
+      if (!user?.uid) {
+        // sem auth => fica em modo guest (LoginVisual pode usar onSkip)
+        setUid("");
+        setEmail("");
+        setCreatedAtIso("");
+        setIsGuest(true);
 
-      const next = {
-        ...session,
-        name: String(picked.name || "").trim(),
-        phoneDigits: String(picked.phoneDigits || "").trim(),
-        photoUrl: String(picked.photoUrl || "").trim(),
-      };
+        const g = loadGuestProfile();
+        setNameDraft(g.name);
+        setPhoneDraft(g.phoneDigits);
+        setPhotoUrl(g.photoUrl);
+        setPhotoFile(null);
+        setPhotoPreview("");
+        return;
+      }
 
-      saveSession(next);
-      setSession(next);
+      // authed
+      setIsGuest(false);
+      setUid(String(user.uid));
+      setEmail(String(user.email || "").trim().toLowerCase());
+      const created = user?.metadata?.creationTime ? new Date(user.metadata.creationTime).toISOString() : "";
+      setCreatedAtIso(created);
 
-      // sincroniza drafts
-      setNameDraft(next.name);
-      setPhoneDraft(next.phoneDigits);
-      setPhotoDraft(next.photoUrl);
-    })();
+      // carrega perfil do Firestore
+      const remote = await loadUserProfile(user.uid);
+
+      const nm = String(remote?.name || "").trim();
+      const ph = String(remote?.phoneDigits || "").trim();
+      const url = String(remote?.photoUrl || "").trim();
+
+      setNameDraft(nm);
+      setPhoneDraft(ph);
+      setPhotoUrl(url);
+      setPhotoFile(null);
+      setPhotoPreview("");
+    });
 
     return () => {
       alive = false;
+      unsub?.();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.ok, session?.uid, isGuest]);
+  }, []);
+
+  const isLogged = useMemo(() => !isGuest && !!uid, [isGuest, uid]);
+
+  const initials = useMemo(() => computeInitials(nameDraft), [nameDraft]);
+
+  const needsProfile = useMemo(() => {
+    if (!isLogged) return false;
+    const nm = String(nameDraft || "").trim();
+    const ph = normalizePhoneBR(phoneDraft);
+    return nm.length < 2 || !isPhoneBRValidDigits(ph);
+  }, [isLogged, nameDraft, phoneDraft]);
+
+  const gridIsMobile = vw < 980;
 
   const ui = useMemo(() => {
     const GOLD = "rgba(201,168,62,0.95)";
@@ -247,7 +240,6 @@ export default function Account({ onClose = null }) {
     const BG = "rgba(0,0,0,0.40)";
     const BG2 = "rgba(0,0,0,0.45)";
     const SHADOW = "0 18px 48px rgba(0,0,0,0.55)";
-    const mobile = vw < 980;
 
     return {
       page: {
@@ -304,7 +296,7 @@ export default function Account({ onClose = null }) {
 
       avatarRow: {
         display: "grid",
-        gridTemplateColumns: mobile ? "1fr" : "84px 1fr",
+        gridTemplateColumns: gridIsMobile ? "1fr" : "84px 1fr",
         gap: 12,
         alignItems: "center",
       },
@@ -378,7 +370,7 @@ export default function Account({ onClose = null }) {
 
       row: {
         display: "grid",
-        gridTemplateColumns: mobile ? "1fr" : "140px 1fr",
+        gridTemplateColumns: gridIsMobile ? "1fr" : "140px 1fr",
         gap: 10,
         alignItems: "center",
         padding: "10px 12px",
@@ -389,172 +381,213 @@ export default function Account({ onClose = null }) {
       k: { fontSize: 12, fontWeight: 900, opacity: 0.75 },
       v: { fontSize: 12.5, fontWeight: 800, wordBreak: "break-word" },
     };
-  }, [vw]);
+  }, [gridIsMobile]);
 
-  // ✅ Este handleEnter depende do SEU LoginVisual real.
-  // Ele precisa passar: { uid, email, createdAtIso } ao autenticar via Firebase.
-  const handleEnter = (payload) => {
-    const uid = String(payload?.uid || "").trim();
-    const email = String(payload?.email || payload?.loginId || "").trim().toLowerCase();
+  /* =========================
+     Handlers
+  ========================= */
 
-    // tenta pegar cache local assim que entra (melhora UX)
-    const cache = loadProfileCache();
-    const cached = uid ? cache?.[uid] : null;
-
-    const next = {
-      ok: true,
-      uid,
-      email,
-      loginId: email || "—",
-      loginType: "email",
-      mode: payload?.mode || "login",
-      since: payload?.createdAtIso || new Date().toISOString(),
-
-      name: String(payload?.name || cached?.name || "").trim(),
-      phoneDigits: String(payload?.phoneDigits || cached?.phoneDigits || "").trim(),
-      photoUrl: String(payload?.photoUrl || cached?.photoUrl || "").trim(),
-
-      // plano fica para o admin/Firestore depois
-      plan: String(payload?.plan || "FREE"),
-    };
-
-    saveSession(next);
-    setSession(next);
+  const handleEnter = () => {
+    // LoginVisual deve fazer signIn/SignUp real.
+    // Se o usuário autenticou, onAuthStateChanged acima vai entrar e preencher tudo.
+    // Então aqui não precisamos fazer nada.
   };
 
   const handleSkip = () => {
-    const next = {
-      ok: true,
-      uid: "",
-      email: "",
-      loginId: "guest",
-      loginType: "guest",
-      mode: "skip",
-      skipped: true,
-      since: new Date().toISOString(),
+    setIsGuest(true);
+    setUid("");
+    setEmail("");
+    setCreatedAtIso("");
 
-      name: "",
-      phoneDigits: "",
-      photoUrl: "",
-      plan: "FREE",
-    };
-
-    saveSession(next);
-    setSession(next);
+    const g = loadGuestProfile();
+    setNameDraft(g.name);
+    setPhoneDraft(g.phoneDigits);
+    setPhotoUrl(g.photoUrl);
+    setPhotoFile(null);
+    setPhotoPreview("");
   };
 
   async function handlePhotoPick(file) {
-    setProfileErr("");
-    setProfileMsg("");
+    setErr("");
+    setMsg("");
     if (!file) return;
 
-    // 🔒 Firestore tem limite de 1MB por doc.
-    // Foto em dataURL explode fácil, então limitamos forte:
-    const maxMB = 0.18; // ~180KB
-    const sizeMB = file.size / (1024 * 1024);
-    if (sizeMB > maxMB) {
-      setProfileErr(
-        `Foto grande demais (${sizeMB.toFixed(2)} MB). Use até ${maxMB} MB (por enquanto).`
-      );
-      return;
-    }
-
+    // sem "limite", mas preview local
     try {
-      const dataUrl = await fileToDataURL(file);
-      setPhotoDraft(dataUrl);
+      const url = URL.createObjectURL(file);
+      setPhotoPreview(url);
+      setPhotoFile(file);
     } catch {
-      setProfileErr("Não foi possível carregar a foto.");
+      setErr("Não foi possível carregar o preview da foto.");
     }
   }
 
   function validateProfile(nm, phDigits) {
     if (isGuest) return true;
     if (String(nm || "").trim().length < 2) {
-      setProfileErr("Informe seu nome (obrigatório).");
+      setErr("Informe seu nome (obrigatório).");
       return false;
     }
     if (!isPhoneBRValidDigits(phDigits)) {
-      setProfileErr("Informe seu telefone com DDD (10 ou 11 dígitos).");
+      setErr("Informe seu telefone com DDD (10 ou 11 dígitos).");
       return false;
     }
     return true;
   }
 
-  async function saveProfileOnly() {
-    setProfileErr("");
-    setProfileMsg("");
+  async function uploadAvatarIfNeeded(uidLocal) {
+    if (!photoFile) return { ok: true, url: String(photoUrl || "") };
 
-    const uid = String(session?.uid || "").trim();
+    try {
+      const safeName = String(photoFile.name || "avatar").replace(/[^\w.\-]+/g, "_");
+      const path = `users/${uidLocal}/avatar/${Date.now()}_${safeName}`;
+      const sref = storageRef(storage, path);
+
+      await uploadBytes(sref, photoFile);
+      const url = await getDownloadURL(sref);
+
+      return { ok: true, url };
+    } catch {
+      return { ok: false, url: String(photoUrl || "") };
+    }
+  }
+
+  async function saveProfile() {
+    setErr("");
+    setMsg("");
+
     const nm = String(nameDraft || "").trim();
     const ph = normalizePhoneBR(phoneDraft);
-    const photoUrl = String(photoDraft || "");
 
-    if (!validateProfile(nm, ph)) return false;
+    if (!validateProfile(nm, ph)) return;
 
-    // 1) atualiza sessão local
-    const next = { ...session, name: nm, phoneDigits: ph, photoUrl };
-    saveSession(next);
-    setSession(next);
+    setBusy(true);
 
-    // 2) cache local por UID (sobrevive ao logout)
-    if (uid) {
-      const cache = loadProfileCache();
-      cache[uid] = { name: nm, phoneDigits: ph, photoUrl };
-      saveProfileCache(cache);
-    }
+    try {
+      if (isGuest) {
+        // guest: salva local
+        const finalPhoto = photoPreview || photoUrl || "";
+        saveGuestProfile({ name: nm, phoneDigits: ph, photoUrl: finalPhoto });
 
-    // 3) grava Firestore (persistente)
-    if (!isGuest && uid) {
-      setBusyProfile(true);
-      const ok = await saveUserProfile(uid, { name: nm, phoneDigits: ph, photoUrl });
-      setBusyProfile(false);
+        setPhotoUrl(finalPhoto);
+        setPhotoFile(null);
+        // não precisa manter preview objectURL
+        setMsg("Perfil salvo.");
+        return;
+      }
+
+      const u = String(uid || auth.currentUser?.uid || "").trim();
+      if (!u) {
+        setErr("Sessão inválida. Faça login novamente.");
+        return;
+      }
+
+      // 1) upload da foto (se houver)
+      const up = await uploadAvatarIfNeeded(u);
+      const finalPhotoUrl = String(up.url || "").trim();
+
+      if (!up.ok) {
+        setErr("Falha ao enviar a foto. Tente novamente.");
+        return;
+      }
+
+      // 2) grava no Firestore
+      const ok = await saveUserProfile(u, {
+        name: nm,
+        phoneDigits: ph,
+        photoUrl: finalPhotoUrl,
+      });
 
       if (!ok) {
-        setProfileMsg("Perfil salvo localmente. (Falha ao gravar no Firestore.)");
-        return true;
+        setErr("Falha ao salvar no Firestore. Verifique as regras/permissões.");
+        return;
       }
+
+      // 3) atualiza estado local
+      setPhotoUrl(finalPhotoUrl);
+      setPhotoFile(null);
+      setMsg("Perfil salvo.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function removePhoto() {
+    setErr("");
+    setMsg("");
+
+    if (busy) return;
+
+    // guest: só limpa local
+    if (isGuest) {
+      setPhotoUrl("");
+      setPhotoFile(null);
+      setPhotoPreview("");
+      saveGuestProfile({ name: nameDraft, phoneDigits: normalizePhoneBR(phoneDraft), photoUrl: "" });
+      setMsg("Foto removida.");
+      return;
     }
 
-    setProfileMsg("Perfil salvo.");
-    return true;
-  }
+    const u = String(uid || auth.currentUser?.uid || "").trim();
+    if (!u) {
+      setErr("Sessão inválida. Faça login novamente.");
+      return;
+    }
 
-  async function saveAndExit() {
-    const ok = await saveProfileOnly();
-    if (!ok) return;
-
-    // ✅ sai do Firebase, mas NÃO destrói o cache do perfil
+    setBusy(true);
     try {
-      await signOut(auth);
-    } catch {}
+      // Se a fotoUrl for de storage, não tentamos deletar o arquivo aqui (opcional).
+      // (Dá pra deletar depois, mas precisa salvar o path.)
+      const ok = await saveUserProfile(u, {
+        name: String(nameDraft || "").trim(),
+        phoneDigits: normalizePhoneBR(phoneDraft),
+        photoUrl: "",
+      });
 
-    // limpa sessão visual para voltar ao login
-    clearSession();
-    setSession(null);
+      if (!ok) {
+        setErr("Falha ao remover no Firestore.");
+        return;
+      }
 
-    if (typeof onClose === "function") onClose();
+      setPhotoUrl("");
+      setPhotoFile(null);
+      setPhotoPreview("");
+      setMsg("Foto removida.");
+    } finally {
+      setBusy(false);
+    }
   }
 
-  if (!isLogged) return <LoginVisual onEnter={handleEnter} onSkip={handleSkip} />;
+  // Render: se não tiver auth e não for guest => mostra login
+  // (login real: o LoginVisual deve autenticar e o onAuthStateChanged vai preencher)
+  const shouldShowLogin = !isLogged && !isGuest;
+
+  if (shouldShowLogin) {
+    return <LoginVisual onEnter={handleEnter} onSkip={handleSkip} />;
+  }
 
   return (
     <div style={ui.page}>
       <div style={ui.header}>
         <div style={ui.title}>Minha Conta</div>
-        <div style={ui.subtitle}>Sessão ativa. Você pode sair/fechar quando quiser.</div>
+        <div style={ui.subtitle}>
+          {isGuest ? "Modo convidado (sem login)." : "Sessão ativa. Você pode sair quando quiser."}
+        </div>
       </div>
 
       <div style={ui.card}>
         <div style={ui.cardHeader}>
           <div style={ui.cardTitle}>{needsProfile ? "Completar Perfil" : "Perfil"}</div>
-          <div style={ui.badge}>{needsProfile ? "Obrigatório" : isGuest ? "Opcional" : "Sessão ativa"}</div>
+          <div style={ui.badge}>
+            {needsProfile ? "Obrigatório" : isGuest ? "Opcional" : "Sessão ativa"}
+          </div>
         </div>
 
         <div style={ui.avatarRow}>
           <div style={ui.avatar} aria-label="Foto do perfil">
-            {session?.photoUrl || photoDraft ? (
+            {photoPreview || photoUrl ? (
               <img
-                src={String(photoDraft || session?.photoUrl || "")}
+                src={String(photoPreview || photoUrl)}
                 alt="Foto do perfil"
                 style={ui.avatarImg}
               />
@@ -582,7 +615,7 @@ export default function Account({ onClose = null }) {
               onChange={(e) => setNameDraft(e.target.value)}
               placeholder={isGuest ? "Digite seu nome (opcional)" : "Digite seu nome"}
               autoComplete="name"
-              disabled={busyProfile}
+              disabled={busy}
             />
 
             <input
@@ -592,7 +625,7 @@ export default function Account({ onClose = null }) {
               placeholder={isGuest ? "Telefone com DDD (opcional)" : "Telefone com DDD (obrigatório)"}
               inputMode="numeric"
               autoComplete="tel"
-              disabled={busyProfile}
+              disabled={busy}
             />
 
             <div style={{ display: "grid", gap: 8 }}>
@@ -601,51 +634,21 @@ export default function Account({ onClose = null }) {
                 accept="image/*"
                 onChange={(e) => handlePhotoPick(e.target.files?.[0] || null)}
                 style={{ color: "rgba(255,255,255,0.78)" }}
-                disabled={busyProfile}
+                disabled={busy}
               />
 
               <div style={ui.actions}>
-                <button
-                  type="button"
-                  style={ui.primaryBtn(busyProfile)}
-                  onClick={saveAndExit}
-                  disabled={busyProfile}
-                >
-                  {busyProfile ? "SALVANDO..." : "SALVAR / SAIR"}
+                <button type="button" style={ui.primaryBtn(busy)} onClick={saveProfile} disabled={busy}>
+                  {busy ? "SALVANDO..." : "SALVAR"}
                 </button>
 
-                <button
-                  type="button"
-                  style={ui.secondaryBtn(busyProfile)}
-                  onClick={() => {
-                    setPhotoDraft("");
-                    const next = { ...session, photoUrl: "" };
-                    saveSession(next);
-                    setSession(next);
-
-                    const uid = String(session?.uid || "").trim();
-                    if (uid) {
-                      const cache = loadProfileCache();
-                      cache[uid] = {
-                        ...(cache[uid] || {}),
-                        photoUrl: "",
-                        name: String(next.name || "").trim(),
-                        phoneDigits: String(next.phoneDigits || "").trim(),
-                      };
-                      saveProfileCache(cache);
-                    }
-
-                    setProfileMsg("Foto removida.");
-                    setProfileErr("");
-                  }}
-                  disabled={busyProfile}
-                >
+                <button type="button" style={ui.secondaryBtn(busy)} onClick={removePhoto} disabled={busy}>
                   REMOVER FOTO
                 </button>
               </div>
 
-              {profileErr ? <div style={ui.msgErr}>{profileErr}</div> : null}
-              {profileMsg ? <div style={ui.msgOk}>{profileMsg}</div> : null}
+              {err ? <div style={ui.msgErr}>{err}</div> : null}
+              {msg ? <div style={ui.msgOk}>{msg}</div> : null}
             </div>
           </div>
         </div>
@@ -655,27 +658,29 @@ export default function Account({ onClose = null }) {
         <div style={{ display: "grid", gap: 10 }}>
           <div style={ui.row}>
             <div style={ui.k}>Identificação</div>
-            <div style={ui.v}>{session?.uid || "—"}</div>
+            <div style={ui.v}>{isGuest ? "—" : uid || "—"}</div>
           </div>
 
           <div style={ui.row}>
             <div style={ui.k}>E-mail</div>
-            <div style={ui.v}>{session?.email || "—"}</div>
+            <div style={ui.v}>{isGuest ? "—" : email || "—"}</div>
           </div>
 
           <div style={ui.row}>
             <div style={ui.k}>Telefone</div>
-            <div style={ui.v}>{session?.phoneDigits ? `+55 ${session.phoneDigits}` : "—"}</div>
+            <div style={ui.v}>
+              {normalizePhoneBR(phoneDraft) ? `+55 ${normalizePhoneBR(phoneDraft)}` : "—"}
+            </div>
           </div>
 
           <div style={ui.row}>
             <div style={ui.k}>Cadastro</div>
-            <div style={ui.v}>{formatBRDateTime(session?.since)}</div>
+            <div style={ui.v}>{isGuest ? "—" : formatBRDateTime(createdAtIso)}</div>
           </div>
 
           {needsProfile ? (
             <div style={ui.msgErr}>
-              Nome e telefone são obrigatórios. Preencha e clique em <b>SALVAR / SAIR</b>.
+              Nome e telefone são obrigatórios. Preencha e clique em <b>SALVAR</b>.
             </div>
           ) : null}
         </div>
