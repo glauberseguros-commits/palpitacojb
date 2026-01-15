@@ -8,8 +8,8 @@ import { getStorage } from "firebase/storage";
  * Firebase Web App — configuração OFICIAL
  * Projeto: palpitacojb-app
  *
- * ✅ App nomeado para evitar colisão (HMR / múltiplos bundles)
- * ✅ Inicialização segura mesmo com hot reload
+ * - App nomeado para evitar colisão (HMR / múltiplos bundles)
+ * - Seguro para React + Vercel
  */
 
 const firebaseConfig = {
@@ -28,7 +28,7 @@ function getOrInitApp() {
     return getApp(APP_NAME);
   } catch {
     const apps = getApps();
-    if (apps?.length) return apps[0];
+    if (apps.length) return apps[0];
     return initializeApp(firebaseConfig, APP_NAME);
   }
 }

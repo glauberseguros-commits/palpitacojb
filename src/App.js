@@ -94,15 +94,6 @@ function hasActiveSession() {
   return !!(obj && obj.ok === true);
 }
 
-/** ✅ Detecção de guest (entrar sem login) */
-function isGuestSession(sess) {
-  const s = sess || loadSessionObj();
-  if (!s || !s.ok) return false;
-  const t = String(s.loginType || "").toLowerCase();
-  const id = String(s.loginId || "").toLowerCase();
-  return t === "guest" || id === "guest" || !!s.skipped === true || String(s.mode || "") === "skip";
-}
-
 function normalizeRoute(saved) {
   if (!saved) return null;
   return Object.values(ROUTES).includes(saved) ? saved : null;
