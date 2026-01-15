@@ -11,19 +11,18 @@ import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage
 /**
  * Account (Minha Conta) — REAL (Firebase) + Premium UX
  *
- * ✅ Regras de acesso:
- * - Auth real (uid/email) manda no acesso.
- * - Guest só acontece quando o usuário clica "Entrar sem login".
+ * ✅ Regras (schema definitivo Firestore users/{uid}):
+ * - name: string
+ * - phone: string (apenas dígitos, 10/11)
+ * - photoURL: string
+ * - createdAt: ISO
+ * - updatedAt: ISO
+ * - email: string
+ * - trialStartAt: ISO
+ * - trialEndAt: ISO
+ * - trialActive: boolean
  *
- * ✅ Perfil persistente:
- * - Firestore: users/{uid}
- *
- * ✅ Trial 7 dias:
- * - users/{uid}: trialStartAt, trialEndAt, trialActive
- *
- * ✅ Correção de bug:
- * - Se user = null, antes NÃO resetava isGuest => podia ficar preso em "Minha Conta".
- * - Agora guest é explícito e persistente: pp_guest_active_v1
+ * ✅ Guest: permanece no localStorage.
  */
 
 const LS_GUEST_KEY = "pp_guest_profile_v1";
@@ -204,7 +203,7 @@ async function resizeImageToJpegBlob(file, { maxSide = 768, quality = 0.82 } = {
 }
 
 /* =========================
-   Firestore profile + Trial
+   Firestore profile + Trial (schema definitivo)
 ========================= */
 
 async function ensureUserDoc(uid, user) {
@@ -215,7 +214,6 @@ async function ensureUserDoc(uid, user) {
     const r = doc(db, "users", u);
     const snap = await getDoc(r);
 
-    // base timestamps
     const createdAtIso =
       user?.metadata?.creationTime
         ? new Date(user.metadata.creationTime).toISOString()
@@ -224,18 +222,19 @@ async function ensureUserDoc(uid, user) {
     if (!snap.exists()) {
       const trialStartAt = createdAtIso;
       const trialEndAt = isoPlusDays(trialStartAt, TRIAL_DAYS);
+
+      // ✅ Doc mínimo e padronizado
       await setDoc(
         r,
         {
-          uid: u,
-          email: String(user?.email || "").trim().toLowerCase(),
           createdAt: createdAtIso,
           updatedAt: new Date().toISOString(),
+          email: String(user?.email || "").trim().toLowerCase(),
 
           // profile
           name: String(user?.displayName || "").trim(),
-          phoneDigits: "",
-          photoUrl: "",
+          phone: "",
+          photoURL: "",
 
           // trial
           trialStartAt,
@@ -244,11 +243,14 @@ async function ensureUserDoc(uid, user) {
         },
         { merge: true }
       );
+
       return { ok: true, created: true };
     }
 
-    // existe: garantir campos de trial (se faltarem)
+    // existe: garantir trial coerente (sem mexer em campos sensíveis além do trial)
     const data = snap.data() || {};
+
+    // Compat: se veio de versão antiga (phoneDigits/photoUrl), não quebra leitura.
     const trialStartAt = String(data.trialStartAt || "").trim() || createdAtIso;
     const trialEndAt =
       String(data.trialEndAt || "").trim() || isoPlusDays(trialStartAt, TRIAL_DAYS);
@@ -279,7 +281,6 @@ async function ensureUserDoc(uid, user) {
       patch.trialActive = active;
       needPatch = true;
     } else {
-      // se já existe, mas está inconsistente com endAt, corrigir
       const cur = safeBool(data.trialActive);
       if (cur !== active) {
         patch.trialActive = active;
@@ -301,15 +302,29 @@ async function ensureUserDoc(uid, user) {
 async function loadUserProfile(uid) {
   const u = String(uid || "").trim();
   if (!u) return null;
+
   try {
     const r = doc(db, "users", u);
     const snap = await getDoc(r);
     if (!snap.exists()) return null;
+
     const data = snap.data() || {};
+
+    // ✅ leitura compatível: aceita campos antigos caso existam
+    const name = String(data.name || "").trim();
+
+    const phone =
+      String(data.phone || "").trim() ||
+      String(data.phoneDigits || "").trim(); // compat
+
+    const photoURL =
+      String(data.photoURL || "").trim() ||
+      String(data.photoUrl || "").trim(); // compat
+
     return {
-      name: String(data.name || "").trim(),
-      phoneDigits: String(data.phoneDigits || "").trim(),
-      photoUrl: String(data.photoUrl || "").trim(),
+      name,
+      phone,
+      photoURL,
 
       // trial
       trialStartAt: String(data.trialStartAt || "").trim(),
@@ -324,14 +339,15 @@ async function loadUserProfile(uid) {
 async function saveUserProfile(uid, payload) {
   const u = String(uid || "").trim();
   if (!u) return false;
+
   try {
     const r = doc(db, "users", u);
     await setDoc(
       r,
       {
         name: String(payload?.name || "").trim(),
-        phoneDigits: String(payload?.phoneDigits || "").trim(),
-        photoUrl: String(payload?.photoUrl || "").trim(),
+        phone: String(payload?.phone || "").trim(),       // ✅ schema definitivo
+        photoURL: String(payload?.photoURL || "").trim(), // ✅ schema definitivo
         updatedAt: new Date().toISOString(),
       },
       { merge: true }
@@ -349,17 +365,16 @@ async function saveUserProfile(uid, payload) {
 function loadGuestProfile() {
   try {
     const raw = localStorage.getItem(LS_GUEST_KEY);
-    if (!raw) return { name: "", phoneDigits: "", photoUrl: "" };
+    if (!raw) return { name: "", phone: "", photoURL: "" };
     const obj = JSON.parse(raw);
-    if (!obj || typeof obj !== "object")
-      return { name: "", phoneDigits: "", photoUrl: "" };
+    if (!obj || typeof obj !== "object") return { name: "", phone: "", photoURL: "" };
     return {
       name: String(obj.name || "").trim(),
-      phoneDigits: String(obj.phoneDigits || "").trim(),
-      photoUrl: String(obj.photoUrl || "").trim(),
+      phone: String(obj.phone || obj.phoneDigits || "").trim(), // compat
+      photoURL: String(obj.photoURL || obj.photoUrl || "").trim(), // compat
     };
   } catch {
-    return { name: "", phoneDigits: "", photoUrl: "" };
+    return { name: "", phone: "", photoURL: "" };
   }
 }
 
@@ -369,8 +384,8 @@ function saveGuestProfile(p) {
       LS_GUEST_KEY,
       JSON.stringify({
         name: String(p?.name || "").trim(),
-        phoneDigits: String(p?.phoneDigits || "").trim(),
-        photoUrl: String(p?.photoUrl || "").trim(),
+        phone: String(p?.phone || "").trim(),
+        photoURL: String(p?.photoURL || "").trim(),
         updatedAt: new Date().toISOString(),
       })
     );
@@ -406,7 +421,7 @@ export default function Account({ onClose = null }) {
 
   // auth state (real)
   const [authReady, setAuthReady] = useState(false);
-  const [isGuest, setIsGuest] = useState(false); // só TRUE quando usuário clicou "Entrar sem login"
+  const [isGuest, setIsGuest] = useState(false);
   const [uid, setUid] = useState("");
   const [email, setEmail] = useState("");
   const [createdAtIso, setCreatedAtIso] = useState("");
@@ -418,9 +433,9 @@ export default function Account({ onClose = null }) {
 
   // profile drafts
   const [nameDraft, setNameDraft] = useState("");
-  const [phoneDigitsDraft, setPhoneDigitsDraft] = useState(""); // sempre digits (10/11)
-  const [photoUrl, setPhotoUrl] = useState(""); // URL (authed) ou dataURL (guest)
-  const [photoFile, setPhotoFile] = useState(null); // file escolhido (upload no salvar)
+  const [phoneDraft, setPhoneDraft] = useState(""); // digits
+  const [photoURL, setPhotoURL] = useState(""); // URL (authed) ou dataURL (guest)
+  const [photoFile, setPhotoFile] = useState(null);
 
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
@@ -430,7 +445,6 @@ export default function Account({ onClose = null }) {
   const previewUrlRef = useRef("");
   const [photoPreview, setPhotoPreview] = useState("");
 
-  // responsive
   useEffect(() => {
     const onResize = () => setVw(window.innerWidth);
     window.addEventListener("resize", onResize);
@@ -453,10 +467,9 @@ export default function Account({ onClose = null }) {
     setTrialEndAt("");
     setTrialActive(false);
 
-    // NÃO limpa guest profile aqui; só desarma guestActive se não estiver em guest explícito
     setNameDraft("");
-    setPhoneDigitsDraft("");
-    setPhotoUrl("");
+    setPhoneDraft("");
+    setPhotoURL("");
     setPhotoFile(null);
     clearPreview();
   }
@@ -472,17 +485,15 @@ export default function Account({ onClose = null }) {
       setErr("");
       setAuthReady(true);
 
-      // ✅ Se NÃO tem user:
-      // - se guestActive estiver ligado => entra guest
-      // - senão => vai pra LoginVisual
+      // sem user: entra guest se guestActive
       if (!user?.uid) {
         const ga = isGuestActive();
         if (ga) {
           setIsGuest(true);
           const g = loadGuestProfile();
           setNameDraft(g.name);
-          setPhoneDigitsDraft(normalizePhoneDigits(g.phoneDigits));
-          setPhotoUrl(g.photoUrl);
+          setPhoneDraft(normalizePhoneDigits(g.phone));
+          setPhotoURL(g.photoURL);
           setPhotoFile(null);
           clearPreview();
         } else {
@@ -503,18 +514,14 @@ export default function Account({ onClose = null }) {
         user?.metadata?.creationTime ? new Date(user.metadata.creationTime).toISOString() : "";
       setCreatedAtIso(created);
 
-      // ✅ garante doc + trial
+      // garante doc + trial
       await ensureUserDoc(user.uid, user);
 
       const remote = await loadUserProfile(user.uid);
 
-      const nm = String(remote?.name || "").trim();
-      const ph = String(remote?.phoneDigits || "").trim();
-      const url = String(remote?.photoUrl || "").trim();
-
-      setNameDraft(nm);
-      setPhoneDigitsDraft(normalizePhoneDigits(ph));
-      setPhotoUrl(url);
+      setNameDraft(String(remote?.name || "").trim());
+      setPhoneDraft(normalizePhoneDigits(remote?.phone || ""));
+      setPhotoURL(String(remote?.photoURL || "").trim());
 
       setTrialStartAt(String(remote?.trialStartAt || "").trim());
       setTrialEndAt(String(remote?.trialEndAt || "").trim());
@@ -539,9 +546,9 @@ export default function Account({ onClose = null }) {
   const needsProfile = useMemo(() => {
     if (!isLogged) return false;
     const nm = String(nameDraft || "").trim();
-    const ph = normalizePhoneDigits(phoneDigitsDraft);
+    const ph = normalizePhoneDigits(phoneDraft);
     return nm.length < 2 || !isPhoneBRValidDigits(ph);
-  }, [isLogged, nameDraft, phoneDigitsDraft]);
+  }, [isLogged, nameDraft, phoneDraft]);
 
   const trialDaysLeft = useMemo(() => {
     if (!isLogged) return 0;
@@ -723,8 +730,6 @@ export default function Account({ onClose = null }) {
   ========================= */
 
   const handleEnter = () => {
-    // LoginVisual faz o signIn/signup real.
-    // onAuthStateChanged acima preenche.
     setGuestActive(false);
     setIsGuest(false);
   };
@@ -745,8 +750,8 @@ export default function Account({ onClose = null }) {
 
     const g = loadGuestProfile();
     setNameDraft(g.name);
-    setPhoneDigitsDraft(normalizePhoneDigits(g.phoneDigits));
-    setPhotoUrl(g.photoUrl);
+    setPhoneDraft(normalizePhoneDigits(g.phone));
+    setPhotoURL(g.photoURL);
     setPhotoFile(null);
 
     clearPreview();
@@ -786,7 +791,7 @@ export default function Account({ onClose = null }) {
   }
 
   async function uploadAvatarIfNeeded(uidLocal) {
-    if (!photoFile) return { ok: true, url: String(photoUrl || "") };
+    if (!photoFile) return { ok: true, url: String(photoURL || "") };
 
     try {
       const blob = await resizeImageToJpegBlob(photoFile, { maxSide: 768, quality: 0.82 });
@@ -799,7 +804,7 @@ export default function Account({ onClose = null }) {
 
       return { ok: true, url };
     } catch {
-      return { ok: false, url: String(photoUrl || "") };
+      return { ok: false, url: String(photoURL || "") };
     }
   }
 
@@ -812,7 +817,7 @@ export default function Account({ onClose = null }) {
     setMsg("");
 
     const nm = String(nameDraft || "").trim();
-    const ph = normalizePhoneDigits(phoneDigitsDraft);
+    const ph = normalizePhoneDigits(phoneDraft);
 
     if (!validateProfile(nm, ph)) return;
 
@@ -820,7 +825,7 @@ export default function Account({ onClose = null }) {
 
     try {
       if (isGuest) {
-        let finalPhoto = String(photoUrl || "");
+        let finalPhoto = String(photoURL || "");
 
         if (photoFile) {
           const blob = await resizeImageToJpegBlob(photoFile, { maxSide: 768, quality: 0.82 });
@@ -828,9 +833,9 @@ export default function Account({ onClose = null }) {
           finalPhoto = dataUrl;
         }
 
-        saveGuestProfile({ name: nm, phoneDigits: ph, photoUrl: finalPhoto });
+        saveGuestProfile({ name: nm, phone: ph, photoURL: finalPhoto });
 
-        setPhotoUrl(finalPhoto);
+        setPhotoURL(finalPhoto);
         setPhotoFile(null);
         clearPreview();
 
@@ -845,7 +850,7 @@ export default function Account({ onClose = null }) {
       }
 
       const up = await uploadAvatarIfNeeded(u);
-      const finalPhotoUrl = String(up.url || "").trim();
+      const finalPhotoURL = String(up.url || "").trim();
 
       if (!up.ok) {
         setErr("Falha ao enviar a foto. Tente novamente.");
@@ -854,8 +859,8 @@ export default function Account({ onClose = null }) {
 
       const ok = await saveUserProfile(u, {
         name: nm,
-        phoneDigits: ph,
-        photoUrl: finalPhotoUrl,
+        phone: ph,
+        photoURL: finalPhotoURL,
       });
 
       if (!ok) {
@@ -863,7 +868,7 @@ export default function Account({ onClose = null }) {
         return;
       }
 
-      setPhotoUrl(finalPhotoUrl);
+      setPhotoURL(finalPhotoURL);
       setPhotoFile(null);
       clearPreview();
       setMsg("Perfil salvo.");
@@ -880,14 +885,14 @@ export default function Account({ onClose = null }) {
     if (busy) return;
 
     if (isGuest) {
-      setPhotoUrl("");
+      setPhotoURL("");
       setPhotoFile(null);
       clearPreview();
 
       saveGuestProfile({
         name: String(nameDraft || "").trim(),
-        phoneDigits: normalizePhoneDigits(phoneDigitsDraft),
-        photoUrl: "",
+        phone: normalizePhoneDigits(phoneDraft),
+        photoURL: "",
       });
 
       setMsg("Foto removida.");
@@ -904,8 +909,8 @@ export default function Account({ onClose = null }) {
     try {
       const ok = await saveUserProfile(u, {
         name: String(nameDraft || "").trim(),
-        phoneDigits: normalizePhoneDigits(phoneDigitsDraft),
-        photoUrl: "",
+        phone: normalizePhoneDigits(phoneDraft),
+        photoURL: "",
       });
 
       if (!ok) {
@@ -913,7 +918,7 @@ export default function Account({ onClose = null }) {
         return;
       }
 
-      setPhotoUrl("");
+      setPhotoURL("");
       setPhotoFile(null);
       clearPreview();
       setMsg("Foto removida.");
@@ -939,8 +944,8 @@ export default function Account({ onClose = null }) {
         setGuestActive(false);
 
         setNameDraft("");
-        setPhoneDigitsDraft("");
-        setPhotoUrl("");
+        setPhoneDraft("");
+        setPhotoURL("");
         setPhotoFile(null);
         clearPreview();
 
@@ -994,7 +999,7 @@ export default function Account({ onClose = null }) {
     return <LoginVisual onEnter={handleEnter} onSkip={handleSkip} />;
   }
 
-  const phoneDisplay = formatPhoneBR(phoneDigitsDraft);
+  const phoneDisplay = formatPhoneBR(phoneDraft);
   const phoneLabel = phoneDisplay || "—";
 
   return (
@@ -1022,15 +1027,13 @@ export default function Account({ onClose = null }) {
       <div style={ui.card}>
         <div style={ui.cardHeader}>
           <div style={ui.cardTitle}>{needsProfile ? "Completar Perfil" : "Perfil"}</div>
-          <div style={ui.badge}>
-            {needsProfile ? "Obrigatório" : isGuest ? "Opcional" : "Sessão ativa"}
-          </div>
+          <div style={ui.badge}>{needsProfile ? "Obrigatório" : isGuest ? "Opcional" : "Sessão ativa"}</div>
         </div>
 
         <div style={ui.avatarRow}>
           <div style={ui.avatar} aria-label="Foto do perfil">
-            {photoPreview || photoUrl ? (
-              <img src={String(photoPreview || photoUrl)} alt="Foto do perfil" style={ui.avatarImg} />
+            {photoPreview || photoURL ? (
+              <img src={String(photoPreview || photoURL)} alt="Foto do perfil" style={ui.avatarImg} />
             ) : (
               <div style={ui.avatarFallback}>{initials}</div>
             )}
@@ -1061,7 +1064,7 @@ export default function Account({ onClose = null }) {
             <input
               style={ui.input}
               value={phoneDisplay}
-              onChange={(e) => setPhoneDigitsDraft(normalizePhoneDigits(e.target.value))}
+              onChange={(e) => setPhoneDraft(normalizePhoneDigits(e.target.value))}
               placeholder={isGuest ? "(xx) x xxxx-xxxx (opcional)" : "(xx) x xxxx-xxxx"}
               inputMode="numeric"
               autoComplete="tel"
