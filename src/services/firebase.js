@@ -2,6 +2,7 @@
 import { initializeApp, getApp, getApps } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
 /**
  * Firebase Web App — configuração OFICIAL
@@ -23,21 +24,19 @@ const firebaseConfig = {
 const APP_NAME = "palpitaco-web";
 
 function getOrInitApp() {
-  // tenta pegar pelo nome
   try {
     return getApp(APP_NAME);
   } catch {
-    // se já existe algum app (por HMR) e não está nomeado, reaproveita o primeiro
     const apps = getApps();
     if (apps?.length) return apps[0];
-
-    // cria nomeado
     return initializeApp(firebaseConfig, APP_NAME);
   }
 }
 
 export const app = getOrInitApp();
+
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const storage = getStorage(app);
 
 export default app;
