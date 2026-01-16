@@ -207,6 +207,8 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
     };
   }, [isMobile]);
 
+  // ✅ MENU: adicionamos Downloads
+  // Se quiser esconder no guest, é só filtrar: .filter(x => !isGuest || x.key !== ROUTES.DOWNLOADS)
   const menu = [
     { key: ROUTES.DASHBOARD, icon: "home", title: "Dashboard" },
     { key: ROUTES.RESULTS, icon: "calendar", title: "Resultados" },
@@ -214,6 +216,10 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
     { key: ROUTES.LATE, icon: "clock", title: "Atrasados" },
     { key: ROUTES.SEARCH, icon: "search", title: "Busca" },
     { key: ROUTES.CENTENAS, icon: "hash", title: "Centenas" },
+
+    // ✅ NOVO: Downloads (PDF / Excel)
+    { key: ROUTES.DOWNLOADS, icon: "download", title: "Downloads" },
+
     { key: ROUTES.ACCOUNT, icon: "user", title: "Minha Conta" },
   ];
 
