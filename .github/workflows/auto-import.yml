@@ -2,41 +2,43 @@ name: Auto Import — PalPitaco JB
 
 on:
   schedule:
-    # Domingo (BRT)
     - cron: "0 12 * * 0"
     - cron: "0 14 * * 0"
     - cron: "0 17 * * 0"
     - cron: "0 19 * * 0"
-
-    # Segunda a Sábado (BRT)
     - cron: "0 12 * * 1-6"
     - cron: "0 14 * * 1-6"
     - cron: "0 17 * * 1-6"
     - cron: "0 19 * * 1-6"
     - cron: "0 21 * * 1-6"
-    - cron: "0 0  * * 2-6"
-
+    - cron: "0 0 * * 2-6"
   workflow_dispatch:
 
 jobs:
   run-import:
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: backend
-
     steps:
       - name: Checkout do repositório
         uses: actions/checkout@v4
+
+      - name: Debug: listar arquivos do backend/scripts
+        run: |
+          pwd
+          ls -la
+          ls -la backend
+          ls -la backend/scripts
+          test -f backend/scripts/autoImportToday.js && echo "OK: script existe" || (echo "ERRO: script nao existe" && exit 1)
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Instalar dependências do backend
+      - name: Instalar dependências (backend)
+        working-directory: backend
         run: npm ci
 
       - name: Rodar importação automática
+        working-directory: backend
         run: node scripts/autoImportToday.js
