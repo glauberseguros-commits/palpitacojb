@@ -135,16 +135,19 @@ service cloud.firestore {
     }
 
     /* =========================================================
-       DADOS DO APP
+       DADOS DO APP (PREVIEW PUBLIC READ)
+       - Para o modo "Entrar sem login (Preview)" funcionar,
+         precisamos permitir READ sem auth.
+       - WRITE continua restrito a admin.
     ========================================================= */
 
     match /draws/{drawId} {
-      allow read: if signedIn();  // troque por true se quiser público
+      allow read: if true;        // ✅ público (Preview funciona)
       allow write: if isAdmin();
     }
 
     match /draws/{drawId}/prizes/{prizeId} {
-      allow read: if signedIn();  // troque por true se quiser público
+      allow read: if true;        // ✅ público (Preview funciona)
       allow write: if isAdmin();
     }
 

@@ -6,10 +6,29 @@ const fs = require("fs");
 
 /**
  * RANGE GLOBAL CONHECIDO DA BASE (draws)
- * Ajuste aqui se um dia o range global mudar.
+ * - MIN: pode ficar fixo (primeiro dia real do seu dataset)
+ * - MAX: NÃO deve ficar fixo para sempre, senão o import "para no tempo".
+ *
+ * ✅ Novo comportamento:
+ * - GLOBAL_MIN_DATE permanece fixo
+ * - GLOBAL_MAX_DATE:
+ *    - se houver env GLOBAL_MAX_DATE=YYYY-MM-DD => usa (modo "travado")
+ *    - senão => usa HOJE (UTC)
+ *
+ * Extras:
+ * - MAX_FUTURE_DAYS (env) limita quantos dias no futuro pode importar (padrão: 7)
+ * - MAX_RANGE_DAYS (env) limite do range por execução (padrão: 400)
  */
 const GLOBAL_MIN_DATE = "2022-06-07";
-const GLOBAL_MAX_DATE = "2026-01-10";
+
+const ENV_GLOBAL_MAX_DATE = String(process.env.GLOBAL_MAX_DATE || "").trim(); // opcional
+const MAX_FUTURE_DAYS = Number.isFinite(Number(process.env.MAX_FUTURE_DAYS))
+  ? Number(process.env.MAX_FUTURE_DAYS)
+  : 7;
+
+const MAX_RANGE_DAYS = Number.isFinite(Number(process.env.MAX_RANGE_DAYS))
+  ? Number(process.env.MAX_RANGE_DAYS)
+  : 400;
 
 function parseDate(s) {
   const str = String(s || "").trim();
@@ -53,6 +72,30 @@ function addDays(dt, n) {
 function daysBetweenUTC(a, b) {
   const ms = b.getTime() - a.getTime();
   return Math.floor(ms / (24 * 60 * 60 * 1000));
+}
+
+function todayUTCDate() {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+}
+
+/**
+ * Resolve o max global:
+ * - se env GLOBAL_MAX_DATE válida => usa ela
+ * - senão => hoje (UTC)
+ */
+function resolveGlobalMaxDate() {
+  if (ENV_GLOBAL_MAX_DATE) {
+    const parsed = parseDate(ENV_GLOBAL_MAX_DATE);
+    if (!parsed) {
+      console.error(
+        `ERRO: GLOBAL_MAX_DATE inválida: "${ENV_GLOBAL_MAX_DATE}". Use YYYY-MM-DD.`
+      );
+      process.exit(1);
+    }
+    return parsed;
+  }
+  return todayUTCDate();
 }
 
 /**
@@ -102,30 +145,46 @@ async function main() {
 
   // ====== RECORTE PELO RANGE GLOBAL ======
   const gMin = parseDate(GLOBAL_MIN_DATE);
-  const gMax = parseDate(GLOBAL_MAX_DATE);
+  const gMax = resolveGlobalMaxDate();
 
+  // segurança contra futuro absurdo (ex.: usuário passou 2030 sem querer)
+  const today = todayUTCDate();
+  const futureDays = daysBetweenUTC(today, d2);
+  if (futureDays > MAX_FUTURE_DAYS) {
+    console.error(
+      `ERRO: data final muito no futuro (${fmt(d2)}). ` +
+        `Máximo permitido: hoje + ${MAX_FUTURE_DAYS} dias. ` +
+        `Ajuste MAX_FUTURE_DAYS ou use um intervalo real.`
+    );
+    process.exit(1);
+  }
+
+  // Se o intervalo estiver totalmente antes do mínimo (não deveria) ou totalmente após o máximo
   if (d2 < gMin || d1 > gMax) {
     console.error(
-      `[ABORTADO] Intervalo fora do range da base (${GLOBAL_MIN_DATE} → ${GLOBAL_MAX_DATE}).`
+      `[ABORTADO] Intervalo fora do range global (${GLOBAL_MIN_DATE} → ${fmt(gMax)}).`
     );
     process.exit(0);
   }
 
+  // recorta dentro do global
   if (d1 < gMin) d1 = gMin;
   if (d2 > gMax) d2 = gMax;
 
   const totalDays = daysBetweenUTC(d1, d2) + 1;
 
-  if (totalDays > 400) {
+  if (totalDays > MAX_RANGE_DAYS) {
     console.error(
       `ERRO: range muito grande (${totalDays} dias). ` +
-        `Verifique os parâmetros (ou ajuste o limite no script).`
+        `Limite atual: ${MAX_RANGE_DAYS}. ` +
+        `Ajuste MAX_RANGE_DAYS no env se quiser.`
     );
     process.exit(1);
   }
 
   console.log(
-    `[RANGE] ${lotteryKey} de ${fmt(d1)} até ${fmt(d2)} (${totalDays} dias)`
+    `[RANGE] ${lotteryKey} de ${fmt(d1)} até ${fmt(d2)} (${totalDays} dias)` +
+      ` | globalMax=${fmt(gMax)}${ENV_GLOBAL_MAX_DATE ? " (fixado por ENV)" : " (dinâmico/hoje UTC)"}`
   );
 
   let days = 0;
@@ -133,11 +192,8 @@ async function main() {
   let fail = 0;
 
   const importApostasPath = path.join(__dirname, "importKingApostas.js");
-
   if (!fs.existsSync(importApostasPath)) {
-    console.error(
-      `ERRO: script não encontrado: ${importApostasPath}`
-    );
+    console.error(`ERRO: script não encontrado: ${importApostasPath}`);
     process.exit(1);
   }
 
@@ -146,11 +202,11 @@ async function main() {
     const date = fmt(dt);
     days++;
 
-    const r = spawnSync(
-      process.execPath,
-      [importApostasPath, date, lotteryKey],
-      { stdio: "inherit" }
-    );
+    console.log(`\n[DAY ${days}/${totalDays}] ${date} (${lotteryKey})`);
+
+    const r = spawnSync(process.execPath, [importApostasPath, date, lotteryKey], {
+      stdio: "inherit",
+    });
 
     const isOk = r && r.status === 0;
 
@@ -167,15 +223,13 @@ async function main() {
 
       if (r?.error) {
         console.error(
-          `[FALHA] ${date} (${lotteryKey}) - spawn error: ${
-            r.error.message || r.error
-          }`
+          `[FALHA] ${date} (${lotteryKey}) - spawn error: ${r.error.message || r.error}`
         );
       }
     }
   }
 
-  console.log("==================================");
+  console.log("\n==================================");
   console.log(`[RESUMO] dias=${days} ok=${ok} falhas=${fail}`);
   console.log("==================================");
 
