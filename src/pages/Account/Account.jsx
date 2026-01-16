@@ -23,10 +23,19 @@ import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage
  * - trialActive: boolean
  *
  * ✅ Guest: permanece no localStorage.
+ *
+ * ✅ IMPORTANTE (App.js):
+ * - App.js só sai da tela LOGIN quando existir pp_session_v1 com { ok:true }.
+ * - Portanto este arquivo DEVE gravar pp_session_v1 quando:
+ *   - login Firebase ocorreu
+ *   - entrar como guest ocorreu
  */
 
 const LS_GUEST_KEY = "pp_guest_profile_v1";
 const LS_GUEST_ACTIVE_KEY = "pp_guest_active_v1";
+
+// ✅ Fonte de verdade da sessão (usada pelo App.js)
+const ACCOUNT_SESSION_KEY = "pp_session_v1";
 
 const TRIAL_DAYS = 7;
 
@@ -127,6 +136,43 @@ function safeBool(v) {
   return v === true;
 }
 
+/* =========================
+   Sessão (pp_session_v1) — CRÍTICO
+========================= */
+
+function safeWriteSession(obj) {
+  try {
+    localStorage.setItem(ACCOUNT_SESSION_KEY, JSON.stringify(obj));
+  } catch {}
+}
+
+function safeRemoveSession() {
+  try {
+    localStorage.removeItem(ACCOUNT_SESSION_KEY);
+  } catch {}
+}
+
+function markSessionAuth(user) {
+  const uid = String(user?.uid || "").trim();
+  const email = String(user?.email || "").trim().toLowerCase();
+  if (!uid) return;
+  safeWriteSession({
+    ok: true,
+    mode: "auth",
+    uid,
+    email,
+    ts: Date.now(),
+  });
+}
+
+function markSessionGuest() {
+  safeWriteSession({
+    ok: true,
+    mode: "guest",
+    ts: Date.now(),
+  });
+}
+
 /**
  * Resize/compress image client-side (mobile-friendly)
  * - maxSide: 768 (bom p/ avatar)
@@ -136,7 +182,6 @@ async function resizeImageToJpegBlob(file, { maxSide = 768, quality = 0.82 } = {
   const inputFile = file;
   if (!inputFile) throw new Error("Arquivo inválido.");
 
-  // tenta createImageBitmap (rápido), fallback para <img>
   let bitmap = null;
   try {
     bitmap = await createImageBitmap(inputFile);
@@ -151,7 +196,6 @@ async function resizeImageToJpegBlob(file, { maxSide = 768, quality = 0.82 } = {
     w = bitmap.width;
     h = bitmap.height;
   } else {
-    // fallback
     const dataUrl = await new Promise((resolve, reject) => {
       const r = new FileReader();
       r.onerror = () => reject(new Error("Falha ao ler imagem."));
@@ -223,7 +267,6 @@ async function ensureUserDoc(uid, user) {
       const trialStartAt = createdAtIso;
       const trialEndAt = isoPlusDays(trialStartAt, TRIAL_DAYS);
 
-      // ✅ Doc mínimo e padronizado
       await setDoc(
         r,
         {
@@ -231,12 +274,10 @@ async function ensureUserDoc(uid, user) {
           updatedAt: new Date().toISOString(),
           email: String(user?.email || "").trim().toLowerCase(),
 
-          // profile
           name: String(user?.displayName || "").trim(),
           phone: "",
           photoURL: "",
 
-          // trial
           trialStartAt,
           trialEndAt,
           trialActive: true,
@@ -247,10 +288,7 @@ async function ensureUserDoc(uid, user) {
       return { ok: true, created: true };
     }
 
-    // existe: garantir trial coerente (sem mexer em campos sensíveis além do trial)
     const data = snap.data() || {};
-
-    // Compat: se veio de versão antiga (phoneDigits/photoUrl), não quebra leitura.
     const trialStartAt = String(data.trialStartAt || "").trim() || createdAtIso;
     const trialEndAt =
       String(data.trialEndAt || "").trim() || isoPlusDays(trialStartAt, TRIAL_DAYS);
@@ -310,7 +348,6 @@ async function loadUserProfile(uid) {
 
     const data = snap.data() || {};
 
-    // ✅ leitura compatível: aceita campos antigos caso existam
     const name = String(data.name || "").trim();
 
     const phone =
@@ -326,7 +363,6 @@ async function loadUserProfile(uid) {
       phone,
       photoURL,
 
-      // trial
       trialStartAt: String(data.trialStartAt || "").trim(),
       trialEndAt: String(data.trialEndAt || "").trim(),
       trialActive: data.trialActive === true,
@@ -346,8 +382,8 @@ async function saveUserProfile(uid, payload) {
       r,
       {
         name: String(payload?.name || "").trim(),
-        phone: String(payload?.phone || "").trim(),       // ✅ schema definitivo
-        photoURL: String(payload?.photoURL || "").trim(), // ✅ schema definitivo
+        phone: String(payload?.phone || "").trim(),
+        photoURL: String(payload?.photoURL || "").trim(),
         updatedAt: new Date().toISOString(),
       },
       { merge: true }
@@ -370,8 +406,8 @@ function loadGuestProfile() {
     if (!obj || typeof obj !== "object") return { name: "", phone: "", photoURL: "" };
     return {
       name: String(obj.name || "").trim(),
-      phone: String(obj.phone || obj.phoneDigits || "").trim(), // compat
-      photoURL: String(obj.photoURL || obj.photoUrl || "").trim(), // compat
+      phone: String(obj.phone || obj.phoneDigits || "").trim(),
+      photoURL: String(obj.photoURL || obj.photoUrl || "").trim(),
     };
   } catch {
     return { name: "", phone: "", photoURL: "" };
@@ -441,7 +477,7 @@ export default function Account({ onClose = null }) {
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
 
-  // preview objectURL (não vazar memória)
+  // preview objectURL
   const previewUrlRef = useRef("");
   const [photoPreview, setPhotoPreview] = useState("");
 
@@ -485,11 +521,12 @@ export default function Account({ onClose = null }) {
       setErr("");
       setAuthReady(true);
 
-      // sem user: entra guest se guestActive
+      // sem user: entra guest se guestActive, senão remove sessão
       if (!user?.uid) {
         const ga = isGuestActive();
         if (ga) {
           setIsGuest(true);
+          markSessionGuest(); // ✅ garante App.js sair do LOGIN
           const g = loadGuestProfile();
           setNameDraft(g.name);
           setPhoneDraft(normalizePhoneDigits(g.phone));
@@ -499,6 +536,7 @@ export default function Account({ onClose = null }) {
         } else {
           setIsGuest(false);
           resetAuthedState();
+          safeRemoveSession(); // ✅ sem auth/guest => sem sessão
         }
         return;
       }
@@ -507,6 +545,9 @@ export default function Account({ onClose = null }) {
       setGuestActive(false);
       setIsGuest(false);
 
+      // ✅ CRÍTICO: marca sessão AUTH para App.js ir pro Dashboard
+      markSessionAuth(user);
+
       setUid(String(user.uid));
       setEmail(String(user.email || "").trim().toLowerCase());
 
@@ -514,9 +555,7 @@ export default function Account({ onClose = null }) {
         user?.metadata?.creationTime ? new Date(user.metadata.creationTime).toISOString() : "";
       setCreatedAtIso(created);
 
-      // garante doc + trial
       await ensureUserDoc(user.uid, user);
-
       const remote = await loadUserProfile(user.uid);
 
       setNameDraft(String(remote?.name || "").trim());
@@ -540,7 +579,6 @@ export default function Account({ onClose = null }) {
   }, []);
 
   const isLogged = useMemo(() => !!uid && !isGuest, [uid, isGuest]);
-
   const initials = useMemo(() => computeInitials(nameDraft), [nameDraft]);
 
   const needsProfile = useMemo(() => {
@@ -730,6 +768,7 @@ export default function Account({ onClose = null }) {
   ========================= */
 
   const handleEnter = () => {
+    // LoginVisual faz o sign-in. Quando auth mudar, markSessionAuth() roda acima.
     setGuestActive(false);
     setIsGuest(false);
   };
@@ -740,6 +779,9 @@ export default function Account({ onClose = null }) {
 
     setGuestActive(true);
     setIsGuest(true);
+
+    // ✅ CRÍTICO: guest também precisa marcar sessão ok para App.js ir pro Dashboard
+    markSessionGuest();
 
     setUid("");
     setEmail("");
@@ -942,6 +984,7 @@ export default function Account({ onClose = null }) {
       if (isGuest) {
         clearGuestProfile();
         setGuestActive(false);
+        safeRemoveSession();
 
         setNameDraft("");
         setPhoneDraft("");
@@ -961,12 +1004,10 @@ export default function Account({ onClose = null }) {
         return;
       }
 
-      // 1) apaga doc do Firestore
       try {
         await deleteDoc(doc(db, "users", u));
       } catch {}
 
-      // 2) apaga a conta do Auth
       try {
         await deleteUser(user);
       } catch {
@@ -976,6 +1017,7 @@ export default function Account({ onClose = null }) {
         return;
       }
 
+      safeRemoveSession();
       setMsg("Conta excluída.");
       setIsGuest(false);
       setGuestActive(false);
@@ -1027,13 +1069,19 @@ export default function Account({ onClose = null }) {
       <div style={ui.card}>
         <div style={ui.cardHeader}>
           <div style={ui.cardTitle}>{needsProfile ? "Completar Perfil" : "Perfil"}</div>
-          <div style={ui.badge}>{needsProfile ? "Obrigatório" : isGuest ? "Opcional" : "Sessão ativa"}</div>
+          <div style={ui.badge}>
+            {needsProfile ? "Obrigatório" : isGuest ? "Opcional" : "Sessão ativa"}
+          </div>
         </div>
 
         <div style={ui.avatarRow}>
           <div style={ui.avatar} aria-label="Foto do perfil">
             {photoPreview || photoURL ? (
-              <img src={String(photoPreview || photoURL)} alt="Foto do perfil" style={ui.avatarImg} />
+              <img
+                src={String(photoPreview || photoURL)}
+                alt="Foto do perfil"
+                style={ui.avatarImg}
+              />
             ) : (
               <div style={ui.avatarFallback}>{initials}</div>
             )}
@@ -1081,15 +1129,30 @@ export default function Account({ onClose = null }) {
               />
 
               <div style={ui.actions}>
-                <button type="button" style={ui.primaryBtn(busy)} onClick={saveProfile} disabled={busy}>
+                <button
+                  type="button"
+                  style={ui.primaryBtn(busy)}
+                  onClick={saveProfile}
+                  disabled={busy}
+                >
                   {busy ? "SALVANDO..." : "SALVAR"}
                 </button>
 
-                <button type="button" style={ui.secondaryBtn(busy)} onClick={removePhoto} disabled={busy}>
+                <button
+                  type="button"
+                  style={ui.secondaryBtn(busy)}
+                  onClick={removePhoto}
+                  disabled={busy}
+                >
                   REMOVER FOTO
                 </button>
 
-                <button type="button" style={ui.dangerBtn(busy)} onClick={deleteAccountForever} disabled={busy}>
+                <button
+                  type="button"
+                  style={ui.dangerBtn(busy)}
+                  onClick={deleteAccountForever}
+                  disabled={busy}
+                >
                   EXCLUIR CONTA
                 </button>
               </div>
