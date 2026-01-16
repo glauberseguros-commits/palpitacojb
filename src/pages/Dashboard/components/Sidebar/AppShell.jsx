@@ -24,145 +24,80 @@ const LS_GUEST_ACTIVE_KEY = "pp_guest_active_v1";
 /* ======================
    Helpers seguros
 ====================== */
-function safeReadLS(k) {
+const safeReadLS = (k) => {
   try {
     return localStorage.getItem(k);
   } catch {
     return null;
   }
-}
-function safeWriteLS(k, v) {
+};
+const safeWriteLS = (k, v) => {
   try {
     localStorage.setItem(k, v);
   } catch {}
-}
-function safeRemoveLS(k) {
+};
+const safeRemoveLS = (k) => {
   try {
     localStorage.removeItem(k);
   } catch {}
-}
-function safeParseJson(raw) {
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-}
-function dispatchSessionChanged() {
-  try {
-    window.dispatchEvent(new Event("pp_session_changed"));
-  } catch {}
-}
+};
 
-function readGuestActive() {
-  try {
-    return localStorage.getItem(LS_GUEST_ACTIVE_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
-
-/**
- * ✅ Normaliza a sessão (compatível com App.js / Account.jsx / LoginVisual.jsx)
- * Formato esperado:
- * - { ok:true, type:"guest"|"user", plan:"FREE"|"PRO"|"VIP", ... }
- */
 function readSession() {
   const raw = safeReadLS(ACCOUNT_SESSION_KEY);
-  if (!raw) return { ok: false, type: "none", plan: "FREE" };
+  if (!raw) return { ok: false };
 
-  const s = String(raw || "").trim();
-  if (!s) return { ok: false, type: "none", plan: "FREE" };
-
-  if (!s.startsWith("{")) {
-    // legacy: qualquer string não vazia
+  try {
+    const obj = JSON.parse(raw);
+    return { ok: true, ...obj };
+  } catch {
     return { ok: true, type: "user", plan: "FREE" };
   }
-
-  const obj = safeParseJson(s);
-  if (!obj || typeof obj !== "object") return { ok: false, type: "none", plan: "FREE" };
-
-  const ok = obj.ok === true || obj.ok == null; // tolera sessão antiga sem ok
-  const typeRaw = String(obj.type || obj.mode || "").trim().toLowerCase();
-  const planRaw = String(obj.plan || "FREE").trim().toUpperCase();
-
-  const type = typeRaw === "guest" ? "guest" : typeRaw === "user" ? "user" : "user";
-  const plan = planRaw === "VIP" ? "VIP" : planRaw === "PRO" ? "PRO" : "FREE";
-
-  return { ok: !!ok, type, plan, raw: obj };
 }
 
-function writeSession(obj) {
-  safeWriteLS(ACCOUNT_SESSION_KEY, JSON.stringify(obj));
-  // storage não dispara no mesmo tab, então disparamos manualmente
-  dispatchSessionChanged();
+function useViewport() {
+  const [vw, setVw] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth : 1200
+  );
+  useEffect(() => {
+    const onR = () => setVw(window.innerWidth);
+    window.addEventListener("resize", onR);
+    return () => window.removeEventListener("resize", onR);
+  }, []);
+  return vw;
 }
 
 export default function AppShell({ active, onNavigate, onLogout, children }) {
-  // ✅ sessão reativa
   const [session, setSession] = useState(() => readSession());
-
-  // ✅ refaz leitura quando localStorage mudar (outros tabs) OU evento interno
-  useEffect(() => {
-    const sync = () => setSession(readSession());
-
-    const onStorage = (e) => {
-      if (!e) return;
-      if (e.key === ACCOUNT_SESSION_KEY || e.key === LS_GUEST_ACTIVE_KEY) sync();
-    };
-
-    window.addEventListener("storage", onStorage);
-    window.addEventListener("pp_session_changed", sync);
-
-    return () => {
-      window.removeEventListener("storage", onStorage);
-      window.removeEventListener("pp_session_changed", sync);
-    };
-  }, []);
+  const vw = useViewport();
 
   /* ======================
      Sync Firebase Auth
-     (SEM navegação automática)
   ====================== */
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
-      // user logado de verdade
       if (user?.uid) {
-        writeSession({
-          ok: true,
-          type: "user",
-          plan: "FREE",
-          uid: user.uid,
-          email: String(user.email || "").trim().toLowerCase(),
-          ts: Date.now(),
-        });
+        safeWriteLS(
+          ACCOUNT_SESSION_KEY,
+          JSON.stringify({ type: "user", plan: "FREE", uid: user.uid })
+        );
         setSession(readSession());
         return;
       }
 
-      // sem user: se guest ativo, mantém guest; se não, limpa sessão
-      if (readGuestActive()) {
-        writeSession({ ok: true, type: "guest", plan: "FREE", ts: Date.now() });
-        setSession(readSession());
-      } else {
-        safeRemoveLS(ACCOUNT_SESSION_KEY);
-        dispatchSessionChanged();
+      if (safeReadLS(LS_GUEST_ACTIVE_KEY) === "1") {
+        safeWriteLS(
+          ACCOUNT_SESSION_KEY,
+          JSON.stringify({ type: "guest", plan: "FREE" })
+        );
         setSession(readSession());
       }
     });
 
-    return () => unsub?.();
+    return () => unsub();
   }, []);
 
-  const isGuest = !!session?.ok && session?.type === "guest";
-  const plan = String(session?.plan || "FREE").toUpperCase();
-
-  const planLabel = useMemo(() => {
-    if (isGuest) return "PREVIEW";
-    if (plan === "VIP") return "VIP";
-    if (plan === "PRO") return "PRO";
-    return "FREE";
-  }, [isGuest, plan]);
+  const isGuest = session?.type === "guest";
+  const isMobile = vw < 980;
 
   /* ======================
      Navegação
@@ -171,15 +106,12 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
     if (!key) return;
 
     if (key === "__LOGOUT__") {
-      // logout real do Firebase (se houver)
       try {
         await signOut(auth);
       } catch {}
 
-      // limpa sessão local
       safeRemoveLS(ACCOUNT_SESSION_KEY);
       safeRemoveLS(LS_GUEST_ACTIVE_KEY);
-      dispatchSessionChanged();
 
       onLogout?.();
       return;
@@ -189,8 +121,92 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
   };
 
   /* ======================
-     UI
+     UI (premium lateral + anti-corte)
   ====================== */
+
+  const UI = useMemo(() => {
+    const GOLD = "rgba(202,166,75,1)";
+    const GOLD_SOFT = "rgba(202,166,75,0.18)";
+    const WHITE = "rgba(255,255,255,0.92)";
+    const BORDER = "rgba(255,255,255,0.10)";
+    const BG = "#050505";
+
+    const sidebarW = isMobile ? 74 : 92; // desktop mais “premium”
+    return {
+      shell: {
+        minHeight: "100vh",
+        height: "100dvh", // melhora em mobile modernos
+        background: BG,
+        display: "flex",
+        flexDirection: "row",
+        overflow: "hidden", // importante (main rola, não o body)
+      },
+      sidebar: {
+        width: sidebarW,
+        minWidth: sidebarW,
+        height: "100%",
+        borderRight: `1px solid ${BORDER}`,
+        background:
+          "radial-gradient(120px 220px at 40% 10%, rgba(202,166,75,0.10), rgba(0,0,0,0)), rgba(0,0,0,0.45)",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 12,
+        padding: "12px 10px",
+        boxSizing: "border-box",
+      },
+      brand: {
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 10,
+        paddingBottom: 10,
+        borderBottom: `1px solid ${BORDER}`,
+      },
+      plan: {
+        fontSize: 11,
+        fontWeight: 900,
+        padding: "6px 10px",
+        borderRadius: 999,
+        border: `1px solid ${GOLD_SOFT}`,
+        color: GOLD,
+        background: "rgba(0,0,0,0.35)",
+        letterSpacing: 0.2,
+      },
+      nav: {
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        gap: 8,
+        paddingTop: 10,
+        alignItems: "center",
+        overflow: "auto",
+      },
+      btn: (isActive) => ({
+        width: "100%",
+        height: 44,
+        borderRadius: 14,
+        border: `1px solid ${isActive ? "rgba(202,166,75,0.55)" : BORDER}`,
+        background: isActive
+          ? "linear-gradient(180deg, rgba(202,166,75,0.16), rgba(0,0,0,0.35))"
+          : "rgba(0,0,0,0.25)",
+        color: WHITE,
+        cursor: "pointer",
+        display: "grid",
+        placeItems: "center",
+        boxShadow: isActive ? "0 14px 36px rgba(0,0,0,0.55)" : "none",
+      }),
+      main: {
+        flex: 1,
+        minWidth: 0,
+        height: "100%",
+        overflow: "auto", // ✅ isso evita corte
+        WebkitOverflowScrolling: "touch",
+      },
+    };
+  }, [isMobile]);
+
   const menu = [
     { key: ROUTES.DASHBOARD, icon: "home", title: "Dashboard" },
     { key: ROUTES.RESULTS, icon: "calendar", title: "Resultados" },
@@ -198,45 +214,40 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
     { key: ROUTES.LATE, icon: "clock", title: "Atrasados" },
     { key: ROUTES.SEARCH, icon: "search", title: "Busca" },
     { key: ROUTES.CENTENAS, icon: "hash", title: "Centenas" },
-    { key: ROUTES.ACCOUNT, icon: "user", title: isGuest ? "Entrar / Minha Conta" : "Minha Conta" },
+    { key: ROUTES.ACCOUNT, icon: "user", title: "Minha Conta" },
   ];
 
   return (
-    <div className="pp_shell">
-      <aside className="pp_sidebar">
-        <div className="pp_brand" title="Palpitaco">
+    <div style={UI.shell}>
+      <aside style={UI.sidebar}>
+        <div style={UI.brand}>
           <MiniLogo />
-          <div className="pp_planPill">{planLabel}</div>
+          <div style={UI.plan}>{isGuest ? "PREVIEW" : "FREE"}</div>
         </div>
 
-        <nav className="pp_nav" aria-label="Menu">
+        <nav style={UI.nav}>
           {menu.map((m) => (
             <button
               key={m.key}
-              type="button"
-              className={`pp_nav_item ${active === m.key ? "isActive" : ""}`}
               onClick={() => handleNavigate(m.key)}
               title={m.title}
-              aria-label={m.title}
-              aria-current={active === m.key ? "page" : undefined}
+              style={UI.btn(active === m.key)}
             >
               <Icon name={m.icon} />
             </button>
           ))}
 
           <button
-            type="button"
-            className="pp_nav_item"
             onClick={() => handleNavigate("__LOGOUT__")}
             title={isGuest ? "Sair do Preview" : "Sair"}
-            aria-label={isGuest ? "Sair do Preview" : "Sair"}
+            style={UI.btn(false)}
           >
             <Icon name="logout" />
           </button>
         </nav>
       </aside>
 
-      <main className="pp_main">{children}</main>
+      <main style={UI.main}>{children}</main>
     </div>
   );
 }
