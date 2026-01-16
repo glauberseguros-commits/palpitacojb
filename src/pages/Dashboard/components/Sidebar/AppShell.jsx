@@ -24,44 +24,101 @@ const LS_GUEST_ACTIVE_KEY = "pp_guest_active_v1";
 /* ======================
    Helpers seguros
 ====================== */
-const safeReadLS = (k) => {
+function safeReadLS(k) {
   try {
     return localStorage.getItem(k);
   } catch {
     return null;
   }
-};
-const safeWriteLS = (k, v) => {
+}
+function safeWriteLS(k, v) {
   try {
     localStorage.setItem(k, v);
   } catch {}
-};
-const safeRemoveLS = (k) => {
+}
+function safeRemoveLS(k) {
   try {
     localStorage.removeItem(k);
   } catch {}
-};
-
-function readSession() {
-  const raw = safeReadLS(ACCOUNT_SESSION_KEY);
-  if (!raw) return { ok: false };
-
+}
+function safeParseJson(raw) {
   try {
-    const obj = JSON.parse(raw);
-    return { ok: true, ...obj };
+    return JSON.parse(raw);
   } catch {
-    return { ok: true, type: "user", plan: "FREE" };
+    return null;
+  }
+}
+function dispatchSessionChanged() {
+  try {
+    window.dispatchEvent(new Event("pp_session_changed"));
+  } catch {}
+}
+
+function readGuestActive() {
+  try {
+    return localStorage.getItem(LS_GUEST_ACTIVE_KEY) === "1";
+  } catch {
+    return false;
   }
 }
 
-export default function AppShell({
-  active,
-  onNavigate,
-  onLogout,
-  children,
-}) {
+/**
+ * ✅ Normaliza a sessão (compatível com App.js / Account.jsx / LoginVisual.jsx)
+ * Formato esperado:
+ * - { ok:true, type:"guest"|"user", plan:"FREE"|"PRO"|"VIP", ... }
+ */
+function readSession() {
+  const raw = safeReadLS(ACCOUNT_SESSION_KEY);
+  if (!raw) return { ok: false, type: "none", plan: "FREE" };
+
+  const s = String(raw || "").trim();
+  if (!s) return { ok: false, type: "none", plan: "FREE" };
+
+  if (!s.startsWith("{")) {
+    // legacy: qualquer string não vazia
+    return { ok: true, type: "user", plan: "FREE" };
+  }
+
+  const obj = safeParseJson(s);
+  if (!obj || typeof obj !== "object") return { ok: false, type: "none", plan: "FREE" };
+
+  const ok = obj.ok === true || obj.ok == null; // tolera sessão antiga sem ok
+  const typeRaw = String(obj.type || obj.mode || "").trim().toLowerCase();
+  const planRaw = String(obj.plan || "FREE").trim().toUpperCase();
+
+  const type = typeRaw === "guest" ? "guest" : typeRaw === "user" ? "user" : "user";
+  const plan = planRaw === "VIP" ? "VIP" : planRaw === "PRO" ? "PRO" : "FREE";
+
+  return { ok: !!ok, type, plan, raw: obj };
+}
+
+function writeSession(obj) {
+  safeWriteLS(ACCOUNT_SESSION_KEY, JSON.stringify(obj));
+  // storage não dispara no mesmo tab, então disparamos manualmente
+  dispatchSessionChanged();
+}
+
+export default function AppShell({ active, onNavigate, onLogout, children }) {
+  // ✅ sessão reativa
   const [session, setSession] = useState(() => readSession());
-  const [moreOpen, setMoreOpen] = useState(false);
+
+  // ✅ refaz leitura quando localStorage mudar (outros tabs) OU evento interno
+  useEffect(() => {
+    const sync = () => setSession(readSession());
+
+    const onStorage = (e) => {
+      if (!e) return;
+      if (e.key === ACCOUNT_SESSION_KEY || e.key === LS_GUEST_ACTIVE_KEY) sync();
+    };
+
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("pp_session_changed", sync);
+
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("pp_session_changed", sync);
+    };
+  }, []);
 
   /* ======================
      Sync Firebase Auth
@@ -69,28 +126,43 @@ export default function AppShell({
   ====================== */
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
+      // user logado de verdade
       if (user?.uid) {
-        safeWriteLS(
-          ACCOUNT_SESSION_KEY,
-          JSON.stringify({ type: "user", plan: "FREE", uid: user.uid })
-        );
+        writeSession({
+          ok: true,
+          type: "user",
+          plan: "FREE",
+          uid: user.uid,
+          email: String(user.email || "").trim().toLowerCase(),
+          ts: Date.now(),
+        });
         setSession(readSession());
         return;
       }
 
-      if (safeReadLS(LS_GUEST_ACTIVE_KEY) === "1") {
-        safeWriteLS(
-          ACCOUNT_SESSION_KEY,
-          JSON.stringify({ type: "guest", plan: "FREE" })
-        );
+      // sem user: se guest ativo, mantém guest; se não, limpa sessão
+      if (readGuestActive()) {
+        writeSession({ ok: true, type: "guest", plan: "FREE", ts: Date.now() });
+        setSession(readSession());
+      } else {
+        safeRemoveLS(ACCOUNT_SESSION_KEY);
+        dispatchSessionChanged();
         setSession(readSession());
       }
     });
 
-    return () => unsub();
+    return () => unsub?.();
   }, []);
 
-  const isGuest = session?.type === "guest";
+  const isGuest = !!session?.ok && session?.type === "guest";
+  const plan = String(session?.plan || "FREE").toUpperCase();
+
+  const planLabel = useMemo(() => {
+    if (isGuest) return "PREVIEW";
+    if (plan === "VIP") return "VIP";
+    if (plan === "PRO") return "PRO";
+    return "FREE";
+  }, [isGuest, plan]);
 
   /* ======================
      Navegação
@@ -98,18 +170,16 @@ export default function AppShell({
   const handleNavigate = async (key) => {
     if (!key) return;
 
-    if (key === "__MORE__") {
-      setMoreOpen(true);
-      return;
-    }
-
     if (key === "__LOGOUT__") {
+      // logout real do Firebase (se houver)
       try {
         await signOut(auth);
       } catch {}
 
+      // limpa sessão local
       safeRemoveLS(ACCOUNT_SESSION_KEY);
       safeRemoveLS(LS_GUEST_ACTIVE_KEY);
+      dispatchSessionChanged();
 
       onLogout?.();
       return;
@@ -128,33 +198,38 @@ export default function AppShell({
     { key: ROUTES.LATE, icon: "clock", title: "Atrasados" },
     { key: ROUTES.SEARCH, icon: "search", title: "Busca" },
     { key: ROUTES.CENTENAS, icon: "hash", title: "Centenas" },
-    { key: ROUTES.ACCOUNT, icon: "user", title: "Minha Conta" },
+    { key: ROUTES.ACCOUNT, icon: "user", title: isGuest ? "Entrar / Minha Conta" : "Minha Conta" },
   ];
 
   return (
     <div className="pp_shell">
       <aside className="pp_sidebar">
-        <div className="pp_brand">
+        <div className="pp_brand" title="Palpitaco">
           <MiniLogo />
-          <div className="pp_planPill">{isGuest ? "PREVIEW" : "FREE"}</div>
+          <div className="pp_planPill">{planLabel}</div>
         </div>
 
-        <nav className="pp_nav">
+        <nav className="pp_nav" aria-label="Menu">
           {menu.map((m) => (
             <button
               key={m.key}
+              type="button"
               className={`pp_nav_item ${active === m.key ? "isActive" : ""}`}
               onClick={() => handleNavigate(m.key)}
               title={m.title}
+              aria-label={m.title}
+              aria-current={active === m.key ? "page" : undefined}
             >
               <Icon name={m.icon} />
             </button>
           ))}
 
           <button
+            type="button"
             className="pp_nav_item"
             onClick={() => handleNavigate("__LOGOUT__")}
             title={isGuest ? "Sair do Preview" : "Sair"}
+            aria-label={isGuest ? "Sair do Preview" : "Sair"}
           >
             <Icon name="logout" />
           </button>
