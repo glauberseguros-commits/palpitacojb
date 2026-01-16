@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import Icon from "./Icon";
 import MiniLogo from "./MiniLogo";
 
-import { auth } from "../../../services/firebase";
+import { auth } from "../../../../services/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 
 const ROUTES = {
