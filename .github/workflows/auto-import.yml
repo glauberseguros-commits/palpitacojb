@@ -2,8 +2,8 @@ name: Auto Import — PalPitaco JB
 
 on:
   schedule:
-    # ⏰ Horários de sorteio (BRT = UTC-3)
-    # GitHub usa UTC, então somamos +3h
+    # Horários de sorteio (BRT = UTC-3)
+    # GitHub Actions usa UTC, então somamos +3h
     #
     # Domingo: 09h, 11h, 14h, 16h (BRT)
     - cron: "0 12 * * 0"   # 09h BRT
@@ -19,7 +19,7 @@ on:
     - cron: "0 21 * * 1-6" # 18h BRT
     - cron: "0 0 * * 2-6"  # 21h BRT (00h UTC)
 
-  workflow_dispatch: # botão manual no GitHub (opcional)
+  workflow_dispatch:
 
 jobs:
   run-import:
@@ -34,7 +34,8 @@ jobs:
         with:
           node-version: 20
 
-      - name: Instalar dependências
+      - name: Instalar dependências (backend)
+        working-directory: backend
         run: npm ci
 
       - name: Rodar importação automática
