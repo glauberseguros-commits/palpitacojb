@@ -1,51 +1,61 @@
-# ======================================
+# ===============================
 # Dependencies
-# ======================================
-/node_modules
-/.pnp
+# ===============================
+node_modules/
+.pnp
 .pnp.js
 
-# ======================================
-# Testing
-# ======================================
-/coverage
+# ===============================
+# Build
+# ===============================
+build/
 
-# ======================================
-# Production build
-# ======================================
-/build
+# ===============================
+# Backend
+# ===============================
 
-# ======================================
-# Backend (motor local / scripts)
-# Estratégia:
-# - Ignora tudo do backend
-# - Reabre explicitamente o que o GitHub Actions precisa
-# ======================================
-
-# 🔒 ignora tudo
-/backend
-
-# 🔓 reabre diretórios pais necessários
-!/backend/
-!/backend/scripts/
-!/backend/scripts/**
-
-# 🔓 libera apenas JS de scripts
-!/backend/scripts/**/*.js
-
-# 🔓 libera README (opcional)
-!/backend/README.md
-
-# 🔒 bloqueia pesado/sensível
+# Ignora apenas o pesado/sensível
 /backend/node_modules/
 /backend/secrets/
 /backend/logs/
 /backend/.env
 /backend/.env.*
-/backend/.env.local
+/backend/**/*.json
 
-# 🔒 bloqueia JSONs do backend (para não vazar credenciais)
-# ✅ mas reabre os manifests do npm (necessários no Actions)
-backend/**/*.json
-!backend/package.json
-!backend/package-lock.json
+# ===============================
+# Archives
+# ===============================
+archive/
+archive_backend/
+archive_structure/
+ui_legacy/
+
+# ===============================
+# OS / Editor
+# ===============================
+.DS_Store
+Thumbs.db
+
+# ===============================
+# Env (root)
+# ===============================
+.env
+.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ===============================
+# Logs
+# ===============================
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# ===============================
+# Vercel
+# ===============================
+.vercel
+.env*.local
