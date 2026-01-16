@@ -162,14 +162,6 @@ function getDrawHourRaw(d) {
 
 /**
  * ✅ Dedup “de verdade” (alinhado ao service)
- * - chave lógica: ymd + hhmm (normalizado)
- * - fallback: id (quando não houver chave lógica)
- *
- * Regra de preferência quando colide:
- * 1) quem tem prizes embutido (array > 0)
- * 2) quem tem prizesCount maior
- * 3) quem tem ymd/hour preenchidos (mais consistente)
- * 4) mantém o primeiro
  */
 function dedupeDrawsLogicalPreferBest(draws) {
   const arr = Array.isArray(draws) ? draws : [];
@@ -218,11 +210,7 @@ function dedupeDrawsLogicalPreferBest(draws) {
 }
 
 /**
- * ✅ Normalização final para UI/Charts:
- * - date: preferir YMD (canoniza)
- * - ymd: sempre que possível
- * - close_hour/closeHour: HH:MM
- * - prizes: array (nunca null)
+ * ✅ Normalização final para UI/Charts
  */
 function normalizeDrawForCharts(d) {
   const ymd = d?.ymd || normalizeToYMD(getDrawDateRaw(d));
@@ -232,13 +220,10 @@ function normalizeDrawForCharts(d) {
 
   return {
     ...d,
-    // canoniza "date" quando possível (evita mix BR/ISO bagunçar)
     date: ymd || d?.date || null,
     ymd: ymd || null,
-
     close_hour: closeHour || "",
     closeHour: closeHour || "",
-
     prizes,
   };
 }
@@ -295,7 +280,6 @@ function normalizeBucketInput(bucket) {
 
 /**
  * ✅ Decide o modo do service no RANGE (performance/UX)
- * - alinha com o corte do service (AGGREGATED_AUTO_DAYS)
  */
 function decideRangeServiceMode(rangeDays) {
   const THRESHOLD = Number.isFinite(Number(AGGREGATED_AUTO_DAYS))
@@ -304,6 +288,15 @@ function decideRangeServiceMode(rangeDays) {
 
   if (!Number.isFinite(rangeDays) || rangeDays <= 0) return "detailed";
   return rangeDays >= THRESHOLD ? "aggregated" : "detailed";
+}
+
+/* =========================
+   ✅ Bounds cache com TTL (CORREÇÃO DO "TRAVOU NA DATA")
+========================= */
+
+const BOUNDS_TTL_MS = 10 * 60 * 1000; // 10 min (ajuste se quiser)
+function nowMs() {
+  return Date.now();
 }
 
 export function useKingRanking({
@@ -334,14 +327,15 @@ export function useKingRanking({
     bounds: { ok: false, uf: null, minYmd: null, maxYmd: null, source: "none" },
     suggestedRange: { from: null, to: null },
 
-    // ✅ novos (não quebra ninguém que ignore)
-    serviceMode: "detailed", // "detailed" | "aggregated"
+    serviceMode: "detailed",
     hydrating: false,
   });
 
   const [drawsRaw, setDrawsRaw] = useState([]);
 
+  // ✅ cache: uf -> { ts, data }
   const boundsCacheRef = useRef(new Map());
+
   const [bounds, setBounds] = useState({
     ok: false,
     uf: null,
@@ -352,6 +346,18 @@ export function useKingRanking({
 
   const [boundsRetryTick, setBoundsRetryTick] = useState(0);
   const boundsRetryTimerRef = useRef(null);
+
+  // ✅ “soft tick” pra permitir refresh de bounds (sem spam)
+  const [boundsSoftTick, setBoundsSoftTick] = useState(0);
+
+  // ✅ no foco, tenta atualizar bounds (respeitando TTL)
+  useEffect(() => {
+    const onFocus = () => setBoundsSoftTick((t) => t + 1);
+    if (typeof window !== "undefined") window.addEventListener("focus", onFocus);
+    return () => {
+      if (typeof window !== "undefined") window.removeEventListener("focus", onFocus);
+    };
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -371,10 +377,15 @@ export function useKingRanking({
         return;
       }
 
+      // ✅ cache com expiração
       if (boundsCacheRef.current.has(key)) {
-        const cached = boundsCacheRef.current.get(key);
-        if (mounted) setBounds(cached);
-        return;
+        const cachedWrap = boundsCacheRef.current.get(key);
+        const age = nowMs() - Number(cachedWrap?.ts || 0);
+
+        if (cachedWrap?.data?.ok && Number.isFinite(age) && age < BOUNDS_TTL_MS) {
+          if (mounted) setBounds(cachedWrap.data);
+          return;
+        }
       }
 
       try {
@@ -388,7 +399,9 @@ export function useKingRanking({
           source: b?.source || "none",
         };
 
-        if (safe.ok) boundsCacheRef.current.set(key, safe);
+        // ✅ salva no cache com timestamp (mesmo se ok=false, pra não martelar)
+        boundsCacheRef.current.set(key, { ts: nowMs(), data: safe });
+
         if (mounted) setBounds(safe);
 
         if (mounted && !safe.ok) {
@@ -406,6 +419,8 @@ export function useKingRanking({
           source: "none",
         };
 
+        boundsCacheRef.current.set(key, { ts: nowMs(), data: safe });
+
         if (mounted) setBounds(safe);
 
         if (boundsRetryTimerRef.current) clearTimeout(boundsRetryTimerRef.current);
@@ -420,17 +435,17 @@ export function useKingRanking({
       mounted = false;
       if (boundsRetryTimerRef.current) clearTimeout(boundsRetryTimerRef.current);
     };
-  }, [uf, boundsRetryTick]);
+  }, [uf, boundsRetryTick, boundsSoftTick]);
 
   const ymdDateRaw = useMemo(() => normalizeToYMD(date), [date]);
   const ymdFromRaw = useMemo(() => normalizeToYMD(dateFrom), [dateFrom]);
   const ymdToRaw = useMemo(() => normalizeToYMD(dateTo), [dateTo]);
 
-  const bucketNorm = useMemo(() => normalizeBucketInput(closeHourBucket), [closeHourBucket]);
+  const bucketNorm = useMemo(
+    () => normalizeBucketInput(closeHourBucket),
+    [closeHourBucket]
+  );
 
-  /**
-   * ✅ positions null/undefined/vazio => TODAS
-   */
   const positionsEffective = useMemo(() => {
     return Array.isArray(positions) && positions.length ? positions : null;
   }, [positions]);
@@ -508,7 +523,6 @@ export function useKingRanking({
 
     if (!Number.isFinite(rangeDays)) return true;
 
-    // ranges muito longos => sem refresh automático
     const REFRESH_MAX_DAYS = 45;
     return rangeDays <= REFRESH_MAX_DAYS;
   }, [mode, rangeDays]);
@@ -519,7 +533,6 @@ export function useKingRanking({
   const [refreshTick, setRefreshTick] = useState(0);
   const refreshSeqRef = useRef(0);
 
-  // ✅ seq exclusivo da hidratação (para cancelar ao trocar filtros)
   const hydrateSeqRef = useRef(0);
 
   const hardKey = useMemo(() => {
@@ -586,7 +599,6 @@ export function useKingRanking({
     async function load({ hard = false } = {}) {
       const mySeq = ++refreshSeqRef.current;
 
-      // ✅ cancela qualquer hidratação anterior ao iniciar um load novo
       hydrateSeqRef.current += 1;
       const myHydrateSeq = hydrateSeqRef.current;
 
@@ -618,8 +630,8 @@ export function useKingRanking({
             dateFrom: ymdFrom,
             dateTo: ymdTo,
             closeHour: null,
-            positions: positionsArrStable, // null => todas
-            mode: serviceMode, // "aggregated" ou "detailed"
+            positions: positionsArrStable,
+            mode: serviceMode,
           });
         } else if (mode === "day") {
           serviceMode = "detailed";
@@ -627,7 +639,7 @@ export function useKingRanking({
             uf,
             date: ymdDate,
             closeHour: null,
-            positions: positionsArrStable, // null => todas
+            positions: positionsArrStable,
           });
         } else {
           draws = [];
@@ -637,24 +649,20 @@ export function useKingRanking({
 
         rangeBlockedRef.current = false;
 
-        // ✅ Dedup por chave lógica ymd+hhmm (preferindo o melhor draw quando colide)
         let unique = dedupeDrawsLogicalPreferBest(draws).map(normalizeDrawForCharts);
 
-        // filtro por bucket aplicado localmente
         if (bucketNorm) {
           unique = unique.filter(
             (d) => toHourBucketLabel(d?.close_hour) === bucketNorm
           );
         }
 
-        // ✅ Atualiza drawsRaw imediatamente (UX)
         setDrawsRaw(unique);
 
         const hasAnyPrize = unique.some(
           (d) => Array.isArray(d?.prizes) && d.prizes.length
         );
 
-        // ✅ DETALHADO (com prizes)
         if (serviceMode === "detailed") {
           if (hasAnyPrize) {
             const built = buildRanking(unique);
@@ -696,7 +704,6 @@ export function useKingRanking({
               hydrating: false,
             }));
           } else {
-            // ✅ Se por algum motivo vier "detailed" sem prizes, zera com segurança
             setData([]);
             setMeta((prev) => ({
               ...prev,
@@ -730,14 +737,12 @@ export function useKingRanking({
             }));
           }
 
-          return; // encerra aqui: não hidrata
+          return;
         }
 
-        // ✅ AGREGADO: não “zera ranking” (sem flicker),
-        // mas sinaliza claramente que ainda NÃO está detalhado.
+        // aggregated
         setMeta((prev) => ({
           ...prev,
-          // mantém top3/data anteriores sem flicker, mas você pode travar a UI usando hydrating/serviceMode
           totalDraws: unique.length,
           mode,
           date: null,
@@ -761,7 +766,6 @@ export function useKingRanking({
           hydrating: mode === "range" && serviceMode === "aggregated",
         }));
 
-        // ✅ Hidratação: range longo em agregado => busca prizes em background
         if (mode === "range" && serviceMode === "aggregated") {
           (async () => {
             try {
@@ -771,7 +775,7 @@ export function useKingRanking({
 
               const hydrated = await hydrateKingDrawsWithPrizes({
                 draws: unique,
-                positions: positionsArrStable, // null => todas
+                positions: positionsArrStable,
               });
 
               if (!mounted) return;
@@ -786,7 +790,6 @@ export function useKingRanking({
                 );
               }
 
-              // ✅ Dedup final por chave lógica também após hidratação (blindagem)
               hydratedFiltered = dedupeDrawsLogicalPreferBest(hydratedFiltered).map(
                 normalizeDrawForCharts
               );

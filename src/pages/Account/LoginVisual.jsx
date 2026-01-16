@@ -1,5 +1,6 @@
 // src/pages/Account/LoginVisual.jsx
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
+import { runAuditRJ } from "../../dev/runAuditRJ";
 
 const ACCOUNT_SESSION_KEY = "pp_session_v1";
 const LS_GUEST_ACTIVE_KEY = "pp_guest_active_v1";
@@ -17,9 +18,14 @@ function safeSetLS(key, value) {
 }
 
 export default function LoginVisual({ onEnter }) {
+  // ✅ executa auditoria RJ (bounds) ao abrir a tela
+  useEffect(() => {
+    console.log("🔎 Rodando auditoria RJ (bounds)...");
+    runAuditRJ().catch(console.error);
+  }, []);
+
   const ui = useMemo(() => {
     const GOLD = "rgba(202,166,75,1)";
-    const GOLD_SOFT = "rgba(202,166,75,0.20)";
     const WHITE = "rgba(255,255,255,0.92)";
     const WHITE_70 = "rgba(255,255,255,0.70)";
     const BORDER = "rgba(255,255,255,0.12)";
@@ -41,7 +47,6 @@ export default function LoginVisual({ onEnter }) {
           "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
       },
 
-      // glow + textura sutil
       glowA: {
         position: "absolute",
         inset: "-25%",
@@ -49,9 +54,9 @@ export default function LoginVisual({ onEnter }) {
           "radial-gradient(700px 420px at 18% 22%, rgba(202,166,75,0.18), rgba(0,0,0,0) 60%)," +
           "radial-gradient(520px 380px at 82% 34%, rgba(202,166,75,0.10), rgba(0,0,0,0) 62%)," +
           "radial-gradient(520px 520px at 50% 92%, rgba(255,255,255,0.06), rgba(0,0,0,0) 64%)",
-        filter: "blur(0px)",
         pointerEvents: "none",
       },
+
       glowB: {
         position: "absolute",
         inset: 0,
@@ -64,9 +69,7 @@ export default function LoginVisual({ onEnter }) {
       shell: {
         width: "min(980px, 100%)",
         display: "grid",
-        gridTemplateColumns: "1fr",
         gap: "clamp(12px, 2vw, 18px)",
-        position: "relative",
         zIndex: 2,
       },
 
@@ -91,7 +94,6 @@ export default function LoginVisual({ onEnter }) {
         display: "flex",
         alignItems: "center",
         gap: 12,
-        minWidth: 0,
       },
 
       mark: {
@@ -102,22 +104,15 @@ export default function LoginVisual({ onEnter }) {
         background:
           "radial-gradient(18px 18px at 28% 25%, rgba(255,255,255,0.20), rgba(0,0,0,0) 60%)," +
           "linear-gradient(180deg, rgba(202,166,75,0.25), rgba(0,0,0,0.20))",
-        boxShadow: `0 16px 40px rgba(0,0,0,0.55)`,
         display: "grid",
         placeItems: "center",
         fontWeight: 1000,
-        letterSpacing: 0.6,
         color: GOLD,
-        userSelect: "none",
       },
-
-      titleWrap: { minWidth: 0, display: "grid", gap: 4 },
 
       title: {
         fontSize: "clamp(18px, 2.2vw, 22px)",
         fontWeight: 1000,
-        letterSpacing: 0.2,
-        lineHeight: 1.1,
         margin: 0,
       },
 
@@ -125,8 +120,6 @@ export default function LoginVisual({ onEnter }) {
         fontSize: "clamp(12px, 1.5vw, 13px)",
         color: WHITE_70,
         margin: 0,
-        lineHeight: 1.3,
-        letterSpacing: 0.15,
       },
 
       body: {
@@ -135,16 +128,9 @@ export default function LoginVisual({ onEnter }) {
         gap: 12,
       },
 
-      hint: {
-        fontSize: "clamp(12px, 1.5vw, 12.5px)",
-        color: "rgba(255,255,255,0.75)",
-        lineHeight: 1.35,
-      },
-
       btnRow: {
         display: "grid",
         gap: 10,
-        marginTop: 6,
       },
 
       btnPrimary: {
@@ -153,13 +139,9 @@ export default function LoginVisual({ onEnter }) {
         border: "1px solid rgba(202,166,75,0.55)",
         background:
           "linear-gradient(180deg, rgba(202,166,75,0.22), rgba(202,166,75,0.10))",
-        color: "rgba(255,255,255,0.92)",
+        color: WHITE,
         fontWeight: 950,
-        letterSpacing: 0.25,
         cursor: "pointer",
-        outline: "none",
-        boxShadow: "0 16px 40px rgba(0,0,0,0.55)",
-        transition: "transform .12s ease, filter .12s ease, background .12s ease",
       },
 
       btnSecondary: {
@@ -167,71 +149,30 @@ export default function LoginVisual({ onEnter }) {
         borderRadius: 16,
         border: "1px solid rgba(255,255,255,0.16)",
         background: "rgba(255,255,255,0.06)",
-        color: "rgba(255,255,255,0.90)",
+        color: WHITE,
         fontWeight: 900,
-        letterSpacing: 0.2,
         cursor: "pointer",
-        outline: "none",
-        transition: "transform .12s ease, filter .12s ease, background .12s ease",
-      },
-
-      foot: {
-        padding: "12px 18px",
-        borderTop: "1px solid rgba(255,255,255,0.08)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: 10,
-        flexWrap: "wrap",
-        background: "rgba(0,0,0,0.35)",
-        color: "rgba(255,255,255,0.62)",
-        fontSize: 11.5,
-      },
-
-      pill: {
-        border: "1px solid rgba(255,255,255,0.14)",
-        background: "rgba(255,255,255,0.06)",
-        borderRadius: 999,
-        padding: "6px 10px",
-        fontWeight: 850,
-        letterSpacing: 0.2,
-      },
-
-      link: {
-        color: "rgba(202,166,75,0.95)",
-        textDecoration: "none",
-        fontWeight: 850,
       },
     };
   }, []);
 
   const enterAsGuest = () => {
-    // ✅ marca guest
     safeSetLS(
       ACCOUNT_SESSION_KEY,
       JSON.stringify({ ok: true, type: "guest", plan: "FREE", ts: Date.now() })
     );
     safeSetLS(LS_GUEST_ACTIVE_KEY, "1");
-
-    // ✅ avisa o App.js no mesmo tab
     dispatchSessionChanged();
-
-    // fallback: se o pai quiser navegar
     onEnter?.("dashboard");
   };
 
   const enterLogin = () => {
-    // login visual (sem auth real)
-    // ✅ marca user e desliga guest ativo (se sobrou)
     safeSetLS(
       ACCOUNT_SESSION_KEY,
       JSON.stringify({ ok: true, type: "user", plan: "FREE", ts: Date.now() })
     );
     safeSetLS(LS_GUEST_ACTIVE_KEY, "0");
-
-    // ✅ avisa o App.js no mesmo tab
     dispatchSessionChanged();
-
     onEnter?.("dashboard");
   };
 
@@ -245,7 +186,7 @@ export default function LoginVisual({ onEnter }) {
           <div style={ui.header}>
             <div style={ui.brandRow}>
               <div style={ui.mark}>PJ</div>
-              <div style={ui.titleWrap}>
+              <div>
                 <h1 style={ui.title}>Palpitaco JB</h1>
                 <p style={ui.subtitle}>Estatística • Leitura • Análise</p>
               </div>
@@ -253,52 +194,14 @@ export default function LoginVisual({ onEnter }) {
           </div>
 
           <div style={ui.body}>
-            <div style={ui.hint}>
-              Acesso rápido para explorar estatísticas e painéis.
-              <br />
-              <span style={{ opacity: 0.9 }}>
-                Preview libera navegação básica sem login.
-              </span>
-            </div>
-
             <div style={ui.btnRow}>
-              <button
-                type="button"
-                onClick={enterLogin}
-                style={ui.btnPrimary}
-                onMouseDown={(e) => (e.currentTarget.style.transform = "scale(0.99)")}
-                onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
-                onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-              >
+              <button style={ui.btnPrimary} onClick={enterLogin}>
                 ENTRAR
               </button>
-
-              <button
-                type="button"
-                onClick={enterAsGuest}
-                style={ui.btnSecondary}
-                onMouseDown={(e) => (e.currentTarget.style.transform = "scale(0.99)")}
-                onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
-                onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-              >
+              <button style={ui.btnSecondary} onClick={enterAsGuest}>
                 ENTRAR SEM LOGIN (PREVIEW)
               </button>
             </div>
-          </div>
-
-          <div style={ui.foot}>
-            <span style={ui.pill}>FREE</span>
-            <span>
-              Ao entrar você aceita os{" "}
-              <a href="#!" style={ui.link} onClick={(e) => e.preventDefault()}>
-                termos
-              </a>{" "}
-              e{" "}
-              <a href="#!" style={ui.link} onClick={(e) => e.preventDefault()}>
-                privacidade
-              </a>
-              .
-            </span>
           </div>
         </div>
       </div>
