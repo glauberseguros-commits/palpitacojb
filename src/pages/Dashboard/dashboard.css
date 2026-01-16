@@ -3,7 +3,8 @@
 /* =========================
    DASHBOARD (Premium Frame)
    - Layout e estrutura SOMENTE do Dashboard
-   - Não controla overflow global (isso é do index.css)
+   - Scroll do app é controlado pelo <main> do AppShell (overflow: auto)
+   - Evita “corte” por height fixa no topo (coluna direita com scroll interno)
 ========================= */
 
 /* ====== Base / Tokens ====== */
@@ -21,7 +22,7 @@
 
   --gold: rgba(201,168,62,0.92);
 
-  /* sombras mais refinadas (premium) */
+  /* sombras premium */
   --shadow: 0 18px 50px rgba(0,0,0,0.55);
   --shadowSoft: 0 12px 30px rgba(0,0,0,0.45);
   --shadowTight: 0 10px 22px rgba(0,0,0,0.40);
@@ -30,7 +31,7 @@
   --radius-md: 16px;
   --radius-sm: 12px;
 
-  /* Spacing premium */
+  /* spacing */
   --gap: 12px;
   --gap-lg: 14px;
   --pad: 14px;
@@ -40,37 +41,31 @@
   --scrollThumb: rgba(255,255,255,0.18);
   --scrollThumbHover: rgba(255,255,255,0.26);
 
-  /* ✅ altura única do topo (banner + coluna direita) */
+  /* ✅ altura do topo (banner + coluna direita) no desktop */
   --topH: 250px;
 
-  /* ✅ caso você queira forçar um "inset" por conta do menu fixo externo,
-     você pode setar via CSS global:
-     body { --dashInsetLeft: 72px; } (por exemplo)
-  */
+  /* inset opcional (se precisar compensar algo externo) */
   --dashInsetLeft: 0px;
 }
 
-/* ✅ garante que altura/width incluam bordas */
+/* ✅ garante box-model consistente */
 *, *::before, *::after{
   box-sizing: border-box;
 }
 
 /* ====== Estrutura geral ====== */
 .dashRoot{
-  min-height: 100dvh;
-  height: 100%;
-  min-height: 0;
-
-  /* ✅ CORREÇÃO DO “VÁCUO”:
-     - dashboard NÃO fica mais centralizado
-     - ocupa a largura disponível e encosta mais à esquerda
-  */
   width: 100%;
   max-width: none;
   margin: 0;
 
+  /* Dashboard ocupa o container do AppShell main */
+  min-height: 100%;
+  height: 100%;
+  min-height: 0;
+
   display: grid;
-  grid-template-columns: 380px 1fr;
+  grid-template-columns: 380px minmax(0, 1fr); /* ✅ anti-corte */
   gap: var(--gap-lg);
 
   padding: var(--pad);
@@ -78,16 +73,15 @@
 
   align-items: stretch;
 
-  /* importante: deixa o dashboard controlar o que rola internamente */
+  /* importante: evita scroll duplo interno (quem rola é o main do AppShell) */
   overflow: hidden;
 
-  /* ✅ premium: leve “base vignette” */
   background:
     radial-gradient(900px 500px at 70% 12%, rgba(201,168,62,0.06), transparent 60%),
     radial-gradient(700px 420px at 18% 10%, rgba(255,255,255,0.035), transparent 55%);
 }
 
-/* ====== Helpers de “Card” (padrão visual) ====== */
+/* ====== Helpers de Card ====== */
 .dashCard{
   border: 1px solid var(--border);
   background: var(--panel2);
@@ -102,7 +96,7 @@
   box-shadow: var(--shadowSoft);
 }
 
-/* Painel esquerdo (tabela) */
+/* ====== Painel esquerdo (tabela) ====== */
 .dashLeft{
   border: 1px solid var(--border);
   background: var(--panel2);
@@ -113,15 +107,18 @@
   position: sticky;
   top: var(--pad);
 
-  /* ✅ sticky premium confiável: nunca estoura a viewport */
+  /* ✅ sticky confiável: não estoura a viewport do AppShell */
   max-height: calc(100dvh - (var(--pad) * 2));
   min-height: 0;
 
   display: flex;
   flex-direction: column;
+
+  /* ✅ anti-corte em flex */
+  min-width: 0;
 }
 
-/* Área principal */
+/* ====== Área principal ====== */
 .dashMain{
   display: flex;
   flex-direction: column;
@@ -131,19 +128,17 @@
   min-height: 0;
 
   height: 100%;
+
+  /* mantém o layout “travado”; quem rola é o AppShell main */
   overflow: hidden;
 }
 
-/* ====== Topo ====== */
+/* ====== Topo (Banner + coluna direita) ====== */
 .dashTop{
   display: grid;
-
-  /* ✅ premium: coluna direita firme */
-  grid-template-columns: 1fr 520px;
-
+  grid-template-columns: minmax(0, 1fr) 520px; /* ✅ anti-corte */
   gap: var(--gap-lg);
 
-  /* garante esticamento real dos dois lados */
   align-items: stretch;
 
   min-width: 0;
@@ -160,7 +155,6 @@
   overflow: hidden;
   box-shadow: var(--shadow);
 
-  /* ✅ altura fixa sincronizada */
   height: var(--topH);
   min-height: var(--topH);
   max-height: var(--topH);
@@ -172,7 +166,6 @@
   outline-offset: -1px;
 }
 
-/* brilho premium sutil */
 .dashBanner::before{
   content: "";
   position: absolute;
@@ -186,7 +179,6 @@
   z-index: 1;
 }
 
-/* vinheta leve + borda interna */
 .dashBanner::after{
   content: "";
   position: absolute;
@@ -206,83 +198,68 @@
   object-fit: cover;
   object-position: 50% 25%;
   display: block;
-
   filter: contrast(1.03) saturate(1.12) brightness(1.03);
 }
 
-/* Coluna direita (anos/datas + KPIs) */
+/* Coluna direita */
 .dashTopRight{
   display: flex;
   flex-direction: column;
-
-  /* ✅ refinado para caber no --topH sem “cortar” KPI */
   gap: 8px;
 
-  /* altura sincronizada com o banner */
   height: var(--topH);
   min-height: var(--topH);
   max-height: var(--topH);
 
   min-width: 0;
 
-  /* ✅ evita “quebras” horizontais por conteúdo interno */
-  overflow: hidden;
+  /* ✅ PRINCIPAL FIX: não corta conteúdo; rola internamente se precisar */
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+
+  /* ✅ evita “pular” layout com scrollbar */
+  scrollbar-gutter: stable both-edges;
 }
 
-/* não deixa blocos estourarem */
 .dashTopRight > *{
   flex: 0 0 auto;
   min-width: 0;
 }
 
-/* ✅ FIX: remover o empurrão que causava corte (clipping) */
-.dashTopRight > :last-child{
-  margin-top: 0;
-}
-
 /* =========================
-   INTEGRAÇÃO: DateRangeControl (pp_range)
-   - Ajuste fino sem tocar no componente
-   - Garante encaixe premium na coluna direita
+   Integração: DateRangeControl (pp_range)
 ========================= */
 .dashTopRight .pp_range{
   min-width: 0;
   width: 100%;
 }
 
-/* TopBar (chips / título) alinhado e com menos “peso” visual */
 .dashTopRight .pp_range > div:first-child{
   box-shadow: var(--shadowTight);
 }
 
-/* Linha dos inputs nunca estoura e fica perfeitamente alinhada */
 .dashTopRight .pp_range .pp_range_row{
   min-width: 0;
 }
 
-/* Inputs e botões do calendário: leve redução de “tensão” visual para casar com o dashboard */
 .dashTopRight .pp_range input[type="date"]{
   min-width: 0;
 }
 
-/* Slider: evita qualquer chance de cortar as bolinhas (thumb) em alguns browsers */
 .dashTopRight .pp_range input[type="range"]{
   overflow: visible;
 }
 
-/* Se o container pai tiver outline/shadow forte, evita “briga” com o brilho do componente */
 .dashTopRight .pp_range{
   filter: none;
 }
 
-/* ====== (Legado / opcional) Linha das datas/anos (se ainda existir em algum lugar) ====== */
+/* ====== (Legado / opcional) Linha das datas/anos ====== */
 .dashDateRow{
   display: grid;
   grid-template-columns: 132px 132px 1fr;
-
   gap: 8px;
   padding: 8px;
-
   align-items: center;
 
   border: 1px solid var(--border);
@@ -296,19 +273,16 @@
     inset 0 0 0 1px rgba(255,255,255,0.06);
 }
 
-/* Caixas de data */
 .dashDateBox{
   border: 1px solid var(--border);
   background: rgba(0,0,0,0.74);
   border-radius: var(--radius-sm);
-
   padding: 9px 10px;
 
   font-weight: 850;
   letter-spacing: 0.15;
   text-align: center;
   white-space: nowrap;
-
   font-size: 13px;
 
   min-width: 0;
@@ -316,7 +290,6 @@
   box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
 }
 
-/* Botões de ano */
 .dashYearButtons{
   display: flex;
   justify-content: flex-end;
@@ -358,7 +331,7 @@
     0 0 0 3px rgba(201,168,62,0.08);
 }
 
-/* Faixa de filtros */
+/* ====== Faixa de filtros ====== */
 .dashFilters{
   border: 1px solid var(--border);
   background: rgba(0,0,0,0.62);
@@ -377,7 +350,7 @@
   outline-offset: -1px;
 }
 
-/* Área de gráficos */
+/* ====== Área de gráficos ====== */
 .dashCharts{
   background: transparent;
   border-radius: var(--radius-md);
@@ -389,7 +362,7 @@
   overflow: hidden;
 }
 
-/* Acessibilidade / Foco */
+/* Acessibilidade */
 .dashYearBtn:focus-visible{
   outline: none;
   border-color: rgba(201,168,62,0.55);
@@ -398,30 +371,35 @@
 
 /* Scrollbar (Dashboard scope) */
 .dashLeft *::-webkit-scrollbar,
-.dashMain *::-webkit-scrollbar{
+.dashMain *::-webkit-scrollbar,
+.dashTopRight::-webkit-scrollbar{
   width: 10px;
   height: 10px;
 }
+
 .dashLeft *::-webkit-scrollbar-track,
-.dashMain *::-webkit-scrollbar-track{
+.dashMain *::-webkit-scrollbar-track,
+.dashTopRight::-webkit-scrollbar-track{
   background: var(--scrollTrack);
   border-radius: 999px;
 }
+
 .dashLeft *::-webkit-scrollbar-thumb,
-.dashMain *::-webkit-scrollbar-thumb{
+.dashMain *::-webkit-scrollbar-thumb,
+.dashTopRight::-webkit-scrollbar-thumb{
   background: var(--scrollThumb);
   border-radius: 999px;
   border: 2px solid rgba(0,0,0,0.45);
 }
+
 .dashLeft *::-webkit-scrollbar-thumb:hover,
-.dashMain *::-webkit-scrollbar-thumb:hover{
+.dashMain *::-webkit-scrollbar-thumb:hover,
+.dashTopRight::-webkit-scrollbar-thumb:hover{
   background: var(--scrollThumbHover);
 }
 
 /* =========================
-   TABELA RANKING — melhoria de leitura
-   - Centraliza a coluna "Imagem" (header + células)
-   - Sem depender de classes do componente
+   TABELA RANKING — centraliza coluna imagem
 ========================= */
 .dashLeft table thead th:first-child,
 .dashLeft table tbody td:first-child{
@@ -446,38 +424,41 @@
 
 /* ====== Responsivo ====== */
 @media (max-width: 1400px){
-  .dashTop{ grid-template-columns: 1fr 480px; }
+  .dashTop{ grid-template-columns: minmax(0, 1fr) 480px; }
 }
 
 @media (max-width: 1200px){
-  :root{ --topH: 200px; }
-
-  .dashRoot{ grid-template-columns: 340px 1fr; }
-  .dashTop{ grid-template-columns: 1fr 440px; }
+  :root{ --topH: 210px; }
+  .dashRoot{ grid-template-columns: 340px minmax(0, 1fr); }
+  .dashTop{ grid-template-columns: minmax(0, 1fr) 440px; }
 }
 
+/* ✅ breakpoint alinhado com AppShell (vw < 980) */
 @media (max-width: 980px){
+  :root{ --topH: 200px; }
+
   .dashRoot{
     grid-template-columns: 1fr;
     padding: 12px;
-
-    height: auto;
-    overflow: visible;
-
-    /* mobile: remove qualquer inset extra */
     padding-left: 12px;
+
+    /* mantém o padrão: scroll do AppShell main */
+    height: 100%;
+    overflow: hidden;
   }
 
   .dashLeft{
     position: relative;
     top: auto;
     max-height: none;
-    height: auto;
+
+    /* em mobile, evita “grudar” e ficar gigante */
+    overflow: hidden;
   }
 
   .dashMain{
-    height: auto;
-    overflow: visible;
+    height: 100%;
+    overflow: hidden;
   }
 
   .dashTop{
@@ -485,16 +466,19 @@
   }
 
   .dashBanner{
-    height: 200px;
-    min-height: 200px;
-    max-height: none;
+    height: var(--topH);
+    min-height: var(--topH);
+    max-height: var(--topH);
   }
 
+  /* ✅ em mobile não faz sentido fixar altura no right;
+     deixa ele crescer naturalmente (sem corte) */
   .dashTopRight{
     height: auto;
     min-height: 0;
     max-height: none;
     overflow: visible;
+    scrollbar-gutter: auto;
   }
 
   .dashDateRow{
@@ -505,5 +489,17 @@
   .dashYearButtons{
     grid-column: 1 / -1;
     justify-content: flex-start;
+  }
+}
+
+/* extra: telas bem pequenas */
+@media (max-width: 520px){
+  .dashRoot{
+    padding: 10px;
+    gap: 12px;
+  }
+
+  .dashFilters{
+    padding: 10px;
   }
 }
