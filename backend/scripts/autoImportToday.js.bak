@@ -1,0 +1,76 @@
+﻿"use strict";
+
+/**
+ * autoImportToday.js
+ * - Calcula a data de HOJE (local)
+ * - Roda import em janelas (hours)
+ * - Para ao capturar (stop=1 por padrão)
+ *
+ * Uso:
+ *   node scripts/autoImportToday.js
+ *   node scripts/autoImportToday.js PT_RIO
+ *   node scripts/autoImportToday.js PT_RIO 09:09,11:09,14:09,16:09,18:09,21:09
+ *   node scripts/autoImportToday.js PT_RIO 09:09,11:09 0   (stop=0 => roda todos)
+ */
+
+// Reaproveita seu importKingApostas (já carrega .env.local e resolve credentials no topo)
+const { runImport } = require("./importKingApostas");
+
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
+
+function todayYMDLocal() {
+  const d = new Date();
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+function isHHMM(s) {
+  return /^\d{2}:\d{2}$/.test(String(s || "").trim());
+}
+
+async function main() {
+  const lotteryKey = String(process.argv[2] || "PT_RIO").trim() || "PT_RIO";
+  const hoursCsv = String(process.argv[3] || "").trim();
+  const stopArg = String(process.argv[4] ?? "1").trim(); // default stop=1
+  const stopOnCapture = stopArg !== "0";
+
+  const date = todayYMDLocal();
+
+  const defaultHours = ["09:09", "11:09", "14:09", "16:09", "18:09", "21:09"];
+  const hours = (hoursCsv ? hoursCsv.split(",") : defaultHours)
+    .map((s) => String(s || "").trim())
+    .filter(Boolean);
+
+  for (const h of hours) {
+    if (!isHHMM(h)) {
+      throw new Error(`hours inválido: ${h} (use HH:MM)`);
+    }
+  }
+
+  console.log(`[AUTO] date=${date} lottery=${lotteryKey} hours=${hours.join(",")} stop=${stopOnCapture ? "1" : "0"}`);
+
+  const startedAt = Date.now();
+  let capturedAt = null;
+
+  for (const h of hours) {
+    const r = await runImport({ date, lotteryKey, closeHour: h });
+
+    console.log(
+      `[AUTO] hour=${h} captured=${r.captured ? "1" : "0"} upsert_draws=${r.totalDrawsUpserted} upsert_prizes=${r.totalPrizesUpserted} tookMs=${r.tookMs}`
+    );
+
+    if (r.captured && !capturedAt) {
+      capturedAt = h;
+      if (stopOnCapture) break;
+    }
+  }
+
+  const tookMs = Date.now() - startedAt;
+  console.log(`[AUTO] DONE capturedAt=${capturedAt || "null"} tookMs=${tookMs}`);
+}
+
+main().catch((e) => {
+  console.error("ERRO:", e?.message || e);
+  process.exit(1);
+});
