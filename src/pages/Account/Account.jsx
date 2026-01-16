@@ -24,11 +24,10 @@ import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage
  *
  * ✅ Guest: permanece no localStorage.
  *
- * ✅ IMPORTANTE (App.js):
- * - App.js só sai da tela LOGIN quando existir pp_session_v1 com { ok:true }.
- * - Portanto este arquivo DEVE gravar pp_session_v1 quando:
- *   - login Firebase ocorreu
- *   - entrar como guest ocorreu
+ * ✅ IMPORTANTE:
+ * - App.js sai do LOGIN quando existir pp_session_v1 (user/guest).
+ * - Então este arquivo DEVE gravar pp_session_v1 e disparar o evento
+ *   "pp_session_changed" no mesmo tab.
  */
 
 const LS_GUEST_KEY = "pp_guest_profile_v1";
@@ -140,25 +139,35 @@ function safeBool(v) {
    Sessão (pp_session_v1) — CRÍTICO
 ========================= */
 
+function dispatchSessionChanged() {
+  try {
+    window.dispatchEvent(new Event("pp_session_changed"));
+  } catch {}
+}
+
 function safeWriteSession(obj) {
   try {
     localStorage.setItem(ACCOUNT_SESSION_KEY, JSON.stringify(obj));
   } catch {}
+  dispatchSessionChanged();
 }
 
 function safeRemoveSession() {
   try {
     localStorage.removeItem(ACCOUNT_SESSION_KEY);
   } catch {}
+  dispatchSessionChanged();
 }
 
 function markSessionAuth(user) {
   const uid = String(user?.uid || "").trim();
   const email = String(user?.email || "").trim().toLowerCase();
   if (!uid) return;
+
   safeWriteSession({
     ok: true,
-    mode: "auth",
+    type: "user",
+    plan: "FREE",
     uid,
     email,
     ts: Date.now(),
@@ -168,7 +177,8 @@ function markSessionAuth(user) {
 function markSessionGuest() {
   safeWriteSession({
     ok: true,
-    mode: "guest",
+    type: "guest",
+    plan: "FREE",
     ts: Date.now(),
   });
 }
@@ -438,6 +448,7 @@ function setGuestActive(v) {
   try {
     localStorage.setItem(LS_GUEST_ACTIVE_KEY, v ? "1" : "0");
   } catch {}
+  dispatchSessionChanged();
 }
 
 function isGuestActive() {
@@ -526,7 +537,10 @@ export default function Account({ onClose = null }) {
         const ga = isGuestActive();
         if (ga) {
           setIsGuest(true);
-          markSessionGuest(); // ✅ garante App.js sair do LOGIN
+
+          // ✅ CRÍTICO: garante sessão guest + avisa o app
+          markSessionGuest();
+
           const g = loadGuestProfile();
           setNameDraft(g.name);
           setPhoneDraft(normalizePhoneDigits(g.phone));
@@ -536,7 +550,9 @@ export default function Account({ onClose = null }) {
         } else {
           setIsGuest(false);
           resetAuthedState();
-          safeRemoveSession(); // ✅ sem auth/guest => sem sessão
+
+          // ✅ sem auth/guest => sem sessão
+          safeRemoveSession();
         }
         return;
       }
@@ -768,7 +784,7 @@ export default function Account({ onClose = null }) {
   ========================= */
 
   const handleEnter = () => {
-    // LoginVisual faz o sign-in. Quando auth mudar, markSessionAuth() roda acima.
+    // LoginVisual faz o sign-in. Quando auth mudar, markSessionAuth() roda no listener.
     setGuestActive(false);
     setIsGuest(false);
   };
@@ -780,7 +796,7 @@ export default function Account({ onClose = null }) {
     setGuestActive(true);
     setIsGuest(true);
 
-    // ✅ CRÍTICO: guest também precisa marcar sessão ok para App.js ir pro Dashboard
+    // ✅ CRÍTICO: guest também precisa marcar sessão e avisar o App.js no mesmo tab
     markSessionGuest();
 
     setUid("");
@@ -974,7 +990,9 @@ export default function Account({ onClose = null }) {
     setMsg("");
     if (busy) return;
 
-    const ok1 = window.confirm("ATENÇÃO: Isso vai excluir sua conta e seus dados. Deseja continuar?");
+    const ok1 = window.confirm(
+      "ATENÇÃO: Isso vai excluir sua conta e seus dados. Deseja continuar?"
+    );
     if (!ok1) return;
     const ok2 = window.confirm("Última confirmação: EXCLUIR CONTA definitivamente?");
     if (!ok2) return;

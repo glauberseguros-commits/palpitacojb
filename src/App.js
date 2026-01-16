@@ -29,6 +29,7 @@ import { doc, getDoc } from "firebase/firestore";
 
 const STORAGE_KEY = "palpitaco_screen_v2";
 const ACCOUNT_SESSION_KEY = "pp_session_v1";
+const LS_GUEST_ACTIVE_KEY = "pp_guest_active_v1";
 
 // ✅ Persistência de filtros do Dashboard (não resetar ao trocar de página)
 const DASH_FILTERS_KEY = "pp_dashboard_filters_v1";
@@ -78,22 +79,6 @@ function safeParseJson(raw) {
   }
 }
 
-/** ✅ Lê o objeto de sessão (se existir) */
-function loadSessionObj() {
-  const raw = safeReadLS(ACCOUNT_SESSION_KEY);
-  if (!raw) return null;
-  const s = String(raw || "").trim();
-  if (!s) return null;
-  if (!s.startsWith("{")) return null;
-  const obj = safeParseJson(s);
-  return obj && typeof obj === "object" ? obj : null;
-}
-
-function hasActiveSession() {
-  const obj = loadSessionObj();
-  return !!(obj && obj.ok === true);
-}
-
 function normalizeRoute(saved) {
   if (!saved) return null;
   return Object.values(ROUTES).includes(saved) ? saved : null;
@@ -111,10 +96,60 @@ function resolveComponent(mod, name) {
 
   if (!isProbablyReactComponent) {
     // eslint-disable-next-line no-console
-    console.error(`[IMPORT INVALID] ${name} veio inválido:`, c, " | import raw:", mod);
+    console.error(
+      `[IMPORT INVALID] ${name} veio inválido:`,
+      c,
+      " | import raw:",
+      mod
+    );
   }
 
   return c;
+}
+
+/* =========================
+   Sessão (robusta e compatível)
+========================= */
+
+/**
+ * ✅ Lê sessão do localStorage e normaliza:
+ * - aceita formato novo: { type:"user"/"guest", plan, uid }
+ * - aceita formato antigo: { ok:true, ... }
+ */
+function loadSessionObj() {
+  const raw = safeReadLS(ACCOUNT_SESSION_KEY);
+  if (!raw) return null;
+
+  const s = String(raw || "").trim();
+  if (!s) return null;
+
+  // se não é JSON, ignora (outra versão)
+  if (!s.startsWith("{")) return null;
+
+  const obj = safeParseJson(s);
+  if (!obj || typeof obj !== "object") return null;
+
+  const type = String(obj.type || "").trim().toLowerCase();
+  const ok =
+    obj.ok === true ||
+    type === "user" ||
+    type === "guest" ||
+    // fallback: se tiver uid, é user
+    !!obj.uid;
+
+  if (!ok) return null;
+
+  return {
+    ok: true,
+    type: type === "guest" ? "guest" : "user",
+    plan: String(obj.plan || "FREE").toUpperCase(),
+    uid: obj.uid,
+    raw: obj,
+  };
+}
+
+function hasActiveSession() {
+  return !!loadSessionObj();
 }
 
 /* =========================
@@ -199,7 +234,8 @@ class ErrorBoundary extends React.Component {
 
   render() {
     if (this.state.hasError) {
-      const msg = this.state.err?.message || String(this.state.err || "Erro desconhecido");
+      const msg =
+        this.state.err?.message || String(this.state.err || "Erro desconhecido");
       return (
         <div
           style={{
@@ -207,14 +243,19 @@ class ErrorBoundary extends React.Component {
             background: "#050505",
             color: "rgba(255,255,255,0.92)",
             padding: 18,
-            fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
+            fontFamily:
+              "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
           }}
         >
-          <div style={{ fontWeight: 900, marginBottom: 8 }}>Falha ao renderizar a aplicação</div>
-          <div style={{ opacity: 0.85, whiteSpace: "pre-wrap", lineHeight: 1.35 }}>{msg}</div>
+          <div style={{ fontWeight: 900, marginBottom: 8 }}>
+            Falha ao renderizar a aplicação
+          </div>
+          <div style={{ opacity: 0.85, whiteSpace: "pre-wrap", lineHeight: 1.35 }}>
+            {msg}
+          </div>
           <div style={{ marginTop: 12, opacity: 0.7, fontSize: 12 }}>
-            Dica: abra o Console (F12). Se aparecer “[IMPORT INVALID] …”, o import desse componente
-            está errado (default vs named).
+            Dica: abra o Console (F12). Se aparecer “[IMPORT INVALID] …”, o import
+            desse componente está errado (default vs named).
           </div>
         </div>
       );
@@ -293,9 +334,8 @@ export default function App() {
   }, [adminMode]);
 
   /* ============================================================
-     ✅ FIX: usuário logou => SEMPRE começa no DASHBOARD.
-     - Ignora palpitaco_screen_v2 = "account" como default pós-login.
-     - "Minha Conta" só via clique no menu.
+     ✅ Blindagem: pós-login => sempre Dashboard
+     - Nunca entra “automaticamente” em ACCOUNT
   ============================================================ */
   const [screen, setScreen] = useState(() => {
     const sessionOn = hasActiveSession();
@@ -303,7 +343,7 @@ export default function App() {
 
     if (!sessionOn) return ROUTES.LOGIN;
 
-    // ✅ pós-login sempre cai no Dashboard (não reaproveita ACCOUNT)
+    // ✅ se tiver salvo, respeita EXCETO login/account
     if (saved && saved !== ROUTES.LOGIN && saved !== ROUTES.ACCOUNT) return saved;
 
     return ROUTES.DASHBOARD;
@@ -320,49 +360,62 @@ export default function App() {
   }, [dashboardFilters]);
 
   const logout = () => {
+    // ✅ limpa apenas o que é do navegador (LocalStorage)
     safeRemoveLS(STORAGE_KEY);
     safeRemoveLS(ACCOUNT_SESSION_KEY);
+    safeRemoveLS(LS_GUEST_ACTIVE_KEY);
     safeRemoveLS(DASH_FILTERS_KEY);
+
+    // ✅ avisa o próprio tab (se alguém estiver ouvindo)
+    try {
+      window.dispatchEvent(new Event("pp_session_changed"));
+    } catch {}
+
     setScreen(ROUTES.LOGIN);
   };
 
-  /** ✅ Enquanto estiver no LOGIN, assim que o Account salvar ok:true, vamos para o Dashboard */
+  /**
+   * ✅ Enquanto estiver no LOGIN:
+   * Assim que a sessão existir (guest/user), entra no Dashboard.
+   * Sem setInterval. Usa storage + evento interno.
+   */
   useEffect(() => {
     if (adminMode) return;
     if (screen !== ROUTES.LOGIN) return;
 
-    let timer = null;
-
     const goDashboard = () => {
       setScreen(ROUTES.DASHBOARD);
-      // ✅ garante que não “volta” para account por storage antigo
       safeWriteLS(STORAGE_KEY, ROUTES.DASHBOARD);
     };
 
-    const tick = () => {
-      const sess = loadSessionObj();
-      if (sess?.ok === true) {
-        // ✅ entrou (login ou guest) -> Dashboard
-        goDashboard();
-      }
+    const check = () => {
+      if (hasActiveSession()) goDashboard();
     };
 
-    // checa imediatamente
-    tick();
+    // checa já
+    check();
 
-    // e mantém uma checagem leve enquanto estiver na tela de login
-    timer = setInterval(tick, 450);
+    // outros tabs
+    const onStorage = (e) => {
+      if (!e) return;
+      if (e.key === ACCOUNT_SESSION_KEY || e.key === LS_GUEST_ACTIVE_KEY) check();
+    };
 
-    // reforço: quando volta o foco / muda visibilidade
-    const onFocus = () => tick();
-    const onVis = () => tick();
+    // mesmo tab (se LoginVisual/Account disparar)
+    const onSessionChanged = () => check();
+
+    // reforço
+    const onFocus = () => check();
+    const onVis = () => check();
+
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("pp_session_changed", onSessionChanged);
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onVis);
 
     return () => {
-      try {
-        if (timer) clearInterval(timer);
-      } catch {}
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("pp_session_changed", onSessionChanged);
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVis);
     };
@@ -407,7 +460,8 @@ export default function App() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
+              fontFamily:
+                "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
               padding: 18,
             }}
           >
@@ -456,7 +510,7 @@ export default function App() {
       <ErrorBoundary>
         <Account
           onClose={() => {
-            // se o usuário clicar SAIR/FECHAR na tela de login, mantém no login
+            // mantém no login
             setScreen(ROUTES.LOGIN);
           }}
         />
