@@ -1,53 +1,70 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# =====================
+# ======================================
 # Dependencies
-# =====================
+# ======================================
 /node_modules
 /.pnp
 .pnp.js
 
-# =====================
+# Backend dependencies (NUNCA versionar)
+/backend/node_modules
+
+# ======================================
 # Testing
-# =====================
+# ======================================
 /coverage
 
-# =====================
+# ======================================
 # Production build
-# =====================
+# ======================================
 /build
 
-# =====================
-# Legacy / Archived code
-# =====================
-__legacy__/
+# ======================================
+# Backend (motor local / scripts)
+# - Mantemos FORA do git para não gerar dúvidas nem vazar env
+# ======================================
+/backend
+/backend/**
+!/backend/README.md
+
+# ======================================
+# Archived / Old folders
+# ======================================
 archive/
 archive_backend/
 archive_structure/
+ui_legacy/
 
-# =====================
+# ======================================
 # OS / Editor junk
-# =====================
+# ======================================
 .DS_Store
+Thumbs.db
 
-# =====================
-# Environment files
-# =====================
+# ======================================
+# Environment files (root)
+# ======================================
+.env
+.env.*
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
-# =====================
+# Backend env
+/backend/.env
+/backend/.env.*
+/backend/.env.local
+
+# ======================================
 # Logs
-# =====================
+# ======================================
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+*.log
 
-# Env
-.env
-.env.*
-
+# ======================================
+# Vercel
+# ======================================
 .vercel
 .env*.local
