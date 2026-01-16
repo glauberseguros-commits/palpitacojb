@@ -57,7 +57,6 @@ const axios = require("axios");
       try {
         delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
       } catch {
-        // fallback: não quebra
         process.env.GOOGLE_APPLICATION_CREDENTIALS = "";
       }
     }
@@ -78,7 +77,6 @@ const axios = require("axios");
 
       if (!hits.length) return null;
 
-      // mais recente
       hits.sort((a, b) => {
         try {
           return fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs;
@@ -133,6 +131,17 @@ const { admin, db } = require("../service/firebaseAdmin");
  * - default => não faz reads extras (rápido)
  */
 const CHECK_EXISTENCE = String(process.env.CHECK_EXISTENCE || "").trim() === "1";
+
+/**
+ * Retry HTTP simples (evita falhas intermitentes/429)
+ */
+const HTTP_RETRIES = Number.isFinite(Number(process.env.HTTP_RETRIES))
+  ? Math.max(0, Number(process.env.HTTP_RETRIES))
+  : 3;
+
+const HTTP_RETRY_BASE_MS = Number.isFinite(Number(process.env.HTTP_RETRY_BASE_MS))
+  ? Math.max(50, Number(process.env.HTTP_RETRY_BASE_MS))
+  : 600;
 
 /**
  * =========================
@@ -280,24 +289,64 @@ function buildResultsUrl({ date, lotteryKey }) {
   return `${base}?${params.toString()}`;
 }
 
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+function shouldRetryAxiosError(err) {
+  const code = String(err?.code || "").toLowerCase();
+  const status = Number(err?.response?.status);
+
+  if (code.includes("etimedout") || code.includes("econnreset") || code.includes("enotfound")) {
+    return true;
+  }
+
+  // 429 / 5xx
+  if (Number.isFinite(status) && (status === 429 || (status >= 500 && status <= 599))) {
+    return true;
+  }
+
+  return false;
+}
+
 async function fetchKingResults({ date, lotteryKey }) {
   const url = buildResultsUrl({ date, lotteryKey });
 
-  const { data } = await axios.get(url, {
-    headers: {
-      Accept: "application/json, text/plain, */*",
-      Origin: "https://app.kingapostas.com",
-      Referer: "https://app.kingapostas.com/",
-    },
-    timeout: 30000,
-    validateStatus: (s) => s >= 200 && s < 300,
-  });
+  let lastErr = null;
 
-  if (!data?.success || !Array.isArray(data?.data)) {
-    throw new Error("Resposta inesperada da API (success/data).");
+  for (let attempt = 0; attempt <= HTTP_RETRIES; attempt++) {
+    try {
+      const { data } = await axios.get(url, {
+        headers: {
+          Accept: "application/json, text/plain, */*",
+          Origin: "https://app.kingapostas.com",
+          Referer: "https://app.kingapostas.com/",
+        },
+        timeout: 30000,
+        validateStatus: (s) => s >= 200 && s < 300,
+      });
+
+      if (!data?.success || !Array.isArray(data?.data)) {
+        throw new Error("Resposta inesperada da API (success/data).");
+      }
+
+      return data;
+    } catch (e) {
+      lastErr = e;
+
+      const canRetry = attempt < HTTP_RETRIES && shouldRetryAxiosError(e);
+      if (!canRetry) break;
+
+      const backoff = HTTP_RETRY_BASE_MS * Math.pow(2, attempt);
+      console.warn(
+        `[HTTP] tentativa ${attempt + 1}/${HTTP_RETRIES + 1} falhou (${e?.response?.status || e?.code || "err"}). ` +
+          `retry em ${backoff}ms...`
+      );
+      await sleep(backoff);
+    }
   }
 
-  return data;
+  throw lastErr || new Error("Falha ao buscar API.");
 }
 
 /**
@@ -395,11 +444,18 @@ async function importFromPayload({
   let skippedAlreadyComplete = 0;
 
   // Provas úteis para o scheduler (quando closeHour é informado)
-  let proof = {
+  const proof = {
     filterClose: null,
     apiHasPrizes: false,
-    alreadyComplete: false,
-    targetDrawId: null,
+
+    // agora é multi-draw (pode haver N lotteries no mesmo close_hour)
+    targetDrawIds: [],
+    matchedTargetDraws: 0,
+
+    alreadyCompleteCount: 0,
+    alreadyCompleteAny: false,
+    alreadyCompleteAll: false,
+
     targetWriteCount: 0,
     targetSavedCount: 0,
   };
@@ -410,7 +466,9 @@ async function importFromPayload({
   }
   proof.filterClose = filterClose;
 
-  for (const draw of payload.data) {
+  const apiArr = Array.isArray(payload?.data) ? payload.data : [];
+
+  for (const draw of apiArr) {
     totalDrawsFromApi++;
 
     const date = String(draw?.date || "").trim();
@@ -425,6 +483,7 @@ async function importFromPayload({
     }
 
     totalDrawsMatchedClose++;
+    proof.matchedTargetDraws = totalDrawsMatchedClose;
 
     // validações mínimas
     if (!isISODate(date) || !isHHMM(close)) {
@@ -451,16 +510,19 @@ async function importFromPayload({
       lotteryKey,
     });
 
-    // Em closeHour: checa “já completo” e, se configurado, pula escrita
+    if (filterClose) proof.targetDrawIds.push(drawId);
+
+    // Em closeHour: checa “já completo” e, se configurado, pula escrita (por draw)
     if (filterClose) {
-      proof.targetDrawId = drawId;
       const already = await checkAlreadyComplete(drawRef);
-      proof.alreadyComplete = already;
+      if (already) {
+        proof.alreadyCompleteCount += 1;
+        proof.alreadyCompleteAny = true;
+      }
 
       if (skipIfAlreadyComplete && already) {
         skippedAlreadyComplete++;
-        // Não escreve nada. Prova fica registrada e o scheduler pode marcar como concluído.
-        continue;
+        continue; // ✅ não grava este draw específico, mas continua para outros lotteries do mesmo horário
       }
     }
 
@@ -542,22 +604,23 @@ async function importFromPayload({
         ops = 0;
       }
     }
-
-    // Se closeHour foi usado, sabemos que no máximo 1 draw entra (no seu caso)
-    // Então podemos sair cedo para reduzir custo.
-    if (filterClose) break;
   }
 
   if (ops > 0) await batch.commit();
 
-  // savedCount “forte” para o scheduler:
-  // - se API não liberou prêmios => 0
-  // - se já estava completo e pulamos => 0 (porque não precisou gravar)
-  // - se gravou => writeCount (draw + prizes)
+  // flags finais de complete
   if (proof.filterClose) {
+    const totalTargets = proof.targetDrawIds.length;
+    proof.alreadyCompleteAll =
+      totalTargets > 0 && proof.alreadyCompleteCount === totalTargets;
+
+    // savedCount “forte” para o scheduler:
+    // - se API não liberou prêmios => 0
+    // - se todos já estavam completos e pulamos => 0
+    // - senão => writeCount
     if (!proof.apiHasPrizes) {
       proof.targetSavedCount = 0;
-    } else if (skipIfAlreadyComplete && proof.alreadyComplete) {
+    } else if (skipIfAlreadyComplete && proof.alreadyCompleteAll) {
       proof.targetSavedCount = 0;
     } else {
       proof.targetSavedCount = proof.targetWriteCount;
@@ -614,7 +677,7 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
 
   const payload = await fetchKingResults({ date, lotteryKey });
 
-  // Quando closeHour é informado (scheduler Opção B):
+  // Quando closeHour é informado (scheduler):
   // - queremos PROVA FORTE
   // - e queremos evitar reescrever se já está completo
   const result = await importFromPayload({
@@ -629,15 +692,23 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
   const proof = result.proof || {};
   const apiHasPrizes = Boolean(proof.apiHasPrizes);
 
-  // ✅ Captured “verdadeiro” = API liberou prêmios para esse closeHour (ou já estava completo)
-  // - se já estava completo, consideramos capturado também (porque o objetivo é não faltar no dia)
-  // - se API ainda não liberou (sem prizes), captured = false
-  const alreadyComplete = Boolean(proof.alreadyComplete);
-  const captured = normalizedClose ? apiHasPrizes || alreadyComplete : (result.totalDrawsValid || 0) > 0;
+  const alreadyCompleteAny = Boolean(proof.alreadyCompleteAny);
+  const alreadyCompleteAll = Boolean(proof.alreadyCompleteAll);
 
-  // ✅ savedCount / writeCount para o autoImportToday usar como prova (opcional)
-  const writeCount = Number.isFinite(Number(proof.targetWriteCount)) ? Number(proof.targetWriteCount) : 0;
-  const savedCount = Number.isFinite(Number(proof.targetSavedCount)) ? Number(proof.targetSavedCount) : 0;
+  // ✅ Captured “verdadeiro” (modo closeHour):
+  // - API liberou prizes para pelo menos 1 draw daquele horário, OU
+  // - pelo menos 1 draw daquele horário já estava completo no Firestore
+  const captured = normalizedClose
+    ? apiHasPrizes || alreadyCompleteAny
+    : (result.totalDrawsValid || 0) > 0;
+
+  const writeCount = Number.isFinite(Number(proof.targetWriteCount))
+    ? Number(proof.targetWriteCount)
+    : 0;
+
+  const savedCount = Number.isFinite(Number(proof.targetSavedCount))
+    ? Number(proof.targetSavedCount)
+    : 0;
 
   return {
     ok: true,
@@ -645,12 +716,13 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
     date,
     closeHour: normalizedClose || null,
 
-    captured, // agora é prova real para closeHour
+    captured,
     apiHasPrizes: normalizedClose ? apiHasPrizes : null,
-    alreadyComplete: normalizedClose ? alreadyComplete : null,
+    alreadyCompleteAny: normalizedClose ? alreadyCompleteAny : null,
+    alreadyCompleteAll: normalizedClose ? alreadyCompleteAll : null,
     savedCount: normalizedClose ? savedCount : null,
     writeCount: normalizedClose ? writeCount : null,
-    targetDrawId: normalizedClose ? (proof.targetDrawId || null) : null,
+    targetDrawIds: normalizedClose ? (proof.targetDrawIds || []) : null,
 
     tookMs: ms,
     ...result,
@@ -684,7 +756,7 @@ async function main() {
 
   const payload = await fetchKingResults({ date, lotteryKey });
 
-  console.log(`[2/3] Processando ${payload.data.length} draws retornados pela API...`);
+  console.log(`[2/3] Processando ${Array.isArray(payload?.data) ? payload.data.length : 0} draws retornados pela API...`);
 
   await importFromPayload({
     payload,
