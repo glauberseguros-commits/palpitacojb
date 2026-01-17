@@ -20,6 +20,9 @@ const CACHE_TTL_MS = 10 * 60 * 1000; // 10 min
 const PRIZES_CACHE = new Map(); // key -> { ts, data: prizesAllSorted }
 const DRAWS_CACHE = new Map(); // key -> { ts, data: mappedDrawDocs[] }
 
+// ✅ cache específico para ATRASADOS (Late)
+const LATE_CACHE = new Map(); // key -> { ts, data: lateRows[] }
+
 // ✅ corte seguro (modo auto) — acima disso, tende a ser "agregado" (sem prizes)
 export const AGGREGATED_AUTO_DAYS = 60;
 
@@ -367,6 +370,29 @@ function sortDrawsLocal(draws) {
   });
 }
 
+function sortDrawsLocalDesc(draws) {
+  const toNum = (h) => {
+    const s = normalizeHourLike(h);
+    const m = s.match(/^(\d{2}):(\d{2})$/);
+    if (!m) return 0;
+    return Number(m[1]) * 100 + Number(m[2]);
+  };
+
+  return [...(draws || [])].sort((a, b) => {
+    const ya = String(a?.ymd || "");
+    const yb = String(b?.ymd || "");
+    if (ya !== yb) return yb.localeCompare(ya);
+
+    const ha = toNum(a?.close_hour);
+    const hb = toNum(b?.close_hour);
+    if (ha !== hb) return hb - ha;
+
+    const ia = String(a?.drawId || a?.id || "");
+    const ib = String(b?.drawId || b?.id || "");
+    return ib.localeCompare(ia);
+  });
+}
+
 /**
  * ✅ DEDUPE
  * - chave lógica: ymd + hour (NÃO inclui id)
@@ -632,6 +658,18 @@ function mapDrawDoc(doc) {
   const ufRaw = d.uf ?? null;
   const lotteryKeyRaw = d.lottery_key ?? d.lotteryKey ?? d.lottery ?? null;
 
+  // ✅ novo: código “da loteria” (PT09, PT11, etc) para filtro de loterias no Late
+  const lotteryCodeRaw =
+    d.lottery_code ??
+    d.lotteryCode ??
+    d.lot_code ??
+    d.lotCode ??
+    d.lot ??
+    d.code ??
+    d.lottery_id ??
+    d.lotteryId ??
+    null;
+
   return {
     drawId: doc.id,
     id: doc.id,
@@ -644,6 +682,9 @@ function mapDrawDoc(doc) {
 
     uf: ufRaw,
     lottery_key: lotteryKeyRaw,
+
+    // ✅ exposto no draw mapeado
+    lottery_code: lotteryCodeRaw ? String(lotteryCodeRaw).toUpperCase() : null,
 
     prizesCount: d.prizesCount,
     prizes: embeddedPrizes,
@@ -1031,6 +1072,14 @@ function daysBetweenInclusiveUTC(a, b) {
   return Math.floor(ms / 86400000) + 1;
 }
 
+function daysDiffUTC(fromYmd, toYmd) {
+  const da = ymdToUTCDate(fromYmd);
+  const db = ymdToUTCDate(toYmd);
+  if (!da || !db) return NaN;
+  const ms = db.getTime() - da.getTime();
+  return Math.floor(ms / 86400000);
+}
+
 function drawsCacheKeyRange({ uf, from, to, positionsArr, hourFilter, mode }) {
   const p = positionsArr && positionsArr.length ? positionsArr.join(",") : "all";
   const h =
@@ -1289,4 +1338,211 @@ export async function hydrateKingDrawsWithPrizes({
   });
 
   return dedupeDrawsLocal(results);
+}
+
+/* =========================
+   ✅ ATRASADOS (Late) — 100% baseado na SUA base
+   - NÃO chama nada externo
+   - busca “última aparição” por grupo no prêmio escolhido
+   - calcula atraso em dias (UTC)
+========================= */
+
+function normalizeLotteriesList(lotteries) {
+  const arr = Array.isArray(lotteries) ? lotteries : [];
+  const cleaned = arr
+    .map((x) => String(x ?? "").trim().toUpperCase())
+    .filter(Boolean);
+  return cleaned.length ? Array.from(new Set(cleaned)) : null;
+}
+
+function drawPassesLotteriesFilter(draw, lotteriesArr) {
+  if (!lotteriesArr || !lotteriesArr.length) return true;
+  const code = String(draw?.lottery_code ?? "").trim().toUpperCase();
+  if (!code) return false; // se pediu filtro e o doc não tem code, não entra
+  return lotteriesArr.includes(code);
+}
+
+function lateCacheKey({
+  uf,
+  fromYmd,
+  toYmd,
+  baseYmd,
+  prizePosition,
+  hourFilter,
+  lotteriesArr,
+  chunkDays,
+}) {
+  const h =
+    hourFilter?.kind === "bucket"
+      ? `bucket:${hourFilter.bucket}`
+      : hourFilter?.kind === "exact"
+      ? `exact:${hourFilter.hhmm}`
+      : "all";
+  const lots = lotteriesArr && lotteriesArr.length ? lotteriesArr.join(",") : "all";
+  const cd = Number(chunkDays) || 15;
+  const pos = Number(prizePosition) || 1;
+  return `late::${uf}::${fromYmd}..${toYmd}::base=${baseYmd}::pos=${pos}::h=${h}::lots=${lots}::chunk=${cd}`;
+}
+
+/**
+ * getKingLateByRange
+ * - Retorna 25 linhas (01..25) com:
+ *   { pos, grupo, lastYmd, lastHour, lastDrawId, lastLottery, atrasoDias }
+ *
+ * Params:
+ * - uf: "RJ"
+ * - dateFrom/dateTo: range máximo de busca (ex: bounds ou último ano)
+ * - baseDate: data base do “atraso” (default = dateTo)
+ * - lotteries: ["PT09","PT11",...] (opcional)
+ * - prizePosition: default 1 (1º prêmio)
+ * - closeHour/closeHourBucket: se quiser atrasados por um horário específico (opcional)
+ * - chunkDays: default 15 (varredura por blocos, performance)
+ */
+export async function getKingLateByRange({
+  uf,
+  dateFrom,
+  dateTo,
+  baseDate = null,
+  lotteries = null,
+  prizePosition = 1,
+  closeHour = null,
+  closeHourBucket = null,
+  chunkDays = 15,
+}) {
+  if (!uf || !dateFrom || !dateTo) {
+    throw new Error("Parâmetros obrigatórios: uf, dateFrom, dateTo");
+  }
+
+  const fromYmd = normalizeToYMD(dateFrom);
+  const toYmd = normalizeToYMD(dateTo);
+  if (!fromYmd || !toYmd) return [];
+
+  const baseYmd = normalizeToYMD(baseDate) || toYmd;
+
+  const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
+  const lotteriesArr = normalizeLotteriesList(lotteries);
+
+  const cacheKey = lateCacheKey({
+    uf,
+    fromYmd,
+    toYmd,
+    baseYmd,
+    prizePosition,
+    hourFilter,
+    lotteriesArr,
+    chunkDays,
+  });
+
+  const cached = cacheGet(LATE_CACHE, cacheKey);
+  if (cached) return cached;
+
+  const posNum = Number(prizePosition) || 1;
+
+  // última aparição por grupo (1..25)
+  const lastSeen = new Map(); // grupo -> { ymd, hour, drawId, lottery_code }
+
+  // varrer do final para o início, em blocos (performance)
+  let cursorTo = toYmd;
+  const chunk = Math.max(3, Math.min(60, Number(chunkDays) || 15));
+
+  // safety: evita loop infinito se range vier invertido
+  if (cursorTo < fromYmd) {
+    const outEmpty = Array.from({ length: 25 }, (_, i) => ({
+      pos: i + 1,
+      grupo: i + 1,
+      lastYmd: null,
+      lastHour: null,
+      lastDrawId: null,
+      lastLottery: null,
+      atrasoDias: null,
+    }));
+    cacheSet(LATE_CACHE, cacheKey, outEmpty);
+    return outEmpty;
+  }
+
+  while (cursorTo >= fromYmd && lastSeen.size < 25) {
+    let chunkFrom = addDaysUTC(cursorTo, -(chunk - 1));
+    if (chunkFrom < fromYmd) chunkFrom = fromYmd;
+
+    // força detailed SEMPRE (late precisa de prizes válidos)
+    const draws = await getKingResultsByRange({
+      uf,
+      dateFrom: chunkFrom,
+      dateTo: cursorTo,
+      closeHour,
+      closeHourBucket,
+      positions: [posNum],
+      mode: "detailed",
+    });
+
+    // processa do mais recente para o mais antigo
+    const desc = sortDrawsLocalDesc(dedupeDrawsLocal(draws));
+
+    for (const d of desc) {
+      if (!d) continue;
+
+      if (hourFilter?.kind && !drawPassesHourFilter(d, hourFilter)) continue;
+      if (lotteriesArr && !drawPassesLotteriesFilter(d, lotteriesArr)) continue;
+
+      const ymd = d.ymd || normalizeToYMD(d.date);
+      if (!ymd || !isYMD(ymd)) continue;
+
+      // prizes já vem filtrado por positions [posNum], mas garante
+      const p = Array.isArray(d.prizes)
+        ? d.prizes.find(
+            (x) => Number(x?.position) === posNum && isValidGrupo(x?.grupo)
+          )
+        : null;
+
+      const g = p?.grupo;
+      if (!isValidGrupo(g)) continue;
+
+      if (!lastSeen.has(g)) {
+        lastSeen.set(g, {
+          ymd,
+          hour: d.close_hour || d.closeHour || "",
+          drawId: d.drawId || d.id || null,
+          lottery_code: d.lottery_code || null,
+        });
+
+        if (lastSeen.size >= 25) break;
+      }
+    }
+
+    // move o cursor para antes do bloco atual
+    cursorTo = addDaysUTC(chunkFrom, -1);
+  }
+
+  // monta as 25 linhas
+  const rows = [];
+  for (let g = 1; g <= 25; g += 1) {
+    const seen = lastSeen.get(g) || null;
+    const lastYmd = seen?.ymd || null;
+    const diff = lastYmd ? daysDiffUTC(lastYmd, baseYmd) : NaN;
+    const atrasoDias =
+      lastYmd && Number.isFinite(diff) ? Math.max(0, diff) : null;
+
+    rows.push({
+      pos: 0, // será preenchido após ordenação
+      grupo: g,
+      lastYmd,
+      lastHour: seen?.hour ? normalizeHourLike(seen.hour) : null,
+      lastDrawId: seen?.drawId || null,
+      lastLottery: seen?.lottery_code || null,
+      atrasoDias,
+    });
+  }
+
+  // ordena: maiores atrasos primeiro; null vai pro fim
+  const sorted = [...rows].sort((a, b) => {
+    const aa = Number.isFinite(Number(a?.atrasoDias)) ? Number(a.atrasoDias) : -1;
+    const bb = Number.isFinite(Number(b?.atrasoDias)) ? Number(b.atrasoDias) : -1;
+    return bb - aa;
+  });
+
+  // numera posição 1º..25
+  const out = sorted.map((r, idx) => ({ ...r, pos: idx + 1 }));
+
+  cacheSet(LATE_CACHE, cacheKey, out);
+  return out;
 }

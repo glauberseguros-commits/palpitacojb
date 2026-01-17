@@ -2,8 +2,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   getKingBoundsByUf,
-  getKingResultsByRange,
   getKingResultsByDate,
+  getKingLateByRange,
 } from "../../services/kingResultsService";
 import {
   getAnimalLabel as getAnimalLabelFn,
@@ -13,6 +13,10 @@ import {
 /**
  * Late (Atrasados) — Premium
  *
+ * ✅ Agora 100% em cima da SUA base:
+ * - Usa getKingLateByRange() (varre histórico interno com prizes)
+ * - NÃO chama nada externo
+ *
  * ✅ Atualiza por SORTEIO:
  * - Rebusca bounds periodicamente (maxYmd atualiza quando entra sorteio novo)
  * - Detecta "último sorteio importado" (maxYmd + maior close_hour do dia)
@@ -20,7 +24,6 @@ import {
  *
  * ✅ IMPORTANTE (SEU PROJETO):
  * - Consultas devem usar UF="RJ" (com trava interna para PT_RIO)
- * - "PT_RIO" aqui é apenas rótulo/visual
  */
 
 function pad2(n) {
@@ -48,16 +51,6 @@ function ymdToUTCDate(ymd) {
   const m = String(ymd || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!m) return null;
   return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
-}
-
-function addDaysUTC(ymd, days) {
-  const dt = ymdToUTCDate(ymd);
-  if (!dt) return ymd;
-  dt.setUTCDate(dt.getUTCDate() + Number(days || 0));
-  const y = dt.getUTCFullYear();
-  const m = pad2(dt.getUTCMonth() + 1);
-  const d = pad2(dt.getUTCDate());
-  return `${y}-${m}-${d}`;
 }
 
 function diffDaysUTC(aYmd, bYmd) {
@@ -127,52 +120,86 @@ function pickLatestCloseHour(draws) {
   return best;
 }
 
-/**
- * ✅ FIX CRÍTICO: extrai grupo de prizes mesmo quando o backend usa outro campo
- * Aceita:
- * - grupo, group, grupo_num, grupoId, grupo_id, etc.
- * - strings tipo "GRUPO 23"
- */
-function extractGrupo(prize) {
-  const p = prize || {};
+// escolhe "mais recente" entre (ymd + closeHour)
+function isMoreRecent(a, b) {
+  // a/b: { lastYmd, lastCloseHour }
+  const ay = String(a?.lastYmd || "");
+  const by = String(b?.lastYmd || "");
+  if (ay && by && ay !== by) return ay > by;
 
-  const raw =
-    p.grupo ??
-    p.group ??
-    p.grupo_num ??
-    p.grupoNum ??
-    p.grupo_id ??
-    p.grupoId ??
-    p.group_id ??
-    p.groupId ??
-    p.g ??
-    null;
+  const am = hourToMinutes(a?.lastCloseHour || "");
+  const bm = hourToMinutes(b?.lastCloseHour || "");
+  if (am != null && bm != null && am !== bm) return am > bm;
 
-  // número direto
-  if (typeof raw === "number" && Number.isFinite(raw)) return raw;
+  // se só um tem data, ele é mais recente
+  if (ay && !by) return true;
+  if (!ay && by) return false;
 
-  // string -> extrai dígitos
-  const s = String(raw ?? "").trim();
-  if (!s) {
-    // fallback: tenta localizar em outros campos textuais comuns
-    const alt =
-      String(p.label ?? p.nome ?? p.animal ?? p.desc ?? p.description ?? "")
-        .trim()
-        .toUpperCase() || "";
-    const mAlt = alt.match(/\bGRUPO\s*(\d{1,2})\b/);
-    if (mAlt) return Number(mAlt[1]);
-    return null;
+  return false;
+}
+
+// merge de múltiplas consultas (ex: 1º ao 5º) => pega a última aparição mais recente por grupo
+function mergeLateLists(lists, baseYmd) {
+  const byGrupo = new Map();
+
+  for (const list of lists) {
+    const arr = Array.isArray(list) ? list : [];
+    for (const r of arr) {
+      const g = Number(r?.grupo);
+      if (!isValidGrupo(g)) continue;
+
+      const candidate = {
+        grupo: g,
+        lastYmd: r?.lastYmd || null,
+        lastCloseHour: r?.lastCloseHour || null,
+      };
+
+      if (!byGrupo.has(g)) {
+        byGrupo.set(g, candidate);
+        continue;
+      }
+
+      const prev = byGrupo.get(g);
+      if (isMoreRecent(candidate, prev)) byGrupo.set(g, candidate);
+    }
   }
 
-  // "23" / "GRUPO23" / "GRUPO 23"
-  const m = s.toUpperCase().match(/(\d{1,2})/);
-  if (!m) return null;
-  const n = Number(m[1]);
-  return Number.isFinite(n) ? n : null;
+  const out = [];
+  for (let g = 1; g <= 25; g += 1) {
+    const rec = byGrupo.get(g) || { grupo: g, lastYmd: null, lastCloseHour: "" };
+    const lastYmd = rec?.lastYmd || null;
+    const lastCloseHour = rec?.lastCloseHour ? normalizeHourLike(rec.lastCloseHour) : "";
+    const daysLate = lastYmd ? diffDaysUTC(lastYmd, baseYmd) : null;
+
+    out.push({
+      grupo: g,
+      grupo2: toGrupo2(g),
+      lastYmd,
+      lastCloseHour,
+      daysLate,
+    });
+  }
+
+  // ordenação: atraso desc, depois hora asc, depois animal asc
+  out.sort((a, b) => {
+    const aa = a.daysLate == null ? 999999 : a.daysLate;
+    const bb = b.daysLate == null ? 999999 : b.daysLate;
+    if (bb !== aa) return bb - aa;
+
+    const ma = hourToMinutes(a.lastCloseHour);
+    const mb = hourToMinutes(b.lastCloseHour);
+    if (ma != null && mb != null && ma !== mb) return ma - mb;
+    if (ma == null && mb != null) return 1;
+    if (ma != null && mb == null) return -1;
+
+    return a.grupo - b.grupo;
+  });
+
+  // adiciona posição (1..25)
+  return out.map((r, idx) => ({ ...r, pos: idx + 1 }));
 }
 
 export default function Late() {
-  // ✅ NO SEU APP, A UF REAL É "RJ"
   const UF_CODE = "RJ";
   const LOTTERY_DISPLAY = "PT_RIO";
 
@@ -205,24 +232,18 @@ export default function Late() {
   const [error, setError] = useState("");
   const [rows, setRows] = useState([]);
 
-  // Último sorteio importado (para UX e para "atualizar a cada sorteio")
+  // Último sorteio importado
   const [lastImported, setLastImported] = useState({
     ymd: "",
     closeHour: "",
   });
 
-  // ✅ evita “state congelado” no setInterval
   const lastImportedRef = useRef(lastImported);
   useEffect(() => {
     lastImportedRef.current = lastImported;
   }, [lastImported]);
 
   const [meta, setMeta] = useState({
-    scannedDays: 0,
-    foundCount: 0,
-    stopReason: "",
-    lastWindowFrom: "",
-    lastWindowTo: "",
     effectiveTargetYmd: "",
   });
 
@@ -253,7 +274,6 @@ export default function Late() {
 
   const boundsReady = !!(bounds?.minYmd && bounds?.maxYmd);
 
-  // ✅ IMPORTANTE: retorna bounds para uso imediato (evita state stale)
   async function refreshBoundsAndLastDraw() {
     const b = await getKingBoundsByUf({ uf: UF_CODE });
     const minYmd = b?.minYmd || null;
@@ -261,7 +281,6 @@ export default function Late() {
 
     setBounds({ minYmd, maxYmd, source: b?.source || "" });
 
-    // Descobre o "último sorteio importado" do dia maxYmd (maior close_hour)
     if (maxYmd) {
       const dayDraws = await getKingResultsByDate({
         uf: UF_CODE,
@@ -281,7 +300,6 @@ export default function Late() {
     return { minYmd, maxYmd };
   }
 
-  // ✅ usa bounds efetivo (passado) — não depende do state atualizar
   function getEffectiveTargetYmd(targetYmd, effBounds) {
     const minYmd = effBounds?.minYmd || null;
     const maxYmd = effBounds?.maxYmd || null;
@@ -305,143 +323,70 @@ export default function Late() {
   }
 
   async function buildLateList({ targetYmd, effBounds }) {
-    const BLOCK_DAYS = 14;
-    const MAX_SCAN_DAYS = 500;
-
     const { effective: safeTarget, note } = getEffectiveTargetYmd(
       targetYmd,
       effBounds
     );
     if (note) setError(note);
 
-    const lastByGrupo = new Map();
-    const totalGrupos = 25;
-
-    let cursorTo = safeTarget;
-    let scannedDays = 0;
-    let stopReason = "";
-    let lastWindowFrom = "";
-    let lastWindowTo = "";
-
-    while (true) {
-      if (abortedRef.current) {
-        stopReason = "abortado";
-        break;
-      }
-      if (effBounds?.minYmd && cursorTo < effBounds.minYmd) {
-        stopReason = "chegou_no_minDate";
-        break;
-      }
-      if (scannedDays >= MAX_SCAN_DAYS) {
-        stopReason = "limite_max_scan";
-        break;
-      }
-
-      const windowTo = cursorTo;
-      const candidateFrom = addDaysUTC(windowTo, -(BLOCK_DAYS - 1));
-      const windowFrom = effBounds?.minYmd
-        ? candidateFrom < effBounds.minYmd
-          ? effBounds.minYmd
-          : candidateFrom
-        : candidateFrom;
-
-      lastWindowFrom = windowFrom;
-      lastWindowTo = windowTo;
-
-      const windowSize = Number.isFinite(diffDaysUTC(windowFrom, windowTo))
-        ? diffDaysUTC(windowFrom, windowTo) + 1
-        : BLOCK_DAYS;
-
-      scannedDays += windowSize;
-
-      const draws = await getKingResultsByRange({
-        uf: UF_CODE,
-        dateFrom: windowFrom,
-        dateTo: windowTo,
-        closeHour: selectedCloseHour || null,
-        positions: prizePositions,
-        mode: "detailed",
-      });
-
-      const ordered = [...(draws || [])]
-        .filter((d) => d?.ymd && d.ymd <= safeTarget)
-        .sort((a, b) => {
-          const ya = String(a?.ymd || "");
-          const yb = String(b?.ymd || "");
-          if (ya !== yb) return yb.localeCompare(ya);
-
-          const haMin = hourToMinutes(a?.close_hour || a?.closeHour || "");
-          const hbMin = hourToMinutes(b?.close_hour || b?.closeHour || "");
-          if (haMin != null && hbMin != null && haMin !== hbMin) return hbMin - haMin;
-          if (haMin == null && hbMin != null) return 1;
-          if (haMin != null && hbMin == null) return -1;
-
-          const ia = String(a?.drawId || a?.id || "");
-          const ib = String(b?.drawId || b?.id || "");
-          return ib.localeCompare(ia);
-        });
-
-      for (const d of ordered) {
-        if (abortedRef.current) break;
-
-        const ymd = d?.ymd;
-        const drawCloseHour = normalizeHourLike(
-          d?.close_hour || d?.closeHour || ""
-        );
-
-        const prizes = Array.isArray(d?.prizes) ? d.prizes : [];
-
-        for (const p of prizes) {
-          const g = extractGrupo(p);
-          if (!isValidGrupo(g)) continue;
-
-          if (!lastByGrupo.has(g)) {
-            lastByGrupo.set(g, { ymd, closeHour: drawCloseHour || "" });
-          }
-        }
-
-        if (lastByGrupo.size >= totalGrupos) break;
-      }
-
-      if (lastByGrupo.size >= totalGrupos) {
-        stopReason = "todos_encontrados";
-        break;
-      }
-
-      cursorTo = addDaysUTC(windowFrom, -1);
+    const minYmd = effBounds?.minYmd || null;
+    if (!minYmd) {
+      return {
+        rows: [],
+        meta: { effectiveTargetYmd: safeTarget },
+      };
     }
 
-    const out = [];
-    for (let g = 1; g <= 25; g += 1) {
-      const rec = lastByGrupo.get(g) || null;
-      const lastYmd = rec?.ymd || null;
-      const lastCloseHour = rec?.closeHour || "";
-      const daysLate = lastYmd ? diffDaysUTC(lastYmd, safeTarget) : null;
+    // 1) Consulta atrasados por posição (1 ou várias) via SUA base
+    const lists = [];
+    for (const pos of prizePositions) {
+      const list = await getKingLateByRange({
+        uf: UF_CODE,
+        dateFrom: minYmd,
+        dateTo: safeTarget, // não olha além da data alvo
+        baseDate: safeTarget,
+        prizePosition: pos,
+        closeHour: selectedCloseHour || null,
+        closeHourBucket: null,
+        // lotteries: null (evita filtrar fora por falta de lottery_code nos docs)
+        chunkDays: 15,
+      });
 
-      const grupo2 = toGrupo2(g);
+      // normaliza para o formato da UI
+      const mapped = (Array.isArray(list) ? list : []).map((r) => ({
+        grupo: Number(r?.grupo),
+        lastYmd: r?.lastYmd || null,
+        lastCloseHour: r?.lastHour || r?.lastCloseHour || null,
+      }));
+
+      lists.push(mapped);
+    }
+
+    // 2) Merge (1-5) e cálculo de daysLate
+    const merged = mergeLateLists(lists, safeTarget);
+
+    // 3) Injeta label/imagem
+    const out = merged.map((r) => {
+      const g = Number(r?.grupo);
       const animalLabel = (getAnimalLabel && getAnimalLabel(g)) || "";
       const img = (getImgFromGrupo && getImgFromGrupo(g)) || "";
-
-      out.push({
+      return {
+        ...r,
         grupo: g,
-        grupo2,
+        grupo2: toGrupo2(g),
         animal: animalLabel,
         img,
-        lastYmd,
-        lastCloseHour,
-        daysLate,
-      });
-    }
+      };
+    });
 
+    // 4) desempate com animal (estável e bonito)
     out.sort((a, b) => {
       const aa = a.daysLate == null ? 999999 : a.daysLate;
       const bb = b.daysLate == null ? 999999 : b.daysLate;
-
       if (bb !== aa) return bb - aa;
 
       const ma = hourToMinutes(a.lastCloseHour);
       const mb = hourToMinutes(b.lastCloseHour);
-
       if (ma != null && mb != null && ma !== mb) return ma - mb;
       if (ma == null && mb != null) return 1;
       if (ma != null && mb == null) return -1;
@@ -452,16 +397,12 @@ export default function Late() {
       return a.grupo - b.grupo;
     });
 
+    // renumera posição
+    const finalRows = out.map((r, idx) => ({ ...r, pos: idx + 1 }));
+
     return {
-      rows: out,
-      meta: {
-        scannedDays,
-        foundCount: lastByGrupo.size,
-        stopReason,
-        lastWindowFrom,
-        lastWindowTo,
-        effectiveTargetYmd: safeTarget,
-      },
+      rows: finalRows,
+      meta: { effectiveTargetYmd: safeTarget },
     };
   }
 
@@ -489,14 +430,7 @@ export default function Late() {
       if (abortedRef.current) return;
 
       setRows(result.rows);
-      setMeta({
-        scannedDays: result.meta.scannedDays,
-        foundCount: result.meta.foundCount,
-        stopReason: result.meta.stopReason,
-        lastWindowFrom: result.meta.lastWindowFrom,
-        lastWindowTo: result.meta.lastWindowTo,
-        effectiveTargetYmd: result.meta.effectiveTargetYmd,
-      });
+      setMeta({ effectiveTargetYmd: result.meta.effectiveTargetYmd });
     } catch (e) {
       if (abortedRef.current) return;
       if (!silent) setError(String(e?.message || e));
@@ -532,7 +466,7 @@ export default function Late() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [boundsReady, dateYmd, prizeMode, lotteryOptId]);
 
-  // ✅ polling: atualiza quando entrar sorteio novo
+  // polling: atualiza quando entrar sorteio novo
   useEffect(() => {
     if (pollRef.current) clearInterval(pollRef.current);
 
