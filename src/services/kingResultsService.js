@@ -105,55 +105,83 @@ function ymdToBR(ymd) {
 
 /**
  * ✅ Normaliza "horário" para HH:MM
+ * - Aceita "09", "9", "09h", "09HS", "09:00", "9:0", "0900"
+ * - Aceita textos contendo a hora: "LT PT RIO 09HS", "PT-RIO 11h", etc.
  */
 function normalizeHourLike(value) {
   const s0 = String(value ?? "").trim();
   if (!s0) return "";
 
-  const s = s0.replace(/\s+/g, "");
+  const s = s0.replace(/\s+/g, " ").trim();
+  const sNoSpace = s.replace(/\s+/g, "");
+  const up = s.toUpperCase();
 
-  const mhx = s.match(/^(\d{1,2})(?:h|hs|hr|hrs)$/i);
-  if (mhx) return `${pad2(mhx[1])}:00`;
+  // 1) HH:MM (em qualquer lugar do texto)
+  {
+    const m = up.match(/\b(\d{1,2}):(\d{1,2})\b/);
+    if (m) return `${pad2(m[1])}:${pad2(m[2])}`;
+  }
 
-  const mISO = s.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
-  if (mISO) return `${pad2(mISO[1])}:${pad2(mISO[2])}`;
+  // 2) "09H", "09HS", "09HR", "09HRS" (em qualquer lugar)
+  {
+    const m = up.match(/\b(\d{1,2})\s*(H|HS|HR|HRS)\b/);
+    if (m) return `${pad2(m[1])}:00`;
+  }
 
-  const mHm = s.match(/^(\d{3,4})$/);
-  if (mHm) {
-    const hh = String(mHm[1]).slice(0, -2);
-    const mm = String(mHm[1]).slice(-2);
-    if (/^\d{1,2}$/.test(hh) && /^\d{2}$/.test(mm)) {
-      return `${pad2(hh)}:${mm}`;
+  // 3) "09HS" grudado (sem borda de palavra)
+  {
+    const m = up.match(/(\d{1,2})(H|HS|HR|HRS)\b/);
+    if (m) return `${pad2(m[1])}:00`;
+  }
+
+  // 4) "0900" / "900" como horário (evita pegar ano etc)
+  {
+    const m = sNoSpace.match(/^\d{3,4}$/);
+    if (m) {
+      const raw = String(m[0]);
+      const hh = raw.slice(0, -2);
+      const mm = raw.slice(-2);
+      const hhn = Number(hh);
+      const mmn = Number(mm);
+      if (
+        Number.isFinite(hhn) &&
+        Number.isFinite(mmn) &&
+        hhn >= 0 &&
+        hhn <= 23 &&
+        mmn >= 0 &&
+        mmn <= 59
+      ) {
+        return `${pad2(hh)}:${pad2(mm)}`;
+      }
     }
   }
 
-  const m2 = s.match(/^(\d{1,2})$/);
-  if (m2) return `${pad2(m2[1])}:00`;
+  // 5) "09" / "9"
+  {
+    const m = sNoSpace.match(/^(\d{1,2})$/);
+    if (m) return `${pad2(m[1])}:00`;
+  }
 
   return s0.trim();
 }
 
 /**
- * ✅ Bucket "09h", "11h"…
+ * ✅ Bucket "09h", "11h"… (sempre a partir do HH:MM normalizado)
  */
 function toHourBucket(value) {
+  const norm = normalizeHourLike(value);
+  const m = String(norm).match(/^(\d{2}):(\d{2})$/);
+  if (m) return `${m[1]}h`;
+
+  // fallback (caso normalize devolva vazio)
   const s = String(value ?? "").trim();
   if (!s || s.toLowerCase() === "todos") return null;
 
   const mh = s.match(/^(\d{1,2})h$/i);
   if (mh) return `${pad2(mh[1])}h`;
 
-  const m1 = s.match(/^(\d{1,2}):(\d{2})$/);
-  if (m1) return `${pad2(m1[1])}h`;
-
   const m2 = s.match(/^(\d{1,2})$/);
   if (m2) return `${pad2(m2[1])}h`;
-
-  const m3 = s.match(/^(\d{1,2}):(\d{2}):(\d{2})$/);
-  if (m3) return `${pad2(m3[1])}h`;
-
-  const m4 = s.match(/^(\d{3,4})$/);
-  if (m4) return `${pad2(String(m4[1]).slice(0, -2))}h`;
 
   return null;
 }
@@ -165,9 +193,7 @@ function toHourBucket(value) {
 function resolveHourFilter({ closeHour = null, closeHourBucket = null }) {
   const bucket =
     toHourBucket(closeHourBucket) ||
-    (closeHour && !String(closeHour).includes(":")
-      ? toHourBucket(closeHour)
-      : null);
+    (closeHour && !String(closeHour).includes(":") ? toHourBucket(closeHour) : null);
 
   if (bucket) return { kind: "bucket", bucket, hhmm: null };
 
@@ -210,33 +236,26 @@ function normalizeToYMD(input) {
   if (typeof input === "object" && typeof input.toDate === "function") {
     const d = input.toDate();
     if (!Number.isNaN(d.getTime())) {
-      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(
-        d.getDate()
-      )}`;
+      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
     }
   }
 
   // Timestamp-like { seconds } / { _seconds }
   if (
     typeof input === "object" &&
-    (Number.isFinite(Number(input.seconds)) ||
-      Number.isFinite(Number(input._seconds)))
+    (Number.isFinite(Number(input.seconds)) || Number.isFinite(Number(input._seconds)))
   ) {
     const sec = Number.isFinite(Number(input.seconds))
       ? Number(input.seconds)
       : Number(input._seconds);
     const d = new Date(sec * 1000);
     if (!Number.isNaN(d.getTime())) {
-      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(
-        d.getDate()
-      )}`;
+      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
     }
   }
 
   if (input instanceof Date && !Number.isNaN(input.getTime())) {
-    return `${input.getFullYear()}-${pad2(input.getMonth() + 1)}-${pad2(
-      input.getDate()
-    )}`;
+    return `${input.getFullYear()}-${pad2(input.getMonth() + 1)}-${pad2(input.getDate())}`;
   }
 
   const s = String(input).trim();
@@ -254,9 +273,7 @@ function normalizeToYMD(input) {
 function normalizePositions(positions) {
   const arr =
     Array.isArray(positions) && positions.length
-      ? positions
-          .map(Number)
-          .filter((n) => Number.isFinite(n) && n > 0)
+      ? positions.map(Number).filter((n) => Number.isFinite(n) && n > 0)
       : null;
 
   if (!arr || !arr.length) return null;
@@ -380,9 +397,7 @@ function dedupeDrawsLocal(draws) {
 
   function score(d) {
     const prizesLen = Array.isArray(d?.prizes) ? d.prizes.length : 0;
-    const pc = Number.isFinite(Number(d?.prizesCount))
-      ? Number(d.prizesCount)
-      : 0;
+    const pc = Number.isFinite(Number(d?.prizesCount)) ? Number(d.prizesCount) : 0;
     const hasLogical = !!(d?.ymd && d?.close_hour);
     return prizesLen * 1_000_000 + pc * 1_000 + (hasLogical ? 10 : 0);
   }
@@ -438,9 +453,7 @@ async function mapWithConcurrency(items, limitN, mapper) {
     }
   }
 
-  await Promise.all(
-    Array.from({ length: Math.min(concurrency, arr.length) }, worker)
-  );
+  await Promise.all(Array.from({ length: Math.min(concurrency, arr.length) }, worker));
   return results;
 }
 
@@ -482,7 +495,7 @@ function getDocDateRaw(d) {
    Prizes (ROBUSTO + CACHE)
 ========================= */
 
-function normalizePrize(p, prizeId) {
+function normalizePrize(p, prizeId, idx = null) {
   const rawGrupo =
     p?.grupo ??
     p?.group ??
@@ -492,6 +505,12 @@ function normalizePrize(p, prizeId) {
     p?.g ??
     p?.grupo_animal ??
     p?.grupoAnimal ??
+    p?.grupo_num ??
+    p?.grupoNum ??
+    p?.grupo_id ??
+    p?.grupoId ??
+    p?.group_id ??
+    p?.groupId ??
     null;
 
   const rawPos =
@@ -503,6 +522,13 @@ function normalizePrize(p, prizeId) {
     p?.premio ??
     p?.prize ??
     p?.p ??
+    p?.premio_num ??
+    p?.premioNum ??
+    p?.prize_position ??
+    p?.prizePosition ??
+    p?.order ??
+    p?.ordem ??
+    p?.idx ??
     null;
 
   const rawMilhar =
@@ -516,8 +542,31 @@ function normalizePrize(p, prizeId) {
     null;
 
   // ✅ parse tolerante (aceita "GRUPO 23", "1º", "1°", etc)
-  const grupo = extractIntInRange(rawGrupo, 1, 25);
-  const position = extractIntInRange(rawPos, 1, 10);
+  let grupo = extractIntInRange(rawGrupo, 1, 25);
+  let position = extractIntInRange(rawPos, 1, 10);
+
+  // fallback: tenta achar "GRUPO 02" em textos comuns (quando grupo vem só no label/animal)
+  if (!isValidGrupo(grupo)) {
+    const alt = String(
+      p?.label ?? p?.nome ?? p?.animal ?? p?.desc ?? p?.description ?? ""
+    )
+      .trim()
+      .toUpperCase();
+    const mAlt = alt.match(/\bGRUPO\s*(\d{1,2})\b/);
+    if (mAlt) grupo = extractIntInRange(mAlt[1], 1, 25);
+  }
+
+  // fallback: se posição não existe no doc, tenta inferir pelo id ("p1", "premio_2", "2", etc)
+  if (!isValidPosition(position)) {
+    const fromId = extractIntInRange(prizeId, 1, 10);
+    if (isValidPosition(fromId)) position = fromId;
+  }
+
+  // fallback: embedded array normalmente vem na ordem dos prêmios
+  if (!isValidPosition(position) && Number.isFinite(Number(idx))) {
+    const n = Number(idx) + 1;
+    if (isValidPosition(n)) position = n;
+  }
 
   const numero = toPrizeDigitsByPosition(rawMilhar, position);
   const digitsLen = numero ? numero.length : null;
@@ -531,8 +580,8 @@ function normalizePrize(p, prizeId) {
     prizeId: prizeId ?? p?.prizeId ?? null,
     ...p,
 
-    grupo,
-    position,
+    grupo: isValidGrupo(grupo) ? grupo : null,
+    position: isValidPosition(position) ? position : null,
 
     numero: numero || null,
     digitsLen,
@@ -571,13 +620,13 @@ async function fetchPrizesForDraw(drawId, positionsArr, embeddedPrizes) {
 
   if (Array.isArray(embeddedPrizes) && embeddedPrizes.length) {
     const normalized = embeddedPrizes.map((p, idx) =>
-      normalizePrize(p, p?.prizeId ?? `emb_${idx}`)
+      normalizePrize(p, p?.prizeId ?? `emb_${idx}`, idx)
     );
 
-    // ✅ mantém só prizes válidos
-    const cleaned = normalized.filter(
-      (x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position)
-    );
+    // ✅ FIX CRÍTICO:
+    // Não derrubar o dataset por "position" ausente.
+    // Mantém prizes com grupo válido; a filtragem por positions (quando pedida) já elimina os sem position.
+    const cleaned = normalized.filter((x) => isValidGrupo(x?.grupo));
 
     const allSorted = sortPrizesByPosition(cleaned);
     return filterPrizesByPositions(allSorted, positionsArr);
@@ -592,12 +641,10 @@ async function fetchPrizesForDraw(drawId, positionsArr, embeddedPrizes) {
   const { snap, error } = await safeGetDocsPreferServer(prizesCol);
   if (error) throw error;
 
-  const allRaw = snap.docs.map((d) => normalizePrize(d.data(), d.id));
+  const allRaw = snap.docs.map((d, idx) => normalizePrize(d.data(), d.id, idx));
 
-  // ✅ mantém só prizes válidos
-  const all = allRaw.filter(
-    (x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position)
-  );
+  // ✅ FIX CRÍTICO: não exigir position aqui
+  const all = allRaw.filter((x) => isValidGrupo(x?.grupo));
 
   const allSorted = sortPrizesByPosition(all);
   cacheSet(PRIZES_CACHE, allKey, allSorted);
@@ -651,9 +698,7 @@ function buildUfWhereClauses(fieldName, uf) {
 
 function normalizeOrderBys(extraOrderBy) {
   if (!extraOrderBy) return [];
-  return Array.isArray(extraOrderBy)
-    ? extraOrderBy.filter(Boolean)
-    : [extraOrderBy];
+  return Array.isArray(extraOrderBy) ? extraOrderBy.filter(Boolean) : [extraOrderBy];
 }
 
 async function queryDrawsByField({
@@ -801,29 +846,22 @@ export async function getKingBoundsByUf(ufOrObj) {
     const orderAsc = [orderBy("ymd", "asc"), orderBy(DOC_ID)];
     const orderDesc = [orderBy("ymd", "desc"), orderBy(DOC_ID)];
 
-    const {
-      docs: minDocs,
-      usedField: usedMin,
-      error: eMin,
-    } = await fetchDrawDocsPreferUf({
-      uf,
-      extraOrderBy: orderAsc,
-      extraLimit: limit(SCAN_LIMIT),
-    });
+    const { docs: minDocs, usedField: usedMin, error: eMin } =
+      await fetchDrawDocsPreferUf({
+        uf,
+        extraOrderBy: orderAsc,
+        extraLimit: limit(SCAN_LIMIT),
+      });
 
-    const {
-      docs: maxDocs,
-      usedField: usedMax,
-      error: eMax,
-    } = await fetchDrawDocsPreferUf({
-      uf,
-      extraOrderBy: orderDesc,
-      extraLimit: limit(SCAN_LIMIT),
-    });
+    const { docs: maxDocs, usedField: usedMax, error: eMax } =
+      await fetchDrawDocsPreferUf({
+        uf,
+        extraOrderBy: orderDesc,
+        extraLimit: limit(SCAN_LIMIT),
+      });
 
     if (eMin || eMax) {
-      if (!isIndexError(eMin) && !isIndexError(eMax))
-        firstTryError = eMin || eMax;
+      if (!isIndexError(eMin) && !isIndexError(eMax)) firstTryError = eMin || eMax;
     }
 
     if (minDocs.length && maxDocs.length && !eMin && !eMax) {
@@ -862,10 +900,7 @@ export async function getKingBoundsByUf(ufOrObj) {
 
     const b = a.ok
       ? null
-      : await sampleEdgesByDocId(
-          "lottery_key",
-          String(lotteryKey).toUpperCase()
-        );
+      : await sampleEdgesByDocId("lottery_key", String(lotteryKey).toUpperCase());
 
     const merged = a.ok ? a.merged : b?.merged || [];
     const { minYmd, maxYmd } = pickMinMaxFromMapped(merged);
@@ -875,9 +910,9 @@ export async function getKingBoundsByUf(ufOrObj) {
       uf,
       minYmd: minYmd || null,
       maxYmd: maxYmd || null,
-      source: `fallback_edges_docId_limit=${FALLBACK_EDGE_LIMIT}:${a.ok ? "uf" : "lottery_key"}:sampleCount=${
-        merged.length
-      }${idxInfo}`,
+      source: `fallback_edges_docId_limit=${FALLBACK_EDGE_LIMIT}:${
+        a.ok ? "uf" : "lottery_key"
+      }:sampleCount=${merged.length}${idxInfo}`,
     };
   }
 }
@@ -974,9 +1009,7 @@ export async function getKingResultsByDate({
   let baseAll = dedupeDrawsLocal(docCandidates.map(mapDrawDoc));
   baseAll = baseAll.filter((x) => (x.ymd || normalizeToYMD(x.date)) === ymdDate);
 
-  const base = hourFilter?.kind
-    ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
-    : baseAll;
+  const base = hourFilter?.kind ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter)) : baseAll;
   const ordered = sortDrawsLocal(base);
 
   const results = await mapWithConcurrency(ordered, 6, async (item) => {
@@ -1129,9 +1162,7 @@ export async function getKingResultsByRange({
         }
 
         const baseAll = dedupeDrawsLocal(all);
-        const base = hourFilter?.kind
-          ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
-          : baseAll;
+        const base = hourFilter?.kind ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter)) : baseAll;
 
         const out = dedupeDrawsLocal(sortDrawsLocal(base));
         cacheSet(DRAWS_CACHE, rangeKey, out);
@@ -1171,9 +1202,7 @@ export async function getKingResultsByRange({
       }
 
       const baseAll = dedupeDrawsLocal(all);
-      const base = hourFilter?.kind
-        ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
-        : baseAll;
+      const base = hourFilter?.kind ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter)) : baseAll;
 
       const ordered = sortDrawsLocal(base);
 
@@ -1204,9 +1233,7 @@ export async function getKingResultsByRange({
   }
 
   const baseAll = dedupeDrawsLocal(docs.map(mapDrawDoc));
-  const base = hourFilter?.kind
-    ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
-    : baseAll;
+  const base = hourFilter?.kind ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter)) : baseAll;
 
   const ordered = sortDrawsLocal(base);
 
