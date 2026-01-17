@@ -22,6 +22,10 @@ import React, { useCallback, useMemo, useRef } from "react";
  * - Remove “efeito de seleção” vindo de foco (focus/focus-visible) no chip.
  * - Após clicar, o chip dá blur para não ficar marcado.
  * - Seleção visual fica SOMENTE pelo chipActive.
+ *
+ * ✅ DEMO safe (novo):
+ * - prop `disabled`: trava inputs / slider / chips / calendário
+ * - prop `onBlocked`: callback quando tenta interagir bloqueado
  */
 
 function pad2(n) {
@@ -130,6 +134,10 @@ export default function DateRangeControl({
   selectedYears = null,
   onToggleYear = () => {},
   onClearYears = () => {},
+
+  // ✅ DEMO safe (novo)
+  disabled = false,
+  onBlocked = null,
 }) {
   const fromRef = useRef(null);
   const toRef = useRef(null);
@@ -208,28 +216,43 @@ export default function DateRangeControl({
     return selectedYearsArr.length === yearsArr.length;
   }, [yearsArr, selectedYearsArr]);
 
-  const openPickerByRef = useCallback((ref) => {
-    const el = ref?.current;
-    if (!el) return;
+  const openPickerByRef = useCallback(
+    (ref) => {
+      // ✅ DEMO safe
+      if (disabled) {
+        if (typeof onBlocked === "function") onBlocked("datePicker");
+        return;
+      }
 
-    try {
-      el.focus({ preventScroll: true });
-    } catch {
-      try {
-        el.focus();
-      } catch {}
-    }
+      const el = ref?.current;
+      if (!el) return;
 
-    if (typeof el.showPicker === "function") {
       try {
-        el.showPicker();
-      } catch {}
-    }
-  }, []);
+        el.focus({ preventScroll: true });
+      } catch {
+        try {
+          el.focus();
+        } catch {}
+      }
+
+      if (typeof el.showPicker === "function") {
+        try {
+          el.showPicker();
+        } catch {}
+      }
+    },
+    [disabled, onBlocked]
+  );
 
   // commit que funciona COM ou SEM bounds
   const commit = useCallback(
     (nextFrom, nextTo) => {
+      // ✅ DEMO safe
+      if (disabled) {
+        if (typeof onBlocked === "function") onBlocked("dateRange");
+        return;
+      }
+
       const fCandidate = isISODate(nextFrom) ? nextFrom : normalized.from;
       const tCandidate = isISODate(nextTo) ? nextTo : normalized.to;
 
@@ -253,7 +276,7 @@ export default function DateRangeControl({
       if (fDt.getTime() <= tDt.getTime()) onChange({ from: f, to: t });
       else onChange({ from: t, to: f });
     },
-    [boundsReady, onChange, normalized.from, normalized.to, minISO, maxISO]
+    [disabled, onBlocked, boundsReady, onChange, normalized.from, normalized.to, minISO, maxISO]
   );
 
   const onInputFrom = (e) => commit(e.target.value, normalized.to);
@@ -289,6 +312,8 @@ export default function DateRangeControl({
       display: "flex",
       alignItems: "flex-start",
       justifyContent: "flex-start",
+      opacity: disabled ? 0.72 : 1, // ✅ DEMO safe
+      filter: disabled ? "grayscale(0.18)" : "none", // ✅ DEMO safe
     },
 
     // ✅ grid que estica e ocupa 100%
@@ -300,6 +325,7 @@ export default function DateRangeControl({
       gridAutoColumns: "minmax(76px, 1fr)",
       gap: 10,
       alignItems: "center",
+      pointerEvents: disabled ? "none" : "auto", // ✅ DEMO safe
     },
 
     chip: {
@@ -344,6 +370,8 @@ export default function DateRangeControl({
       minWidth: 0,
       position: "relative",
       zIndex: 10,
+      opacity: disabled ? 0.72 : 1, // ✅ DEMO safe
+      filter: disabled ? "grayscale(0.18)" : "none", // ✅ DEMO safe
     },
 
     inputWrap: { position: "relative", minWidth: 0, zIndex: 11 },
@@ -367,6 +395,12 @@ export default function DateRangeControl({
       transition: "border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease",
     },
 
+    inputDisabled: {
+      opacity: 0.68,
+      cursor: "not-allowed",
+      filter: "grayscale(0.18)",
+    },
+
     iconBtn: {
       position: "absolute",
       right: 10,
@@ -388,13 +422,19 @@ export default function DateRangeControl({
         "transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease, color 160ms ease",
     },
 
+    iconBtnDisabled: {
+      cursor: "not-allowed",
+      opacity: 0.6,
+      filter: "grayscale(0.18)",
+    },
+
     sliderWrap: {
       position: "relative",
       height: 28,
       minWidth: 0,
       zIndex: 1,
-      opacity: boundsReady ? 1 : 0.35,
-      pointerEvents: boundsReady ? "auto" : "none",
+      opacity: boundsReady && !disabled ? 1 : 0.35, // ✅ DEMO safe
+      pointerEvents: boundsReady && !disabled ? "auto" : "none", // ✅ DEMO safe
     },
 
     track: {
@@ -528,22 +568,32 @@ export default function DateRangeControl({
 
   const handleClearYears = useCallback(
     (e) => {
+      // ✅ DEMO safe
+      if (disabled) {
+        if (typeof onBlocked === "function") onBlocked("years");
+        return;
+      }
       try {
         e?.currentTarget?.blur?.();
       } catch {}
       onClearYears();
     },
-    [onClearYears]
+    [disabled, onBlocked, onClearYears]
   );
 
   const handleToggleYear = useCallback(
     (y, e) => {
+      // ✅ DEMO safe
+      if (disabled) {
+        if (typeof onBlocked === "function") onBlocked("years");
+        return;
+      }
       try {
         e?.currentTarget?.blur?.();
       } catch {}
       onToggleYear(y);
     },
-    [onToggleYear]
+    [disabled, onBlocked, onToggleYear]
   );
 
   const renderTop = () => {
@@ -557,6 +607,7 @@ export default function DateRangeControl({
               onMouseDown={(e) => e.preventDefault()}
               onClick={handleClearYears}
               style={{ ...ui.chip, ...(isAllYears ? ui.chipActive : null) }}
+              title={disabled ? "Bloqueado no modo demonstração" : "Todos os anos"}
             >
               Todos
             </button>
@@ -571,7 +622,7 @@ export default function DateRangeControl({
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={(e) => handleToggleYear(y, e)}
                   style={{ ...ui.chip, ...(isActive ? ui.chipActive : null) }}
-                  title={String(y)}
+                  title={disabled ? "Bloqueado no modo demonstração" : String(y)}
                 >
                   {y}
                 </button>
@@ -604,18 +655,20 @@ export default function DateRangeControl({
             min={minISO || undefined}
             max={maxISO || undefined}
             onChange={onInputFrom}
-            style={ui.input}
+            style={{ ...ui.input, ...(disabled ? ui.inputDisabled : null) }} // ✅ DEMO safe
             aria-label="Data inicial"
+            disabled={disabled} // ✅ DEMO safe
           />
 
           <button
             type="button"
             className="pp_calbtn"
-            style={ui.iconBtn}
+            style={{ ...ui.iconBtn, ...(disabled ? ui.iconBtnDisabled : null) }} // ✅ DEMO safe
             aria-label="Abrir calendário (data inicial)"
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => openPickerByRef(fromRef)}
-            title="Abrir calendário"
+            title={disabled ? "Bloqueado no modo demonstração" : "Abrir calendário"}
+            disabled={disabled} // ✅ DEMO safe
           >
             <CalendarIcon />
           </button>
@@ -629,18 +682,20 @@ export default function DateRangeControl({
             min={minISO || undefined}
             max={maxISO || undefined}
             onChange={onInputTo}
-            style={ui.input}
+            style={{ ...ui.input, ...(disabled ? ui.inputDisabled : null) }} // ✅ DEMO safe
             aria-label="Data final"
+            disabled={disabled} // ✅ DEMO safe
           />
 
           <button
             type="button"
             className="pp_calbtn"
-            style={ui.iconBtn}
+            style={{ ...ui.iconBtn, ...(disabled ? ui.iconBtnDisabled : null) }} // ✅ DEMO safe
             aria-label="Abrir calendário (data final)"
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => openPickerByRef(toRef)}
-            title="Abrir calendário"
+            title={disabled ? "Bloqueado no modo demonstração" : "Abrir calendário"}
+            disabled={disabled} // ✅ DEMO safe
           >
             <CalendarIcon />
           </button>

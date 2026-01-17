@@ -15,6 +15,10 @@ import React, { useMemo, useCallback } from "react";
  * Opção A (Horário):
  * - Horário é DOMÍNIO FIXO (Todos + 09h/11h/14h/16h/18h/21h)
  * - IGNORA options.horarios (porque ele pode vir “podado” pelo filtro atual e causar UX ruim)
+ *
+ * Extras (freeze-safe):
+ * - disabledAll: trava todos selects (útil para modo DEMO)
+ * - onBlocked: callback quando usuário tenta interagir enquanto bloqueado
  */
 
 function normalizeValue(v, fallback = "Todos") {
@@ -26,12 +30,7 @@ function sortPTBR(a, b) {
   return String(a).localeCompare(String(b), "pt-BR", { sensitivity: "base" });
 }
 
-/**
- * ✅ Normaliza entradas de posição para o formato da UI:
- * - "Todos" => "Todos"
- * - "2" => "2º"
- * - "2º" => "2º"
- */
+/** Normaliza posição para "1º..7º" ou "Todos" */
 function normalizePosicaoInput(v) {
   const s = String(v ?? "").trim();
   if (!s) return "Todos";
@@ -46,9 +45,56 @@ function normalizePosicaoInput(v) {
   return s;
 }
 
-/**
- * ✅ Garante que o value do select exista na lista.
- */
+/** ✅ Normaliza Dia da Semana para o formato curto: Dom/Seg/Ter/Qua/Qui/Sex/Sáb/Todos */
+function normalizeDiaSemanaInput(v) {
+  const raw = String(v ?? "").trim();
+  if (!raw) return "Todos";
+
+  const key = raw
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (key === "todos") return "Todos";
+
+  const map = {
+    dom: "Dom",
+    domingo: "Dom",
+    seg: "Seg",
+    "segunda-feira": "Seg",
+    "segunda feira": "Seg",
+    segunda: "Seg",
+    ter: "Ter",
+    "terca-feira": "Ter",
+    "terca feira": "Ter",
+    terca: "Ter",
+    qua: "Qua",
+    "quarta-feira": "Qua",
+    "quarta feira": "Qua",
+    quarta: "Qua",
+    qui: "Qui",
+    "quinta-feira": "Qui",
+    "quinta feira": "Qui",
+    quinta: "Qui",
+    sex: "Sex",
+    "sexta-feira": "Sex",
+    "sexta feira": "Sex",
+    sexta: "Sex",
+    sab: "Sáb",
+    sabado: "Sáb",
+    "sabado-feira": "Sáb",
+    "sabado feira": "Sáb",
+    sabb: "Sáb",
+    sáb: "Sáb", // caso venha já com acento
+    sábado: "Sáb",
+  };
+
+  return map[key] || raw;
+}
+
+/** Garante que o value exista na lista */
 function ensureValueInList({
   value,
   list,
@@ -65,19 +111,25 @@ function ensureValueInList({
 
   const isObjList = typeof arr[0] === "object" && arr[0] && "value" in arr[0];
 
+  // ✅ FIX: normaliza também os valores da lista (evita mismatch sutil)
+  const norm = (x) => {
+    const s = normalizeValue(x, "");
+    return typeof normalizeFn === "function" ? normalizeFn(s) : s;
+  };
+
   if (isObjList) {
-    const values = new Set(arr.map((x) => normalizeValue(x?.value, "")));
+    const values = new Set(arr.map((x) => norm(x?.value)));
     if (values.has(v)) return v;
     if (values.has("Todos")) return "Todos";
-    const first = normalizeValue(arr[0]?.value, "");
+    const first = norm(arr[0]?.value);
     return first || fallback;
   }
 
-  const values = new Set(arr.map((x) => normalizeValue(x, "")));
+  const values = new Set(arr.map((x) => norm(x)));
   if (values.has(v)) return v;
   if (values.has("Todos")) return "Todos";
 
-  const first = normalizeValue(arr[0], "");
+  const first = norm(arr[0]);
   return first || fallback;
 }
 
@@ -96,13 +148,8 @@ const PP = {
   muted: "rgba(255,255,255,0.55)",
   rCard: 18,
   rInner: 14,
-  shadowGlow:
-    "0 0 0 1px rgba(200,178,90,0.10), 0 18px 50px rgba(0,0,0,0.55)",
-
-  // ✅ melhor toque/leitura
+  shadowGlow: "0 0 0 1px rgba(200,178,90,0.10), 0 18px 50px rgba(0,0,0,0.55)",
   inputH: 48,
-
-  // ✅ seleção do dropdown (substitui azul por dourado)
   selGoldA: "rgba(200,178,90,0.95)",
   selGoldB: "rgba(184,158,71,0.95)",
   selGoldSoft: "rgba(200,178,90,0.55)",
@@ -121,6 +168,10 @@ export default function FiltersBar({
   options = {},
   posicaoMode = "full",
   posicoesFromOptionsMode = "ignore",
+
+  // ✅ extras (não quebram chamadas antigas)
+  disabledAll = false,
+  onBlocked = null,
 }) {
   const defaultOptions = useMemo(() => {
     const mesesDefault = [
@@ -150,7 +201,7 @@ export default function FiltersBar({
       { label: "Sábado", value: "Sáb" },
     ];
 
-    // ✅ OPÇÃO A: domínio fixo (NÃO depende de dados filtrados)
+    // ✅ domínio fixo (não depende de dados filtrados)
     const horariosDefault = [
       { label: "Todos", value: "Todos" },
       { label: "09h", value: "09h" },
@@ -178,12 +229,7 @@ export default function FiltersBar({
       if (!Array.isArray(arr) || !arr.length) return fallback;
       const first = arr[0];
 
-      if (
-        typeof first === "object" &&
-        first &&
-        "label" in first &&
-        "value" in first
-      ) {
+      if (typeof first === "object" && first && "label" in first && "value" in first) {
         return arr
           .map((x) => ({
             label: normalizeValue(x?.label, "Todos"),
@@ -192,7 +238,6 @@ export default function FiltersBar({
           .filter((x) => x.label && x.value);
       }
 
-      // lista simples de strings/números
       return arr
         .map((x) => {
           const v = normalizeValue(x, "");
@@ -201,30 +246,38 @@ export default function FiltersBar({
         .filter(Boolean);
     };
 
+    // ✅ FIX: aceita string OU {value,label} em options.animais
     const animais =
       Array.isArray(options.animais) && options.animais.length
         ? (() => {
             const cleaned = options.animais
-              .map((x) => String(x ?? "").trim())
+              .map((x) => {
+                if (x && typeof x === "object") return String(x.value ?? x.label ?? "").trim();
+                return String(x ?? "").trim();
+              })
               .filter(Boolean)
               .filter((x) => x.toLowerCase() !== "todos");
 
             const uniq = Array.from(new Set(cleaned));
             uniq.sort(sortPTBR);
-
             return ["Todos", ...uniq];
           })()
         : ["Todos"];
 
+    // ✅ FIX: aceita string OU {value,label} em options.diasMes + dedup
     const diasMes =
       Array.isArray(options.diasMes) && options.diasMes.length
-        ? [
-            "Todos",
-            ...options.diasMes
-              .map((x) => String(x ?? "").trim())
+        ? (() => {
+            const cleaned = options.diasMes
+              .map((x) => {
+                if (x && typeof x === "object") return String(x.value ?? x.label ?? "").trim();
+                return String(x ?? "").trim();
+              })
               .filter(Boolean)
-              .filter((x) => x.toLowerCase() !== "todos"),
-          ]
+              .filter((x) => x.toLowerCase() !== "todos");
+            const uniq = Array.from(new Set(cleaned));
+            return ["Todos", ...uniq];
+          })()
         : ["Todos", ...Array.from({ length: 31 }, (_, i) => String(i + 1))];
 
     const diasSemanaFromParent =
@@ -232,7 +285,7 @@ export default function FiltersBar({
         ? normalizeLabelValueList(options.diasSemana, diasSemanaDefault)
         : diasSemanaDefault;
 
-    // ✅ OPÇÃO A: não aceitar options.horarios (evita “sumir” horários após filtro)
+    // ✅ não aceitar options.horarios (evita “sumir” horários após filtro)
     const horarios = horariosDefault;
 
     const posicoesFromParent =
@@ -250,7 +303,10 @@ export default function FiltersBar({
       Array.isArray(options.meses) && options.meses.length
         ? (() => {
             const cleaned = options.meses
-              .map((x) => String(x ?? "").trim())
+              .map((x) => {
+                if (x && typeof x === "object") return String(x.value ?? x.label ?? "").trim();
+                return String(x ?? "").trim();
+              })
               .filter(Boolean)
               .filter((x) => x.toLowerCase() !== "todos");
             const uniq = Array.from(new Set(cleaned));
@@ -296,7 +352,6 @@ export default function FiltersBar({
 
     item: { display: "grid", gap: 8, minWidth: 0 },
 
-    // ✅ label mais suave
     label: {
       fontWeight: 700,
       letterSpacing: 0.12,
@@ -312,7 +367,6 @@ export default function FiltersBar({
 
     selectWrap: { position: "relative", width: "100%", minWidth: 0 },
 
-    // ✅ select mais suave
     select: {
       height: PP.inputH,
       borderRadius: 12,
@@ -331,10 +385,7 @@ export default function FiltersBar({
       boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.28)",
       cursor: "pointer",
       minWidth: 0,
-      transition:
-        "border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease",
-
-      // ✅ FIX (mínimo e freeze-safe): evita cortar “Todos” em “Tod”
+      transition: "border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease",
       whiteSpace: "nowrap",
       textOverflow: "clip",
     },
@@ -381,53 +432,41 @@ export default function FiltersBar({
         .pp_f_posicao{ grid-column: span 4 !important; }
       }
 
-      /* Mantém tema escuro */
       .pp_filters_grid select{ color-scheme: dark; }
 
-      /* Focus premium (não muda layout) */
       .pp_filters_grid select:focus{
         border-color: rgba(200,178,90,0.55) !important;
         box-shadow: 0 0 0 3px rgba(200,178,90,0.14) !important;
       }
 
-      /* Hover */
       .pp_filters_grid select:hover{
         border-color: rgba(200,178,90,0.20);
       }
 
-      /* ====== TROCA DO AZUL PARA DOURADO (SELEÇÃO DO MENU) ======
-         Limitação: o <select> nativo pode ser parcialmente “travado” pelo SO/navegador.
-         Essas regras fazem o máximo possível sem alterar layout/componente.
-      */
       .pp_filters_grid select option{
         background: #0B0B0C;
         color: rgba(255,255,255,0.92);
       }
 
-      /* Selecionado (substitui o azul padrão sempre que o navegador permitir) */
       .pp_filters_grid select option:checked{
         background-color: ${PP.selGoldA} !important;
         color: #0B0B0C !important;
       }
 
-      /* Hover no item do menu (quando o navegador respeitar) */
       .pp_filters_grid select option:hover{
         background-color: ${PP.selGoldSoft} !important;
         color: #0B0B0C !important;
       }
 
-      /* Active/pressed */
       .pp_filters_grid select option:active{
         background-color: ${PP.selGoldB} !important;
         color: #0B0B0C !important;
       }
 
-      /* Tentativa de “degradê” (alguns browsers ignoram, mas não quebra) */
       .pp_filters_grid select option:checked{
         background: linear-gradient(180deg, ${PP.selGoldA}, ${PP.selGoldB}) !important;
       }
 
-      /* (Opcional) remove aquele brilho azul de foco do Windows em alguns cenários */
       .pp_filters_grid select:focus-visible{
         outline: none;
       }
@@ -439,15 +478,29 @@ export default function FiltersBar({
 
   const handleChange = useCallback(
     (name, next) => {
+      if (disabledAll) {
+        if (typeof onBlocked === "function") onBlocked(name);
+        return;
+      }
+
       if (lockPosicaoV1 && name === "posicao") {
         onChange("posicao", "1º");
         return;
       }
 
-      const nextValue = name === "posicao" ? normalizePosicaoInput(next) : next;
-      onChange(name, nextValue);
+      if (name === "posicao") {
+        onChange(name, normalizePosicaoInput(next));
+        return;
+      }
+
+      if (name === "diaSemana") {
+        onChange(name, normalizeDiaSemanaInput(next));
+        return;
+      }
+
+      onChange(name, next);
     },
-    [lockPosicaoV1, onChange]
+    [disabledAll, onBlocked, lockPosicaoV1, onChange]
   );
 
   const Item = ({
@@ -460,16 +513,25 @@ export default function FiltersBar({
     disabled = false,
     forceValue = null,
   }) => {
+    const normalizeFn =
+      name === "posicao"
+        ? normalizePosicaoInput
+        : name === "diaSemana"
+        ? normalizeDiaSemanaInput
+        : null;
+
     const normalizedValue = ensureValueInList({
       value,
       list,
       forceValue,
       fallback: "Todos",
-      normalizeFn: name === "posicao" ? normalizePosicaoInput : null,
+      normalizeFn,
     });
 
     const isObjList =
       Array.isArray(list) && list.length && typeof list[0] === "object" && list[0];
+
+    const finalDisabled = !!disabledAll || !!disabled;
 
     return (
       <div className={wrapClassName} style={{ ...wrapStyle, minWidth: 0 }}>
@@ -481,19 +543,16 @@ export default function FiltersBar({
           <div style={ui.selectWrap}>
             <select
               value={normalizedValue}
-              disabled={disabled}
+              disabled={finalDisabled}
               onChange={(e) => handleChange(name, e.target.value)}
               style={{
                 ...ui.select,
-                ...(disabled ? ui.selectDisabled : null),
+                ...(finalDisabled ? ui.selectDisabled : null),
               }}
             >
               {isObjList
                 ? list.map((opt, idx) => (
-                    <option
-                      key={`${name}_${String(opt?.value)}_${idx}`}
-                      value={opt?.value}
-                    >
+                    <option key={`${name}_${String(opt?.value)}_${idx}`} value={opt?.value}>
                       {opt?.label}
                     </option>
                   ))

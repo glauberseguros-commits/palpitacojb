@@ -1,4 +1,5 @@
-﻿"use strict";
+﻿// backend/scripts/importKingApostas.js
+"use strict";
 
 const fs = require("fs");
 const path = require("path");
@@ -145,6 +146,33 @@ const HTTP_RETRY_BASE_MS = Number.isFinite(Number(process.env.HTTP_RETRY_BASE_MS
 
 /**
  * =========================
+ * ✅ Regras de negócio: UF x lottery_key
+ * =========================
+ *
+ * IMPORTANTE:
+ * - lottery_key identifica a loteria/fonte (ex.: PT_RIO)
+ * - uf deve ser o estado (ex.: RJ), pois o frontend consulta por UF ("RJ")
+ *
+ * Se uf ficar "PT_RIO", o bounds por UF quebra.
+ */
+const RJ_STATE_CODE = "RJ";
+const RJ_LOTTERY_KEY = "PT_RIO";
+
+function resolveUfFromLotteryKey(lotteryKey) {
+  const lk = String(lotteryKey || "").trim().toUpperCase();
+  if (!lk) return null;
+
+  if (lk === RJ_LOTTERY_KEY) return RJ_STATE_CODE;
+
+  // se for uma UF padrão de 2 letras (SP, MG, DF etc.), preserva
+  if (/^[A-Z]{2}$/.test(lk)) return lk;
+
+  // fallback: não inventa UF
+  return null;
+}
+
+/**
+ * =========================
  * Jogo do Bicho helpers
  * =========================
  */
@@ -279,8 +307,9 @@ const LOTTERIES_BY_KEY = {
 
 function buildResultsUrl({ date, lotteryKey }) {
   const base = "https://app_services.apionline.cloud/api/results";
-  const lotteries = LOTTERIES_BY_KEY[lotteryKey];
-  if (!lotteries?.length) throw new Error(`lotteryKey inválida: ${lotteryKey}`);
+  const lk = String(lotteryKey || "").trim().toUpperCase();
+  const lotteries = LOTTERIES_BY_KEY[lk];
+  if (!lotteries?.length) throw new Error(`lotteryKey inválida: ${lk}`);
 
   const params = new URLSearchParams();
   params.append("dates[]", date);
@@ -297,7 +326,11 @@ function shouldRetryAxiosError(err) {
   const code = String(err?.code || "").toLowerCase();
   const status = Number(err?.response?.status);
 
-  if (code.includes("etimedout") || code.includes("econnreset") || code.includes("enotfound")) {
+  if (
+    code.includes("etimedout") ||
+    code.includes("econnreset") ||
+    code.includes("enotfound")
+  ) {
     return true;
   }
 
@@ -310,7 +343,8 @@ function shouldRetryAxiosError(err) {
 }
 
 async function fetchKingResults({ date, lotteryKey }) {
-  const url = buildResultsUrl({ date, lotteryKey });
+  const lk = String(lotteryKey || "").trim().toUpperCase();
+  const url = buildResultsUrl({ date, lotteryKey: lk });
 
   let lastErr = null;
 
@@ -425,6 +459,9 @@ async function importFromPayload({
   closeHour = null,
   skipIfAlreadyComplete = false,
 } = {}) {
+  const lk = String(lotteryKey || "").trim().toUpperCase();
+  const uf = resolveUfFromLotteryKey(lk); // ✅ FIX: UF correta (ex.: RJ)
+
   let batch = db.batch();
   let ops = 0;
 
@@ -507,7 +544,7 @@ async function importFromPayload({
 
     const { drawId, drawRef, lotteryName, lotteryIdFromDraw } = buildDrawRef({
       draw,
-      lotteryKey,
+      lotteryKey: lk,
     });
 
     if (filterClose) proof.targetDrawIds.push(drawId);
@@ -537,15 +574,18 @@ async function importFromPayload({
       }
     }
 
-    // ✅ FIX REAL: sempre gravar ymd (base do projeto) a partir de date (YYYY-MM-DD)
+    // ✅ base: ymd sempre a partir de date (YYYY-MM-DD)
     const ymd = date;
 
     batch.set(
       drawRef,
       {
         source: "kingapostas",
-        uf: lotteryKey,
-        lottery_key: lotteryKey,
+
+        // ✅ FIX: UF é estado (RJ) e lottery_key é a chave da loteria (PT_RIO)
+        uf: uf || null,
+        lottery_key: lk,
+
         lottery_name: lotteryName,
         lottery_id: lotteryIdFromDraw || null,
         drawId,
@@ -633,7 +673,8 @@ async function importFromPayload({
       ` | prizes_upserted=${totalPrizesUpserted} | prizes_novos=${totalPrizesSaved}` +
       ` | skip_vazio=${skippedEmpty} | skip_invalido=${skippedInvalid} | skip_close=${skippedCloseHour}` +
       ` | skip_complete=${skippedAlreadyComplete}` +
-      ` | CHECK_EXISTENCE=${CHECK_EXISTENCE ? "ON" : "OFF"}`
+      ` | CHECK_EXISTENCE=${CHECK_EXISTENCE ? "ON" : "OFF"}` +
+      ` | uf=${uf || "NULL"} lottery_key=${lk}`
   );
 
   return {
@@ -664,8 +705,10 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
   if (!date || !isISODate(date)) {
     throw new Error('Parâmetro "date" inválido. Use YYYY-MM-DD.');
   }
-  if (!lotteryKey || !LOTTERIES_BY_KEY[lotteryKey]) {
-    throw new Error(`Parâmetro "lotteryKey" inválido: ${lotteryKey}`);
+
+  const lk = String(lotteryKey || "").trim().toUpperCase();
+  if (!lk || !LOTTERIES_BY_KEY[lk]) {
+    throw new Error(`Parâmetro "lotteryKey" inválido: ${lk}`);
   }
 
   const normalizedClose = closeHour ? normalizeHHMM(closeHour) : null;
@@ -675,14 +718,14 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
 
   const startedAt = Date.now();
 
-  const payload = await fetchKingResults({ date, lotteryKey });
+  const payload = await fetchKingResults({ date, lotteryKey: lk });
 
   // Quando closeHour é informado (scheduler):
   // - queremos PROVA FORTE
   // - e queremos evitar reescrever se já está completo
   const result = await importFromPayload({
     payload,
-    lotteryKey,
+    lotteryKey: lk,
     closeHour: normalizedClose,
     skipIfAlreadyComplete: Boolean(normalizedClose), // liga automaticamente
   });
@@ -712,7 +755,7 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
 
   return {
     ok: true,
-    lotteryKey,
+    lotteryKey: lk,
     date,
     closeHour: normalizedClose || null,
 
@@ -743,6 +786,13 @@ async function main() {
     );
   }
 
+  const lk = String(lotteryKey || "").trim().toUpperCase();
+  if (!lk || !LOTTERIES_BY_KEY[lk]) {
+    throw new Error(
+      "Uso: node archive_backend/backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO] [HH:MM]"
+    );
+  }
+
   const normalizedClose = closeHour ? normalizeHHMM(closeHour) : null;
   if (normalizedClose && !isHHMM(normalizedClose)) {
     throw new Error(
@@ -751,22 +801,26 @@ async function main() {
   }
 
   console.log(
-    `[1/3] Buscando API: ${lotteryKey} ${date}${normalizedClose ? ` ${normalizedClose}` : ""}`
+    `[1/3] Buscando API: ${lk} ${date}${normalizedClose ? ` ${normalizedClose}` : ""}`
   );
 
-  const payload = await fetchKingResults({ date, lotteryKey });
+  const payload = await fetchKingResults({ date, lotteryKey: lk });
 
-  console.log(`[2/3] Processando ${Array.isArray(payload?.data) ? payload.data.length : 0} draws retornados pela API...`);
+  console.log(
+    `[2/3] Processando ${
+      Array.isArray(payload?.data) ? payload.data.length : 0
+    } draws retornados pela API...`
+  );
 
   await importFromPayload({
     payload,
-    lotteryKey,
+    lotteryKey: lk,
     closeHour: normalizedClose,
     skipIfAlreadyComplete: false, // CLI mantém comportamento tradicional (regrava)
   });
 
   console.log(
-    `[3/3] OK. Import concluído: ${lotteryKey} ${date}${normalizedClose ? ` ${normalizedClose}` : ""}`
+    `[3/3] OK. Import concluído: ${lk} ${date}${normalizedClose ? ` ${normalizedClose}` : ""}`
   );
 }
 

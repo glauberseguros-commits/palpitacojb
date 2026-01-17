@@ -523,6 +523,7 @@ async function fetchPrizesForDraw(drawId, positionsArr, embeddedPrizes) {
       normalizePrize(p, p?.prizeId ?? `emb_${idx}`)
     );
 
+    // ✅ FIX: o campo correto é "grupo" (não "grupo")
     const cleaned = normalized.filter(
       (x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position)
     );
@@ -542,6 +543,7 @@ async function fetchPrizesForDraw(drawId, positionsArr, embeddedPrizes) {
 
   const allRaw = snap.docs.map((d) => normalizePrize(d.data(), d.id));
 
+  // ✅ FIX: o campo correto é "grupo" (não "grupo")
   const all = allRaw.filter((x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position));
 
   const allSorted = sortPrizesByPosition(all);

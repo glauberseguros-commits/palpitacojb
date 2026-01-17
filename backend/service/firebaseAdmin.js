@@ -1,3 +1,4 @@
+// backend/service/firebaseAdmin.js
 "use strict";
 
 const fs = require("fs");
@@ -18,14 +19,16 @@ let _inited = false;
 
     const raw = fs.readFileSync(envPath, "utf8");
     raw.split(/\r?\n/).forEach((line) => {
-      const s = String(line || "").trim();
+      let s = String(line || "");
+      s = s.replace(/^\uFEFF/, "").trim(); // remove BOM invisível
       if (!s || s.startsWith("#")) return;
 
       const i = s.indexOf("=");
       if (i <= 0) return;
 
-      const k = s.slice(0, i).trim();
+      const k = s.slice(0, i).trim().replace(/^\uFEFF/, "");
       const v = s.slice(i + 1).trim();
+
       if (k && v && !process.env[k]) process.env[k] = v;
     });
   } catch {
@@ -33,37 +36,34 @@ let _inited = false;
   }
 })();
 
-function tryParseServiceAccountFromEnv() {
-  // 1) JSON puro
-  const rawJson = String(process.env.FIREBASE_SERVICE_ACCOUNT_JSON || "").trim();
-  if (rawJson) {
-    try {
-      const obj = JSON.parse(rawJson);
-      if (obj && typeof obj === "object" && obj.project_id && obj.client_email) return obj;
-    } catch (e) {
-      throw new Error("FIREBASE_SERVICE_ACCOUNT_JSON inválido (não é JSON válido).");
-    }
+/* =========================
+   Helpers
+========================= */
+
+function normalizePath(p) {
+  let s = String(p || "").trim().replace(/^\uFEFF/, "");
+
+  // remove aspas se vier "C:\..." ou 'C:\...'
+  if (
+    (s.startsWith('"') && s.endsWith('"')) ||
+    (s.startsWith("'") && s.endsWith("'"))
+  ) {
+    s = s.slice(1, -1).trim();
   }
 
-  // 2) Base64
-  const b64 = String(process.env.FIREBASE_SERVICE_ACCOUNT_BASE64 || "").trim();
-  if (b64) {
-    try {
-      const decoded = Buffer.from(b64, "base64").toString("utf8");
-      const obj = JSON.parse(decoded);
-      if (obj && typeof obj === "object" && obj.project_id && obj.client_email) return obj;
-      throw new Error("FIREBASE_SERVICE_ACCOUNT_BASE64 decodificou, mas JSON é inválido.");
-    } catch (e) {
-      throw new Error("FIREBASE_SERVICE_ACCOUNT_BASE64 inválido (base64/JSON).");
-    }
+  // aceita caminho relativo (a partir da raiz do repo)
+  if (s && !path.isAbsolute(s)) {
+    s = path.resolve(path.join(__dirname, "..", ".."), s);
   }
 
-  return null;
+  return s || "";
 }
 
 function resolveCredentialsPath() {
-  const p = String(process.env.GOOGLE_APPLICATION_CREDENTIALS || "").trim();
+  const raw = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  const p = normalizePath(raw);
   if (!p) return null;
+
   try {
     if (fs.existsSync(p) && fs.lstatSync(p).isFile()) return p;
   } catch {
@@ -72,57 +72,128 @@ function resolveCredentialsPath() {
   return null;
 }
 
+function safeJsonParse(s) {
+  try {
+    const obj = JSON.parse(String(s || ""));
+    return obj && typeof obj === "object" ? obj : null;
+  } catch {
+    return null;
+  }
+}
+
+function normalizePrivateKey(sa) {
+  // Corrige casos de private_key vindo com "\\n" nas envs
+  if (sa && sa.private_key && typeof sa.private_key === "string") {
+    sa.private_key = sa.private_key.replace(/\\n/g, "\n");
+  }
+  return sa;
+}
+
+function readServiceAccountFromEnv() {
+  // 1) JSON direto
+  const rawJson = process.env.FIREBASE_ADMIN_SA_JSON;
+  if (rawJson) {
+    const sa = safeJsonParse(rawJson);
+    if (sa) return normalizePrivateKey(sa);
+  }
+
+  // 2) JSON em base64
+  const rawB64 = process.env.FIREBASE_ADMIN_SA_BASE64;
+  if (rawB64) {
+    try {
+      const decoded = Buffer.from(String(rawB64), "base64").toString("utf8");
+      const sa = safeJsonParse(decoded);
+      if (sa) return normalizePrivateKey(sa);
+    } catch {
+      // ignore
+    }
+  }
+
+  return null;
+}
+
 function initAdmin() {
   if (_inited) return admin;
-  if (admin.apps.length) {
+
+  // Se já existe app inicializado (hot reload / múltiplos imports)
+  if (admin.apps && admin.apps.length) {
     _inited = true;
     return admin;
   }
 
-  // ✅ Preferência: secrets (env) -> arquivo -> erro claro
-  const serviceAccountObj = tryParseServiceAccountFromEnv();
-  const credsPath = serviceAccountObj ? null : resolveCredentialsPath();
-
-  if (serviceAccountObj) {
+  // ✅ Preferência 1: credencial por ENV (melhor pra deploy)
+  const saFromEnv = readServiceAccountFromEnv();
+  if (saFromEnv) {
     admin.initializeApp({
-      credential: admin.credential.cert(serviceAccountObj),
+      credential: admin.credential.cert(saFromEnv),
     });
-  } else if (credsPath) {
-    // ✅ Lê o JSON do arquivo apontado pela env
-    let json = null;
-    try {
-      json = JSON.parse(fs.readFileSync(credsPath, "utf8"));
-    } catch {
-      throw new Error(`GOOGLE_APPLICATION_CREDENTIALS aponta para um arquivo inválido: ${credsPath}`);
-    }
-
-    admin.initializeApp({
-      credential: admin.credential.cert(json),
-    });
-  } else {
-    throw new Error(
-      "Credenciais Firebase Admin ausentes.\n" +
-        "Use UMA das opções:\n" +
-        "- FIREBASE_SERVICE_ACCOUNT_JSON (recomendado no GitHub Actions)\n" +
-        "- FIREBASE_SERVICE_ACCOUNT_BASE64\n" +
-        "- GOOGLE_APPLICATION_CREDENTIALS (caminho de arquivo)\n"
-    );
+    _inited = true;
+    return admin;
   }
 
-  _inited = true;
-  return admin;
+  // ✅ Preferência 2: caminho do arquivo via GOOGLE_APPLICATION_CREDENTIALS
+  const credsPath = resolveCredentialsPath();
+  if (credsPath) {
+    const json = JSON.parse(fs.readFileSync(credsPath, "utf8"));
+    admin.initializeApp({
+      credential: admin.credential.cert(normalizePrivateKey(json)),
+    });
+    _inited = true;
+    return admin;
+  }
+
+  // ✅ Preferência 3: ADC (funciona em alguns ambientes cloud)
+  try {
+    admin.initializeApp({
+      credential: admin.credential.applicationDefault(),
+    });
+    _inited = true;
+    return admin;
+  } catch (e) {
+    const hint =
+      "Credenciais Firebase Admin ausentes.\n\n" +
+      "Escolha UMA das opções:\n" +
+      "A) Arquivo (local): defina GOOGLE_APPLICATION_CREDENTIALS apontando para o JSON.\n" +
+      '   PowerShell: $env:GOOGLE_APPLICATION_CREDENTIALS="C:\\\\caminho\\\\sua-chave.json"\n' +
+      '   Relativo:   $env:GOOGLE_APPLICATION_CREDENTIALS="backend\\\\secrets\\\\firebase-admin.json"\n\n' +
+      "B) Deploy (recomendado): cole o JSON do service account em FIREBASE_ADMIN_SA_JSON\n" +
+      "   (ou base64 em FIREBASE_ADMIN_SA_BASE64)\n\n";
+
+    throw new Error(
+      hint + (e && e.message ? `Detalhe: ${e.message}\n` : "")
+    );
+  }
 }
 
-function getDb() {
-  if (_db) return _db;
+/**
+ * Retorna Firestore admin.
+ * - Lazy: só inicializa quando acessado.
+ * - forceNew: útil em debugging (não use em produção).
+ */
+function getDb(forceNew = false) {
+  if (_db && !forceNew) return _db;
+
   initAdmin();
   _db = admin.firestore();
   return _db;
 }
 
-module.exports = {
+/**
+ * ✅ Compat:
+ * scripts antigos fazem:
+ * const { admin, db } = require("../service/firebaseAdmin")
+ */
+const exportsObj = {
   admin,
   initAdmin,
   getDb,
-  db: getDb(),
 };
+
+Object.defineProperty(exportsObj, "db", {
+  enumerable: true,
+  get() {
+    return getDb(false);
+  },
+});
+
+module.exports = exportsObj;

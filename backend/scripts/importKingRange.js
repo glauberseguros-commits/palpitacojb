@@ -1,3 +1,4 @@
+// backend/scripts/importKingRange.js
 "use strict";
 
 const { spawnSync } = require("child_process");
@@ -98,10 +99,14 @@ function resolveGlobalMaxDate() {
   return todayUTCDate();
 }
 
+function normLotteryKey(v) {
+  return String(v || "PT_RIO").trim().toUpperCase() || "PT_RIO";
+}
+
 /**
  * Uso:
- *  node archive_backend/backend/scripts/importKingRange.js 2025-12-01 2025-12-29 PT_RIO
- *  node archive_backend/backend/scripts/importKingRange.js 2025 PT_RIO
+ *  node backend/scripts/importKingRange.js 2025-12-01 2025-12-29 PT_RIO
+ *  node backend/scripts/importKingRange.js 2025 PT_RIO
  */
 async function main() {
   const a1 = process.argv[2];
@@ -117,12 +122,12 @@ async function main() {
   if (year) {
     start = `${year}-01-01`;
     end = `${year}-12-31`;
-    lotteryKey = String(a2 || "PT_RIO").trim() || "PT_RIO";
+    lotteryKey = normLotteryKey(a2);
   } else {
     // ====== MODO DATAS ======
     start = String(a1 || "").trim();
     end = String(a2 || "").trim();
-    lotteryKey = String(a3 || "PT_RIO").trim() || "PT_RIO";
+    lotteryKey = normLotteryKey(a3);
   }
 
   let d1 = parseDate(start);
@@ -131,9 +136,9 @@ async function main() {
   if (!d1 || !d2) {
     console.error(
       "Uso:\n" +
-        "  node archive_backend/backend/scripts/importKingRange.js YYYY-MM-DD YYYY-MM-DD [PT_RIO]\n" +
+        "  node backend/scripts/importKingRange.js YYYY-MM-DD YYYY-MM-DD [PT_RIO]\n" +
         "ou:\n" +
-        "  node archive_backend/backend/scripts/importKingRange.js YYYY [PT_RIO]"
+        "  node backend/scripts/importKingRange.js YYYY [PT_RIO]"
     );
     process.exit(1);
   }
@@ -145,21 +150,16 @@ async function main() {
 
   // ====== RECORTE PELO RANGE GLOBAL ======
   const gMin = parseDate(GLOBAL_MIN_DATE);
-  const gMax = resolveGlobalMaxDate();
-
-  // segurança contra futuro absurdo (ex.: usuário passou 2030 sem querer)
-  const today = todayUTCDate();
-  const futureDays = daysBetweenUTC(today, d2);
-  if (futureDays > MAX_FUTURE_DAYS) {
+  if (!gMin) {
     console.error(
-      `ERRO: data final muito no futuro (${fmt(d2)}). ` +
-        `Máximo permitido: hoje + ${MAX_FUTURE_DAYS} dias. ` +
-        `Ajuste MAX_FUTURE_DAYS ou use um intervalo real.`
+      `ERRO: GLOBAL_MIN_DATE inválida: "${GLOBAL_MIN_DATE}". Use YYYY-MM-DD.`
     );
     process.exit(1);
   }
 
-  // Se o intervalo estiver totalmente antes do mínimo (não deveria) ou totalmente após o máximo
+  const gMax = resolveGlobalMaxDate();
+
+  // Se o intervalo estiver totalmente antes do mínimo ou totalmente após o máximo
   if (d2 < gMin || d1 > gMax) {
     console.error(
       `[ABORTADO] Intervalo fora do range global (${GLOBAL_MIN_DATE} → ${fmt(gMax)}).`
@@ -167,9 +167,21 @@ async function main() {
     process.exit(0);
   }
 
-  // recorta dentro do global
+  // recorta dentro do global ANTES do check de futuro (evita falso-positivo)
   if (d1 < gMin) d1 = gMin;
   if (d2 > gMax) d2 = gMax;
+
+  // segurança contra futuro absurdo (ex.: usuário passou 2030 sem querer)
+  const today = todayUTCDate();
+  const futureDays = daysBetweenUTC(today, d2);
+  if (futureDays > MAX_FUTURE_DAYS) {
+    console.error(
+      `ERRO: data final muito no futuro (${fmt(d2)}). ` +
+        `Máximo permitido: hoje(UTC=${fmt(today)}) + ${MAX_FUTURE_DAYS} dias. ` +
+        `Ajuste MAX_FUTURE_DAYS ou use um intervalo real.`
+    );
+    process.exit(1);
+  }
 
   const totalDays = daysBetweenUTC(d1, d2) + 1;
 
@@ -184,7 +196,10 @@ async function main() {
 
   console.log(
     `[RANGE] ${lotteryKey} de ${fmt(d1)} até ${fmt(d2)} (${totalDays} dias)` +
-      ` | globalMax=${fmt(gMax)}${ENV_GLOBAL_MAX_DATE ? " (fixado por ENV)" : " (dinâmico/hoje UTC)"}`
+      ` | globalMin=${GLOBAL_MIN_DATE}` +
+      ` | globalMax=${fmt(gMax)}${
+        ENV_GLOBAL_MAX_DATE ? " (fixado por ENV)" : " (dinâmico = hoje UTC)"
+      }`
   );
 
   let days = 0;
@@ -194,6 +209,7 @@ async function main() {
   const importApostasPath = path.join(__dirname, "importKingApostas.js");
   if (!fs.existsSync(importApostasPath)) {
     console.error(`ERRO: script não encontrado: ${importApostasPath}`);
+    console.error(`Dica: verifique se você está rodando a partir de backend/scripts/.`);
     process.exit(1);
   }
 
@@ -204,9 +220,9 @@ async function main() {
 
     console.log(`\n[DAY ${days}/${totalDays}] ${date} (${lotteryKey})`);
 
-    const r = spawnSync(process.execPath, [importApostasPath, date, lotteryKey], {
-      stdio: "inherit",
-    });
+    const cmd = [importApostasPath, date, lotteryKey];
+
+    const r = spawnSync(process.execPath, cmd, { stdio: "inherit" });
 
     const isOk = r && r.status === 0;
 
@@ -220,6 +236,7 @@ async function main() {
       const signalStr = r && r.signal ? ` signal=${r.signal}` : "";
 
       console.error(`[FALHA] ${date} (${lotteryKey}) - ${statusStr}${signalStr}`);
+      console.error(`[CMD] node ${cmd.map((x) => `"${x}"`).join(" ")}`);
 
       if (r?.error) {
         console.error(

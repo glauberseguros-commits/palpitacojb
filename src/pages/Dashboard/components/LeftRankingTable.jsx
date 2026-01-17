@@ -16,6 +16,9 @@ import {
  * ✅ Ajuste premium:
  * - Sem scroll interno (ranking não rola; a página que rola)
  * - Moldura da imagem menos arredondada + padding interno (não corta foto)
+ *
+ * ✅ DEMO safe:
+ * - prop `disabled`: bloqueia ordenação e seleção (sem depender de overlay externo)
  */
 
 function digitsOnly(v) {
@@ -57,7 +60,9 @@ function fmtIntPT(n) {
 }
 
 function normalizeGrupoNumber(v) {
-  const n = Number(String(v ?? "").trim());
+  const s = String(v ?? "").trim();
+  if (!s) return 0;
+  const n = Number(s);
   return Number.isFinite(n) ? n : 0;
 }
 
@@ -112,6 +117,9 @@ export default function LeftRankingTable({
   palpitesByGrupo = {},
   aparGlobalByGrupo = null,
   fillMissingGroups = false,
+
+  // ✅ novo: trava ações no DEMO
+  disabled = false,
 }) {
   const [sort, setSort] = useState({ key: "apar", dir: "desc" });
 
@@ -203,9 +211,7 @@ export default function LeftRankingTable({
       const palpite = palpiteFromByGrupo || palpiteFromRow || palpiteFallback;
 
       const aparFromGlobal = hasGlobal ? safeNumber(aparGlobalByGrupo[grupo2]) : NaN;
-      const apar = Number.isFinite(aparFromGlobal)
-        ? aparFromGlobal
-        : pickAparCount(srcRow);
+      const apar = Number.isFinite(aparFromGlobal) ? aparFromGlobal : pickAparCount(srcRow);
 
       const imgCandidates = buildImgCandidates(getImgFromGrupo, grupo);
 
@@ -250,18 +256,30 @@ export default function LeftRankingTable({
         case "grupo":
           vA = Number(A.grupo || 0);
           vB = Number(B.grupo || 0);
+          // ✅ desempate estável por grupo2/grupo (não dança)
+          if (vA === vB) return 0;
           return (vA - vB) * dirMul;
 
         case "animal":
           vA = String(A.animalLabel || A.animalRaw || "");
           vB = String(B.animalLabel || B.animalRaw || "");
-          return cmpText(vA, vB) * dirMul;
+          {
+            const c = cmpText(vA, vB) * dirMul;
+            if (c !== 0) return c;
+            // ✅ desempate: grupo
+            return (Number(A.grupo || 0) - Number(B.grupo || 0)) * 1;
+          }
 
         case "apar":
         default:
           vA = Number(A.apar || 0);
           vB = Number(B.apar || 0);
-          return (vA - vB) * dirMul;
+          {
+            const c = (vA - vB) * dirMul;
+            if (c !== 0) return c;
+            // ✅ desempate: grupo
+            return (Number(A.grupo || 0) - Number(B.grupo || 0)) * 1;
+          }
       }
     });
 
@@ -271,6 +289,7 @@ export default function LeftRankingTable({
   const formatGrupo2 = (n) => String(Number(n || 0)).padStart(2, "0");
 
   const toggleSort = (key) => {
+    if (disabled) return;
     if (!["grupo", "animal", "apar"].includes(key)) return;
 
     setSort((prev) => {
@@ -293,6 +312,20 @@ export default function LeftRankingTable({
     Number.isFinite(Number(selectedGrupo)) &&
     Number(selectedGrupo) >= 1 &&
     Number(selectedGrupo) <= 25;
+
+  const canSelect = !disabled && typeof onSelectGrupo === "function";
+
+  // ✅ Toggle real: clicar no mesmo grupo desmarca (null)
+  const handleSelectGrupo = (grupo) => {
+    if (!canSelect) return;
+    const g = Number(grupo);
+    const cur = Number(selectedGrupo);
+    if (Number.isFinite(cur) && cur === g) {
+      onSelectGrupo(null);
+      return;
+    }
+    onSelectGrupo(g);
+  };
 
   const renderBody = () => {
     if (loading) {
@@ -326,12 +359,10 @@ export default function LeftRankingTable({
       );
     }
 
-    // ✅ SEM SCROLL INTERNO: corpo cresce e quem rola é a página
     return (
       <div style={ui.bodyNoScroll}>
         {sortedRows.map((r) => {
           const isSel = Number(selectedGrupo) === Number(r.grupo);
-          const clickable = typeof onSelectGrupo === "function";
           const dim = hasSelection && !isSel;
 
           const initialSrc =
@@ -343,15 +374,24 @@ export default function LeftRankingTable({
             <div
               key={`g_${formatGrupo2(r.grupo)}`}
               data-dim={dim ? "1" : "0"}
+              aria-disabled={disabled ? "true" : "false"}
               style={{
                 ...ui.row,
                 ...(isSel ? ui.rowSelected : null),
                 ...(dim ? ui.rowDim : null),
-                ...(clickable ? ui.rowClickable : null),
-                cursor: clickable ? "pointer" : "default",
+                ...(canSelect ? ui.rowClickable : null),
+                cursor: disabled ? "not-allowed" : canSelect ? "pointer" : "default",
+                opacity: disabled ? 0.72 : undefined,
+                filter: disabled ? "grayscale(0.18)" : undefined,
               }}
-              onClick={clickable ? () => onSelectGrupo(r.grupo) : undefined}
-              title={clickable ? "Clique para selecionar (toggle)" : undefined}
+              onClick={canSelect ? () => handleSelectGrupo(r.grupo) : undefined}
+              title={
+                disabled
+                  ? "Bloqueado no modo demonstração"
+                  : canSelect
+                  ? "Clique para selecionar (toggle)"
+                  : undefined
+              }
             >
               <div style={ui.cellImg}>
                 <div
@@ -404,7 +444,14 @@ export default function LeftRankingTable({
                 </div>
               </div>
 
-              <div style={{ ...ui.td, ...ui.cellCenter, ...ui.numCell, ...(dim ? ui.tdDim : null) }}>
+              <div
+                style={{
+                  ...ui.td,
+                  ...ui.cellCenter,
+                  ...ui.numCell,
+                  ...(dim ? ui.tdDim : null),
+                }}
+              >
                 {formatGrupo2(r.grupo)}
               </div>
 
@@ -420,11 +467,26 @@ export default function LeftRankingTable({
                 {String(r.animalLabel || "").toUpperCase()}
               </div>
 
-              <div style={{ ...ui.td, ...ui.cellCenter, ...ui.numCell, ...(dim ? ui.tdDim : null) }}>
+              <div
+                style={{
+                  ...ui.td,
+                  ...ui.cellCenter,
+                  ...ui.numCell,
+                  ...(dim ? ui.tdDim : null),
+                }}
+              >
                 {fmtIntPT(r.apar || 0)}
               </div>
 
-              <div style={{ ...ui.td, ...ui.right, ...ui.numCell, ...ui.palpiteCell, ...(dim ? ui.tdDim : null) }}>
+              <div
+                style={{
+                  ...ui.td,
+                  ...ui.right,
+                  ...ui.numCell,
+                  ...ui.palpiteCell,
+                  ...(dim ? ui.tdDim : null),
+                }}
+              >
                 {String(r.palpite || "----")}
               </div>
             </div>
@@ -453,36 +515,52 @@ export default function LeftRankingTable({
 
           <button
             type="button"
-            style={{ ...ui.thBtn, ...ui.hCenter }}
+            style={{
+              ...ui.thBtn,
+              ...ui.hCenter,
+              ...(disabled ? ui.disabledBtn : null),
+            }}
             onClick={() => toggleSort("grupo")}
-            title="Ordenar por Grupo"
+            title={disabled ? "Bloqueado no modo demonstração" : "Ordenar por Grupo"}
+            disabled={disabled}
           >
             <span style={ui.thLabel}>Grupo</span>
-            <span style={{ ...ui.sortIcon, opacity: arrowOpacity("grupo") }}>
+            <span style={{ ...ui.sortIcon, opacity: disabled ? 0.18 : arrowOpacity("grupo") }}>
               {sortArrow("grupo")}
             </span>
           </button>
 
           <button
             type="button"
-            style={{ ...ui.thBtn, ...ui.hLeft, ...ui.animalCell }}
+            style={{
+              ...ui.thBtn,
+              ...ui.hLeft,
+              ...ui.animalCell,
+              ...(disabled ? ui.disabledBtn : null),
+            }}
             onClick={() => toggleSort("animal")}
-            title="Ordenar por Animal"
+            title={disabled ? "Bloqueado no modo demonstração" : "Ordenar por Animal"}
+            disabled={disabled}
           >
             <span style={ui.thLabel}>Animal</span>
-            <span style={{ ...ui.sortIcon, opacity: arrowOpacity("animal") }}>
+            <span style={{ ...ui.sortIcon, opacity: disabled ? 0.18 : arrowOpacity("animal") }}>
               {sortArrow("animal")}
             </span>
           </button>
 
           <button
             type="button"
-            style={{ ...ui.thBtn, ...ui.hCenter }}
+            style={{
+              ...ui.thBtn,
+              ...ui.hCenter,
+              ...(disabled ? ui.disabledBtn : null),
+            }}
             onClick={() => toggleSort("apar")}
-            title="Ordenar por Aparições"
+            title={disabled ? "Bloqueado no modo demonstração" : "Ordenar por Aparições"}
+            disabled={disabled}
           >
             <span style={ui.thLabel}>Apar.</span>
-            <span style={{ ...ui.sortIcon, opacity: arrowOpacity("apar") }}>
+            <span style={{ ...ui.sortIcon, opacity: disabled ? 0.18 : arrowOpacity("apar") }}>
               {sortArrow("apar")}
             </span>
           </button>
@@ -539,7 +617,6 @@ const ui = {
     fontSize: 14,
   },
 
-  // ✅ Sem "altura fixa" com scroll interno
   tableShell: {
     border: "1px solid rgba(255,255,255,0.24)",
     borderRadius: 18,
@@ -596,6 +673,12 @@ const ui = {
     overflow: "hidden",
   },
 
+  disabledBtn: {
+    cursor: "not-allowed",
+    opacity: 0.65,
+    filter: "grayscale(0.18)",
+  },
+
   thLabel: {
     overflow: "hidden",
     textOverflow: "ellipsis",
@@ -615,7 +698,6 @@ const ui = {
   hCenter: { textAlign: "center", justifyContent: "center" },
   hRight: { textAlign: "right", justifyContent: "flex-end" },
 
-  // ✅ corpo sem overflow/scroll
   bodyNoScroll: {
     overflow: "visible",
   },
@@ -693,7 +775,6 @@ const ui = {
 
   cellImg: { display: "flex", alignItems: "center" },
 
-  // ✅ borda menos arredondada + padding interno (não corta)
   imgFrame: {
     width: 26,
     height: 26,
@@ -749,7 +830,6 @@ const ui = {
   emptyTitle: { fontWeight: 900, letterSpacing: 0.2, opacity: 0.95 },
   emptyHint: { fontSize: 12.5, opacity: 0.75, lineHeight: 1.35 },
 
-  // ✅ remove estilos de scrollbar (não há mais scroll interno)
   _styleTag: `
     .pp_left_scroll::-webkit-scrollbar { width: 0px; height: 0px; }
   `,

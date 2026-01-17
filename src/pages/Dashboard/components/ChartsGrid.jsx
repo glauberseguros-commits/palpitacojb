@@ -22,6 +22,9 @@ import { getAnimalLabel } from "../../../constants/bichoMap";
  *
  * ✅ Compat:
  * - Se drawsRawGlobal NÃO for passado, cai no fallback drawsRaw (não quebra, mas o card global obedecerá filtros).
+ *
+ * ✅ NOVO (opcional):
+ * - disabledInteractions (boolean): se true, desativa cliques (posição) sem quebrar UI.
  */
 
 function clamp(n, a, b) {
@@ -308,6 +311,7 @@ function normalizePosFilter(filters) {
 
 /**
  * ✅ Lê grupo/posição de um prize com compatibilidade
+ * (blindagem extra: aceita "01", 1, "1º", etc.)
  */
 function getPrizeGrupo(pz) {
   const g =
@@ -318,12 +322,18 @@ function getPrizeGrupo(pz) {
     pz?.g ??
     null;
 
-  const n = Number(String(g ?? "").replace(/\D/g, ""));
+  const digits = String(g ?? "").replace(/\D/g, "");
+  const n = Number(digits);
   return Number.isFinite(n) ? n : null;
 }
 
 function getPrizePos(pz) {
-  const n = Number(pz?.posicao ?? pz?.position);
+  const raw = pz?.posicao ?? pz?.position ?? null;
+  if (raw == null) return null;
+
+  // aceita number, "1", "1º", "01", etc.
+  const digits = String(raw).replace(/\D/g, "");
+  const n = Number(digits);
   return Number.isFinite(n) ? n : null;
 }
 
@@ -468,8 +478,8 @@ function buildPosAnimalRanking(draws, expectedPositions, selectedPosOrNull) {
   for (const d of safeDraws) {
     const prizes = Array.isArray(d?.prizes) ? d.prizes : [];
     for (const pz of prizes) {
-      const pos = Number(pz?.posicao ?? pz?.position);
-      if (!Number.isFinite(pos)) continue;
+      const pos = getPrizePos(pz);
+      if (!pos) continue;
 
       if (selectedPosOrNull && pos !== selectedPosOrNull) continue;
       if (!map.has(pos)) continue;
@@ -482,11 +492,18 @@ function buildPosAnimalRanking(draws, expectedPositions, selectedPosOrNull) {
     }
   }
 
+  // tie-break estável: value desc, label asc
+  const sortStable = (a, b) => {
+    const dv = safeNumber(b.value) - safeNumber(a.value);
+    if (dv !== 0) return dv;
+    return String(a.label || "").localeCompare(String(b.label || ""), "pt-BR");
+  };
+
   if (selectedPosOrNull) {
     const m = map.get(selectedPosOrNull) || new Map();
     const items = Array.from(m.entries())
       .map(([label, value]) => ({ label, value }))
-      .sort((a, b) => b.value - a.value)
+      .sort(sortStable)
       .slice(0, 10);
 
     return {
@@ -501,7 +518,7 @@ function buildPosAnimalRanking(draws, expectedPositions, selectedPosOrNull) {
     const m = map.get(pos) || new Map();
     const sorted = Array.from(m.entries())
       .map(([label, value]) => ({ label, value }))
-      .sort((a, b) => b.value - a.value);
+      .sort(sortStable);
 
     const top = sorted[0] || null;
     if (!top) {
@@ -557,8 +574,12 @@ function buildGlobalAparicoes25(drawsAll) {
     items.push({ grupo: g, label, value: map.get(g) || 0 });
   }
 
-  // ✅ Ordena por aparições (desc), mas mantém TODOS (inclusive 0)
-  items.sort((a, b) => b.value - a.value);
+  // ✅ Ordena por aparições (desc), e em empate por grupo (asc) => estável
+  items.sort((a, b) => {
+    const dv = safeNumber(b.value) - safeNumber(a.value);
+    if (dv !== 0) return dv;
+    return safeNumber(a.grupo) - safeNumber(b.grupo);
+  });
 
   return items;
 }
@@ -846,6 +867,9 @@ function WaterfallHourChart({ data }) {
   const steps = hasTotal ? safe.slice(0, -1) : safe.slice(0);
   const totalVal = hasTotal ? safeNumber(last?.value) : steps.reduce((a, x) => a + safeNumber(x.value), 0);
 
+  // ✅ Se só tiver "Total" ou total 0, não desenha
+  if (!steps.length || totalVal <= 0) return null;
+
   const n = steps.length + (hasTotal ? 1 : 0);
   const innerW = W - pad.l - pad.r;
   const innerH = H - pad.t - pad.b;
@@ -919,39 +943,37 @@ function WaterfallHourChart({ data }) {
           );
         })}
 
-        {hasTotal
-          ? (() => {
-              const i = steps.length;
-              const x = pad.l + i * (barW + gap);
+        {hasTotal ? (() => {
+          const i = steps.length;
+          const x = pad.l + i * (barW + gap);
 
-              const y = yBase - (totalVal / scaleMax) * innerH;
-              const h = Math.max(12, yBase - y);
+          const y = yBase - (totalVal / scaleMax) * innerH;
+          const h = Math.max(12, yBase - y);
 
-              return (
-                <g key="total">
-                  <rect
-                    x={x}
-                    y={y}
-                    width={barW}
-                    height={h}
-                    rx="12"
-                    fill={PP.gold}
-                    stroke="rgba(255,255,255,0.20)"
-                    strokeWidth="1"
-                    style={{ filter: "drop-shadow(0 12px 26px rgba(0,0,0,0.55))" }}
-                  />
+          return (
+            <g key="total">
+              <rect
+                x={x}
+                y={y}
+                width={barW}
+                height={h}
+                rx="12"
+                fill={PP.gold}
+                stroke="rgba(255,255,255,0.20)"
+                strokeWidth="1"
+                style={{ filter: "drop-shadow(0 12px 26px rgba(0,0,0,0.55))" }}
+              />
 
-                  <text x={x + barW / 2} y={y - 10} textAnchor="middle" fontSize="15" fontWeight="950" fill={PP.text}>
-                    {fmtIntPT(totalVal)}
-                  </text>
+              <text x={x + barW / 2} y={y - 10} textAnchor="middle" fontSize="15" fontWeight="950" fill={PP.text}>
+                {fmtIntPT(totalVal)}
+              </text>
 
-                  <text x={x + barW / 2} y={H - 18} textAnchor="middle" fontSize="13" fontWeight="900" fill={PP.text2}>
-                    Total
-                  </text>
-                </g>
-              );
-            })()
-          : null}
+              <text x={x + barW / 2} y={H - 18} textAnchor="middle" fontSize="13" fontWeight="900" fill={PP.text2}>
+                Total
+              </text>
+            </g>
+          );
+        })() : null}
       </svg>
     </div>
   );
@@ -974,7 +996,7 @@ function AparicoesList({ items }) {
           const pct = (safeNumber(x.value) / max) * 100;
 
           return (
-            <div key={`${x.label}-${idx}`} style={ui.apRow}>
+            <div key={`${x.grupo ?? x.label}-${idx}`} style={ui.apRow}>
               <div style={ui.apName} title={x.label}>
                 {x.label}
               </div>
@@ -997,14 +1019,15 @@ function AparicoesList({ items }) {
    Posição — UI
 ========================= */
 
-function PosicaoRanking({ model, onPickPos, emptyLabel }) {
+function PosicaoRanking({ model, onPickPos, emptyLabel, disabled = false }) {
   if (!model) return null;
+
+  const clickable = !disabled && typeof onPickPos === "function";
 
   // ✅ MODE: distribuição do grupo (lista simples 1º..7º)
   if (model.mode === "dist") {
     const items = Array.isArray(model.items) ? model.items : [];
     const max = Math.max(1, ...items.map((x) => safeNumber(x.value)));
-    const clickable = typeof onPickPos === "function";
 
     return (
       <div style={ui.posWrap}>
@@ -1027,8 +1050,13 @@ function PosicaoRanking({ model, onPickPos, emptyLabel }) {
                   key={`${x.label}-${idx}`}
                   type="button"
                   onClick={() => (clickable ? onPickPos(String(x.label || "1º")) : null)}
-                  style={ui.posRowBtn}
-                  title={clickable ? `Filtrar ${x.label}` : undefined}
+                  style={{
+                    ...ui.posRowBtn,
+                    cursor: clickable ? "pointer" : "not-allowed",
+                    opacity: clickable ? 1 : 0.72,
+                  }}
+                  title={clickable ? `Filtrar ${x.label}` : "Interação desativada"}
+                  disabled={!clickable}
                 >
                   <div style={ui.posLeft}>{String(x.label)}</div>
 
@@ -1048,7 +1076,9 @@ function PosicaoRanking({ model, onPickPos, emptyLabel }) {
           <EmptyState label={emptyLabel || ""} />
         )}
 
-        <div style={ui.posHint}>Clique em uma posição para aplicar o filtro de posição.</div>
+        <div style={ui.posHint}>
+          {disabled ? "Interação desativada." : "Clique em uma posição para aplicar o filtro de posição."}
+        </div>
       </div>
     );
   }
@@ -1074,9 +1104,14 @@ function PosicaoRanking({ model, onPickPos, emptyLabel }) {
                 <button
                   key={x.pos}
                   type="button"
-                  onClick={() => (typeof onPickPos === "function" ? onPickPos(posLabel) : null)}
-                  style={ui.posRowBtn}
-                  title={`Ver ranking de ${posLabel}`}
+                  onClick={() => (clickable ? onPickPos(posLabel) : null)}
+                  style={{
+                    ...ui.posRowBtn,
+                    cursor: clickable ? "pointer" : "not-allowed",
+                    opacity: clickable ? 1 : 0.72,
+                  }}
+                  title={clickable ? `Ver ranking de ${posLabel}` : "Interação desativada"}
+                  disabled={!clickable}
                 >
                   <div style={ui.posLeft}>{posLabel}</div>
 
@@ -1099,7 +1134,9 @@ function PosicaoRanking({ model, onPickPos, emptyLabel }) {
           <EmptyState label={emptyLabel || ""} />
         )}
 
-        <div style={ui.posHint}>Clique em uma posição para ver o Top daquela posição no filtro.</div>
+        <div style={ui.posHint}>
+          {disabled ? "Interação desativada." : "Clique em uma posição para ver o Top daquela posição no filtro."}
+        </div>
       </div>
     );
   }
@@ -1284,7 +1321,9 @@ function computeStats({ drawsRawView, drawsRawGlobal, filters, selectedGrupo }) 
   })).filter((x) => safeNumber(x.value) > 0);
 
   const hourDataWithTotal =
-    hourData.length > 0 ? [...hourData, { label: "Total", value: aparicoesComHoraTotal }] : [];
+    hourData.length > 0 && aparicoesComHoraTotal > 0
+      ? [...hourData, { label: "Total", value: aparicoesComHoraTotal }]
+      : [];
 
   // ===== posições =====
   let posRankingModel = null;
@@ -1343,6 +1382,9 @@ export default function ChartsGrid({
   error = null,
   selectedGrupo = null,
   onSelectPosicao,
+
+  // ✅ opcional
+  disabledInteractions = false,
 }) {
   const stats = useMemo(() => {
     const global = Array.isArray(drawsRawGlobal) ? drawsRawGlobal : drawsRaw; // fallback seguro
@@ -1361,14 +1403,17 @@ export default function ChartsGrid({
   const posBadge = useMemo(() => {
     if (!hasDataForView) return null;
 
+    if (disabledInteractions) return "Interação desativada";
     if (stats.hasSelected) return "Clique para filtrar";
     if (stats.selectedPosOrNull) return `Filtro: ${prettyPosLabel(stats.selectedPosOrNull)}`;
     return "Clique para filtrar";
-  }, [hasDataForView, stats.hasSelected, stats.selectedPosOrNull]);
+  }, [hasDataForView, disabledInteractions, stats.hasSelected, stats.selectedPosOrNull]);
 
   const monthTitle = useMemo(() => {
     return "Quantidade de Aparições por Mês";
   }, []);
+
+  const canPickPos = !disabledInteractions && typeof onSelectPosicao === "function";
 
   return (
     <>
@@ -1426,11 +1471,8 @@ export default function ChartsGrid({
               <PosicaoRanking
                 model={stats.posRankingModel}
                 emptyLabel={emptyLabel}
-                onPickPos={
-                  typeof onSelectPosicao === "function"
-                    ? (posLabel) => onSelectPosicao(String(posLabel || "1º"))
-                    : null
-                }
+                disabled={!canPickPos}
+                onPickPos={canPickPos ? (posLabel) => onSelectPosicao(String(posLabel || "1º")) : null}
               />
             )}
           </Card>

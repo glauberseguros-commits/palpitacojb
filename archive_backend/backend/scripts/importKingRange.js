@@ -98,6 +98,10 @@ function resolveGlobalMaxDate() {
   return todayUTCDate();
 }
 
+function normLotteryKey(v) {
+  return String(v || "PT_RIO").trim().toUpperCase() || "PT_RIO";
+}
+
 /**
  * Uso:
  *  node archive_backend/backend/scripts/importKingRange.js 2025-12-01 2025-12-29 PT_RIO
@@ -117,12 +121,12 @@ async function main() {
   if (year) {
     start = `${year}-01-01`;
     end = `${year}-12-31`;
-    lotteryKey = String(a2 || "PT_RIO").trim() || "PT_RIO";
+    lotteryKey = normLotteryKey(a2);
   } else {
     // ====== MODO DATAS ======
     start = String(a1 || "").trim();
     end = String(a2 || "").trim();
-    lotteryKey = String(a3 || "PT_RIO").trim() || "PT_RIO";
+    lotteryKey = normLotteryKey(a3);
   }
 
   let d1 = parseDate(start);
@@ -145,6 +149,13 @@ async function main() {
 
   // ====== RECORTE PELO RANGE GLOBAL ======
   const gMin = parseDate(GLOBAL_MIN_DATE);
+  if (!gMin) {
+    console.error(
+      `ERRO: GLOBAL_MIN_DATE inválida: "${GLOBAL_MIN_DATE}". Use YYYY-MM-DD.`
+    );
+    process.exit(1);
+  }
+
   const gMax = resolveGlobalMaxDate();
 
   // segurança contra futuro absurdo (ex.: usuário passou 2030 sem querer)
@@ -153,7 +164,7 @@ async function main() {
   if (futureDays > MAX_FUTURE_DAYS) {
     console.error(
       `ERRO: data final muito no futuro (${fmt(d2)}). ` +
-        `Máximo permitido: hoje + ${MAX_FUTURE_DAYS} dias. ` +
+        `Máximo permitido: hoje(UTC=${fmt(today)}) + ${MAX_FUTURE_DAYS} dias. ` +
         `Ajuste MAX_FUTURE_DAYS ou use um intervalo real.`
     );
     process.exit(1);
@@ -184,6 +195,7 @@ async function main() {
 
   console.log(
     `[RANGE] ${lotteryKey} de ${fmt(d1)} até ${fmt(d2)} (${totalDays} dias)` +
+      ` | globalMin=${GLOBAL_MIN_DATE}` +
       ` | globalMax=${fmt(gMax)}${ENV_GLOBAL_MAX_DATE ? " (fixado por ENV)" : " (dinâmico/hoje UTC)"}`
   );
 
