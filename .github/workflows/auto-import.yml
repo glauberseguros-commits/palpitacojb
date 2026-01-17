@@ -42,3 +42,15 @@ jobs:
 
       - name: Rodar importação automática
         run: node scripts/autoImportToday.js
+      - name: Debug: listar arquivos do backend
+        run: |
+          pwd
+          ls -la
+          ls -la backend
+          ls -la backend/scripts
+          ls -la backend/service
+          echo "----- grep firebaseAdmin -----"
+          grep -n "firebaseAdmin" backend/scripts/importKingApostas.js || true
+          echo "----- require resolve test -----"
+          node -e "console.log('exists backend/service/firebaseAdmin.js =', require('fs').existsSync('backend/service/firebaseAdmin.js'))"
+          node -e "console.log('exists backend/scripts/importKingApostas.js =', require('fs').existsSync('backend/scripts/importKingApostas.js'))"
