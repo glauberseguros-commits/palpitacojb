@@ -7,6 +7,9 @@ import {
 } from "../../services/kingResultsService";
 import { getAnimalLabel, getImgFromGrupo } from "../../constants/bichoMap";
 
+// ✅ NOVO: motor de sinais (analytics)
+import { computeTop3Signals } from "../../services/statsSignals";
+
 /* =========================
    Helpers (robustos)
 ========================= */
@@ -42,7 +45,6 @@ function brToYMD(br) {
 function normalizeToYMD(input) {
   if (!input) return null;
 
-  // Date object
   if (input instanceof Date && !Number.isNaN(input.getTime())) {
     return `${input.getFullYear()}-${pad2(input.getMonth() + 1)}-${pad2(
       input.getDate()
@@ -52,11 +54,9 @@ function normalizeToYMD(input) {
   const s = safeStr(input);
   if (!s) return null;
 
-  // YYYY-MM-DD...
   const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
 
-  // DD/MM/YYYY
   const y = brToYMD(s);
   if (y) return y;
 
@@ -78,7 +78,6 @@ function addDaysYMD(ymd, deltaDays) {
 
 /**
  * ✅ Normaliza "horário" para HH:MM
- * Aceita: "09HS", "9 HS", "09HRS", "09HR", "09H", "9h", "09:00", "9", etc.
  */
 function normalizeHourLike(value) {
   const s0 = safeStr(value);
@@ -158,11 +157,6 @@ function pickDrawYMD(draw) {
   return y;
 }
 
-/**
- * ✅ Extrai grupo do 1º prêmio do draw:
- * - primeiro tenta prizes (modo detailed)
- * - depois tenta campos “lean/auto/agregado” (se existirem)
- */
 function pickPrize1GrupoFromDraw(draw) {
   const prizes = Array.isArray(draw?.prizes) ? draw.prizes : [];
   if (prizes.length) {
@@ -173,7 +167,6 @@ function pickPrize1GrupoFromDraw(draw) {
     }
   }
 
-  // fallback “lean/auto/agregado” (nomes comuns)
   const candidates = [
     draw?.grupo1,
     draw?.group1,
@@ -199,76 +192,21 @@ function getDowKey(ymd) {
   if (!isYMD(ymd)) return null;
   const [Y, M, D] = ymd.split("-").map((x) => Number(x));
   const dt = new Date(Y, M - 1, D);
-  // 0=Dom..6=Sáb
   return dt.getDay();
-}
-
-function getDomNumber(ymd) {
-  if (!isYMD(ymd)) return null;
-  const m = ymd.match(/^\d{4}-\d{2}-(\d{2})$/);
-  if (!m) return null;
-  return Number(m[1]);
-}
-
-/**
- * Mapeamento UI (UF) -> chave real do Firestore
- */
-const UF_TO_LOTTERY_KEY = {
-  RJ: "PT_RIO",
-};
-
-function normalizeUfToQueryKey(input) {
-  const s = safeStr(input).toUpperCase();
-  if (!s) return "";
-  if (s.includes("_") || s.length > 2) return s;
-  return UF_TO_LOTTERY_KEY[s] || s;
-}
-
-function lotteryLabelFromKey(key) {
-  const s = safeStr(key).toUpperCase();
-  if (s === "PT_RIO") return "RIO";
-  if (s.length === 2) return s;
-  const parts = s.split("_");
-  return parts[parts.length - 1] || s;
 }
 
 /* =========================
    Grade de horários (PT/RIO)
-   ✅ Regra: quarta (3) e sábado (6) NÃO tem 18h (por causa Federal 20h)
+   ✅ qua (3) e sáb (6) sem 18h
 ========================= */
 
 const PT_RIO_SCHEDULE_NORMAL = ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
 const PT_RIO_SCHEDULE_WED_SAT = ["09:00", "11:00", "14:00", "16:00", "21:00"];
 
-/** Retorna grade válida para a data consultada (evita 18h em qua/sáb) */
 function getPtRioScheduleForYmd(ymd) {
   const dow = getDowKey(ymd);
   if (dow === 3 || dow === 6) return PT_RIO_SCHEDULE_WED_SAT;
   return PT_RIO_SCHEDULE_NORMAL;
-}
-
-function prevHourFromSchedule(schedule, targetHour) {
-  const sch =
-    Array.isArray(schedule) && schedule.length ? schedule : PT_RIO_SCHEDULE_NORMAL;
-  const t = toHourBucket(targetHour);
-  const idx = sch.findIndex((h) => h === t);
-  if (idx < 0) return null;
-  if (idx > 0) return sch[idx - 1];
-  return null;
-}
-
-/**
- * ✅ Próximo horário:
- * - se existir, retorna o próximo
- * - se o alvo for o último do dia, retorna null (dia encerrado)
- */
-function nextHourFromSchedule(schedule, lastHourBucket) {
-  const sch =
-    Array.isArray(schedule) && schedule.length ? schedule : PT_RIO_SCHEDULE_NORMAL;
-  const lh = toHourBucket(lastHourBucket);
-  const idx = sch.findIndex((h) => h === lh);
-  if (idx >= 0 && idx < sch.length - 1) return sch[idx + 1];
-  return null; // ✅ dia encerrado
 }
 
 function scheduleSet(schedule) {
@@ -333,7 +271,6 @@ async function getPreviousDrawRobust({
     };
   }
 
-  // ao voltar dias, usa o schedule do próprio dia consultado
   for (let i = 1; i <= maxBackDays; i += 1) {
     const day = addDaysYMD(ymdTarget, -i);
     const daySchedule = getPtRioScheduleForYmd(day);
@@ -417,11 +354,6 @@ function dezenaCompareAsc(a, b) {
   return String(a).localeCompare(String(b), "en", { numeric: true });
 }
 
-/**
- * ✅ Ordena milhares por:
- * 1) CENTENA (asc)
- * 2) MILHAR (asc)
- */
 function milharCompareByCentenaAsc(a, b) {
   const ca = getCentena3(a);
   const cb = getCentena3(b);
@@ -431,7 +363,7 @@ function milharCompareByCentenaAsc(a, b) {
 }
 
 /* =========================
-   TOP3 Page
+   Top3 Page (Painel Analytics)
 ========================= */
 
 export default function Top3() {
@@ -447,21 +379,15 @@ export default function Top3() {
   const [rangeDraws, setRangeDraws] = useState([]);
   const [bounds, setBounds] = useState({ minDate: "", maxDate: "" });
 
-  // ✅ usado (some no warning)
   const [rangeInfo, setRangeInfo] = useState({ from: "", to: "" });
 
   const [lastHourBucket, setLastHourBucket] = useState("");
-
-  // ✅ Próximo horário (alvo). Quando o dia estiver encerrado => ""
   const [targetHourBucket, setTargetHourBucket] = useState("");
 
   const dayEnded = useMemo(() => {
     return !!safeStr(lastHourBucket) && !safeStr(targetHourBucket);
   }, [lastHourBucket, targetHourBucket]);
 
-  // ✅ Hora efetiva de cálculo do TOP3:
-  // - se houver alvo => alvo
-  // - se dia encerrado => último horário encontrado
   const analysisHourBucket = useMemo(() => {
     return safeStr(targetHourBucket) || safeStr(lastHourBucket) || "";
   }, [targetHourBucket, lastHourBucket]);
@@ -474,12 +400,11 @@ export default function Top3() {
     source: "none",
   });
 
-  const ufQueryKey = useMemo(() => normalizeUfToQueryKey(ufUi), [ufUi]);
-
-  const label = useMemo(
-    () => lotteryLabelFromKey(ufQueryKey || ufUi),
-    [ufQueryKey, ufUi]
-  );
+  const ufQueryKey = useMemo(() => {
+    // ✅ seu service já trava RJ em PT_RIO (RJ Lock)
+    const s = safeStr(ufUi).toUpperCase();
+    return s === "RJ" ? "RJ" : s;
+  }, [ufUi]);
 
   const ymdSafe = useMemo(() => {
     const y = normalizeToYMD(ymd);
@@ -488,12 +413,9 @@ export default function Top3() {
 
   const dateBR = useMemo(() => ymdToBR(ymdSafe), [ymdSafe]);
 
-  // ✅ Schedule dinâmico por data (quarta/sábado sem 18h)
   const schedule = useMemo(() => {
-    const key = safeStr(ufQueryKey).toUpperCase();
-    if (key === "PT_RIO") return getPtRioScheduleForYmd(ymdSafe);
     return getPtRioScheduleForYmd(ymdSafe);
-  }, [ufQueryKey, ymdSafe]);
+  }, [ymdSafe]);
 
   const lookbackLabel = useMemo(() => {
     if (lookback === LOOKBACK_ALL) return "Toda a base";
@@ -536,6 +458,7 @@ export default function Top3() {
         // ok
       }
 
+      // hoje (para descobrir último e alvo)
       const outToday = await getKingResultsByDate({
         uf: uQuery,
         date: ymdSafe,
@@ -544,18 +467,20 @@ export default function Top3() {
       });
       const today = Array.isArray(outToday) ? outToday : [];
 
-      // ✅ “last” só considera horários previstos no schedule do dia
       const last = findLastDrawInList(today, schedule);
       const lastBucket = last ? toHourBucket(pickDrawHour(last)) : "";
       setLastHourBucket(lastBucket);
 
-      // ✅ CORREÇÃO:
-      // - se não existe sorteio ainda no dia: alvo = primeiro horário da grade
-      // - se existe last: alvo = próximo da grade (ou "" se dia encerrado)
-      const nextFromLast = lastBucket ? nextHourFromSchedule(schedule, lastBucket) : null;
-      const targetBucket = !lastBucket ? (schedule[0] || "") : (nextFromLast || "");
+      const nextFromLast = (() => {
+        if (!lastBucket) return null;
+        const sch = Array.isArray(schedule) ? schedule : [];
+        const lh = toHourBucket(lastBucket);
+        const idx = sch.findIndex((h) => toHourBucket(h) === lh);
+        if (idx >= 0 && idx < sch.length - 1) return sch[idx + 1];
+        return null;
+      })();
 
-      // dia encerrado apenas quando existe lastBucket e nextFromLast é null
+      const targetBucket = !lastBucket ? (schedule[0] || "") : (nextFromLast || "");
       const ended = !!lastBucket && !nextFromLast;
 
       setTargetHourBucket(ended ? "" : targetBucket);
@@ -572,6 +497,7 @@ export default function Top3() {
 
       setRangeInfo({ from: rangeFrom, to: rangeTo });
 
+      // histórico do período (posição 1, detailed)
       const outRange = await getKingResultsByRange({
         uf: uQuery,
         dateFrom: rangeFrom,
@@ -584,9 +510,6 @@ export default function Top3() {
       const hist = Array.isArray(outRange) ? outRange : [];
       setRangeDraws(hist);
 
-      // ✅ Hora efetiva para buscar “sorteio anterior”:
-      // - se dia encerrado => usa lastBucket
-      // - se não encerrou => usa alvo (targetBucket)
       const hourForPrev = ended ? (lastBucket || "") : (targetBucket || "");
 
       if (hourForPrev) {
@@ -600,9 +523,7 @@ export default function Top3() {
         });
 
         const prevGrupo = prev?.draw ? pickPrize1GrupoFromDraw(prev.draw) : null;
-        const prevAnimal = prevGrupo
-          ? safeStr(getAnimalLabel?.(prevGrupo) || "")
-          : "";
+        const prevAnimal = prevGrupo ? safeStr(getAnimalLabel?.(prevGrupo) || "") : "";
 
         setPrevInfo({
           prevYmd: safeStr(prev?.ymd || ""),
@@ -650,217 +571,197 @@ export default function Top3() {
       prevInfo?.prevYmd && prevInfo?.prevHour
         ? `${ymdToBR(prevInfo.prevYmd)} ${prevInfo.prevHour}`
         : "";
-    return `G${pad2(g)}${animal ? " • " + animal.toUpperCase() : ""}${
-      when ? " • " + when : ""
-    }`;
+    return `G${pad2(g)}${animal ? " • " + animal.toUpperCase() : ""}${when ? " • " + when : ""}`;
   }, [prevInfo]);
 
-  const top3 = useMemo(() => {
+  // ✅ NOVO: Top3 vindo do motor de sinais
+  const analytics = useMemo(() => {
     const list = Array.isArray(rangeDraws) ? rangeDraws : [];
-    if (!list.length) return [];
-
-    const target = toHourBucket(analysisHourBucket);
-    if (!target) return [];
-
-    const schSet = scheduleSet(schedule);
-
-    const curYmd = ymdSafe;
-    const curDow = getDowKey(curYmd);
-    const curDom = getDomNumber(curYmd);
-
-    const prevGrupo = Number.isFinite(Number(prevInfo?.prevGrupo))
-      ? Number(prevInfo.prevGrupo)
-      : null;
-
-    // ✅ byKey só considera draws em horários válidos do schedule do dia analisado
-    const byKey = new Map(); // `${ymd}__${hour}` -> grupo1
-    for (const d of list) {
-      const y = pickDrawYMD(d);
-      if (!isYMD(y)) continue;
-
-      const h = toHourBucket(pickDrawHour(d));
-      if (!h) continue;
-
-      // ignora horas fora da grade (ex: 20:00 Federal)
-      if (!schSet.has(h)) continue;
-
-      const g1 = pickPrize1GrupoFromDraw(d);
-      if (!Number.isFinite(Number(g1))) continue;
-
-      byKey.set(`${y}__${h}`, Number(g1));
+    const hour = safeStr(analysisHourBucket);
+    if (!list.length || !hour) {
+      return { top: [], meta: null };
     }
 
-    const baseCounts = new Map(); // grupo -> count
-    let baseTotal = 0;
+    const out = computeTop3Signals({
+      drawsRange: list,
+      schedule,
+      ymdTarget: ymdSafe,
+      hourBucket: hour,
+      prevGrupo: prevInfo?.prevGrupo ?? null,
 
-    for (const [k, g] of byKey.entries()) {
-      const hour = k.split("__")[1] || "";
-      if (hour !== target) continue;
-      baseTotal += 1;
-      baseCounts.set(g, (baseCounts.get(g) || 0) + 1);
-    }
+      // você pode calibrar aqui depois:
+      weights: { base: 1.0, trans: 0.65, dow: 0.35, dom: 0.25 },
+      mins: { trans: 6, dow: 4, dom: 3 },
+    });
 
-    if (baseTotal <= 0) return [];
+    return out;
+  }, [rangeDraws, schedule, ymdSafe, analysisHourBucket, prevInfo?.prevGrupo]);
 
-    const prevHourSameDay = prevHourFromSchedule(schedule, target);
-    const lastHourInDay = schedule[schedule.length - 1] || "21:00";
-
-    const transitions = []; // { ymd, dow, dom, prevG, nextG }
-    for (const [k, nextG] of byKey.entries()) {
-      const [y, hour] = k.split("__");
-      if (hour !== target) continue;
-
-      let prevG = null;
-
-      if (prevHourSameDay) {
-        prevG = byKey.get(`${y}__${prevHourSameDay}`) ?? null;
-      } else {
-        const yPrev = addDaysYMD(y, -1);
-        prevG = byKey.get(`${yPrev}__${lastHourInDay}`) ?? null;
-      }
-
-      if (!Number.isFinite(Number(prevG))) continue;
-
-      transitions.push({
-        ymd: y,
-        dow: getDowKey(y),
-        dom: getDomNumber(y),
-        prevG: Number(prevG),
-        nextG: Number(nextG),
-      });
-    }
-
-    const transCounts = new Map(); // nextG -> count
-    const transCountsDow = new Map();
-    const transCountsDom = new Map();
-
-    let transTotal = 0;
-    let transTotalDow = 0;
-    let transTotalDom = 0;
-
-    if (prevGrupo != null) {
-      for (const t of transitions) {
-        if (t.prevG !== prevGrupo) continue;
-
-        transTotal += 1;
-        transCounts.set(t.nextG, (transCounts.get(t.nextG) || 0) + 1);
-
-        if (curDow != null && t.dow === curDow) {
-          transTotalDow += 1;
-          transCountsDow.set(t.nextG, (transCountsDow.get(t.nextG) || 0) + 1);
-        }
-
-        if (curDom != null && t.dom === curDom) {
-          transTotalDom += 1;
-          transCountsDom.set(t.nextG, (transCountsDom.get(t.nextG) || 0) + 1);
-        }
-      }
-    }
-
-    const MIN_TRANS_SAMPLES = 6;
-    const MIN_DOW_SAMPLES = 4;
-    const MIN_DOM_SAMPLES = 3;
-
-    const W_BASE = 1.0;
-    const W_TRANS = 0.65;
-    const W_DOW = 0.35;
-    const W_DOM = 0.25;
-
-    function prob(count, total) {
-      if (!Number.isFinite(total) || total <= 0) return 0;
-      return Math.max(0, Math.min(1, Number(count || 0) / total));
-    }
-
-    function capped(x, cap) {
-      return Math.max(0, Math.min(Number(cap), Number(x || 0)));
-    }
-
-    const candidates = Array.from(baseCounts.keys());
-
-    const scored = candidates.map((g) => {
-      const baseHit = baseCounts.get(g) || 0;
-      const pBase = prob(baseHit, baseTotal);
-
-      const transHit = transCounts.get(g) || 0;
-      const pTrans = prob(transHit, transTotal);
-
-      const dowHit = transCountsDow.get(g) || 0;
-      const pDow = prob(dowHit, transTotalDow);
-
-      const domHit = transCountsDom.get(g) || 0;
-      const pDom = prob(domHit, transTotalDom);
-
-      const useTrans = prevGrupo != null && transTotal >= MIN_TRANS_SAMPLES;
-      const useDow = prevGrupo != null && transTotalDow >= MIN_DOW_SAMPLES;
-      const useDom = prevGrupo != null && transTotalDom >= MIN_DOM_SAMPLES;
-
-      const bonusTrans = useTrans ? capped(pTrans, 0.55) : 0;
-      const bonusDow = useDow ? capped(pDow, 0.40) : 0;
-      const bonusDom = useDom ? capped(pDom, 0.32) : 0;
-
-      const finalScore =
-        W_BASE * pBase +
-        W_TRANS * bonusTrans +
-        W_DOW * bonusDow +
-        W_DOM * bonusDom;
-
+  const top3 = useMemo(() => {
+    const arr = Array.isArray(analytics?.top) ? analytics.top : [];
+    return arr.map((x) => {
+      const g = Number(x.grupo);
       const animal = safeStr(getAnimalLabel?.(g) || "");
       const img =
         safeStr(getImgFromGrupo?.(g) || "") ||
         (animal ? `/img/${animal.toLowerCase()}.png` : "");
-
-      return {
-        grupo: g,
-        animal,
-        img,
-
-        baseHit,
-        baseTotal,
-
-        prevGrupo,
-        transHit,
-        transTotal,
-
-        dowHit,
-        transTotalDow,
-
-        domHit,
-        transTotalDom,
-
-        useTrans,
-        useDow,
-        useDom,
-
-        pBase,
-        pTrans,
-        pDow,
-        pDom,
-        finalScore,
-      };
+      return { ...x, animal, img };
     });
+  }, [analytics]);
 
-    scored.sort(
-      (a, b) =>
-        b.finalScore - a.finalScore ||
-        b.baseHit - a.baseHit ||
-        a.grupo - b.grupo
+  const layerMetaText = useMemo(() => {
+    const m = analytics?.meta;
+    if (!m) return "—";
+
+    const parts = [];
+    parts.push(`Base(${m.baseTotal})`);
+
+    if (m.prevGrupo != null) {
+      parts.push(`Trans(${m.transTotal}${m.useTrans ? "" : "↓"})`);
+      parts.push(`DOW(${m.transTotalDow}${m.useDow ? "" : "↓"})`);
+      parts.push(`DOM(${m.transTotalDom}${m.useDom ? "" : "↓"})`);
+    } else {
+      parts.push("Trans(—)");
+      parts.push("DOW(—)");
+      parts.push("DOM(—)");
+    }
+
+    return parts.join(" • ");
+  }, [analytics]);
+
+  function buildWhyFromReasons(reasons) {
+    const r = Array.isArray(reasons) ? reasons : [];
+    const out = [];
+
+    // sempre começa pelo contexto
+    out.push(
+      `Horário alvo: ${safeStr(analysisHourBucket)} • Base: ${lookbackLabel}`
     );
 
-    const best = scored.slice(0, 3);
-    const sum =
-      best.reduce((acc, x) => acc + (Number(x.finalScore) || 0), 0) || 1;
+    // camada anterior
+    if (prevInfo?.prevGrupo) {
+      out.push(`Sorteio anterior (camada): ${prevLabel}`);
+    } else {
+      out.push(`Sorteio anterior: sem amostra suficiente/ausente (camada reduzida)`);
+    }
 
-    return best.map((x, idx) => {
-      const pct = Math.round(((Number(x.finalScore) || 0) / sum) * 100);
-      return {
-        ...x,
-        rank: idx + 1,
-        pct,
-        title:
-          idx === 0 ? "Principal" : idx === 1 ? "Alternativa" : "Terceira opção",
-      };
-    });
-  }, [rangeDraws, analysisHourBucket, schedule, ymdSafe, prevInfo]);
+    // cola as razões do motor (já vem com amostra)
+    for (const line of r) out.push(line);
+
+    // anti-contaminação
+    out.push(`Grade PT/RIO respeitada (ignora Federal/20h quando existir).`);
+
+    if (dayEnded) {
+      out.push(`Dia encerrado: exibindo o último Top3 do dia (${safeStr(lastHourBucket)}).`);
+    }
+
+    return out.slice(0, 8); // mantém compacto
+  }
+
+  /**
+   * ✅ 16 milhares (mesma lógica do seu Top3 atual)
+   */
+  function build16MilharesForGrupo(grupo2) {
+    const list = Array.isArray(rangeDraws) ? rangeDraws : [];
+    const target = toHourBucket(analysisHourBucket);
+
+    if (!grupo2 || !list.length || !target) {
+      return { dezenas: [], milhares: [], slots: [] };
+    }
+
+    const prizes = [];
+    for (const d of list) {
+      const h = toHourBucket(pickDrawHour(d));
+      if (h !== target) continue;
+
+      const ps = Array.isArray(d?.prizes) ? d.prizes : [];
+      if (!ps.length) continue;
+
+      const p1 = ps.find((p) => guessPrizePos(p) === 1) || null;
+      if (!p1) continue;
+
+      const g = guessPrizeGrupo(p1);
+      if (!Number.isFinite(Number(g)) || Number(g) !== Number(grupo2)) continue;
+
+      const m4 = pickPrizeMilhar4(p1);
+      if (!m4) continue;
+
+      prizes.push(m4);
+    }
+
+    if (!prizes.length) return { dezenas: [], milhares: [], slots: [] };
+
+    const dezCounts = new Map();
+    for (const m4 of prizes) {
+      const dz = getDezena2(m4);
+      if (!dz) continue;
+      dezCounts.set(dz, (dezCounts.get(dz) || 0) + 1);
+    }
+
+    const selectedDezenas = Array.from(dezCounts.entries())
+      .sort((a, b) => b[1] - a[1] || dezenaCompareAsc(a[0], b[0]))
+      .slice(0, 4)
+      .map((x) => x[0]);
+
+    const topDezenas = [...selectedDezenas].sort(dezenaCompareAsc);
+
+    const byDezena = new Map();
+    const usedCentenas = new Set();
+
+    for (const dz of topDezenas) {
+      const countsMilhar = new Map();
+
+      for (const m4 of prizes) {
+        if (getDezena2(m4) !== dz) continue;
+        countsMilhar.set(m4, (countsMilhar.get(m4) || 0) + 1);
+      }
+
+      const ranked = Array.from(countsMilhar.entries())
+        .sort((a, b) => b[1] - a[1] || milharCompareAsc(a[0], b[0]))
+        .map((x) => x[0]);
+
+      const pickedThisDz = [];
+
+      for (const m4 of ranked) {
+        if (pickedThisDz.length >= 4) break;
+        const cent = getCentena3(m4);
+        if (!cent) continue;
+        if (usedCentenas.has(cent)) continue;
+        usedCentenas.add(cent);
+        pickedThisDz.push(m4);
+      }
+
+      if (pickedThisDz.length < 4) {
+        for (const m4 of ranked) {
+          if (pickedThisDz.length >= 4) break;
+          if (pickedThisDz.includes(m4)) continue;
+          const cent = getCentena3(m4);
+          if (!cent) continue;
+          if (usedCentenas.has(cent)) continue;
+          usedCentenas.add(cent);
+          pickedThisDz.push(m4);
+        }
+      }
+
+      pickedThisDz.sort(milharCompareByCentenaAsc);
+
+      byDezena.set(
+        dz,
+        pickedThisDz.map((m4) => ({ dezena: dz, milhar: m4 }))
+      );
+    }
+
+    const slots = [];
+    for (const dz of topDezenas) {
+      const arr = byDezena.get(dz) || [];
+      for (let i = 0; i < 4; i += 1) {
+        slots.push(arr[i] || { dezena: dz, milhar: "" });
+      }
+    }
+    while (slots.length < 16) slots.push({ dezena: "", milhar: "" });
+
+    return { dezenas: topDezenas, slots: slots.slice(0, 16) };
+  }
 
   const styles = useMemo(() => {
     return `
@@ -1219,154 +1120,6 @@ export default function Top3() {
     `;
   }, []);
 
-  function buildWhySimple() {
-    const out = [];
-
-    out.push(
-      `Esse grupo aparece bem no horário ${safeStr(
-        analysisHourBucket
-      )} dentro da base escolhida (${lookbackLabel}).`
-    );
-
-    if (prevInfo?.prevGrupo) {
-      out.push(
-        `O sorteio anterior ajuda na leitura (continuidade do fluxo), porque o anterior foi ${prevLabel}.`
-      );
-    } else {
-      out.push(
-        `O sorteio anterior não teve amostra suficiente para influenciar com força — o peso maior ficou na base do horário.`
-      );
-    }
-
-    out.push(
-      `O cálculo foi feito respeitando a grade do dia (ignorando Federal/20h quando existir).`
-    );
-
-    if (dayEnded) {
-      out.push(
-        `Dia encerrado: exibindo o último TOP3 do dia no horário ${safeStr(lastHourBucket)}.`
-      );
-    }
-
-    return out;
-  }
-
-  /**
-   * ✅ 16 milhares (com ORDEM pedida)
-   * - Seleção: top 4 dezenas por frequência; top 4 milhares por frequência; sem repetir centena
-   * - EXIBIÇÃO:
-   *   - dezenas em ordem crescente
-   *   - milhares ordenados por CENTENA asc e depois MILHAR asc
-   * - Retorna SEMPRE 16 slots
-   */
-  function build16MilharesForGrupo(grupo2) {
-    const list = Array.isArray(rangeDraws) ? rangeDraws : [];
-    const target = toHourBucket(analysisHourBucket);
-
-    if (!grupo2 || !list.length || !target) {
-      return { dezenas: [], milhares: [], slots: [] };
-    }
-
-    // filtra: apenas draws do horário alvo que tenham prizes detalhados
-    const prizes = [];
-    for (const d of list) {
-      const h = toHourBucket(pickDrawHour(d));
-      if (h !== target) continue;
-
-      const ps = Array.isArray(d?.prizes) ? d.prizes : [];
-      if (!ps.length) continue;
-
-      const p1 = ps.find((p) => guessPrizePos(p) === 1) || null;
-      if (!p1) continue;
-
-      const g = guessPrizeGrupo(p1);
-      if (!Number.isFinite(Number(g)) || Number(g) !== Number(grupo2)) continue;
-
-      const m4 = pickPrizeMilhar4(p1);
-      if (!m4) continue;
-
-      prizes.push(m4);
-    }
-
-    if (!prizes.length) return { dezenas: [], milhares: [], slots: [] };
-
-    // contagem por dezena
-    const dezCounts = new Map();
-    for (const m4 of prizes) {
-      const dz = getDezena2(m4);
-      if (!dz) continue;
-      dezCounts.set(dz, (dezCounts.get(dz) || 0) + 1);
-    }
-
-    // top 4 dezenas por freq (seleção), exibidas em ordem crescente
-    const selectedDezenas = Array.from(dezCounts.entries())
-      .sort((a, b) => b[1] - a[1] || dezenaCompareAsc(a[0], b[0]))
-      .slice(0, 4)
-      .map((x) => x[0]);
-
-    const topDezenas = [...selectedDezenas].sort(dezenaCompareAsc);
-
-    // milhares por dezena (seleção por frequência; exibição por centena asc)
-    const byDezena = new Map();
-    const usedCentenas = new Set();
-
-    for (const dz of topDezenas) {
-      const countsMilhar = new Map();
-
-      for (const m4 of prizes) {
-        if (getDezena2(m4) !== dz) continue;
-        countsMilhar.set(m4, (countsMilhar.get(m4) || 0) + 1);
-      }
-
-      const ranked = Array.from(countsMilhar.entries())
-        .sort((a, b) => b[1] - a[1] || milharCompareAsc(a[0], b[0]))
-        .map((x) => x[0]);
-
-      const pickedThisDz = [];
-
-      // 1ª passada: não repetir centena
-      for (const m4 of ranked) {
-        if (pickedThisDz.length >= 4) break;
-        const cent = getCentena3(m4);
-        if (!cent) continue;
-        if (usedCentenas.has(cent)) continue;
-        usedCentenas.add(cent);
-        pickedThisDz.push(m4);
-      }
-
-      // 2ª passada: tenta completar ainda sem repetir centena
-      if (pickedThisDz.length < 4) {
-        for (const m4 of ranked) {
-          if (pickedThisDz.length >= 4) break;
-          if (pickedThisDz.includes(m4)) continue;
-          const cent = getCentena3(m4);
-          if (!cent) continue;
-          if (usedCentenas.has(cent)) continue;
-          usedCentenas.add(cent);
-          pickedThisDz.push(m4);
-        }
-      }
-
-      pickedThisDz.sort(milharCompareByCentenaAsc);
-
-      byDezena.set(
-        dz,
-        pickedThisDz.map((m4) => ({ dezena: dz, milhar: m4 }))
-      );
-    }
-
-    const slots = [];
-    for (const dz of topDezenas) {
-      const arr = byDezena.get(dz) || [];
-      for (let i = 0; i < 4; i += 1) {
-        slots.push(arr[i] || { dezena: dz, milhar: "" });
-      }
-    }
-    while (slots.length < 16) slots.push({ dezena: "", milhar: "" });
-
-    return { dezenas: topDezenas, slots: slots.slice(0, 16) };
-  }
-
   return (
     <div className="pp_wrap">
       <style>{styles}</style>
@@ -1376,7 +1129,9 @@ export default function Top3() {
           <div className="pp_headerLeft" aria-hidden="true" />
           <div className="pp_headerCenter" style={{ minWidth: 0 }}>
             <div className="pp_title">Top 3</div>
-            <div className="pp_sub"></div>
+            <div className="pp_sub">
+              Painel de sinais • <span className="pp_gold">{layerMetaText}</span>
+            </div>
           </div>
 
           <div className="pp_headerRight">
@@ -1432,7 +1187,7 @@ export default function Top3() {
               <div className="pp_kpi">
                 <div className="pp_kpiLabel">UF</div>
                 <div className="pp_kpiValue">
-                  <strong>{safeStr(ufUi).toUpperCase() || "RJ"}</strong> • {label}
+                  <strong>{safeStr(ufUi).toUpperCase() || "RJ"}</strong> • RIO (PT_RIO)
                 </div>
               </div>
 
@@ -1462,14 +1217,12 @@ export default function Top3() {
 
               <div className="pp_kpi">
                 <div className="pp_kpiLabel">Sorteio anterior (camada)</div>
-                <div className="pp_kpiValue">
-                  {safeStr(analysisHourBucket) ? prevLabel : "—"}
-                </div>
+                <div className="pp_kpiValue">{safeStr(analysisHourBucket) ? prevLabel : "—"}</div>
               </div>
             </div>
 
             {loading ? (
-              <div className="pp_state">Calculando TOP 3…</div>
+              <div className="pp_state">Calculando sinais…</div>
             ) : error ? (
               <div className="pp_state">
                 <div style={{ fontWeight: 1100, marginBottom: 6 }}>Erro</div>
@@ -1477,7 +1230,7 @@ export default function Top3() {
               </div>
             ) : top3.length === 0 ? (
               <div className="pp_state">
-                Sem dados suficientes para calcular TOP 3 no horário{" "}
+                Sem dados suficientes para calcular no horário{" "}
                 <span className="pp_gold">{analysisHourBucket || "—"}</span>.
                 <div style={{ marginTop: 6, opacity: 0.85 }}>
                   Dica: troque a data ou reduza a janela.
@@ -1488,18 +1241,13 @@ export default function Top3() {
                 {top3.map((x) => {
                   const isMain = x.rank === 1;
 
-                  const animal =
-                    safeStr(x.animal || (x.grupo ? getAnimalLabel(x.grupo) : "")) ||
-                    "—";
+                  const animal = safeStr(x.animal) || "—";
 
                   const imgSrc =
                     safeStr(x.img) ||
-                    (x.grupo
-                      ? safeStr(getImgFromGrupo?.(x.grupo)) ||
-                        `/img/${animal.toLowerCase()}.png`
-                      : "");
+                    (x.grupo ? safeStr(getImgFromGrupo?.(x.grupo)) || `/img/${animal.toLowerCase()}.png` : "");
 
-                  const why = buildWhySimple();
+                  const why = buildWhyFromReasons(x.reasons);
                   const mil = build16MilharesForGrupo(x.grupo);
                   const slots = Array.isArray(mil?.slots) ? mil.slots : [];
 
@@ -1525,11 +1273,28 @@ export default function Top3() {
                           <div className="pp_group">GRUPO {pad2(x.grupo)}</div>
                           <div className="pp_animal">{animal}</div>
                           <div className="pp_meta">
-                            Score final:{" "}
-                            <span className="pp_gold">
-                              {(Number(x.finalScore) || 0).toFixed(3)}
-                            </span>{" "}
+                            Score:{" "}
+                            <span className="pp_gold">{(Number(x.finalScore) || 0).toFixed(3)}</span>{" "}
                             • Peso no Top3: <span className="pp_gold">{x.pct}%</span>
+                          </div>
+
+                          <div className="pp_meta" style={{ opacity: 0.92 }}>
+                            Camadas:{" "}
+                            <span className="pp_gold">
+                              Base {x.baseHit}/{x.baseTotal}
+                            </span>{" "}
+                            • Trans{" "}
+                            <span className="pp_gold">
+                              {x.useTrans ? `${x.transHit}/${x.transTotal}` : `(${x.transTotal}↓)`}
+                            </span>{" "}
+                            • DOW{" "}
+                            <span className="pp_gold">
+                              {x.useDow ? `${x.dowHit}/${x.transTotalDow}` : `(${x.transTotalDow}↓)`}
+                            </span>{" "}
+                            • DOM{" "}
+                            <span className="pp_gold">
+                              {x.useDom ? `${x.domHit}/${x.transTotalDom}` : `(${x.transTotalDom}↓)`}
+                            </span>
                           </div>
                         </div>
 
@@ -1537,7 +1302,7 @@ export default function Top3() {
 
                         <div className="pp_bottom">
                           <div className="pp_whyBox">
-                            <div className="pp_notesTitle">Por que entrou no Top 3?</div>
+                            <div className="pp_notesTitle">Leitura estatística (camadas)</div>
                             <ul className="pp_list">
                               {why.map((t, i) => (
                                 <li key={`why_${x.grupo}_${i}`}>{t}</li>
@@ -1551,16 +1316,12 @@ export default function Top3() {
                                 const has = !!safeStr(m?.milhar);
                                 return (
                                   <div
-                                    key={`mil_${x.grupo}_${m?.dezena || "dz"}_${
-                                      m?.milhar || "empty"
-                                    }_${i}`}
+                                    key={`mil_${x.grupo}_${m?.dezena || "dz"}_${m?.milhar || "empty"}_${i}`}
                                     className={`pp_milharPill ${has ? "" : "isEmpty"}`}
                                     role="listitem"
                                     title={
                                       has
-                                        ? `Dezena ${m.dezena} • Centena ${getCentena3(
-                                            m.milhar
-                                          )}`
+                                        ? `Dezena ${m.dezena} • Centena ${getCentena3(m.milhar)}`
                                         : ""
                                     }
                                   >
