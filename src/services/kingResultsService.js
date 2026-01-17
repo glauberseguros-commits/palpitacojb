@@ -165,7 +165,9 @@ function toHourBucket(value) {
 function resolveHourFilter({ closeHour = null, closeHourBucket = null }) {
   const bucket =
     toHourBucket(closeHourBucket) ||
-    (closeHour && !String(closeHour).includes(":") ? toHourBucket(closeHour) : null);
+    (closeHour && !String(closeHour).includes(":")
+      ? toHourBucket(closeHour)
+      : null);
 
   if (bucket) return { kind: "bucket", bucket, hhmm: null };
 
@@ -178,7 +180,12 @@ function resolveHourFilter({ closeHour = null, closeHourBucket = null }) {
 function drawPassesHourFilter(draw, hourFilter) {
   if (!hourFilter || !hourFilter.kind) return true;
 
-  const raw = draw?.close_hour ?? draw?.closeHour ?? draw?.hour ?? draw?.hora ?? "";
+  const raw =
+    draw?.close_hour ??
+    draw?.closeHour ??
+    draw?.hour ??
+    draw?.hora ??
+    "";
   const norm = normalizeHourLike(raw);
 
   if (hourFilter.kind === "exact") {
@@ -203,26 +210,33 @@ function normalizeToYMD(input) {
   if (typeof input === "object" && typeof input.toDate === "function") {
     const d = input.toDate();
     if (!Number.isNaN(d.getTime())) {
-      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(
+        d.getDate()
+      )}`;
     }
   }
 
   // Timestamp-like { seconds } / { _seconds }
   if (
     typeof input === "object" &&
-    (Number.isFinite(Number(input.seconds)) || Number.isFinite(Number(input._seconds)))
+    (Number.isFinite(Number(input.seconds)) ||
+      Number.isFinite(Number(input._seconds)))
   ) {
     const sec = Number.isFinite(Number(input.seconds))
       ? Number(input.seconds)
       : Number(input._seconds);
     const d = new Date(sec * 1000);
     if (!Number.isNaN(d.getTime())) {
-      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(
+        d.getDate()
+      )}`;
     }
   }
 
   if (input instanceof Date && !Number.isNaN(input.getTime())) {
-    return `${input.getFullYear()}-${pad2(input.getMonth() + 1)}-${pad2(input.getDate())}`;
+    return `${input.getFullYear()}-${pad2(input.getMonth() + 1)}-${pad2(
+      input.getDate()
+    )}`;
   }
 
   const s = String(input).trim();
@@ -240,7 +254,9 @@ function normalizeToYMD(input) {
 function normalizePositions(positions) {
   const arr =
     Array.isArray(positions) && positions.length
-      ? positions.map(Number).filter((n) => Number.isFinite(n) && n > 0)
+      ? positions
+          .map(Number)
+          .filter((n) => Number.isFinite(n) && n > 0)
       : null;
 
   if (!arr || !arr.length) return null;
@@ -257,6 +273,35 @@ function isValidGrupo(n) {
 
 function isValidPosition(n) {
   return Number.isFinite(Number(n)) && Number(n) >= 1 && Number(n) <= 10;
+}
+
+/* =========================
+   ✅ Helpers de parsing (robusto p/ strings tipo "GRUPO 23", "1º")
+========================= */
+
+function extractIntInRange(value, min, max) {
+  if (value === null || value === undefined) return null;
+
+  // número puro
+  if (typeof value === "number" && Number.isFinite(value)) {
+    const n = Math.trunc(value);
+    return n >= min && n <= max ? n : null;
+  }
+
+  const s = String(value).trim();
+  if (!s) return null;
+
+  // se for "02" etc
+  if (/^\d+$/.test(s)) {
+    const n = Number(s);
+    return Number.isFinite(n) && n >= min && n <= max ? n : null;
+  }
+
+  // pega o primeiro número de 1-2 dígitos (evita capturar milhar 4 dígitos por engano)
+  const m = s.match(/(\d{1,2})/);
+  if (!m) return null;
+  const n = Number(m[1]);
+  return Number.isFinite(n) && n >= min && n <= max ? n : null;
 }
 
 /* =========================
@@ -324,6 +369,8 @@ function sortDrawsLocal(draws) {
 
 /**
  * ✅ DEDUPE (premium/robusto)
+ * - chave lógica: ymd + hour (NÃO inclui id)
+ * - se não houver ymd/hour, cai no id/idx
  */
 function dedupeDrawsLocal(draws) {
   const arr = Array.isArray(draws) ? draws : [];
@@ -333,7 +380,9 @@ function dedupeDrawsLocal(draws) {
 
   function score(d) {
     const prizesLen = Array.isArray(d?.prizes) ? d.prizes.length : 0;
-    const pc = Number.isFinite(Number(d?.prizesCount)) ? Number(d.prizesCount) : 0;
+    const pc = Number.isFinite(Number(d?.prizesCount))
+      ? Number(d.prizesCount)
+      : 0;
     const hasLogical = !!(d?.ymd && d?.close_hour);
     return prizesLen * 1_000_000 + pc * 1_000 + (hasLogical ? 10 : 0);
   }
@@ -348,9 +397,9 @@ function dedupeDrawsLocal(draws) {
     const idStr = drawId != null ? String(drawId) : "";
 
     const hasLogical = !!(ymd && hour);
-    const key = hasLogical
-      ? `${ymd}__${hour}__${idStr || "noid"}`
-      : `id__${idStr || `idx_${i}`}`;
+
+    // ✅ chave lógica não inclui ID (evita duplicado por reimport/uf/lottery_key)
+    const key = hasLogical ? `${ymd}__${hour}` : `id__${idStr || `idx_${i}`}`;
 
     const normalized = {
       ...raw,
@@ -389,7 +438,9 @@ async function mapWithConcurrency(items, limitN, mapper) {
     }
   }
 
-  await Promise.all(Array.from({ length: Math.min(concurrency, arr.length) }, worker));
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, arr.length) }, worker)
+  );
   return results;
 }
 
@@ -439,6 +490,8 @@ function normalizePrize(p, prizeId) {
     p?.group2 ??
     p?.animal_grupo ??
     p?.g ??
+    p?.grupo_animal ??
+    p?.grupoAnimal ??
     null;
 
   const rawPos =
@@ -447,6 +500,9 @@ function normalizePrize(p, prizeId) {
     p?.pos ??
     p?.colocacao ??
     p?.place ??
+    p?.premio ??
+    p?.prize ??
+    p?.p ??
     null;
 
   const rawMilhar =
@@ -459,14 +515,9 @@ function normalizePrize(p, prizeId) {
     p?.n ??
     null;
 
-  const grupoCandidate =
-    rawGrupo === null || rawGrupo === undefined || rawGrupo === "" ? null : Number(rawGrupo);
-
-  const posCandidate =
-    rawPos === null || rawPos === undefined || rawPos === "" ? null : Number(rawPos);
-
-  const grupo = isValidGrupo(grupoCandidate) ? Number(grupoCandidate) : null;
-  const position = isValidPosition(posCandidate) ? Number(posCandidate) : null;
+  // ✅ parse tolerante (aceita "GRUPO 23", "1º", "1°", etc)
+  const grupo = extractIntInRange(rawGrupo, 1, 25);
+  const position = extractIntInRange(rawPos, 1, 10);
 
   const numero = toPrizeDigitsByPosition(rawMilhar, position);
   const digitsLen = numero ? numero.length : null;
@@ -523,7 +574,7 @@ async function fetchPrizesForDraw(drawId, positionsArr, embeddedPrizes) {
       normalizePrize(p, p?.prizeId ?? `emb_${idx}`)
     );
 
-    // ✅ FIX: o campo correto é "grupo" (não "grupo")
+    // ✅ mantém só prizes válidos
     const cleaned = normalized.filter(
       (x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position)
     );
@@ -543,8 +594,10 @@ async function fetchPrizesForDraw(drawId, positionsArr, embeddedPrizes) {
 
   const allRaw = snap.docs.map((d) => normalizePrize(d.data(), d.id));
 
-  // ✅ FIX: o campo correto é "grupo" (não "grupo")
-  const all = allRaw.filter((x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position));
+  // ✅ mantém só prizes válidos
+  const all = allRaw.filter(
+    (x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position)
+  );
 
   const allSorted = sortPrizesByPosition(all);
   cacheSet(PRIZES_CACHE, allKey, allSorted);
@@ -560,7 +613,9 @@ function mapDrawDoc(doc) {
   const d = doc.data();
 
   const ymd = d.ymd || normalizeToYMD(getDocDateRaw(d));
-  const hourNorm = normalizeHourLike(d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? "");
+  const hourNorm = normalizeHourLike(
+    d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? ""
+  );
 
   const embeddedPrizes = Array.isArray(d.prizes) ? d.prizes : null;
 
@@ -596,7 +651,9 @@ function buildUfWhereClauses(fieldName, uf) {
 
 function normalizeOrderBys(extraOrderBy) {
   if (!extraOrderBy) return [];
-  return Array.isArray(extraOrderBy) ? extraOrderBy.filter(Boolean) : [extraOrderBy];
+  return Array.isArray(extraOrderBy)
+    ? extraOrderBy.filter(Boolean)
+    : [extraOrderBy];
 }
 
 async function queryDrawsByField({
@@ -627,7 +684,8 @@ async function queryDrawsByField({
 function extractUfParam(maybeUfOrObj) {
   if (!maybeUfOrObj) return "";
   if (typeof maybeUfOrObj === "string") return maybeUfOrObj;
-  if (typeof maybeUfOrObj === "object" && typeof maybeUfOrObj.uf === "string") return maybeUfOrObj.uf;
+  if (typeof maybeUfOrObj === "object" && typeof maybeUfOrObj.uf === "string")
+    return maybeUfOrObj.uf;
   return String(maybeUfOrObj || "");
 }
 
@@ -650,13 +708,15 @@ async function fetchDrawDocsPreferUf({
       extraLimit,
     });
 
-    if (!error && snap?.docs?.length) return { docs: snap.docs, usedField: "uf", error: null };
+    if (!error && snap?.docs?.length)
+      return { docs: snap.docs, usedField: "uf", error: null };
     if (error) return { docs: [], usedField: "uf", error };
   }
 
   // 2) fallback por lottery_key
   {
-    const lotteryKey = ufUp === RJ_STATE_CODE ? RJ_LOTTERY_KEY : resolveLotteryKeyForQuery(ufTrim);
+    const lotteryKey =
+      ufUp === RJ_STATE_CODE ? RJ_LOTTERY_KEY : resolveLotteryKeyForQuery(ufTrim);
 
     const { snap, error } = await queryDrawsByField({
       fieldName: "lottery_key",
@@ -666,7 +726,8 @@ async function fetchDrawDocsPreferUf({
       extraLimit,
     });
 
-    if (!error && snap?.docs?.length) return { docs: snap.docs, usedField: "lottery_key", error: null };
+    if (!error && snap?.docs?.length)
+      return { docs: snap.docs, usedField: "lottery_key", error: null };
     if (error) return { docs: [], usedField: "lottery_key", error };
   }
 
@@ -740,20 +801,29 @@ export async function getKingBoundsByUf(ufOrObj) {
     const orderAsc = [orderBy("ymd", "asc"), orderBy(DOC_ID)];
     const orderDesc = [orderBy("ymd", "desc"), orderBy(DOC_ID)];
 
-    const { docs: minDocs, usedField: usedMin, error: eMin } = await fetchDrawDocsPreferUf({
+    const {
+      docs: minDocs,
+      usedField: usedMin,
+      error: eMin,
+    } = await fetchDrawDocsPreferUf({
       uf,
       extraOrderBy: orderAsc,
       extraLimit: limit(SCAN_LIMIT),
     });
 
-    const { docs: maxDocs, usedField: usedMax, error: eMax } = await fetchDrawDocsPreferUf({
+    const {
+      docs: maxDocs,
+      usedField: usedMax,
+      error: eMax,
+    } = await fetchDrawDocsPreferUf({
       uf,
       extraOrderBy: orderDesc,
       extraLimit: limit(SCAN_LIMIT),
     });
 
     if (eMin || eMax) {
-      if (!isIndexError(eMin) && !isIndexError(eMax)) firstTryError = eMin || eMax;
+      if (!isIndexError(eMin) && !isIndexError(eMax))
+        firstTryError = eMin || eMax;
     }
 
     if (minDocs.length && maxDocs.length && !eMin && !eMax) {
@@ -787,9 +857,15 @@ export async function getKingBoundsByUf(ufOrObj) {
     const a = await sampleEdgesByDocId("uf", String(uf).toUpperCase());
 
     const ufUp = String(uf || "").trim().toUpperCase();
-    const lotteryKey = ufUp === RJ_STATE_CODE ? RJ_LOTTERY_KEY : resolveLotteryKeyForQuery(uf);
+    const lotteryKey =
+      ufUp === RJ_STATE_CODE ? RJ_LOTTERY_KEY : resolveLotteryKeyForQuery(uf);
 
-    const b = a.ok ? null : await sampleEdgesByDocId("lottery_key", String(lotteryKey).toUpperCase());
+    const b = a.ok
+      ? null
+      : await sampleEdgesByDocId(
+          "lottery_key",
+          String(lotteryKey).toUpperCase()
+        );
 
     const merged = a.ok ? a.merged : b?.merged || [];
     const { minYmd, maxYmd } = pickMinMaxFromMapped(merged);
@@ -898,7 +974,9 @@ export async function getKingResultsByDate({
   let baseAll = dedupeDrawsLocal(docCandidates.map(mapDrawDoc));
   baseAll = baseAll.filter((x) => (x.ymd || normalizeToYMD(x.date)) === ymdDate);
 
-  const base = hourFilter?.kind ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter)) : baseAll;
+  const base = hourFilter?.kind
+    ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+    : baseAll;
   const ordered = sortDrawsLocal(base);
 
   const results = await mapWithConcurrency(ordered, 6, async (item) => {
@@ -951,12 +1029,13 @@ function drawsCacheKeyRange({ uf, from, to, positionsArr, hourFilter, mode }) {
   return `range::${uf}::${from}..${to}::pos=${p}::h=${h}::mode=${m}`;
 }
 
+// ✅ mais estável no browser (evita flood/timeout)
 function chooseRangeConcurrency(drawCount) {
-  if (!Number.isFinite(drawCount)) return 10;
-  if (drawCount <= 50) return 6;
-  if (drawCount <= 300) return 10;
-  if (drawCount <= 1200) return 14;
-  return 18;
+  if (!Number.isFinite(drawCount)) return 6;
+  if (drawCount <= 50) return 4;
+  if (drawCount <= 300) return 6;
+  if (drawCount <= 1200) return 8;
+  return 10;
 }
 
 export function decideKingRangeMode({ dateFrom, dateTo, mode = "detailed" }) {
