@@ -173,7 +173,6 @@ export default function Late() {
     lastImportedRef.current = lastImported;
   }, [lastImported]);
 
-  // meta continua existindo para a lógica
   const [meta, setMeta] = useState({
     scannedDays: 0,
     foundCount: 0,
@@ -210,6 +209,7 @@ export default function Late() {
 
   const boundsReady = !!(bounds?.minYmd && bounds?.maxYmd);
 
+  // ✅ IMPORTANTE: retorna bounds para uso imediato (evita state stale)
   async function refreshBoundsAndLastDraw() {
     const b = await getKingBoundsByUf({ uf: UF_CODE });
     const minYmd = b?.minYmd || null;
@@ -237,13 +237,14 @@ export default function Late() {
     return { minYmd, maxYmd };
   }
 
-  function getEffectiveTargetYmd(targetYmd) {
-    if (!bounds?.minYmd || !bounds?.maxYmd || !isYMD(targetYmd)) {
+  // ✅ usa bounds efetivo (passado) — não depende do state atualizar
+  function getEffectiveTargetYmd(targetYmd, effBounds) {
+    const minYmd = effBounds?.minYmd || null;
+    const maxYmd = effBounds?.maxYmd || null;
+
+    if (!minYmd || !maxYmd || !isYMD(targetYmd)) {
       return { effective: targetYmd, note: "" };
     }
-
-    const minYmd = bounds.minYmd;
-    const maxYmd = bounds.maxYmd;
 
     if (targetYmd < minYmd)
       return {
@@ -255,14 +256,18 @@ export default function Late() {
         effective: maxYmd,
         note: `Data fora do bounds. Usando ${ymdToBR(maxYmd)}.`,
       };
+
     return { effective: targetYmd, note: "" };
   }
 
-  async function buildLateList({ targetYmd }) {
+  async function buildLateList({ targetYmd, effBounds }) {
     const BLOCK_DAYS = 14;
     const MAX_SCAN_DAYS = 500;
 
-    const { effective: safeTarget, note } = getEffectiveTargetYmd(targetYmd);
+    const { effective: safeTarget, note } = getEffectiveTargetYmd(
+      targetYmd,
+      effBounds
+    );
     if (note) setError(note);
 
     const lastByGrupo = new Map();
@@ -279,7 +284,7 @@ export default function Late() {
         stopReason = "abortado";
         break;
       }
-      if (bounds?.minYmd && cursorTo < bounds.minYmd) {
+      if (effBounds?.minYmd && cursorTo < effBounds.minYmd) {
         stopReason = "chegou_no_minDate";
         break;
       }
@@ -290,9 +295,9 @@ export default function Late() {
 
       const windowTo = cursorTo;
       const candidateFrom = addDaysUTC(windowTo, -(BLOCK_DAYS - 1));
-      const windowFrom = bounds?.minYmd
-        ? candidateFrom < bounds.minYmd
-          ? bounds.minYmd
+      const windowFrom = effBounds?.minYmd
+        ? candidateFrom < effBounds.minYmd
+          ? effBounds.minYmd
           : candidateFrom
         : candidateFrom;
 
@@ -428,9 +433,12 @@ export default function Late() {
         setKind("grupo");
       }
 
-      await refreshBoundsAndLastDraw();
+      const effBounds = await refreshBoundsAndLastDraw();
 
-      const result = await buildLateList({ targetYmd: dateYmd });
+      const result = await buildLateList({
+        targetYmd: dateYmd,
+        effBounds,
+      });
       if (abortedRef.current) return;
 
       setRows(result.rows);
