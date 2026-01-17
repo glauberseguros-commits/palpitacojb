@@ -33,10 +33,37 @@ let _inited = false;
   }
 })();
 
+function tryParseServiceAccountFromEnv() {
+  // 1) JSON puro
+  const rawJson = String(process.env.FIREBASE_SERVICE_ACCOUNT_JSON || "").trim();
+  if (rawJson) {
+    try {
+      const obj = JSON.parse(rawJson);
+      if (obj && typeof obj === "object" && obj.project_id && obj.client_email) return obj;
+    } catch (e) {
+      throw new Error("FIREBASE_SERVICE_ACCOUNT_JSON inválido (não é JSON válido).");
+    }
+  }
+
+  // 2) Base64
+  const b64 = String(process.env.FIREBASE_SERVICE_ACCOUNT_BASE64 || "").trim();
+  if (b64) {
+    try {
+      const decoded = Buffer.from(b64, "base64").toString("utf8");
+      const obj = JSON.parse(decoded);
+      if (obj && typeof obj === "object" && obj.project_id && obj.client_email) return obj;
+      throw new Error("FIREBASE_SERVICE_ACCOUNT_BASE64 decodificou, mas JSON é inválido.");
+    } catch (e) {
+      throw new Error("FIREBASE_SERVICE_ACCOUNT_BASE64 inválido (base64/JSON).");
+    }
+  }
+
+  return null;
+}
+
 function resolveCredentialsPath() {
   const p = String(process.env.GOOGLE_APPLICATION_CREDENTIALS || "").trim();
   if (!p) return null;
-
   try {
     if (fs.existsSync(p) && fs.lstatSync(p).isFile()) return p;
   } catch {
@@ -52,21 +79,35 @@ function initAdmin() {
     return admin;
   }
 
-  const credsPath = resolveCredentialsPath();
+  // ✅ Preferência: secrets (env) -> arquivo -> erro claro
+  const serviceAccountObj = tryParseServiceAccountFromEnv();
+  const credsPath = serviceAccountObj ? null : resolveCredentialsPath();
 
-  if (!credsPath) {
-    // Sem ADC no Windows: falha com instrução objetiva
+  if (serviceAccountObj) {
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccountObj),
+    });
+  } else if (credsPath) {
+    // ✅ Lê o JSON do arquivo apontado pela env
+    let json = null;
+    try {
+      json = JSON.parse(fs.readFileSync(credsPath, "utf8"));
+    } catch {
+      throw new Error(`GOOGLE_APPLICATION_CREDENTIALS aponta para um arquivo inválido: ${credsPath}`);
+    }
+
+    admin.initializeApp({
+      credential: admin.credential.cert(json),
+    });
+  } else {
     throw new Error(
-      'Credenciais Firebase Admin ausentes.\n' +
-        'Defina GOOGLE_APPLICATION_CREDENTIALS apontando para o JSON do service account.\n' +
-        'Exemplo (PowerShell):\n' +
-        '$env:GOOGLE_APPLICATION_CREDENTIALS="C:\\caminho\\sua-chave.json"\n'
+      "Credenciais Firebase Admin ausentes.\n" +
+        "Use UMA das opções:\n" +
+        "- FIREBASE_SERVICE_ACCOUNT_JSON (recomendado no GitHub Actions)\n" +
+        "- FIREBASE_SERVICE_ACCOUNT_BASE64\n" +
+        "- GOOGLE_APPLICATION_CREDENTIALS (caminho de arquivo)\n"
     );
   }
-
-  admin.initializeApp({
-    credential: admin.credential.applicationDefault(),
-  });
 
   _inited = true;
   return admin;
