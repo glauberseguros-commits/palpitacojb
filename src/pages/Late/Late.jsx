@@ -152,6 +152,10 @@ export default function Late() {
 
   const abortedRef = useRef(false);
 
+  // ✅ NEW: controla atualização de bounds
+  const lastBoundsFetchRef = useRef(0);
+  const BOUNDS_MIN_REVALIDATE_MS = 30 * 1000; // 30s (leve e suficiente)
+
   const getAnimalLabel = useMemo(() => getAnimalLabelFn, []);
   const getImgFromGrupo = useMemo(() => getImgFromGrupoFn, []);
 
@@ -176,31 +180,60 @@ export default function Late() {
 
   const boundsReady = !!(bounds?.minYmd && bounds?.maxYmd);
 
+  // ✅ NEW: refaz bounds (com throttle)
+  async function loadBounds({ force = false } = {}) {
+    const now = Date.now();
+    if (!force && now - lastBoundsFetchRef.current < BOUNDS_MIN_REVALIDATE_MS) {
+      return bounds;
+    }
+
+    lastBoundsFetchRef.current = now;
+    try {
+      const b = await getKingBoundsByUf({ uf: LOTTERY_KEY });
+
+      const minYmd = b?.minYmd || null;
+      const maxYmd = b?.maxYmd || null;
+
+      setBounds({ minYmd, maxYmd, source: b?.source || "" });
+
+      if (!minYmd || !maxYmd) {
+        setError(
+          `Bounds não encontrados para "${LOTTERY_KEY}".\n` +
+            `Isso indica mismatch de chave ou base vazia.\n` +
+            `Fonte: ${String(b?.source || "")}`
+        );
+      }
+
+      return { minYmd, maxYmd, source: b?.source || "" };
+    } catch (e) {
+      setError(String(e?.message || e));
+      return null;
+    }
+  }
+
   useEffect(() => {
     let alive = true;
     (async () => {
       setError("");
       setBounds({ minYmd: null, maxYmd: null, source: "" });
 
-      try {
-        const b = await getKingBoundsByUf({ uf: LOTTERY_KEY });
-        if (!alive) return;
+      const b = await getKingBoundsByUf({ uf: LOTTERY_KEY });
+      if (!alive) return;
 
-        const minYmd = b?.minYmd || null;
-        const maxYmd = b?.maxYmd || null;
-        setBounds({ minYmd, maxYmd, source: b?.source || "" });
+      const minYmd = b?.minYmd || null;
+      const maxYmd = b?.maxYmd || null;
+      setBounds({ minYmd, maxYmd, source: b?.source || "" });
 
-        if (!minYmd || !maxYmd) {
-          setError(
-            `Bounds não encontrados para "${LOTTERY_KEY}".\n` +
-              `Isso indica mismatch de chave ou base vazia.\n` +
-              `Fonte: ${String(b?.source || "")}`
-          );
-        }
-      } catch (e) {
-        if (!alive) return;
-        setError(String(e?.message || e));
+      if (!minYmd || !maxYmd) {
+        setError(
+          `Bounds não encontrados para "${LOTTERY_KEY}".\n` +
+            `Isso indica mismatch de chave ou base vazia.\n` +
+            `Fonte: ${String(b?.source || "")}`
+        );
       }
+
+      // marca o fetch inicial
+      lastBoundsFetchRef.current = Date.now();
     })();
 
     return () => {
@@ -208,13 +241,14 @@ export default function Late() {
     };
   }, []);
 
-  function getEffectiveTargetYmd(targetYmd) {
-    if (!bounds?.minYmd || !bounds?.maxYmd || !isYMD(targetYmd)) {
+  function getEffectiveTargetYmd(targetYmd, boundsObj) {
+    const b = boundsObj || bounds;
+    if (!b?.minYmd || !b?.maxYmd || !isYMD(targetYmd)) {
       return { effective: targetYmd, note: "" };
     }
 
-    const minYmd = bounds.minYmd;
-    const maxYmd = bounds.maxYmd;
+    const minYmd = b.minYmd;
+    const maxYmd = b.maxYmd;
 
     if (targetYmd < minYmd)
       return {
@@ -229,11 +263,14 @@ export default function Late() {
     return { effective: targetYmd, note: "" };
   }
 
-  async function buildLateList({ targetYmd }) {
+  async function buildLateList({ targetYmd, boundsObj }) {
     const BLOCK_DAYS = 14;
     const MAX_SCAN_DAYS = 500;
 
-    const { effective: safeTarget, note } = getEffectiveTargetYmd(targetYmd);
+    const { effective: safeTarget, note } = getEffectiveTargetYmd(
+      targetYmd,
+      boundsObj
+    );
     if (note) setError(note);
 
     // key: grupo -> { ymd, closeHour }
@@ -251,7 +288,7 @@ export default function Late() {
         stopReason = "abortado";
         break;
       }
-      if (bounds?.minYmd && cursorTo < bounds.minYmd) {
+      if (boundsObj?.minYmd && cursorTo < boundsObj.minYmd) {
         stopReason = "chegou_no_minDate";
         break;
       }
@@ -262,9 +299,9 @@ export default function Late() {
 
       const windowTo = cursorTo;
       const candidateFrom = addDaysUTC(windowTo, -(BLOCK_DAYS - 1));
-      const windowFrom = bounds?.minYmd
-        ? candidateFrom < bounds.minYmd
-          ? bounds.minYmd
+      const windowFrom = boundsObj?.minYmd
+        ? candidateFrom < boundsObj.minYmd
+          ? boundsObj.minYmd
           : candidateFrom
         : candidateFrom;
 
@@ -388,7 +425,8 @@ export default function Late() {
     };
   }
 
-  async function refresh() {
+  // ✅ NEW: refresh com opção de forçar bounds (para atualizar a cada sorteio)
+  async function refresh(forceBounds = false) {
     abortedRef.current = false;
     setLoading(true);
     setError("");
@@ -401,7 +439,19 @@ export default function Late() {
         setKind("grupo");
       }
 
-      const result = await buildLateList({ targetYmd: dateYmd });
+      // ✅ Se a data escolhida pode estar acima do max, revalida bounds automaticamente
+      let b = bounds;
+      if (
+        forceBounds ||
+        (bounds?.maxYmd && isYMD(dateYmd) && dateYmd > bounds.maxYmd)
+      ) {
+        const fresh = await loadBounds({ force: true });
+        if (fresh?.minYmd && fresh?.maxYmd) {
+          b = fresh;
+        }
+      }
+
+      const result = await buildLateList({ targetYmd: dateYmd, boundsObj: b });
       if (abortedRef.current) return;
 
       setRows(result.rows);
@@ -423,9 +473,21 @@ export default function Late() {
 
   useEffect(() => {
     if (!boundsReady) return;
-    refresh();
+    refresh(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [boundsReady, dateYmd, prizeMode, lotteryOptId]);
+
+  useEffect(() => {
+    // ✅ bônus: ao voltar para a aba, revalida bounds (ajuda muito no “a cada sorteio”)
+    function onFocus() {
+      if (abortedRef.current) return;
+      // só revalida se estiver na data de hoje
+      if (dateYmd === todayYMDLocal()) refresh(true);
+    }
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dateYmd, boundsReady, lotteryOptId, prizeMode]);
 
   useEffect(() => {
     return () => {
@@ -502,9 +564,6 @@ export default function Late() {
           flex-direction:column;
         }
 
-        /* =========================================================
-           ✅ Tabela centralizada
-        ========================================================= */
         .ppLateTableWrap{
           width:100%;
           flex:1 1 auto;
@@ -679,7 +738,7 @@ export default function Late() {
 
           <button
             className="ppBtn"
-            onClick={refresh}
+            onClick={() => refresh(true)} // ✅ força revalidar bounds antes de calcular
             disabled={loading || !boundsReady}
           >
             {loading ? "Carregando..." : "Atualizar"}
