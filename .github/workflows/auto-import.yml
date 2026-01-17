@@ -41,16 +41,19 @@ jobs:
         run: npm ci
 
       - name: Rodar importação automática
+        env:
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
         run: node scripts/autoImportToday.js
-      - name: Debug: listar arquivos do backend
+
+      - name: Debug (listar arquivos relevantes)
+        if: failure()
         run: |
           pwd
           ls -la
-          ls -la backend
-          ls -la backend/scripts
-          ls -la backend/service
+          ls -la scripts
+          ls -la service
           echo "----- grep firebaseAdmin -----"
-          grep -n "firebaseAdmin" backend/scripts/importKingApostas.js || true
-          echo "----- require resolve test -----"
-          node -e "console.log('exists backend/service/firebaseAdmin.js =', require('fs').existsSync('backend/service/firebaseAdmin.js'))"
-          node -e "console.log('exists backend/scripts/importKingApostas.js =', require('fs').existsSync('backend/scripts/importKingApostas.js'))"
+          grep -n "firebaseAdmin" scripts/importKingApostas.js || true
+          echo "----- exists -----"
+          node -e "console.log('exists service/firebaseAdmin.js =', require('fs').existsSync('service/firebaseAdmin.js'))"
+          node -e "console.log('exists scripts/importKingApostas.js =', require('fs').existsSync('scripts/importKingApostas.js'))"
