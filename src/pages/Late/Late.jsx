@@ -127,6 +127,50 @@ function pickLatestCloseHour(draws) {
   return best;
 }
 
+/**
+ * ✅ FIX CRÍTICO: extrai grupo de prizes mesmo quando o backend usa outro campo
+ * Aceita:
+ * - grupo, group, grupo_num, grupoId, grupo_id, etc.
+ * - strings tipo "GRUPO 23"
+ */
+function extractGrupo(prize) {
+  const p = prize || {};
+
+  const raw =
+    p.grupo ??
+    p.group ??
+    p.grupo_num ??
+    p.grupoNum ??
+    p.grupo_id ??
+    p.grupoId ??
+    p.group_id ??
+    p.groupId ??
+    p.g ??
+    null;
+
+  // número direto
+  if (typeof raw === "number" && Number.isFinite(raw)) return raw;
+
+  // string -> extrai dígitos
+  const s = String(raw ?? "").trim();
+  if (!s) {
+    // fallback: tenta localizar em outros campos textuais comuns
+    const alt =
+      String(p.label ?? p.nome ?? p.animal ?? p.desc ?? p.description ?? "")
+        .trim()
+        .toUpperCase() || "";
+    const mAlt = alt.match(/\bGRUPO\s*(\d{1,2})\b/);
+    if (mAlt) return Number(mAlt[1]);
+    return null;
+  }
+
+  // "23" / "GRUPO23" / "GRUPO 23"
+  const m = s.toUpperCase().match(/(\d{1,2})/);
+  if (!m) return null;
+  const n = Number(m[1]);
+  return Number.isFinite(n) ? n : null;
+}
+
 export default function Late() {
   // ✅ NO SEU APP, A UF REAL É "RJ"
   const UF_CODE = "RJ";
@@ -326,9 +370,11 @@ export default function Late() {
           const yb = String(b?.ymd || "");
           if (ya !== yb) return yb.localeCompare(ya);
 
-          const ha = String(a?.close_hour || "");
-          const hb = String(b?.close_hour || "");
-          if (ha !== hb) return hb.localeCompare(ha);
+          const haMin = hourToMinutes(a?.close_hour || a?.closeHour || "");
+          const hbMin = hourToMinutes(b?.close_hour || b?.closeHour || "");
+          if (haMin != null && hbMin != null && haMin !== hbMin) return hbMin - haMin;
+          if (haMin == null && hbMin != null) return 1;
+          if (haMin != null && hbMin == null) return -1;
 
           const ia = String(a?.drawId || a?.id || "");
           const ib = String(b?.drawId || b?.id || "");
@@ -344,8 +390,9 @@ export default function Late() {
         );
 
         const prizes = Array.isArray(d?.prizes) ? d.prizes : [];
+
         for (const p of prizes) {
-          const g = Number(p?.grupo);
+          const g = extractGrupo(p);
           if (!isValidGrupo(g)) continue;
 
           if (!lastByGrupo.has(g)) {
@@ -809,7 +856,7 @@ export default function Late() {
                 const days = r.daysLate == null ? "—" : String(r.daysLate);
 
                 return (
-                  <tr key={`${r.grupo}-${idx}`}>
+                  <tr key={`g${r.grupo}`}>
                     <td className="ppPos">{idx + 1}º</td>
 
                     <td className="ppImgCell">
