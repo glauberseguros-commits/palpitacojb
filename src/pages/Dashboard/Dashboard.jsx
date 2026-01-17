@@ -459,14 +459,13 @@ export default function Dashboard(props) {
   const [isGuest, setIsGuest] = useState(() => isGuestSession(loadSessionObj()));
 
   useEffect(() => {
-    // observa alterações (caso o usuário faça login em outra aba)
     const onStorage = (e) => {
       if (e && e.key && e.key !== ACCOUNT_SESSION_KEY) return;
       setIsGuest(isGuestSession(loadSessionObj()));
     };
     window.addEventListener("storage", onStorage);
 
-    // checagem leve no mesmo tab (storage não dispara no mesmo tab)
+    // checagem leve no mesmo tab
     const t = setInterval(() => setIsGuest(isGuestSession(loadSessionObj())), 1000);
 
     return () => {
@@ -489,7 +488,6 @@ export default function Dashboard(props) {
   // ✅ setter estável
   const noopSetFilters = useCallback(() => {}, []);
   const setFilters = useMemo(() => {
-    // guest: nunca persiste mudança
     if (isGuest) return noopSetFilters;
     return typeof externalSetFilters === "function" ? externalSetFilters : noopSetFilters;
   }, [externalSetFilters, noopSetFilters, isGuest]);
@@ -618,11 +616,9 @@ export default function Dashboard(props) {
     if (!isGuest) return;
     if (!boundsReady || !MIN_DATE || !MAX_DATE) return;
 
-    // zera seleções e trava vitrine em "Todos"
     setSelectedGrupo(null);
     setSelectedYears([]);
 
-    // força range completo
     const full = { from: MIN_DATE, to: MAX_DATE };
     setDateRange(full);
     setDateRangeQuery(full);
@@ -656,8 +652,6 @@ export default function Dashboard(props) {
   const applyDateRange = useCallback(
     (next) => {
       if (!next) return;
-
-      // guest: ignora alterações (vitrine)
       if (isGuest) return;
 
       setDateRange(next);
@@ -812,15 +806,23 @@ export default function Dashboard(props) {
     return null;
   }, []);
 
+  /* =========================
+     ✅ Guest Toast (fix)
+  ========================= */
   const [guestToast, setGuestToast] = useState("");
+  const toastTimerRef = useRef(null);
 
   const showGuestToast = useCallback((msg) => {
     setGuestToast(String(msg || "Disponível no PRO/VIP."));
-    window.clearTimeout(showGuestToast._t);
-    showGuestToast._t = window.setTimeout(() => setGuestToast(""), 2400);
+    if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = window.setTimeout(() => setGuestToast(""), 2400);
   }, []);
-  // @ts-ignore
-  showGuestToast._t = showGuestToast._t || null;
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
+    };
+  }, []);
 
   const handleFilterChange = useCallback(
     (name, value) => {
@@ -903,9 +905,7 @@ export default function Dashboard(props) {
         let next = prizes;
 
         if (posSet && posSet.size) {
-          next = next.filter((p) =>
-            posSet.has(Number(p?.position ?? p?.pos ?? p?.colocacao))
-          );
+          next = next.filter((p) => posSet.has(Number(p?.position ?? p?.pos ?? p?.colocacao)));
         }
 
         if (grupoTarget) {
@@ -986,7 +986,6 @@ export default function Dashboard(props) {
     if (!dataReady || !hasAnyDrawsView) return {};
     try {
       const out = buildPalpiteV2(drawsForView, { closeHourBucket: null });
-
       return out?.palpitesByGrupo && typeof out.palpitesByGrupo === "object" ? out.palpitesByGrupo : {};
     } catch {
       return {};
@@ -1060,7 +1059,6 @@ export default function Dashboard(props) {
   const applyAllYearsFull = useCallback(() => {
     if (!MIN_DATE || !MAX_DATE) return;
     setSelectedYears([]);
-    // guest: já está travado no full, então ignore
     if (isGuest) return;
     applyDateRange({ from: MIN_DATE, to: MAX_DATE });
   }, [MIN_DATE, MAX_DATE, applyDateRange, isGuest]);
@@ -1215,7 +1213,9 @@ export default function Dashboard(props) {
       }
 
       const cand128 =
-        typeof getImgFromGrupoFromMap === "function" ? getImgFromGrupoFromMap(Number(selectedGrupo), 128) : "";
+        typeof getImgFromGrupoFromMap === "function"
+          ? getImgFromGrupoFromMap(Number(selectedGrupo), 128)
+          : "";
 
       const candBase =
         typeof getImgFromGrupoFromMap === "function" ? getImgFromGrupoFromMap(Number(selectedGrupo)) : "";
@@ -1243,7 +1243,6 @@ export default function Dashboard(props) {
   }, [selectedGrupo]);
 
   useEffect(() => {
-    // guest: não grava estado auxiliar (evita “sujar” demo)
     if (isGuest) return;
 
     safeWriteJSON(DASH_STATE_KEY, {
@@ -1326,18 +1325,40 @@ export default function Dashboard(props) {
 
                 {MIN_DATE && MAX_DATE && dateRange ? (
                   <div style={{ position: "relative", zIndex: 10, pointerEvents: "auto" }}>
-                    {/* Guest: trava UI de período (vitrine) */}
-                    <div style={isGuest ? { pointerEvents: "none", opacity: 0.55, filter: "grayscale(0.2)" } : null}>
-                      <DateRangeControl
-                        value={dateRange}
-                        onChange={applyDateRange}
-                        minDate={MIN_DATE}
-                        maxDate={MAX_DATE}
-                        years={yearsAvailable}
-                        selectedYears={selectedYears}
-                        onToggleYear={onToggleYear}
-                        onClearYears={onClearYears}
-                      />
+                    {/* Guest: trava UI de período (vitrine) + overlay clicável */}
+                    <div style={{ position: "relative" }}>
+                      <div
+                        style={
+                          isGuest ? { opacity: 0.55, filter: "grayscale(0.2)" } : null
+                        }
+                      >
+                        <DateRangeControl
+                          value={dateRange}
+                          onChange={applyDateRange}
+                          minDate={MIN_DATE}
+                          maxDate={MAX_DATE}
+                          years={yearsAvailable}
+                          selectedYears={selectedYears}
+                          onToggleYear={onToggleYear}
+                          onClearYears={onClearYears}
+                        />
+                      </div>
+
+                      {isGuest ? (
+                        <div
+                          role="button"
+                          aria-label="Período bloqueado no modo demonstração"
+                          onClick={() =>
+                            showGuestToast("Modo demonstração: período está bloqueado. Faça login para usar.")
+                          }
+                          style={{
+                            position: "absolute",
+                            inset: 0,
+                            cursor: "not-allowed",
+                            background: "transparent",
+                          }}
+                        />
+                      ) : null}
                     </div>
                   </div>
                 ) : (
@@ -1365,14 +1386,25 @@ export default function Dashboard(props) {
         </section>
 
         <section className="dashFilters">
-          {/* Guest: trava UI de filtros (vitrine) */}
-          <div
-            style={isGuest ? { pointerEvents: "none", opacity: 0.65, filter: "grayscale(0.2)" } : null}
-            onClick={() => {
-              if (isGuest) showGuestToast("Modo demonstração: filtros bloqueados. Faça login para usar.");
-            }}
-          >
-            <FiltersBar filters={filters} onChange={handleFilterChange} options={options} />
+          {/* Guest: trava UI de filtros (vitrine) + overlay clicável */}
+          <div style={{ position: "relative" }}>
+            <div style={isGuest ? { opacity: 0.65, filter: "grayscale(0.2)" } : null}>
+              <FiltersBar filters={filters} onChange={handleFilterChange} options={options} />
+            </div>
+
+            {isGuest ? (
+              <div
+                role="button"
+                aria-label="Filtros bloqueados no modo demonstração"
+                onClick={() => showGuestToast("Modo demonstração: filtros bloqueados. Faça login para usar.")}
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  cursor: "not-allowed",
+                  background: "transparent",
+                }}
+              />
+            ) : null}
           </div>
 
           {guestToast ? (
