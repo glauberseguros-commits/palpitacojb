@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   getKingBoundsByUf,
   getKingResultsByRange,
+  getKingResultsByDate,
 } from "../../services/kingResultsService";
 import {
   getAnimalLabel as getAnimalLabelFn,
@@ -11,15 +12,15 @@ import {
 
 /**
  * Late (Atrasados) — Premium
- * ✅ Mais justo + mais centralizado
- * ✅ Colunas centralizadas (texto/valores)
- * ✅ Grupo sem duplicidade (remove parênteses)
  *
- * ✅ CRITÉRIO DE DESEMPATE:
- * - Atraso (dias) DESC
- * - Empate: horário da ÚLTIMA aparição ASC (09:00 antes de 21:00)
- * - Depois: animal (A-Z)
- * - Depois: grupo (crescente)
+ * ✅ Atualiza por SORTEIO:
+ * - Rebusca bounds periodicamente (maxYmd atualiza quando entra sorteio novo)
+ * - Detecta "último sorteio importado" (maxYmd + maior close_hour do dia)
+ * - Se mudar maxYmd ou close_hour do último sorteio -> refresh automático
+ *
+ * ✅ IMPORTANTE (SEU PROJETO):
+ * - Consultas devem usar UF="RJ" (com trava interna para PT_RIO)
+ * - "PT_RIO" aqui é apenas rótulo/visual
  */
 
 function pad2(n) {
@@ -108,8 +109,28 @@ function hourToMinutes(hhmm) {
   return hh * 60 + mm;
 }
 
+function pickLatestCloseHour(draws) {
+  const arr = Array.isArray(draws) ? draws : [];
+  let best = null;
+  let bestMin = -1;
+
+  for (const d of arr) {
+    const ch = normalizeHourLike(d?.close_hour || d?.closeHour || "");
+    const min = hourToMinutes(ch);
+    if (min == null) continue;
+    if (min > bestMin) {
+      bestMin = min;
+      best = { ymd: d?.ymd || "", closeHour: ch || "" };
+    }
+  }
+
+  return best;
+}
+
 export default function Late() {
-  const LOTTERY_KEY = "PT_RIO";
+  // ✅ NO SEU APP, A UF É "RJ" (e o service trava para PT_RIO)
+  const UF_CODE = "RJ";
+  const LOTTERY_DISPLAY = "PT_RIO";
 
   const LOTTERY_OPTIONS = useMemo(
     () => [
@@ -140,7 +161,11 @@ export default function Late() {
   const [error, setError] = useState("");
   const [rows, setRows] = useState([]);
 
-  // meta continua existindo para a lógica (não exibimos mais na UI)
+  const [lastImported, setLastImported] = useState({
+    ymd: "",
+    closeHour: "",
+  });
+
   const [meta, setMeta] = useState({
     scannedDays: 0,
     foundCount: 0,
@@ -151,10 +176,7 @@ export default function Late() {
   });
 
   const abortedRef = useRef(false);
-
-  // ✅ NEW: controla atualização de bounds
-  const lastBoundsFetchRef = useRef(0);
-  const BOUNDS_MIN_REVALIDATE_MS = 30 * 1000; // 30s (leve e suficiente)
+  const pollRef = useRef(null);
 
   const getAnimalLabel = useMemo(() => getAnimalLabelFn, []);
   const getImgFromGrupo = useMemo(() => getImgFromGrupoFn, []);
@@ -180,75 +202,39 @@ export default function Late() {
 
   const boundsReady = !!(bounds?.minYmd && bounds?.maxYmd);
 
-  // ✅ NEW: refaz bounds (com throttle)
-  async function loadBounds({ force = false } = {}) {
-    const now = Date.now();
-    if (!force && now - lastBoundsFetchRef.current < BOUNDS_MIN_REVALIDATE_MS) {
-      return bounds;
-    }
+  async function refreshBoundsAndLastDraw() {
+    const b = await getKingBoundsByUf({ uf: UF_CODE });
+    const minYmd = b?.minYmd || null;
+    const maxYmd = b?.maxYmd || null;
 
-    lastBoundsFetchRef.current = now;
-    try {
-      const b = await getKingBoundsByUf({ uf: LOTTERY_KEY });
+    setBounds({ minYmd, maxYmd, source: b?.source || "" });
 
-      const minYmd = b?.minYmd || null;
-      const maxYmd = b?.maxYmd || null;
+    if (maxYmd) {
+      const dayDraws = await getKingResultsByDate({
+        uf: UF_CODE,
+        date: maxYmd,
+        closeHour: null,
+        positions: prizePositions,
+      });
 
-      setBounds({ minYmd, maxYmd, source: b?.source || "" });
-
-      if (!minYmd || !maxYmd) {
-        setError(
-          `Bounds não encontrados para "${LOTTERY_KEY}".\n` +
-            `Isso indica mismatch de chave ou base vazia.\n` +
-            `Fonte: ${String(b?.source || "")}`
-        );
+      const latest = pickLatestCloseHour(dayDraws);
+      if (latest?.ymd && latest?.closeHour) {
+        setLastImported({ ymd: latest.ymd, closeHour: latest.closeHour });
+      } else {
+        setLastImported({ ymd: maxYmd, closeHour: "" });
       }
-
-      return { minYmd, maxYmd, source: b?.source || "" };
-    } catch (e) {
-      setError(String(e?.message || e));
-      return null;
     }
+
+    return { minYmd, maxYmd };
   }
 
-  useEffect(() => {
-    let alive = true;
-    (async () => {
-      setError("");
-      setBounds({ minYmd: null, maxYmd: null, source: "" });
-
-      const b = await getKingBoundsByUf({ uf: LOTTERY_KEY });
-      if (!alive) return;
-
-      const minYmd = b?.minYmd || null;
-      const maxYmd = b?.maxYmd || null;
-      setBounds({ minYmd, maxYmd, source: b?.source || "" });
-
-      if (!minYmd || !maxYmd) {
-        setError(
-          `Bounds não encontrados para "${LOTTERY_KEY}".\n` +
-            `Isso indica mismatch de chave ou base vazia.\n` +
-            `Fonte: ${String(b?.source || "")}`
-        );
-      }
-
-      // marca o fetch inicial
-      lastBoundsFetchRef.current = Date.now();
-    })();
-
-    return () => {
-      alive = false;
-    };
-  }, []);
-
-  function getEffectiveTargetYmd(targetYmd, boundsObj) {
-    const b = boundsObj || bounds;
-    if (!b?.minYmd || !b?.maxYmd || !isYMD(targetYmd)) {
+  function getEffectiveTargetYmd(targetYmd) {
+    if (!bounds?.minYmd || !bounds?.maxYmd || !isYMD(targetYmd)) {
       return { effective: targetYmd, note: "" };
     }
 
-    const minYmd = b.minYmd;
-    const maxYmd = b.maxYmd;
+    const minYmd = bounds.minYmd;
+    const maxYmd = bounds.maxYmd;
 
     if (targetYmd < minYmd)
       return {
@@ -263,17 +249,13 @@ export default function Late() {
     return { effective: targetYmd, note: "" };
   }
 
-  async function buildLateList({ targetYmd, boundsObj }) {
+  async function buildLateList({ targetYmd }) {
     const BLOCK_DAYS = 14;
     const MAX_SCAN_DAYS = 500;
 
-    const { effective: safeTarget, note } = getEffectiveTargetYmd(
-      targetYmd,
-      boundsObj
-    );
+    const { effective: safeTarget, note } = getEffectiveTargetYmd(targetYmd);
     if (note) setError(note);
 
-    // key: grupo -> { ymd, closeHour }
     const lastByGrupo = new Map();
     const totalGrupos = 25;
 
@@ -288,7 +270,7 @@ export default function Late() {
         stopReason = "abortado";
         break;
       }
-      if (boundsObj?.minYmd && cursorTo < boundsObj.minYmd) {
+      if (bounds?.minYmd && cursorTo < bounds.minYmd) {
         stopReason = "chegou_no_minDate";
         break;
       }
@@ -299,9 +281,9 @@ export default function Late() {
 
       const windowTo = cursorTo;
       const candidateFrom = addDaysUTC(windowTo, -(BLOCK_DAYS - 1));
-      const windowFrom = boundsObj?.minYmd
-        ? candidateFrom < boundsObj.minYmd
-          ? boundsObj.minYmd
+      const windowFrom = bounds?.minYmd
+        ? candidateFrom < bounds.minYmd
+          ? bounds.minYmd
           : candidateFrom
         : candidateFrom;
 
@@ -315,7 +297,7 @@ export default function Late() {
       scannedDays += windowSize;
 
       const draws = await getKingResultsByRange({
-        uf: LOTTERY_KEY,
+        uf: UF_CODE,
         dateFrom: windowFrom,
         dateTo: windowTo,
         closeHour: selectedCloseHour || null,
@@ -353,10 +335,7 @@ export default function Late() {
           if (!isValidGrupo(g)) continue;
 
           if (!lastByGrupo.has(g)) {
-            lastByGrupo.set(g, {
-              ymd,
-              closeHour: drawCloseHour || "",
-            });
+            lastByGrupo.set(g, { ymd, closeHour: drawCloseHour || "" });
           }
         }
 
@@ -425,11 +404,12 @@ export default function Late() {
     };
   }
 
-  // ✅ NEW: refresh com opção de forçar bounds (para atualizar a cada sorteio)
-  async function refresh(forceBounds = false) {
+  async function refresh({ silent = false } = {}) {
     abortedRef.current = false;
-    setLoading(true);
-    setError("");
+    if (!silent) {
+      setLoading(true);
+      setError("");
+    }
 
     try {
       if (kind !== "grupo") {
@@ -439,19 +419,9 @@ export default function Late() {
         setKind("grupo");
       }
 
-      // ✅ Se a data escolhida pode estar acima do max, revalida bounds automaticamente
-      let b = bounds;
-      if (
-        forceBounds ||
-        (bounds?.maxYmd && isYMD(dateYmd) && dateYmd > bounds.maxYmd)
-      ) {
-        const fresh = await loadBounds({ force: true });
-        if (fresh?.minYmd && fresh?.maxYmd) {
-          b = fresh;
-        }
-      }
+      await refreshBoundsAndLastDraw();
 
-      const result = await buildLateList({ targetYmd: dateYmd, boundsObj: b });
+      const result = await buildLateList({ targetYmd: dateYmd });
       if (abortedRef.current) return;
 
       setRows(result.rows);
@@ -465,33 +435,86 @@ export default function Late() {
       });
     } catch (e) {
       if (abortedRef.current) return;
-      setError(String(e?.message || e));
+      if (!silent) setError(String(e?.message || e));
     } finally {
-      if (!abortedRef.current) setLoading(false);
+      if (!abortedRef.current && !silent) setLoading(false);
     }
   }
 
   useEffect(() => {
+    let alive = true;
+    (async () => {
+      setError("");
+      try {
+        await refreshBoundsAndLastDraw();
+        if (!alive) return;
+      } catch (e) {
+        if (!alive) return;
+        setError(String(e?.message || e));
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
     if (!boundsReady) return;
-    refresh(false);
+    refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [boundsReady, dateYmd, prizeMode, lotteryOptId]);
 
   useEffect(() => {
-    // ✅ bônus: ao voltar para a aba, revalida bounds (ajuda muito no “a cada sorteio”)
-    function onFocus() {
+    if (pollRef.current) clearInterval(pollRef.current);
+
+    pollRef.current = setInterval(async () => {
       if (abortedRef.current) return;
-      // só revalida se estiver na data de hoje
-      if (dateYmd === todayYMDLocal()) refresh(true);
-    }
-    window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
+
+      try {
+        const prev = lastImported;
+
+        const b = await getKingBoundsByUf({ uf: UF_CODE });
+        const maxYmd = b?.maxYmd || "";
+        if (!maxYmd) return;
+
+        const dayDraws = await getKingResultsByDate({
+          uf: UF_CODE,
+          date: maxYmd,
+          closeHour: null,
+          positions: prizePositions,
+        });
+
+        const latest = pickLatestCloseHour(dayDraws);
+        const next = {
+          ymd: latest?.ymd || maxYmd,
+          closeHour: latest?.closeHour || "",
+        };
+
+        const changed =
+          String(prev?.ymd || "") !== String(next.ymd || "") ||
+          String(prev?.closeHour || "") !== String(next.closeHour || "");
+
+        if (changed) {
+          setLastImported(next);
+          await refresh({ silent: true });
+        }
+      } catch {
+        // silencioso
+      }
+    }, 60000);
+
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dateYmd, boundsReady, lotteryOptId, prizeMode]);
+  }, [lotteryOptId, prizeMode, dateYmd, prizePositions]);
 
   useEffect(() => {
     return () => {
       abortedRef.current = true;
+      if (pollRef.current) clearInterval(pollRef.current);
     };
   }, []);
 
@@ -501,58 +524,31 @@ export default function Late() {
     [meta?.effectiveTargetYmd]
   );
 
+  const lastImportedBR = useMemo(() => {
+    const d = lastImported?.ymd ? ymdToBR(lastImported.ymd) : "";
+    const h = lastImported?.closeHour ? lastImported.closeHour : "";
+    return d ? (h ? `${d} ${h}` : d) : "";
+  }, [lastImported]);
+
   return (
     <div className="ppLate">
       <style>{`
-        .ppLate{
-          width:100%;
-          height:calc(100vh - 24px);
-          padding:14px 14px 10px;
-          color:#e9e9e9;
-          display:flex;
-          flex-direction:column;
-          gap:10px;
-          overflow:hidden;
-          min-height:0;
-        }
-
+        .ppLate{ width:100%; height:calc(100vh - 24px); padding:14px 14px 10px; color:#e9e9e9; display:flex; flex-direction:column; gap:10px; overflow:hidden; min-height:0; }
         .ppLateHeader{ display:grid; grid-template-columns:1fr; gap:8px; flex:0 0 auto; }
-
         .ppLateTitleWrap{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; }
         .ppLateTitle{ font-size:20px; font-weight:800; letter-spacing:0.6px; text-transform:uppercase; text-align:center; margin:0; line-height:1.05; }
         .ppLateSubtitle{ font-size:11px; color:rgba(233,233,233,0.72); text-align:center; line-height:1.15; }
         .ppLateSubtitle b{ color:#caa64b; font-weight:800; }
-
         .ppLateControls{ display:flex; justify-content:center; align-items:center; gap:8px; flex-wrap:wrap; }
         .ppCtl{ display:inline-flex; align-items:center; gap:8px; padding:6px 9px; border-radius:999px; background:rgba(0,0,0,0.55); border:1px solid rgba(202,166,75,0.18); box-shadow:0 10px 30px rgba(0,0,0,0.35); }
         .ppCtl label{ font-size:10px; color:rgba(233,233,233,0.62); }
         .ppCtl select, .ppCtl input[type="date"]{ background:transparent; border:none; outline:none; color:#e9e9e9; font-weight:800; font-size:12px; }
         .ppCtl select option{ background:#0b0b0b; color:#e9e9e9; }
-
-        .ppBtn{
-          cursor:pointer; border-radius:999px; padding:7px 12px;
-          font-weight:900; font-size:12px; letter-spacing:0.4px;
-          background:rgba(0,0,0,0.6); color:#e9e9e9;
-          border:1px solid rgba(202,166,75,0.30);
-          box-shadow:0 12px 34px rgba(0,0,0,0.35);
-          transition:transform 0.08s ease, border-color 0.12s ease, background 0.12s ease;
-        }
+        .ppBtn{ cursor:pointer; border-radius:999px; padding:7px 12px; font-weight:900; font-size:12px; letter-spacing:0.4px; background:rgba(0,0,0,0.6); color:#e9e9e9; border:1px solid rgba(202,166,75,0.30); box-shadow:0 12px 34px rgba(0,0,0,0.35); transition:transform 0.08s ease, border-color 0.12s ease, background 0.12s ease; }
         .ppBtn:hover{ transform:translateY(-1px); border-color:rgba(202,166,75,0.55); background:rgba(0,0,0,0.72); }
         .ppBtn:disabled{ opacity:0.55; cursor:not-allowed; transform:none; }
-
-        .ppErr{
-          padding:9px 11px; border-radius:12px;
-          border:1px solid rgba(255,80,80,0.25);
-          background:rgba(255,80,80,0.08);
-          color:rgba(255,220,220,0.92);
-          white-space:pre-wrap;
-          font-size:12px;
-          flex:0 0 auto;
-        }
-
-        .ppLatePanel{
-          border-radius:18px;
-          border:1px solid rgba(202,166,75,0.16);
+        .ppErr{ padding:9px 11px; border-radius:12px; border:1px solid rgba(255,80,80,0.25); background:rgba(255,80,80,0.08); color:rgba(255,220,220,0.92); white-space:pre-wrap; font-size:12px; flex:0 0 auto; }
+        .ppLatePanel{ border-radius:18px; border:1px solid rgba(202,166,75,0.16);
           background:radial-gradient(1000px 500px at 20% 0%, rgba(202,166,75,0.08), transparent 55%),
                      radial-gradient(900px 500px at 85% 20%, rgba(255,255,255,0.05), transparent 50%),
                      rgba(0,0,0,0.45);
@@ -563,89 +559,23 @@ export default function Late() {
           display:flex;
           flex-direction:column;
         }
-
-        .ppLateTableWrap{
-          width:100%;
-          flex:1 1 auto;
-          min-height:0;
-          overflow:auto;
-          display:flex;
-          justify-content:center;
-          padding:0 6px;
-        }
-
-        .ppLateTable{
-          border-collapse:collapse;
-          table-layout:fixed;
-          width:min(860px, 100%);
-          margin:0 auto;
-        }
-
-        .ppLateTable thead th,
-        .ppLateTable tbody td{
-          text-align:center;
-        }
-
-        .ppLateTable thead th{
-          position:sticky;
-          top:0;
-          z-index:2;
-          background:rgba(0,0,0,0.72);
-          backdrop-filter:blur(8px);
-          border-bottom:1px solid rgba(255,255,255,0.08);
-          padding:9px 10px;
-          font-size:10px;
-          text-transform:uppercase;
-          letter-spacing:0.6px;
-          color:rgba(233,233,233,0.72);
-          white-space:nowrap;
-        }
-
-        .ppLateTable tbody td{
-          padding:8px 10px;
-          border-bottom:1px solid rgba(255,255,255,0.06);
-          font-size:12px;
-          color:rgba(233,233,233,0.92);
-          white-space:nowrap;
-          overflow:hidden;
-          text-overflow:ellipsis;
-        }
-
+        .ppLateTableWrap{ width:100%; flex:1 1 auto; min-height:0; overflow:auto; display:flex; justify-content:center; padding:0 6px; }
+        .ppLateTable{ border-collapse:collapse; table-layout:fixed; width:min(860px, 100%); margin:0 auto; }
+        .ppLateTable thead th, .ppLateTable tbody td{ text-align:center; }
+        .ppLateTable thead th{ position:sticky; top:0; z-index:2; background:rgba(0,0,0,0.72); backdrop-filter:blur(8px); border-bottom:1px solid rgba(255,255,255,0.08);
+          padding:9px 10px; font-size:10px; text-transform:uppercase; letter-spacing:0.6px; color:rgba(233,233,233,0.72); white-space:nowrap; }
+        .ppLateTable tbody td{ padding:8px 10px; border-bottom:1px solid rgba(255,255,255,0.06); font-size:12px; color:rgba(233,233,233,0.92); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .ppLateTable tbody tr:hover td{ background:rgba(202,166,75,0.06); }
-
         .ppPos{ width:58px; color:rgba(233,233,233,0.75); font-weight:900; }
-
         .ppImgCell{ width:66px; }
-        .ppImg{
-          width:34px; height:34px;
-          border-radius:12px;
-          border:2px solid rgba(202,166,75,0.55);
-          box-shadow:0 14px 34px rgba(0,0,0,0.45);
-          background:rgba(0,0,0,0.55);
-          display:inline-flex;
-          align-items:center;
-          justify-content:center;
-          overflow:hidden;
-        }
+        .ppImg{ width:34px; height:34px; border-radius:12px; border:2px solid rgba(202,166,75,0.55); box-shadow:0 14px 34px rgba(0,0,0,0.45); background:rgba(0,0,0,0.55);
+          display:inline-flex; align-items:center; justify-content:center; overflow:hidden; }
         .ppImg img{ width:100%; height:100%; object-fit:cover; display:block; }
-
-        .ppGrupo{
-          font-weight:900;
-          letter-spacing:0.4px;
-          color:#e9e9e9;
-        }
-
-        .ppAnimal{
-          width:150px;
-          max-width:150px;
-          font-weight:800;
-          color:rgba(233,233,233,0.92);
-        }
-
+        .ppGrupo{ font-weight:900; letter-spacing:0.4px; color:#e9e9e9; }
+        .ppAnimal{ width:150px; max-width:150px; font-weight:800; color:rgba(233,233,233,0.92); }
         .ppLast{ width:130px; text-align:center; color:rgba(233,233,233,0.72); font-weight:700; }
         .ppDays{ width:118px; font-weight:900; text-align:center; letter-spacing:0.2px; }
         .ppDays b{ color:#caa64b; }
-
         @media (max-width:1100px){
           .ppLate{ padding:12px 12px 10px; }
           .ppLateTable{ width:100%; }
@@ -656,18 +586,22 @@ export default function Late() {
       <div className="ppLateHeader">
         <div className="ppLateTitleWrap">
           <h1 className="ppLateTitle">Atrasados</h1>
+
           <div className="ppLateSubtitle">
             Leitura de atraso por <b>Grupo</b> · Prêmio{" "}
             <b>{prizeMode === "1-5" ? "1º ao 5º" : `${prizeMode}º`}</b> · Data{" "}
-            <b>{titleDateBR}</b>
-            {" · "}
-            <b>{selectedLottery?.label}</b>
-            {" · "}
-            Loteria <b>{LOTTERY_KEY}</b>
+            <b>{titleDateBR}</b> · <b>{selectedLottery?.label}</b> · Loteria{" "}
+            <b>{LOTTERY_DISPLAY}</b>
             {meta?.effectiveTargetYmd && meta.effectiveTargetYmd !== dateYmd ? (
               <>
                 {" · "}
                 Data efetiva <b>{effectiveDateBR}</b>
+              </>
+            ) : null}
+            {lastImportedBR ? (
+              <>
+                {" · "}
+                Último sorteio importado <b>{lastImportedBR}</b>
               </>
             ) : null}
           </div>
@@ -695,18 +629,10 @@ export default function Late() {
               onChange={(e) => setKind(String(e.target.value || "grupo"))}
             >
               <option value="grupo">Grupo</option>
-              <option value="milhar" disabled>
-                Milhar
-              </option>
-              <option value="centena" disabled>
-                Centena
-              </option>
-              <option value="dezena" disabled>
-                Dezena
-              </option>
-              <option value="unidade" disabled>
-                Unidade
-              </option>
+              <option value="milhar" disabled>Milhar</option>
+              <option value="centena" disabled>Centena</option>
+              <option value="dezena" disabled>Dezena</option>
+              <option value="unidade" disabled>Unidade</option>
             </select>
           </div>
 
@@ -738,7 +664,7 @@ export default function Late() {
 
           <button
             className="ppBtn"
-            onClick={() => refresh(true)} // ✅ força revalidar bounds antes de calcular
+            onClick={() => refresh()}
             disabled={loading || !boundsReady}
           >
             {loading ? "Carregando..." : "Atualizar"}
