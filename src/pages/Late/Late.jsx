@@ -128,7 +128,7 @@ function pickLatestCloseHour(draws) {
 }
 
 export default function Late() {
-  // ✅ NO SEU APP, A UF É "RJ" (e o service trava para PT_RIO)
+  // ✅ NO SEU APP, A UF REAL É "RJ"
   const UF_CODE = "RJ";
   const LOTTERY_DISPLAY = "PT_RIO";
 
@@ -161,11 +161,19 @@ export default function Late() {
   const [error, setError] = useState("");
   const [rows, setRows] = useState([]);
 
+  // Último sorteio importado (para UX e para "atualizar a cada sorteio")
   const [lastImported, setLastImported] = useState({
     ymd: "",
     closeHour: "",
   });
 
+  // ✅ evita “state congelado” no setInterval
+  const lastImportedRef = useRef(lastImported);
+  useEffect(() => {
+    lastImportedRef.current = lastImported;
+  }, [lastImported]);
+
+  // meta continua existindo para a lógica
   const [meta, setMeta] = useState({
     scannedDays: 0,
     foundCount: 0,
@@ -209,6 +217,7 @@ export default function Late() {
 
     setBounds({ minYmd, maxYmd, source: b?.source || "" });
 
+    // Descobre o "último sorteio importado" do dia maxYmd (maior close_hour)
     if (maxYmd) {
       const dayDraws = await getKingResultsByDate({
         uf: UF_CODE,
@@ -441,6 +450,7 @@ export default function Late() {
     }
   }
 
+  // primeiro load
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -460,12 +470,14 @@ export default function Late() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // refresh quando muda filtros/data
   useEffect(() => {
     if (!boundsReady) return;
     refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [boundsReady, dateYmd, prizeMode, lotteryOptId]);
 
+  // ✅ polling: atualiza quando entrar sorteio novo
   useEffect(() => {
     if (pollRef.current) clearInterval(pollRef.current);
 
@@ -473,7 +485,7 @@ export default function Late() {
       if (abortedRef.current) return;
 
       try {
-        const prev = lastImported;
+        const prev = lastImportedRef.current;
 
         const b = await getKingBoundsByUf({ uf: UF_CODE });
         const maxYmd = b?.maxYmd || "";
@@ -533,22 +545,55 @@ export default function Late() {
   return (
     <div className="ppLate">
       <style>{`
-        .ppLate{ width:100%; height:calc(100vh - 24px); padding:14px 14px 10px; color:#e9e9e9; display:flex; flex-direction:column; gap:10px; overflow:hidden; min-height:0; }
+        .ppLate{
+          width:100%;
+          height:calc(100vh - 24px);
+          padding:14px 14px 10px;
+          color:#e9e9e9;
+          display:flex;
+          flex-direction:column;
+          gap:10px;
+          overflow:hidden;
+          min-height:0;
+        }
+
         .ppLateHeader{ display:grid; grid-template-columns:1fr; gap:8px; flex:0 0 auto; }
+
         .ppLateTitleWrap{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; }
         .ppLateTitle{ font-size:20px; font-weight:800; letter-spacing:0.6px; text-transform:uppercase; text-align:center; margin:0; line-height:1.05; }
         .ppLateSubtitle{ font-size:11px; color:rgba(233,233,233,0.72); text-align:center; line-height:1.15; }
         .ppLateSubtitle b{ color:#caa64b; font-weight:800; }
+
         .ppLateControls{ display:flex; justify-content:center; align-items:center; gap:8px; flex-wrap:wrap; }
         .ppCtl{ display:inline-flex; align-items:center; gap:8px; padding:6px 9px; border-radius:999px; background:rgba(0,0,0,0.55); border:1px solid rgba(202,166,75,0.18); box-shadow:0 10px 30px rgba(0,0,0,0.35); }
         .ppCtl label{ font-size:10px; color:rgba(233,233,233,0.62); }
         .ppCtl select, .ppCtl input[type="date"]{ background:transparent; border:none; outline:none; color:#e9e9e9; font-weight:800; font-size:12px; }
         .ppCtl select option{ background:#0b0b0b; color:#e9e9e9; }
-        .ppBtn{ cursor:pointer; border-radius:999px; padding:7px 12px; font-weight:900; font-size:12px; letter-spacing:0.4px; background:rgba(0,0,0,0.6); color:#e9e9e9; border:1px solid rgba(202,166,75,0.30); box-shadow:0 12px 34px rgba(0,0,0,0.35); transition:transform 0.08s ease, border-color 0.12s ease, background 0.12s ease; }
+
+        .ppBtn{
+          cursor:pointer; border-radius:999px; padding:7px 12px;
+          font-weight:900; font-size:12px; letter-spacing:0.4px;
+          background:rgba(0,0,0,0.6); color:#e9e9e9;
+          border:1px solid rgba(202,166,75,0.30);
+          box-shadow:0 12px 34px rgba(0,0,0,0.35);
+          transition:transform 0.08s ease, border-color 0.12s ease, background 0.12s ease;
+        }
         .ppBtn:hover{ transform:translateY(-1px); border-color:rgba(202,166,75,0.55); background:rgba(0,0,0,0.72); }
         .ppBtn:disabled{ opacity:0.55; cursor:not-allowed; transform:none; }
-        .ppErr{ padding:9px 11px; border-radius:12px; border:1px solid rgba(255,80,80,0.25); background:rgba(255,80,80,0.08); color:rgba(255,220,220,0.92); white-space:pre-wrap; font-size:12px; flex:0 0 auto; }
-        .ppLatePanel{ border-radius:18px; border:1px solid rgba(202,166,75,0.16);
+
+        .ppErr{
+          padding:9px 11px; border-radius:12px;
+          border:1px solid rgba(255,80,80,0.25);
+          background:rgba(255,80,80,0.08);
+          color:rgba(255,220,220,0.92);
+          white-space:pre-wrap;
+          font-size:12px;
+          flex:0 0 auto;
+        }
+
+        .ppLatePanel{
+          border-radius:18px;
+          border:1px solid rgba(202,166,75,0.16);
           background:radial-gradient(1000px 500px at 20% 0%, rgba(202,166,75,0.08), transparent 55%),
                      radial-gradient(900px 500px at 85% 20%, rgba(255,255,255,0.05), transparent 50%),
                      rgba(0,0,0,0.45);
@@ -559,23 +604,77 @@ export default function Late() {
           display:flex;
           flex-direction:column;
         }
-        .ppLateTableWrap{ width:100%; flex:1 1 auto; min-height:0; overflow:auto; display:flex; justify-content:center; padding:0 6px; }
-        .ppLateTable{ border-collapse:collapse; table-layout:fixed; width:min(860px, 100%); margin:0 auto; }
-        .ppLateTable thead th, .ppLateTable tbody td{ text-align:center; }
-        .ppLateTable thead th{ position:sticky; top:0; z-index:2; background:rgba(0,0,0,0.72); backdrop-filter:blur(8px); border-bottom:1px solid rgba(255,255,255,0.08);
-          padding:9px 10px; font-size:10px; text-transform:uppercase; letter-spacing:0.6px; color:rgba(233,233,233,0.72); white-space:nowrap; }
-        .ppLateTable tbody td{ padding:8px 10px; border-bottom:1px solid rgba(255,255,255,0.06); font-size:12px; color:rgba(233,233,233,0.92); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+        .ppLateTableWrap{
+          width:100%;
+          flex:1 1 auto;
+          min-height:0;
+          overflow:auto;
+          display:flex;
+          justify-content:center;
+          padding:0 6px;
+        }
+
+        .ppLateTable{
+          border-collapse:collapse;
+          table-layout:fixed;
+          width:min(860px, 100%);
+          margin:0 auto;
+        }
+
+        .ppLateTable thead th,
+        .ppLateTable tbody td{
+          text-align:center;
+        }
+
+        .ppLateTable thead th{
+          position:sticky;
+          top:0;
+          z-index:2;
+          background:rgba(0,0,0,0.72);
+          backdrop-filter:blur(8px);
+          border-bottom:1px solid rgba(255,255,255,0.08);
+          padding:9px 10px;
+          font-size:10px;
+          text-transform:uppercase;
+          letter-spacing:0.6px;
+          color:rgba(233,233,233,0.72);
+          white-space:nowrap;
+        }
+
+        .ppLateTable tbody td{
+          padding:8px 10px;
+          border-bottom:1px solid rgba(255,255,255,0.06);
+          font-size:12px;
+          color:rgba(233,233,233,0.92);
+          white-space:nowrap;
+          overflow:hidden;
+          text-overflow:ellipsis;
+        }
+
         .ppLateTable tbody tr:hover td{ background:rgba(202,166,75,0.06); }
+
         .ppPos{ width:58px; color:rgba(233,233,233,0.75); font-weight:900; }
         .ppImgCell{ width:66px; }
-        .ppImg{ width:34px; height:34px; border-radius:12px; border:2px solid rgba(202,166,75,0.55); box-shadow:0 14px 34px rgba(0,0,0,0.45); background:rgba(0,0,0,0.55);
-          display:inline-flex; align-items:center; justify-content:center; overflow:hidden; }
+        .ppImg{
+          width:34px; height:34px;
+          border-radius:12px;
+          border:2px solid rgba(202,166,75,0.55);
+          box-shadow:0 14px 34px rgba(0,0,0,0.45);
+          background:rgba(0,0,0,0.55);
+          display:inline-flex;
+          align-items:center;
+          justify-content:center;
+          overflow:hidden;
+        }
         .ppImg img{ width:100%; height:100%; object-fit:cover; display:block; }
+
         .ppGrupo{ font-weight:900; letter-spacing:0.4px; color:#e9e9e9; }
         .ppAnimal{ width:150px; max-width:150px; font-weight:800; color:rgba(233,233,233,0.92); }
         .ppLast{ width:130px; text-align:center; color:rgba(233,233,233,0.72); font-weight:700; }
         .ppDays{ width:118px; font-weight:900; text-align:center; letter-spacing:0.2px; }
         .ppDays b{ color:#caa64b; }
+
         @media (max-width:1100px){
           .ppLate{ padding:12px 12px 10px; }
           .ppLateTable{ width:100%; }
@@ -629,10 +728,18 @@ export default function Late() {
               onChange={(e) => setKind(String(e.target.value || "grupo"))}
             >
               <option value="grupo">Grupo</option>
-              <option value="milhar" disabled>Milhar</option>
-              <option value="centena" disabled>Centena</option>
-              <option value="dezena" disabled>Dezena</option>
-              <option value="unidade" disabled>Unidade</option>
+              <option value="milhar" disabled>
+                Milhar
+              </option>
+              <option value="centena" disabled>
+                Centena
+              </option>
+              <option value="dezena" disabled>
+                Dezena
+              </option>
+              <option value="unidade" disabled>
+                Unidade
+              </option>
             </select>
           </div>
 
