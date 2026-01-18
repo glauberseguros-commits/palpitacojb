@@ -196,6 +196,28 @@ function getDowKey(ymd) {
 }
 
 /* =========================
+   URL helper (bg robusto)
+========================= */
+
+function publicBase() {
+  const b = String(process.env.PUBLIC_URL || "").trim();
+  return b && b !== "/" ? b : "";
+}
+
+function normalizeImgSrc(src) {
+  const s = safeStr(src);
+  if (!s) return "";
+  if (/^https?:\/\//i.test(s)) return s;
+
+  const base = publicBase();
+  if (s.startsWith("/")) return `${base}${s}`;
+  if (s.startsWith("public/")) return `${base}/${s.slice("public/".length)}`;
+  if (s.startsWith("img/")) return `${base}/${s}`;
+
+  return `${base}/${s}`;
+}
+
+/* =========================
    Grade de horários (PT/RIO)
    ✅ qua (3) e sáb (6) sem 18h
 ========================= */
@@ -605,7 +627,7 @@ export default function Top3() {
       const img =
         safeStr(getImgFromGrupo?.(g) || "") ||
         (animal ? `/img/${animal.toLowerCase()}.png` : "");
-      return { ...x, animal, img };
+      return { ...x, animal, img: normalizeImgSrc(img) };
     });
   }, [analytics]);
 
@@ -633,29 +655,20 @@ export default function Top3() {
     const r = Array.isArray(reasons) ? reasons : [];
     const out = [];
 
-    // sempre começa pelo contexto
-    out.push(
-      `Horário alvo: ${safeStr(analysisHourBucket)} • Base: ${lookbackLabel}`
-    );
+    out.push(`Horário alvo: ${safeStr(analysisHourBucket)} • Base: ${lookbackLabel}`);
 
-    // camada anterior
-    if (prevInfo?.prevGrupo) {
-      out.push(`Sorteio anterior (camada): ${prevLabel}`);
-    } else {
-      out.push(`Sorteio anterior: sem amostra suficiente/ausente (camada reduzida)`);
-    }
+    if (prevInfo?.prevGrupo) out.push(`Sorteio anterior (camada): ${prevLabel}`);
+    else out.push(`Sorteio anterior: sem amostra suficiente/ausente (camada reduzida)`);
 
-    // cola as razões do motor (já vem com amostra)
     for (const line of r) out.push(line);
 
-    // anti-contaminação
     out.push(`Grade PT/RIO respeitada (ignora Federal/20h quando existir).`);
 
     if (dayEnded) {
       out.push(`Dia encerrado: exibindo o último Top3 do dia (${safeStr(lastHourBucket)}).`);
     }
 
-    return out.slice(0, 8); // mantém compacto
+    return out.slice(0, 8);
   }
 
   /**
@@ -745,18 +758,13 @@ export default function Top3() {
 
       pickedThisDz.sort(milharCompareByCentenaAsc);
 
-      byDezena.set(
-        dz,
-        pickedThisDz.map((m4) => ({ dezena: dz, milhar: m4 }))
-      );
+      byDezena.set(dz, pickedThisDz.map((m4) => ({ dezena: dz, milhar: m4 })));
     }
 
     const slots = [];
     for (const dz of topDezenas) {
       const arr = byDezena.get(dz) || [];
-      for (let i = 0; i < 4; i += 1) {
-        slots.push(arr[i] || { dezena: dz, milhar: "" });
-      }
+      for (let i = 0; i < 4; i += 1) slots.push(arr[i] || { dezena: dz, milhar: "" });
     }
     while (slots.length < 16) slots.push({ dezena: "", milhar: "" });
 
@@ -765,13 +773,15 @@ export default function Top3() {
 
   const styles = useMemo(() => {
     return `
-      :root{
+      .pp_wrap{
         --pp-border: rgba(255,255,255,0.10);
         --pp-gold: rgba(201,168,62,0.92);
         --pp-gold2: rgba(201,168,62,0.55);
-      }
 
-      .pp_wrap{ padding: 18px; min-width: 0; box-sizing: border-box; }
+        padding: 18px;
+        min-width: 0;
+        box-sizing: border-box;
+      }
 
       .pp_shell{
         border: 1px solid var(--pp-border);
@@ -1243,9 +1253,13 @@ export default function Top3() {
 
                   const animal = safeStr(x.animal) || "—";
 
-                  const imgSrc =
+                  const imgSrc = normalizeImgSrc(
                     safeStr(x.img) ||
-                    (x.grupo ? safeStr(getImgFromGrupo?.(x.grupo)) || `/img/${animal.toLowerCase()}.png` : "");
+                      (x.grupo
+                        ? safeStr(getImgFromGrupo?.(x.grupo)) ||
+                          `/img/${animal.toLowerCase()}.png`
+                        : "")
+                  );
 
                   const why = buildWhyFromReasons(x.reasons);
                   const mil = build16MilharesForGrupo(x.grupo);
@@ -1319,11 +1333,7 @@ export default function Top3() {
                                     key={`mil_${x.grupo}_${m?.dezena || "dz"}_${m?.milhar || "empty"}_${i}`}
                                     className={`pp_milharPill ${has ? "" : "isEmpty"}`}
                                     role="listitem"
-                                    title={
-                                      has
-                                        ? `Dezena ${m.dezena} • Centena ${getCentena3(m.milhar)}`
-                                        : ""
-                                    }
+                                    title={has ? `Dezena ${m.dezena} • Centena ${getCentena3(m.milhar)}` : ""}
                                   >
                                     <strong>{has ? m.milhar : "0000"}</strong>
                                   </div>
