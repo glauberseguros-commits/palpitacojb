@@ -1,5 +1,5 @@
 // src/pages/Dashboard/components/DateRangeControl.jsx
-import React, { useCallback, useMemo, useRef } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 
 /**
  * DateRangeControl (Premium, sem libs) — CONTROLADO DE VERDADE
@@ -141,6 +141,9 @@ export default function DateRangeControl({
 }) {
   const fromRef = useRef(null);
   const toRef = useRef(null);
+
+  // ✅ qual thumb está "ativo" (para z-index inteligente)
+  const [activeThumb, setActiveThumb] = useState(null); // "from" | "to" | null
 
   const minISO = useMemo(() => (isISODate(minDate) ? minDate : null), [minDate]);
   const maxISO = useMemo(() => (isISODate(maxDate) ? maxDate : null), [maxDate]);
@@ -299,6 +302,14 @@ export default function DateRangeControl({
   const lPct = boundsReady ? (fromOffset / totalDays) * 100 : 0;
   const rPct = boundsReady ? (toOffset / totalDays) * 100 : 0;
 
+  // ✅ highlight sem width negativa
+  const diffPct = Math.max(0, rPct - lPct);
+  const highlightWidth = diffPct <= 0 ? "0px" : `calc(${diffPct}% - 16px)`;
+
+  // ✅ z-index inteligente (thumb ativo por cima)
+  const zFrom = activeThumb === "from" ? 5 : 3;
+  const zTo = activeThumb === "to" ? 5 : 2;
+
   const ui = {
     wrap: { display: "grid", gap: 8, minWidth: 0 },
 
@@ -452,7 +463,7 @@ export default function DateRangeControl({
     highlight: {
       position: "absolute",
       left: `calc(${lPct}% + 8px)`,
-      width: `calc(${Math.max(0, rPct - lPct)}% - 16px)`,
+      width: highlightWidth,
       top: "50%",
       transform: "translateY(-50%)",
       height: 6,
@@ -640,6 +651,8 @@ export default function DateRangeControl({
     );
   };
 
+  const rangeDisabled = disabled || !boundsReady;
+
   return (
     <div className="pp_range" style={ui.wrap}>
       <style>{ui.styleTag}</style>
@@ -712,7 +725,14 @@ export default function DateRangeControl({
           max={totalDays}
           value={fromOffset}
           onChange={onSliderFrom}
-          style={{ ...ui.slider, zIndex: 3 }}
+          onPointerDown={() => setActiveThumb("from")}
+          onMouseDown={() => setActiveThumb("from")}
+          onTouchStart={() => setActiveThumb("from")}
+          onPointerUp={() => setActiveThumb(null)}
+          onMouseUp={() => setActiveThumb(null)}
+          onTouchEnd={() => setActiveThumb(null)}
+          disabled={rangeDisabled}
+          style={{ ...ui.slider, zIndex: zFrom }}
           aria-label="Ajustar data inicial"
         />
 
@@ -722,7 +742,14 @@ export default function DateRangeControl({
           max={totalDays}
           value={toOffset}
           onChange={onSliderTo}
-          style={{ ...ui.slider, zIndex: 2 }}
+          onPointerDown={() => setActiveThumb("to")}
+          onMouseDown={() => setActiveThumb("to")}
+          onTouchStart={() => setActiveThumb("to")}
+          onPointerUp={() => setActiveThumb(null)}
+          onMouseUp={() => setActiveThumb(null)}
+          onTouchEnd={() => setActiveThumb(null)}
+          disabled={rangeDisabled}
+          style={{ ...ui.slider, zIndex: zTo }}
           aria-label="Ajustar data final"
         />
       </div>
