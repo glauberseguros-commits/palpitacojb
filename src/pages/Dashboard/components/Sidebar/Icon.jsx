@@ -1,3 +1,4 @@
+// src/pages/Dashboard/components/Sidebar/Icon.jsx
 import React from "react";
 
 export default function Icon({ name = "home" }) {
@@ -148,6 +149,17 @@ export default function Icon({ name = "home" }) {
           strokeLinejoin="round"
         />
         <path d="M4 21h16" stroke={stroke} strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    );
+  }
+
+  // ✅ NOVO: menu (hambúrguer)
+  if (name === "menu") {
+    return (
+      <svg {...common}>
+        <path d="M4 7h16" stroke={stroke} strokeWidth="2" strokeLinecap="round" />
+        <path d="M4 12h16" stroke={gold} strokeWidth="2" strokeLinecap="round" />
+        <path d="M4 17h16" stroke={stroke} strokeWidth="2" strokeLinecap="round" />
       </svg>
     );
   }

@@ -69,6 +69,16 @@ function useViewport() {
 export default function AppShell({ active, onNavigate, onLogout, children }) {
   const [session, setSession] = useState(() => readSession());
   const vw = useViewport();
+  const isMobile = vw < 980;
+
+  // ✅ Mobile: sidebar vira off-canvas (fechada por padrão)
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Se virar desktop, mantém aberto; se voltar pro mobile, fecha
+  useEffect(() => {
+    if (!isMobile) setSidebarOpen(true);
+    else setSidebarOpen(false);
+  }, [isMobile]);
 
   /* ======================
      Sync Firebase Auth
@@ -97,13 +107,15 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
   }, []);
 
   const isGuest = session?.type === "guest";
-  const isMobile = vw < 980;
 
   /* ======================
      Navegação
   ====================== */
   const handleNavigate = async (key) => {
     if (!key) return;
+
+    // ✅ fecha menu no mobile após navegar
+    if (isMobile) setSidebarOpen(false);
 
     if (key === "__LOGOUT__") {
       try {
@@ -121,9 +133,8 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
   };
 
   /* ======================
-     UI (premium lateral + anti-corte)
+     UI (premium + mobile-first)
   ====================== */
-
   const UI = useMemo(() => {
     const GOLD = "rgba(202,166,75,1)";
     const GOLD_SOFT = "rgba(202,166,75,0.18)";
@@ -131,84 +142,155 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
     const BORDER = "rgba(255,255,255,0.10)";
     const BG = "#050505";
 
-    const sidebarW = isMobile ? 74 : 92; // desktop mais “premium”
-    return {
-      shell: {
-        minHeight: "100vh",
-        height: "100dvh", // melhora em mobile modernos
-        background: BG,
-        display: "flex",
-        flexDirection: "row",
-        overflow: "hidden", // importante (main rola, não o body)
-      },
-      sidebar: {
-        width: sidebarW,
-        minWidth: sidebarW,
-        height: "100%",
-        borderRight: `1px solid ${BORDER}`,
-        background:
-          "radial-gradient(120px 220px at 40% 10%, rgba(202,166,75,0.10), rgba(0,0,0,0)), rgba(0,0,0,0.45)",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: 12,
-        padding: "12px 10px",
-        boxSizing: "border-box",
-      },
-      brand: {
-        width: "100%",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: 10,
-        paddingBottom: 10,
-        borderBottom: `1px solid ${BORDER}`,
-      },
-      plan: {
-        fontSize: 11,
-        fontWeight: 900,
-        padding: "6px 10px",
-        borderRadius: 999,
-        border: `1px solid ${GOLD_SOFT}`,
-        color: GOLD,
-        background: "rgba(0,0,0,0.35)",
-        letterSpacing: 0.2,
-      },
-      nav: {
-        width: "100%",
-        display: "flex",
-        flexDirection: "column",
-        gap: 8,
-        paddingTop: 10,
-        alignItems: "center",
-        overflow: "auto",
-      },
-      btn: (isActive) => ({
-        width: "100%",
-        height: 44,
-        borderRadius: 14,
-        border: `1px solid ${isActive ? "rgba(202,166,75,0.55)" : BORDER}`,
-        background: isActive
-          ? "linear-gradient(180deg, rgba(202,166,75,0.16), rgba(0,0,0,0.35))"
-          : "rgba(0,0,0,0.25)",
-        color: WHITE,
-        cursor: "pointer",
-        display: "grid",
-        placeItems: "center",
-        boxShadow: isActive ? "0 14px 36px rgba(0,0,0,0.55)" : "none",
-      }),
-      main: {
-        flex: 1,
-        minWidth: 0,
-        height: "100%",
-        overflow: "auto", // ✅ isso evita corte
-        WebkitOverflowScrolling: "touch",
-      },
-    };
-  }, [isMobile]);
+    const sidebarW = isMobile ? 84 : 92;
 
-  // ✅ MENU: adicionamos Downloads
-  // Se quiser esconder no guest, é só filtrar: .filter(x => !isGuest || x.key !== ROUTES.DOWNLOADS)
+    const shell = {
+      minHeight: "100vh",
+      height: "100dvh",
+      background: BG,
+      position: "relative",
+      overflow: "hidden", // main que rola
+      display: "flex",
+      flexDirection: "row",
+    };
+
+    const sidebarBase = {
+      width: sidebarW,
+      minWidth: sidebarW,
+      height: "100%",
+      borderRight: `1px solid ${BORDER}`,
+      background:
+        "radial-gradient(120px 220px at 40% 10%, rgba(202,166,75,0.10), rgba(0,0,0,0)), rgba(0,0,0,0.45)",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      gap: 12,
+      padding: "12px 10px",
+      boxSizing: "border-box",
+    };
+
+    const sidebar = isMobile
+      ? {
+          ...sidebarBase,
+          position: "fixed",
+          top: 0,
+          left: 0,
+          bottom: 0,
+          zIndex: 60,
+          transform: sidebarOpen ? "translateX(0)" : "translateX(-110%)",
+          transition: "transform 220ms ease",
+          borderRight: `1px solid ${BORDER}`,
+          boxShadow: "18px 0 48px rgba(0,0,0,0.65)",
+        }
+      : {
+          ...sidebarBase,
+          position: "relative",
+          zIndex: 2,
+        };
+
+    const overlay = isMobile
+      ? {
+          position: "fixed",
+          inset: 0,
+          zIndex: 50,
+          background: "rgba(0,0,0,0.55)",
+          backdropFilter: "blur(6px)",
+          WebkitBackdropFilter: "blur(6px)",
+          opacity: sidebarOpen ? 1 : 0,
+          pointerEvents: sidebarOpen ? "auto" : "none",
+          transition: "opacity 200ms ease",
+        }
+      : { display: "none" };
+
+    const brand = {
+      width: "100%",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      gap: 10,
+      paddingBottom: 10,
+      borderBottom: `1px solid ${BORDER}`,
+    };
+
+    const plan = {
+      fontSize: 11,
+      fontWeight: 900,
+      padding: "6px 10px",
+      borderRadius: 999,
+      border: `1px solid ${GOLD_SOFT}`,
+      color: GOLD,
+      background: "rgba(0,0,0,0.35)",
+      letterSpacing: 0.2,
+    };
+
+    const nav = {
+      width: "100%",
+      display: "flex",
+      flexDirection: "column",
+      gap: 8,
+      paddingTop: 10,
+      alignItems: "center",
+      overflow: "auto",
+    };
+
+    const btn = (isActive) => ({
+      width: "100%",
+      height: 44,
+      borderRadius: 14,
+      border: `1px solid ${isActive ? "rgba(202,166,75,0.55)" : BORDER}`,
+      background: isActive
+        ? "linear-gradient(180deg, rgba(202,166,75,0.16), rgba(0,0,0,0.35))"
+        : "rgba(0,0,0,0.25)",
+      color: WHITE,
+      cursor: "pointer",
+      display: "grid",
+      placeItems: "center",
+      boxShadow: isActive ? "0 14px 36px rgba(0,0,0,0.55)" : "none",
+    });
+
+    const main = {
+      flex: 1,
+      minWidth: 0,
+      height: "100%",
+      overflow: "auto",
+      WebkitOverflowScrolling: "touch",
+      position: "relative",
+      zIndex: 1,
+    };
+
+    // ✅ Botão hambúrguer premium no mobile
+    const mobileMenuBtn = isMobile
+      ? {
+          position: "sticky",
+          top: 10,
+          left: 10,
+          zIndex: 20,
+          margin: "10px 0 0 10px",
+          width: 42,
+          height: 42,
+          borderRadius: 14,
+          border: `1px solid ${BORDER}`,
+          background:
+            "linear-gradient(180deg, rgba(255,255,255,0.06), rgba(0,0,0,0.35))",
+          boxShadow: "0 14px 36px rgba(0,0,0,0.55)",
+          display: "grid",
+          placeItems: "center",
+          cursor: "pointer",
+        }
+      : { display: "none" };
+
+    const mainInner = isMobile
+      ? {
+          minWidth: 0,
+        }
+      : {
+          minWidth: 0,
+        };
+
+    return { shell, sidebar, overlay, brand, plan, nav, btn, main, mobileMenuBtn, mainInner };
+  }, [isMobile, sidebarOpen]);
+
+  // ✅ MENU
   const menu = [
     { key: ROUTES.DASHBOARD, icon: "home", title: "Dashboard" },
     { key: ROUTES.RESULTS, icon: "calendar", title: "Resultados" },
@@ -216,15 +298,19 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
     { key: ROUTES.LATE, icon: "clock", title: "Atrasados" },
     { key: ROUTES.SEARCH, icon: "search", title: "Busca" },
     { key: ROUTES.CENTENAS, icon: "hash", title: "Centenas" },
-
-    // ✅ NOVO: Downloads (PDF / Excel)
     { key: ROUTES.DOWNLOADS, icon: "download", title: "Downloads" },
-
     { key: ROUTES.ACCOUNT, icon: "user", title: "Minha Conta" },
   ];
 
   return (
     <div style={UI.shell}>
+      {/* ✅ Overlay mobile */}
+      <div
+        style={UI.overlay}
+        onClick={() => setSidebarOpen(false)}
+        aria-hidden="true"
+      />
+
       <aside style={UI.sidebar}>
         <div style={UI.brand}>
           <MiniLogo />
@@ -253,7 +339,20 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
         </nav>
       </aside>
 
-      <main style={UI.main}>{children}</main>
+      <main style={UI.main}>
+        {/* ✅ Botão menu (aparece só no mobile) */}
+        <button
+          type="button"
+          style={UI.mobileMenuBtn}
+          onClick={() => setSidebarOpen(true)}
+          title="Menu"
+          aria-label="Abrir menu"
+        >
+          <Icon name="menu" />
+        </button>
+
+        <div style={UI.mainInner}>{children}</div>
+      </main>
     </div>
   );
 }
