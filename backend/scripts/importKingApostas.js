@@ -293,6 +293,7 @@ function pickLotteryId(draw) {
 
 /**
  * Loterias (IDs) capturadas do Network.
+ * Observação: a API pode consolidar em 1 draw por close_hour, mesmo havendo múltiplos IDs aqui.
  */
 const LOTTERIES_BY_KEY = {
   PT_RIO: [
@@ -300,7 +301,7 @@ const LOTTERIES_BY_KEY = {
     "cbac7c11-e733-400b-ba4d-2dfe0cba4272",
     "98352455-8fd3-447d-ab3d-701dc3f7865f",
     "76c127b7-8157-46b6-a64a-ec7ed1574c9f",
-    "8290329b-aac0-4a6a-9649-5feb6182cf4f",
+    "8290329b-aac4-4a6a-9649-5feb6182cf4f",
     "d5123f7e-629d-43e9-a8fb-1385ff1cba45",
   ],
 };
@@ -442,6 +443,41 @@ async function checkAlreadyComplete(drawRef) {
 }
 
 /**
+ * ✅ Prova forte por SLOT (não depende de docId)
+ * - Busca draws por campos: date + close_hour + lottery_key
+ * - Conta quantos estão completos (prizes)
+ */
+async function checkSlotCompletion({ date, closeHour, lotteryKey }) {
+  try {
+    const snap = await db
+      .collection("draws")
+      .where("date", "==", date)
+      .where("close_hour", "==", closeHour)
+      .where("lottery_key", "==", lotteryKey)
+      .limit(50)
+      .get();
+
+    if (snap.empty) {
+      return { docs: 0, complete: 0 };
+    }
+
+    let complete = 0;
+    const refs = [];
+    snap.forEach((d) => refs.push(d.ref));
+
+    // checa completude doc-a-doc (forte)
+    for (const ref of refs) {
+      const ok = await checkAlreadyComplete(ref);
+      if (ok) complete += 1;
+    }
+
+    return { docs: refs.length, complete };
+  } catch {
+    return { docs: 0, complete: 0 };
+  }
+}
+
+/**
  * Importa payload para o Firestore.
  * closeHour (opcional): se informado, importa SOMENTE draws daquele horário.
  *
@@ -483,12 +519,14 @@ async function importFromPayload({
   // Provas úteis para o scheduler (quando closeHour é informado)
   const proof = {
     filterClose: null,
+
     apiHasPrizes: false,
-
-    // agora é multi-draw (pode haver N lotteries no mesmo close_hour)
+    apiReturnedTargetDraws: 0, // draws válidos do closeHour com prizes
     targetDrawIds: [],
-    matchedTargetDraws: 0,
+    inferredDate: null, // date do slot (inferido a partir do payload)
 
+    expectedTargets: 0, // = max(1, apiReturnedTargetDraws)
+    slotDocsFound: 0,
     alreadyCompleteCount: 0,
     alreadyCompleteAny: false,
     alreadyCompleteAll: false,
@@ -520,7 +558,6 @@ async function importFromPayload({
     }
 
     totalDrawsMatchedClose++;
-    proof.matchedTargetDraws = totalDrawsMatchedClose;
 
     // validações mínimas
     if (!isISODate(date) || !isHHMM(close)) {
@@ -539,8 +576,11 @@ async function importFromPayload({
 
     totalDrawsValid++;
 
-    // Se estamos em modo closeHour, agora sabemos: API liberou prêmios para esse horário
-    if (filterClose) proof.apiHasPrizes = true;
+    if (filterClose) {
+      proof.apiHasPrizes = true;
+      proof.apiReturnedTargetDraws += 1;
+      proof.inferredDate = proof.inferredDate || date;
+    }
 
     const { drawId, drawRef, lotteryName, lotteryIdFromDraw } = buildDrawRef({
       draw,
@@ -552,14 +592,9 @@ async function importFromPayload({
     // Em closeHour: checa “já completo” e, se configurado, pula escrita (por draw)
     if (filterClose) {
       const already = await checkAlreadyComplete(drawRef);
-      if (already) {
-        proof.alreadyCompleteCount += 1;
-        proof.alreadyCompleteAny = true;
-      }
-
       if (skipIfAlreadyComplete && already) {
         skippedAlreadyComplete++;
-        continue; // ✅ não grava este draw específico, mas continua para outros lotteries do mesmo horário
+        continue;
       }
     }
 
@@ -574,7 +609,6 @@ async function importFromPayload({
       }
     }
 
-    // ✅ base: ymd sempre a partir de date (YYYY-MM-DD)
     const ymd = date;
 
     batch.set(
@@ -582,7 +616,6 @@ async function importFromPayload({
       {
         source: "kingapostas",
 
-        // ✅ FIX: UF é estado (RJ) e lottery_key é a chave da loteria (PT_RIO)
         uf: uf || null,
         lottery_key: lk,
 
@@ -590,7 +623,6 @@ async function importFromPayload({
         lottery_id: lotteryIdFromDraw || null,
         drawId,
 
-        // datas
         date,
         ymd,
 
@@ -604,7 +636,6 @@ async function importFromPayload({
     totalDrawsUpserted++;
     if (isNewDraw) totalDrawsSaved++;
 
-    // prova: contagem de writes deste horário
     if (filterClose) proof.targetWriteCount += 1;
 
     for (const p of prizes) {
@@ -612,7 +643,6 @@ async function importFromPayload({
       const prizeId = `p${String(p.position).padStart(2, "0")}`;
       const prizeRef = drawRef.collection("prizes").doc(prizeId);
 
-      // métrica "novo" (opcional — custa reads)
       let isNewPrize = false;
       if (CHECK_EXISTENCE) {
         try {
@@ -637,7 +667,6 @@ async function importFromPayload({
 
       if (filterClose) proof.targetWriteCount += 1;
 
-      // limite por batch
       if (ops >= 420) {
         await batch.commit();
         batch = db.batch();
@@ -648,16 +677,34 @@ async function importFromPayload({
 
   if (ops > 0) await batch.commit();
 
-  // flags finais de complete
+  // ✅ flags finais de complete (por SLOT via query)
   if (proof.filterClose) {
-    const totalTargets = proof.targetDrawIds.length;
-    proof.alreadyCompleteAll =
-      totalTargets > 0 && proof.alreadyCompleteCount === totalTargets;
+    const slotDate = proof.inferredDate; // se API trouxe o slot, teremos date
+
+    // expectedTargets:
+    // - se API trouxe 1 draw válido -> expected=1
+    // - se por algum motivo trouxer mais -> expected = quantidade que veio
+    proof.expectedTargets = Math.max(1, Number(proof.apiReturnedTargetDraws || 0));
+
+    if (slotDate) {
+      const { docs, complete } = await checkSlotCompletion({
+        date: slotDate,
+        closeHour: proof.filterClose,
+        lotteryKey: lk,
+      });
+
+      proof.slotDocsFound = docs;
+      proof.alreadyCompleteCount = complete;
+      proof.alreadyCompleteAny = complete > 0;
+      proof.alreadyCompleteAll = complete >= proof.expectedTargets;
+    } else {
+      proof.slotDocsFound = 0;
+      proof.alreadyCompleteCount = 0;
+      proof.alreadyCompleteAny = false;
+      proof.alreadyCompleteAll = false;
+    }
 
     // savedCount “forte” para o scheduler:
-    // - se API não liberou prêmios => 0
-    // - se todos já estavam completos e pulamos => 0
-    // - senão => writeCount
     if (!proof.apiHasPrizes) {
       proof.targetSavedCount = 0;
     } else if (skipIfAlreadyComplete && proof.alreadyCompleteAll) {
@@ -674,7 +721,10 @@ async function importFromPayload({
       ` | skip_vazio=${skippedEmpty} | skip_invalido=${skippedInvalid} | skip_close=${skippedCloseHour}` +
       ` | skip_complete=${skippedAlreadyComplete}` +
       ` | CHECK_EXISTENCE=${CHECK_EXISTENCE ? "ON" : "OFF"}` +
-      ` | uf=${uf || "NULL"} lottery_key=${lk}`
+      ` | uf=${uf || "NULL"} lottery_key=${lk}` +
+      (proof.filterClose
+        ? ` | expected=${proof.expectedTargets} complete=${proof.alreadyCompleteCount} slotDocs=${proof.slotDocsFound} apiTargets=${proof.apiReturnedTargetDraws}`
+        : "")
   );
 
   return {
@@ -720,14 +770,11 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
 
   const payload = await fetchKingResults({ date, lotteryKey: lk });
 
-  // Quando closeHour é informado (scheduler):
-  // - queremos PROVA FORTE
-  // - e queremos evitar reescrever se já está completo
   const result = await importFromPayload({
     payload,
     lotteryKey: lk,
     closeHour: normalizedClose,
-    skipIfAlreadyComplete: Boolean(normalizedClose), // liga automaticamente
+    skipIfAlreadyComplete: Boolean(normalizedClose), // scheduler: evita regravar
   });
 
   const ms = Date.now() - startedAt;
@@ -735,14 +782,20 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
   const proof = result.proof || {};
   const apiHasPrizes = Boolean(proof.apiHasPrizes);
 
-  const alreadyCompleteAny = Boolean(proof.alreadyCompleteAny);
   const alreadyCompleteAll = Boolean(proof.alreadyCompleteAll);
 
+  /**
+   * ✅ BLINDAGEM CRÍTICA:
+   * autoImportToday fecha slot com (savedCount > 0 || alreadyCompleteAny).
+   * Logo, no modo scheduler, "alreadyCompleteAny" precisa significar "ALL".
+   */
+  const alreadyCompleteAny = normalizedClose ? alreadyCompleteAll : null;
+
   // ✅ Captured “verdadeiro” (modo closeHour):
-  // - API liberou prizes para pelo menos 1 draw daquele horário, OU
-  // - pelo menos 1 draw daquele horário já estava completo no Firestore
+  // - API liberou prizes para o horário, OU
+  // - slot já está completo no Firestore
   const captured = normalizedClose
-    ? apiHasPrizes || alreadyCompleteAny
+    ? apiHasPrizes || alreadyCompleteAll
     : (result.totalDrawsValid || 0) > 0;
 
   const writeCount = Number.isFinite(Number(proof.targetWriteCount))
@@ -763,6 +816,12 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
     apiHasPrizes: normalizedClose ? apiHasPrizes : null,
     alreadyCompleteAny: normalizedClose ? alreadyCompleteAny : null,
     alreadyCompleteAll: normalizedClose ? alreadyCompleteAll : null,
+
+    expectedTargets: normalizedClose ? Number(proof.expectedTargets || 0) : null,
+    alreadyCompleteCount: normalizedClose ? Number(proof.alreadyCompleteCount || 0) : null,
+    slotDocsFound: normalizedClose ? Number(proof.slotDocsFound || 0) : null,
+    apiReturnedTargetDraws: normalizedClose ? Number(proof.apiReturnedTargetDraws || 0) : null,
+
     savedCount: normalizedClose ? savedCount : null,
     writeCount: normalizedClose ? writeCount : null,
     targetDrawIds: normalizedClose ? (proof.targetDrawIds || []) : null,
@@ -816,7 +875,7 @@ async function main() {
     payload,
     lotteryKey: lk,
     closeHour: normalizedClose,
-    skipIfAlreadyComplete: false, // CLI mantém comportamento tradicional (regrava)
+    skipIfAlreadyComplete: false, // CLI regrava
   });
 
   console.log(
