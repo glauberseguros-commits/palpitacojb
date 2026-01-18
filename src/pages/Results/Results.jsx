@@ -8,7 +8,11 @@ import React, {
   useState,
 } from "react";
 import { getKingResultsByDate } from "../../services/kingResultsService";
-import { getAnimalLabel, getImgFromGrupo, getSlugByGrupo } from "../../constants/bichoMap";
+import {
+  getAnimalLabel,
+  getImgFromGrupo,
+  getSlugByGrupo,
+} from "../../constants/bichoMap";
 
 /* =========================
    Helpers (locais e robustos)
@@ -266,9 +270,8 @@ function resolveAnimalUI(prize) {
 
   if (grupo) {
     const label = safeStr(getAnimalLabel(grupo)) || (animalRaw ? animalRaw : "");
-
-    // ✅ usa imagem 64 (melhor qualidade), mas o CSS rende em 16px
-    const variants = makeImgVariantsFromGrupo(grupo, 64);
+    // ✅ usa imagem 96 (qualidade) e o CSS rende corretamente
+    const variants = makeImgVariantsFromGrupo(grupo, 96);
     return { grupo, label, imgVariants: variants };
   }
 
@@ -284,7 +287,9 @@ function drawKeyForDedup(d, ufKey, ymd) {
   const id = safeStr(d?.drawId || d?.id || "");
   if (id) return `ID:${ufKey}|${ymd}|${id}`;
 
-  const hour = normalizeHourLike(d?.close_hour || d?.closeHour || d?.hour || d?.hora || "");
+  const hour = normalizeHourLike(
+    d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+  );
   return `DH:${ufKey}|${ymd}|${hour || "??"}`;
 }
 
@@ -317,6 +322,26 @@ function dedupeDraws(list, ufKey, ymd) {
   }
 
   return Array.from(map.values());
+}
+
+/* =========================
+   UI helpers
+========================= */
+
+function prizeRankClass(pos) {
+  if (pos === 1) return "isP1";
+  if (pos === 2) return "isP2";
+  if (pos === 3) return "isP3";
+  return "";
+}
+
+function fmt4digitsMaybe(v) {
+  const s = safeStr(v);
+  if (!s) return "";
+  const digits = s.replace(/\D+/g, "");
+  if (!digits) return s;
+  const last4 = digits.slice(-4).padStart(4, "0");
+  return last4;
 }
 
 /* =========================
@@ -414,14 +439,14 @@ export default function Results() {
     const centerH = centerEl.clientHeight || 0;
 
     const topbarExists = !!topbarRef.current;
-    const topbarH = topbarExists ? (topbarRef.current?.clientHeight || 0) + 8 : 0;
+    const topbarH = topbarExists ? (topbarRef.current?.clientHeight || 0) + 10 : 0;
 
     const available = Math.max(0, centerH - topbarH);
 
     const cardEl = sampleCardRef.current;
     const cardH = cardEl?.clientHeight || 0;
 
-    const rowGap = 10;
+    const rowGap = 12;
 
     if (available <= 0 || cardH <= 0) return;
 
@@ -477,17 +502,38 @@ export default function Results() {
     return drawsOrdered.slice(0, effectiveFit);
   }, [drawsOrdered, needsToggle, fitCount, showAll]);
 
+  /**
+   * ✅ FIX DO “CORTANDO”:
+   * - quando showAll=true (ou não precisa toggle), o miolo precisa ser scrollável.
+   * - mantemos shell com overflow hidden (premium), e liberamos scroll só no .pp_body
+   */
+  const bodyScrollable = useMemo(() => {
+    // em telas pequenas sempre deixa scroll (sem cortar)
+    const isSmall = window.matchMedia?.("(max-width: 980px)")?.matches;
+    if (isSmall) return true;
+    return showAll || !needsToggle;
+  }, [showAll, needsToggle]);
+
   const styles = useMemo(() => {
     return `
       :root{
         --pp-border: rgba(255,255,255,0.10);
+        --pp-border2: rgba(255,255,255,0.14);
+
         --pp-gold: rgba(201,168,62,0.92);
+        --pp-gold2: rgba(201,168,62,0.55);
+        --pp-goldSoft: rgba(201,168,62,0.16);
 
-        --pp-ink: rgba(12,12,12,0.94);
-        --pp-ink2: rgba(12,12,12,0.62);
+        --pp-text: rgba(255,255,255,0.92);
+        --pp-muted: rgba(255,255,255,0.62);
 
-        --pp-paper: rgba(255,255,255,0.96);
-        --pp-paperLine: rgba(0,0,0,0.12);
+        --pp-bg: rgba(0,0,0,0.55);
+        --pp-glass: rgba(10,10,10,0.42);
+
+        --pp-blackA: rgba(0,0,0,0.35);
+        --pp-blackB: rgba(0,0,0,0.65);
+
+        --pp-radius: 18px;
       }
 
       .pp_wrap{
@@ -496,18 +542,22 @@ export default function Results() {
         padding: 14px;
         overflow: hidden;
         min-width: 0;
+        box-sizing: border-box;
       }
 
       .pp_shell{
         height: calc(100dvh - 28px);
         border: 1px solid var(--pp-border);
-        border-radius: 18px;
-        background: rgba(0,0,0,0.40);
+        border-radius: var(--pp-radius);
+        background:
+          radial-gradient(1000px 520px at 10% 0%, rgba(201,168,62,0.10), transparent 60%),
+          radial-gradient(900px 500px at 90% 10%, rgba(201,168,62,0.08), transparent 62%),
+          rgba(0,0,0,0.40);
         box-shadow: 0 16px 48px rgba(0,0,0,0.55);
         padding: 10px;
         display: grid;
         grid-template-rows: auto 1fr;
-        gap: 8px;
+        gap: 10px;
         overflow: hidden;
         min-width: 0;
       }
@@ -522,9 +572,9 @@ export default function Results() {
 
       .pp_title{
         font-size:16px;
-        font-weight:1000;
-        letter-spacing:0.2px;
-        color: rgba(255,255,255,0.92);
+        font-weight:1100;
+        letter-spacing:0.35px;
+        color: var(--pp-text);
         line-height:1.1;
       }
 
@@ -539,14 +589,14 @@ export default function Results() {
       }
 
       .pp_input{
-        height:32px;
-        border-radius:12px;
+        height:34px;
+        border-radius: 12px;
         border: 1px solid var(--pp-border);
         background: rgba(0,0,0,0.55);
-        color:#fff;
+        color: var(--pp-text);
         padding: 0 10px;
         outline:none;
-        font-weight:900;
+        font-weight: 950;
         letter-spacing:0.2px;
         min-width:110px;
         font-size: 12px;
@@ -558,28 +608,35 @@ export default function Results() {
       }
 
       .pp_btn{
-        height:32px;
-        border-radius:12px;
+        height:34px;
+        border-radius: 12px;
         border: 1px solid var(--pp-border);
         background: rgba(255,255,255,0.06);
-        color: rgba(255,255,255,0.92);
-        font-weight:1000;
+        color: var(--pp-text);
+        font-weight: 1100;
         letter-spacing:0.2px;
-        padding: 0 12px;
+        padding: 0 14px;
         cursor:pointer;
         white-space:nowrap;
         font-size: 12px;
         box-sizing: border-box;
       }
       .pp_btn:hover{ background: rgba(255,255,255,0.08); }
+      .pp_btn:active{ transform: translateY(1px); }
 
       .pp_body{
         min-width:0;
         min-height:0;
-        overflow: hidden;
+        overflow: hidden; /* ✅ padrão (modo fit) */
         display: flex;
         justify-content: center;
         align-items: stretch;
+      }
+
+      /* ✅ quando “Ver menos/mais” expande, libera scroll no miolo e não corta */
+      .pp_body.isScroll{
+        overflow: auto;
+        padding-right: 2px; /* evita “clip” por overlay do scrollbar */
       }
 
       .pp_center{
@@ -588,17 +645,18 @@ export default function Results() {
         height: 100%;
         display: grid;
         grid-template-rows: auto 1fr;
-        gap: 8px;
+        gap: 10px;
         min-height: 0;
+        min-width: 0;
       }
 
       .pp_state{
         border: 1px solid var(--pp-border);
-        border-radius: 14px;
+        border-radius: 16px;
         background: rgba(0,0,0,0.26);
         padding: 12px 14px;
         font-weight: 850;
-        color: rgba(255,255,255,0.88);
+        color: var(--pp-text);
       }
 
       .pp_topbar{
@@ -611,137 +669,237 @@ export default function Results() {
 
       .pp_grid2{
         display:grid;
-        grid-template-columns: repeat(2, minmax(0, 430px));
+        grid-template-columns: repeat(2, minmax(0, 460px));
         justify-content: center;
-        gap: 10px;
+        gap: 12px;
         min-width:0;
         align-content: start;
+        padding-bottom: 14px; /* ✅ garante respiro no fim (sem “corte”) */
       }
 
-      .pp_paper{
-        background: var(--pp-paper);
-        border-radius: 14px;
-        overflow:hidden;
-        border: 1px solid rgba(255,255,255,0.28);
-        box-shadow: 0 6px 14px rgba(0,0,0,0.16);
+      /* =========================
+         CARD PREMIUM (Resultados)
+      ========================= */
+
+      .pp_card{
+        position: relative;
+        border-radius: 18px;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.12);
+        background: rgba(10,10,10,0.34);
+        box-shadow: 0 14px 34px rgba(0,0,0,0.48);
       }
 
-      .pp_paper_head{
-        padding: 6px 8px;
-        border-bottom: 1px solid var(--pp-paperLine);
+      /* moldura dourada sutil */
+      .pp_card::before{
+        content:"";
+        position:absolute;
+        inset:0;
+        pointer-events:none;
+        background:
+          linear-gradient(180deg, rgba(201,168,62,0.20), transparent 38%),
+          radial-gradient(800px 380px at 15% 0%, rgba(201,168,62,0.16), transparent 62%),
+          radial-gradient(700px 360px at 85% 10%, rgba(201,168,62,0.10), transparent 64%);
+        opacity: 1;
+      }
+
+      /* overlay para dar "black card" */
+      .pp_card::after{
+        content:"";
+        position:absolute;
+        inset:0;
+        pointer-events:none;
+        background:
+          linear-gradient(180deg, rgba(0,0,0,0.32) 0%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0.74) 100%);
+      }
+
+      .pp_cardInner{
+        position: relative;
+        z-index: 1;
+      }
+
+      .pp_cardHead{
+        padding: 10px 12px;
+        border-bottom: 1px solid rgba(255,255,255,0.10);
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap: 10px;
+      }
+
+      .pp_headLeft{
         display:flex;
         flex-direction:column;
-        align-items:center;
-        gap:1px;
+        gap: 2px;
+        min-width:0;
       }
 
-      .pp_line1{
-        font-weight: 950;
-        letter-spacing: 0.4px;
-        color: var(--pp-ink);
+      .pp_headTitle{
+        font-weight: 1100;
+        letter-spacing: 0.55px;
+        color: rgba(255,255,255,0.92);
         text-transform: uppercase;
-        font-size: 10px;
+        font-size: 11px;
+        white-space: nowrap;
+        overflow:hidden;
+        text-overflow: ellipsis;
       }
 
-      .pp_line2{
-        font-weight: 850;
-        color: var(--pp-ink2);
-        font-size: 10px;
+      .pp_headSub{
+        font-weight: 900;
+        color: rgba(255,255,255,0.62);
+        font-size: 11px;
+      }
+
+      .pp_headPill{
+        border: 1px solid rgba(201,168,62,0.32);
+        background: rgba(201,168,62,0.12);
+        color: rgba(201,168,62,0.96);
+        font-weight: 1100;
+        letter-spacing: 0.3px;
+        font-size: 12px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        white-space: nowrap;
       }
 
       .pp_rows{ display:grid; }
 
       .pp_row{
         display:grid;
-        grid-template-columns: 150px 1fr 92px;
-        gap: 6px;
+        grid-template-columns: 58px 1fr 110px;
+        gap: 10px;
         align-items:center;
-        padding: 5px 8px;
-        border-bottom: 1px solid var(--pp-paperLine);
-        font-weight: 900;
-        color: var(--pp-ink);
+        padding: 10px 12px;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
         min-width: 0;
       }
       .pp_row:last-child{ border-bottom:0; }
 
-      .pp_groupCell{
+      .pp_posBadge{
+        width: 46px;
+        height: 34px;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.12);
+        background: rgba(255,255,255,0.06);
         display:flex;
         align-items:center;
-        gap: 6px;
+        justify-content:center;
+        font-weight: 1200;
+        letter-spacing: 0.4px;
+        color: rgba(255,255,255,0.90);
+        font-size: 12px;
+        user-select: none;
+      }
+
+      .pp_posBadge.isP1,
+      .pp_posBadge.isP2,
+      .pp_posBadge.isP3{
+        border-color: rgba(201,168,62,0.36);
+        background: rgba(201,168,62,0.12);
+        color: rgba(201,168,62,0.98);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.25);
+      }
+
+      .pp_mid{
+        display:flex;
+        align-items:center;
+        gap: 10px;
         min-width: 0;
       }
 
       .pp_imgFrame{
-        width: 18px;
-        height: 18px;
-        border-radius: 6px;
-        border: 1px solid rgba(0,0,0,0.10);
-        background: rgba(255,255,255,0.55);
+        width: 42px;
+        height: 42px;
+        border-radius: 14px;
+        border: 1px solid rgba(201,168,62,0.26);
+        background: rgba(0,0,0,0.22);
         display:grid;
         place-items:center;
         overflow:hidden;
         flex: 0 0 auto;
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
       }
 
       .pp_img{
-        width: 16px;
-        height: 16px;
+        width: 32px;
+        height: 32px;
         object-fit: contain;
-        filter: drop-shadow(0 1px 0 rgba(0,0,0,0.05));
+        filter: drop-shadow(0 2px 0 rgba(0,0,0,0.25));
         display:block;
       }
 
       .pp_imgFallback{
-        font-size: 9px;
-        font-weight: 1000;
-        color: rgba(12,12,12,0.55);
-        letter-spacing: 0.2px;
+        font-size: 10px;
+        font-weight: 1200;
+        color: rgba(201,168,62,0.88);
+        letter-spacing: 0.3px;
         line-height: 1;
       }
 
+      .pp_textBlock{
+        min-width: 0;
+        display:flex;
+        flex-direction:column;
+        gap: 2px;
+      }
+
       .pp_group{
-        color: var(--pp-ink2);
+        color: rgba(255,255,255,0.65);
         font-weight: 950;
         text-transform: uppercase;
         white-space: nowrap;
-        font-size: 10px;
+        font-size: 11px;
         overflow:hidden;
         text-overflow:ellipsis;
-        min-width: 0;
       }
 
       .pp_animal{
+        color: rgba(255,255,255,0.94);
+        font-weight: 1200;
         text-transform: uppercase;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        min-width: 0;
-        font-size: 10px;
-      }
-
-      .pp_result{
-        display:flex;
-        align-items:baseline;
-        justify-content:flex-end;
-        gap: 6px;
-        min-width: 0;
-        white-space: nowrap;
-      }
-
-      .pp_pos{
-        color: var(--pp-ink2);
-        font-weight: 950;
-        font-size: 10px;
+        font-size: 13px;
+        letter-spacing: 0.35px;
       }
 
       .pp_num{
-        font-weight: 1000;
-        letter-spacing: 0.35px;
+        display:flex;
+        align-items:center;
+        justify-content:flex-end;
+        gap: 8px;
+        white-space: nowrap;
+        min-width: 0;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .pp_numValue{
+        font-weight: 1300;
+        font-size: 18px;
+        letter-spacing: 1px;
+        color: rgba(255,255,255,0.95);
+        text-shadow: 0 10px 24px rgba(0,0,0,0.45);
+      }
+
+      .pp_numHint{
+        color: rgba(201,168,62,0.92);
+        font-weight: 1100;
         font-size: 11px;
+        letter-spacing: 0.25px;
+        border: 1px solid rgba(201,168,62,0.28);
+        background: rgba(201,168,62,0.10);
+        padding: 4px 8px;
+        border-radius: 999px;
+      }
+
+      .pp_row:hover{
+        background: rgba(255,255,255,0.03);
       }
 
       @media (max-width: 980px){
-        .pp_body{ overflow: auto; }
+        .pp_body{ overflow: auto; } /* mantém scroll sempre no mobile */
         .pp_grid2{ grid-template-columns: 1fr; }
       }
 
@@ -750,8 +908,8 @@ export default function Results() {
         .pp_controls{ justify-content:flex-start; }
         .pp_input, .pp_btn{ width:100%; min-width:0; }
 
-        .pp_row{ grid-template-columns: 138px 1fr 86px; }
-        .pp_result{ gap: 5px; }
+        .pp_row{ grid-template-columns: 56px 1fr 104px; padding: 10px 10px; }
+        .pp_numValue{ font-size: 17px; }
       }
     `;
   }, []);
@@ -793,13 +951,13 @@ export default function Results() {
           </div>
         </div>
 
-        <div className="pp_body">
+        <div className={`pp_body ${bodyScrollable ? "isScroll" : ""}`}>
           <div className="pp_center" ref={centerRef}>
             {loading ? (
               <div className="pp_state">Carregando…</div>
             ) : error ? (
               <div className="pp_state">
-                <div style={{ fontWeight: 1000, marginBottom: 6 }}>Erro</div>
+                <div style={{ fontWeight: 1100, marginBottom: 6 }}>Erro</div>
                 <div style={{ opacity: 0.9, whiteSpace: "pre-wrap" }}>{error}</div>
               </div>
             ) : drawsOrdered.length === 0 ? (
@@ -866,45 +1024,65 @@ export default function Results() {
                     return (
                       <div
                         key={`${id}_${idx}`}
-                        className="pp_paper"
+                        className="pp_card"
                         ref={idx === 0 ? sampleCardRef : null}
                       >
-                        <div className="pp_paper_head">
-                          <div className="pp_line1">{`LT PT ${label} ${hs}`}</div>
-                          <div className="pp_line2">{dateBR}</div>
-                        </div>
+                        <div className="pp_cardInner">
+                          <div className="pp_cardHead">
+                            <div className="pp_headLeft">
+                              <div className="pp_headTitle">{`Resultado • LT PT ${label}`}</div>
+                              <div className="pp_headSub">{dateBR}</div>
+                            </div>
 
-                        <div className="pp_rows">
-                          {rows.map((r) => {
-                            const gtxt = r.grupo ? `G${pad2(r.grupo)}` : "—";
+                            <div className="pp_headPill">{hs}</div>
+                          </div>
 
-                            return (
-                              <div key={`${id}_pos_${r.pos}`} className="pp_row">
-                                <div className="pp_groupCell">
-                                  <div className="pp_imgFrame" aria-hidden="true">
-                                    <RowImg
-                                      variants={r.imgVariants || []}
-                                      alt={r.animalLabel ? `Bicho ${r.animalLabel}` : "Bicho"}
-                                      fallbackText={gtxt}
-                                    />
+                          <div className="pp_rows">
+                            {rows.map((r) => {
+                              const gtxt = r.grupo ? `G${pad2(r.grupo)}` : "—";
+                              const num4 = r.numero ? fmt4digitsMaybe(r.numero) : "";
+
+                              return (
+                                <div key={`${id}_pos_${r.pos}`} className="pp_row">
+                                  <div className={`pp_posBadge ${prizeRankClass(r.pos)}`}>
+                                    {`${r.pos}º`}
                                   </div>
 
-                                  <div className="pp_group">
-                                    {r.grupo ? `GRUPO ${pad2(r.grupo)}` : "GRUPO —"}
+                                  <div className="pp_mid">
+                                    <div className="pp_imgFrame" aria-hidden="true">
+                                      <RowImg
+                                        variants={r.imgVariants || []}
+                                        alt={r.animalLabel ? `Bicho ${r.animalLabel}` : "Bicho"}
+                                        fallbackText={gtxt}
+                                      />
+                                    </div>
+
+                                    <div className="pp_textBlock">
+                                      <div className="pp_group">
+                                        {r.grupo ? `GRUPO ${pad2(r.grupo)}` : "GRUPO —"}
+                                      </div>
+                                      <div className="pp_animal">
+                                        {r.animalLabel ? r.animalLabel.toUpperCase() : "—"}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div className="pp_num">
+                                    {r.numero ? (
+                                      <>
+                                        <span className="pp_numHint">MILHAR</span>
+                                        <span className="pp_numValue">{num4}</span>
+                                      </>
+                                    ) : (
+                                      <span className="pp_numValue" style={{ opacity: 0.55 }}>
+                                        —
+                                      </span>
+                                    )}
                                   </div>
                                 </div>
-
-                                <div className="pp_animal">
-                                  {r.animalLabel ? r.animalLabel.toUpperCase() : "—"}
-                                </div>
-
-                                <div className="pp_result">
-                                  <span className="pp_pos">{`${r.pos}º`}</span>
-                                  <span className="pp_num">{r.numero || "—"}</span>
-                                </div>
-                              </div>
-                            );
-                          })}
+                              );
+                            })}
+                          </div>
                         </div>
                       </div>
                     );
