@@ -203,10 +203,8 @@ function makeImgVariantsFromGrupo(grupo, size) {
   const slug = safeStr(getSlugByGrupo(g));
   if (!slug) return [];
 
-  // caminho que o bichoMap retorna (seu padrão: sem _size no nome)
   const primary = normalizeImgSrc(getImgFromGrupo(g, s));
 
-  // fallback: com _size no nome (caso exista em alguma pasta)
   const base = publicBase();
   const sizedName = `${base}/assets/animals/animais_${s}_png/${g2}_${slug}_${s}.png`;
 
@@ -270,7 +268,6 @@ function resolveAnimalUI(prize) {
 
   if (grupo) {
     const label = safeStr(getAnimalLabel(grupo)) || (animalRaw ? animalRaw : "");
-    // ✅ usa imagem 96 (qualidade) e o CSS rende corretamente
     const variants = makeImgVariantsFromGrupo(grupo, 96);
     return { grupo, label, imgVariants: variants };
   }
@@ -335,13 +332,29 @@ function prizeRankClass(pos) {
   return "";
 }
 
-function fmt4digitsMaybe(v) {
-  const s = safeStr(v);
+/**
+ * ✅ Formata número por posição:
+ * - 7º prêmio = CENTENA (3 dígitos, sem zero à esquerda)
+ * - demais = MILHAR (4 dígitos, com padStart)
+ */
+function formatPrizeNumberByPos(value, pos) {
+  const s = safeStr(value);
   if (!s) return "";
+
   const digits = s.replace(/\D+/g, "");
   if (!digits) return s;
-  const last4 = digits.slice(-4).padStart(4, "0");
-  return last4;
+
+  if (pos === 7) {
+    // centena: SEM completar com zero
+    return digits.slice(-3);
+  }
+
+  // milhar: completa para 4
+  return digits.slice(-4).padStart(4, "0");
+}
+
+function prizeLabelByPos(pos) {
+  return pos === 7 ? "CENTENA" : "MILHAR";
 }
 
 /* =========================
@@ -439,7 +452,9 @@ export default function Results() {
     const centerH = centerEl.clientHeight || 0;
 
     const topbarExists = !!topbarRef.current;
-    const topbarH = topbarExists ? (topbarRef.current?.clientHeight || 0) + 10 : 0;
+    const topbarH = topbarExists
+      ? (topbarRef.current?.clientHeight || 0) + 10
+      : 0;
 
     const available = Math.max(0, centerH - topbarH);
 
@@ -508,7 +523,6 @@ export default function Results() {
    * - mantemos shell com overflow hidden (premium), e liberamos scroll só no .pp_body
    */
   const bodyScrollable = useMemo(() => {
-    // em telas pequenas sempre deixa scroll (sem cortar)
     const isSmall = window.matchMedia?.("(max-width: 980px)")?.matches;
     if (isSmall) return true;
     return showAll || !needsToggle;
@@ -627,16 +641,15 @@ export default function Results() {
       .pp_body{
         min-width:0;
         min-height:0;
-        overflow: hidden; /* ✅ padrão (modo fit) */
+        overflow: hidden;
         display: flex;
         justify-content: center;
         align-items: stretch;
       }
 
-      /* ✅ quando “Ver menos/mais” expande, libera scroll no miolo e não corta */
       .pp_body.isScroll{
         overflow: auto;
-        padding-right: 2px; /* evita “clip” por overlay do scrollbar */
+        padding-right: 2px;
       }
 
       .pp_center{
@@ -674,12 +687,8 @@ export default function Results() {
         gap: 12px;
         min-width:0;
         align-content: start;
-        padding-bottom: 14px; /* ✅ garante respiro no fim (sem “corte”) */
+        padding-bottom: 14px;
       }
-
-      /* =========================
-         CARD PREMIUM (Resultados)
-      ========================= */
 
       .pp_card{
         position: relative;
@@ -690,7 +699,6 @@ export default function Results() {
         box-shadow: 0 14px 34px rgba(0,0,0,0.48);
       }
 
-      /* moldura dourada sutil */
       .pp_card::before{
         content:"";
         position:absolute;
@@ -703,7 +711,6 @@ export default function Results() {
         opacity: 1;
       }
 
-      /* overlay para dar "black card" */
       .pp_card::after{
         content:"";
         position:absolute;
@@ -899,7 +906,7 @@ export default function Results() {
       }
 
       @media (max-width: 980px){
-        .pp_body{ overflow: auto; } /* mantém scroll sempre no mobile */
+        .pp_body{ overflow: auto; }
         .pp_grid2{ grid-template-columns: 1fr; }
       }
 
@@ -945,7 +952,12 @@ export default function Results() {
               style={{ minWidth: 150 }}
             />
 
-            <button className="pp_btn" onClick={load} type="button" title="Atualizar">
+            <button
+              className="pp_btn"
+              onClick={load}
+              type="button"
+              title="Atualizar"
+            >
               Atualizar
             </button>
           </div>
@@ -958,7 +970,9 @@ export default function Results() {
             ) : error ? (
               <div className="pp_state">
                 <div style={{ fontWeight: 1100, marginBottom: 6 }}>Erro</div>
-                <div style={{ opacity: 0.9, whiteSpace: "pre-wrap" }}>{error}</div>
+                <div style={{ opacity: 0.9, whiteSpace: "pre-wrap" }}>
+                  {error}
+                </div>
               </div>
             ) : drawsOrdered.length === 0 ? (
               <div className="pp_state">
@@ -1040,29 +1054,49 @@ export default function Results() {
                           <div className="pp_rows">
                             {rows.map((r) => {
                               const gtxt = r.grupo ? `G${pad2(r.grupo)}` : "—";
-                              const num4 = r.numero ? fmt4digitsMaybe(r.numero) : "";
+                              const numFmt = r.numero
+                                ? formatPrizeNumberByPos(r.numero, r.pos)
+                                : "";
 
                               return (
-                                <div key={`${id}_pos_${r.pos}`} className="pp_row">
-                                  <div className={`pp_posBadge ${prizeRankClass(r.pos)}`}>
+                                <div
+                                  key={`${id}_pos_${r.pos}`}
+                                  className="pp_row"
+                                >
+                                  <div
+                                    className={`pp_posBadge ${prizeRankClass(
+                                      r.pos
+                                    )}`}
+                                  >
                                     {`${r.pos}º`}
                                   </div>
 
                                   <div className="pp_mid">
-                                    <div className="pp_imgFrame" aria-hidden="true">
+                                    <div
+                                      className="pp_imgFrame"
+                                      aria-hidden="true"
+                                    >
                                       <RowImg
                                         variants={r.imgVariants || []}
-                                        alt={r.animalLabel ? `Bicho ${r.animalLabel}` : "Bicho"}
+                                        alt={
+                                          r.animalLabel
+                                            ? `Bicho ${r.animalLabel}`
+                                            : "Bicho"
+                                        }
                                         fallbackText={gtxt}
                                       />
                                     </div>
 
                                     <div className="pp_textBlock">
                                       <div className="pp_group">
-                                        {r.grupo ? `GRUPO ${pad2(r.grupo)}` : "GRUPO —"}
+                                        {r.grupo
+                                          ? `GRUPO ${pad2(r.grupo)}`
+                                          : "GRUPO —"}
                                       </div>
                                       <div className="pp_animal">
-                                        {r.animalLabel ? r.animalLabel.toUpperCase() : "—"}
+                                        {r.animalLabel
+                                          ? r.animalLabel.toUpperCase()
+                                          : "—"}
                                       </div>
                                     </div>
                                   </div>
@@ -1070,11 +1104,18 @@ export default function Results() {
                                   <div className="pp_num">
                                     {r.numero ? (
                                       <>
-                                        <span className="pp_numHint">MILHAR</span>
-                                        <span className="pp_numValue">{num4}</span>
+                                        <span className="pp_numHint">
+                                          {prizeLabelByPos(r.pos)}
+                                        </span>
+                                        <span className="pp_numValue">
+                                          {numFmt}
+                                        </span>
                                       </>
                                     ) : (
-                                      <span className="pp_numValue" style={{ opacity: 0.55 }}>
+                                      <span
+                                        className="pp_numValue"
+                                        style={{ opacity: 0.55 }}
+                                      >
                                         —
                                       </span>
                                     )}
