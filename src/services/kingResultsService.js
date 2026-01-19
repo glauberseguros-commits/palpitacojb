@@ -63,6 +63,19 @@ function resolveLotteryKeyForQuery(ufInput) {
 }
 
 /**
+ * ✅ Chave canônica para CACHE:
+ * - Se for "RJ" -> usa "PT_RIO"
+ * - Se for "pt_rio" -> "PT_RIO"
+ * - Se for qualquer outro -> UPPER(TRIM)
+ */
+function canonicalScopeKey(ufInput) {
+  const s = String(ufInput || "").trim();
+  if (!s) return "";
+  const up = s.toUpperCase();
+  return up === RJ_STATE_CODE ? RJ_LOTTERY_KEY : up;
+}
+
+/**
  * Quando for consultar por campo "uf", adiciona trava de lottery_key para RJ.
  * Isso elimina o vazamento de Federal para o Rio.
  */
@@ -937,7 +950,7 @@ export async function getKingBoundsByUf(ufOrObj) {
    API: Day
 ========================= */
 
-function drawsCacheKeyDay({ uf, ymd, positionsArr, hourFilter }) {
+function drawsCacheKeyDay({ scopeKey, ymd, positionsArr, hourFilter }) {
   const p = positionsArr && positionsArr.length ? positionsArr.join(",") : "all";
   const h =
     hourFilter?.kind === "bucket"
@@ -945,7 +958,7 @@ function drawsCacheKeyDay({ uf, ymd, positionsArr, hourFilter }) {
       : hourFilter?.kind === "exact"
       ? `exact:${hourFilter.hhmm}`
       : "all";
-  return `day::${uf}::${ymd}::pos=${p}::h=${h}`;
+  return `day::${scopeKey}::${ymd}::pos=${p}::h=${h}`;
 }
 
 export async function getKingResultsByDate({
@@ -957,6 +970,8 @@ export async function getKingResultsByDate({
 }) {
   if (!uf || !date) throw new Error("Parâmetros obrigatórios: uf e date");
 
+  const scopeKey = canonicalScopeKey(uf);
+
   const positionsArr = normalizePositions(positions);
   const ymdDate = normalizeToYMD(date);
   if (!ymdDate) return [];
@@ -964,7 +979,7 @@ export async function getKingResultsByDate({
   const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
 
   const dayKey = drawsCacheKeyDay({
-    uf,
+    scopeKey,
     ymd: ymdDate,
     positionsArr,
     hourFilter,
@@ -1080,7 +1095,7 @@ function daysDiffUTC(fromYmd, toYmd) {
   return Math.floor(ms / 86400000);
 }
 
-function drawsCacheKeyRange({ uf, from, to, positionsArr, hourFilter, mode }) {
+function drawsCacheKeyRange({ scopeKey, from, to, positionsArr, hourFilter, mode }) {
   const p = positionsArr && positionsArr.length ? positionsArr.join(",") : "all";
   const h =
     hourFilter?.kind === "bucket"
@@ -1089,7 +1104,7 @@ function drawsCacheKeyRange({ uf, from, to, positionsArr, hourFilter, mode }) {
       ? `exact:${hourFilter.hhmm}`
       : "all";
   const m = mode ? String(mode) : "detailed";
-  return `range::${uf}::${from}..${to}::pos=${p}::h=${h}::mode=${m}`;
+  return `range::${scopeKey}::${from}..${to}::pos=${p}::h=${h}::mode=${m}`;
 }
 
 // ✅ mais estável no browser (evita flood/timeout)
@@ -1127,6 +1142,8 @@ export async function getKingResultsByRange({
     throw new Error("Parâmetros obrigatórios: uf, dateFrom, dateTo");
   }
 
+  const scopeKey = canonicalScopeKey(uf);
+
   const positionsArr = normalizePositions(positions);
 
   const ymdFrom = normalizeToYMD(dateFrom);
@@ -1142,7 +1159,7 @@ export async function getKingResultsByRange({
   });
 
   const rangeKey = drawsCacheKeyRange({
-    uf,
+    scopeKey,
     from: ymdFrom,
     to: ymdTo,
     positionsArr,
@@ -1363,7 +1380,7 @@ function drawPassesLotteriesFilter(draw, lotteriesArr) {
 }
 
 function lateCacheKey({
-  uf,
+  scopeKey,
   fromYmd,
   toYmd,
   baseYmd,
@@ -1381,7 +1398,7 @@ function lateCacheKey({
   const lots = lotteriesArr && lotteriesArr.length ? lotteriesArr.join(",") : "all";
   const cd = Number(chunkDays) || 15;
   const pos = Number(prizePosition) || 1;
-  return `late::${uf}::${fromYmd}..${toYmd}::base=${baseYmd}::pos=${pos}::h=${h}::lots=${lots}::chunk=${cd}`;
+  return `late::${scopeKey}::${fromYmd}..${toYmd}::base=${baseYmd}::pos=${pos}::h=${h}::lots=${lots}::chunk=${cd}`;
 }
 
 /**
@@ -1413,6 +1430,8 @@ export async function getKingLateByRange({
     throw new Error("Parâmetros obrigatórios: uf, dateFrom, dateTo");
   }
 
+  const scopeKey = canonicalScopeKey(uf);
+
   const fromYmd = normalizeToYMD(dateFrom);
   const toYmd = normalizeToYMD(dateTo);
   if (!fromYmd || !toYmd) return [];
@@ -1423,7 +1442,7 @@ export async function getKingLateByRange({
   const lotteriesArr = normalizeLotteriesList(lotteries);
 
   const cacheKey = lateCacheKey({
-    uf,
+    scopeKey,
     fromYmd,
     toYmd,
     baseYmd,
