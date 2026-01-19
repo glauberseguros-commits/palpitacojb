@@ -296,7 +296,7 @@ function ImgSmart({ variants, alt, className }) {
 }
 
 /* =========================
-   Grade de horários (PT/RIO)
+   Grades (PT_RIO / FEDERAL)
 ========================= */
 
 const PT_RIO_SCHEDULE_NORMAL = [
@@ -309,10 +309,19 @@ const PT_RIO_SCHEDULE_NORMAL = [
 ];
 const PT_RIO_SCHEDULE_WED_SAT = ["09:00", "11:00", "14:00", "16:00", "21:00"];
 
+// Federal: normalmente um único resultado no dia
+const FEDERAL_SCHEDULE = ["20:00"];
+
 function getPtRioScheduleForYmd(ymd) {
   const dow = getDowKey(ymd);
   if (dow === 3 || dow === 6) return PT_RIO_SCHEDULE_WED_SAT;
   return PT_RIO_SCHEDULE_NORMAL;
+}
+
+function getScheduleForLottery(lotteryKey, ymd) {
+  const key = safeStr(lotteryKey).toUpperCase();
+  if (key === "FEDERAL") return FEDERAL_SCHEDULE;
+  return getPtRioScheduleForYmd(ymd);
 }
 
 function scheduleSet(schedule) {
@@ -356,13 +365,14 @@ function findPrevDrawBeforeTargetInSameDay(draws, targetHourBucket, schedule) {
 }
 
 async function getPreviousDrawRobust({
-  ufQueryKey,
+  lotteryKey,
   ymdTarget,
   targetHourBucket,
   todayDraws,
   schedule,
-  maxBackDays = 7,
+  maxBackDays = 10,
 }) {
+  // 1) tenta no mesmo dia (se houver um draw anterior ao alvo)
   const prevSameDay = findPrevDrawBeforeTargetInSameDay(
     todayDraws,
     targetHourBucket,
@@ -377,12 +387,13 @@ async function getPreviousDrawRobust({
     };
   }
 
+  // 2) fallback: dias anteriores (pega o último draw do dia)
   for (let i = 1; i <= maxBackDays; i += 1) {
     const day = addDaysYMD(ymdTarget, -i);
-    const daySchedule = getPtRioScheduleForYmd(day);
+    const daySchedule = getScheduleForLottery(lotteryKey, day);
 
     const out = await getKingResultsByDate({
-      uf: ufQueryKey,
+      uf: lotteryKey,
       date: day,
       closeHour: null,
       positions: null,
@@ -469,18 +480,19 @@ function milharCompareByCentenaAsc(a, b) {
 }
 
 /* =========================
-   UF mapping (FIX)
+   Loterias (UI)
 ========================= */
 
-const UF_TO_LOTTERY_KEY = {
-  RJ: "PT_RIO",
-};
+const LOTTERY_OPTIONS = [
+  { value: "PT_RIO", label: "PT_RIO (RJ)" },
+  { value: "FEDERAL", label: "FEDERAL" },
+];
 
-function normalizeUfToQueryKey(input) {
-  const s = safeStr(input).toUpperCase();
-  if (!s) return "";
-  if (s.includes("_") || s.length > 2) return s; // já é chave
-  return UF_TO_LOTTERY_KEY[s] || s;
+function lotteryLabel(lotteryKey) {
+  const k = safeStr(lotteryKey).toUpperCase();
+  if (k === "FEDERAL") return "FEDERAL";
+  if (k === "PT_RIO") return "RIO (PT_RIO)";
+  return k || "—";
 }
 
 /* =========================
@@ -488,9 +500,9 @@ function normalizeUfToQueryKey(input) {
 ========================= */
 
 export default function Top3() {
-  const DEFAULT_UF_UI = "RJ";
+  const DEFAULT_LOTTERY = "PT_RIO";
 
-  const [ufUi, setUfUi] = useState(DEFAULT_UF_UI);
+  const [lotteryKey, setLotteryKey] = useState(DEFAULT_LOTTERY);
   const [ymd, setYmd] = useState(() => todayYMDLocal());
   const [lookback, setLookback] = useState(LOOKBACK_ALL);
 
@@ -505,7 +517,10 @@ export default function Top3() {
   const [lastHourBucket, setLastHourBucket] = useState("");
   const [targetHourBucket, setTargetHourBucket] = useState("");
 
-  const ufQueryKey = useMemo(() => normalizeUfToQueryKey(ufUi), [ufUi]);
+  const lotteryKeySafe = useMemo(
+    () => safeStr(lotteryKey).toUpperCase() || DEFAULT_LOTTERY,
+    [lotteryKey]
+  );
 
   const ymdSafe = useMemo(() => {
     const y = normalizeToYMD(ymd);
@@ -515,8 +530,8 @@ export default function Top3() {
   const dateBR = useMemo(() => ymdToBR(ymdSafe), [ymdSafe]);
 
   const schedule = useMemo(() => {
-    return getPtRioScheduleForYmd(ymdSafe);
-  }, [ymdSafe]);
+    return getScheduleForLottery(lotteryKeySafe, ymdSafe);
+  }, [lotteryKeySafe, ymdSafe]);
 
   const dayEnded = useMemo(() => {
     return !!safeStr(lastHourBucket) && !safeStr(targetHourBucket);
@@ -549,8 +564,8 @@ export default function Top3() {
   }, [rangeInfo]);
 
   const load = useCallback(async () => {
-    const uQuery = safeStr(ufQueryKey);
-    if (!uQuery || !isYMD(ymdSafe)) return;
+    const lKey = safeStr(lotteryKeySafe);
+    if (!lKey || !isYMD(ymdSafe)) return;
 
     setLoading(true);
     setError("");
@@ -561,7 +576,7 @@ export default function Top3() {
 
       // bounds (quando disponível)
       try {
-        const b = await getKingBoundsByUf({ uf: uQuery });
+        const b = await getKingBoundsByUf({ uf: lKey });
 
         const bMin = safeStr(b?.minYmd || b?.minDate || b?.min || "");
         const bMax = safeStr(b?.maxYmd || b?.maxDate || b?.max || "");
@@ -578,7 +593,7 @@ export default function Top3() {
 
       // hoje
       const outToday = await getKingResultsByDate({
-        uf: uQuery,
+        uf: lKey,
         date: ymdSafe,
         closeHour: null,
         positions: null,
@@ -619,7 +634,7 @@ export default function Top3() {
 
       // histórico (somente 1º prêmio)
       const outRange = await getKingResultsByRange({
-        uf: uQuery,
+        uf: lKey,
         dateFrom: rangeFrom,
         dateTo: rangeTo,
         closeHour: null,
@@ -635,12 +650,12 @@ export default function Top3() {
 
       if (hourForPrev) {
         const prev = await getPreviousDrawRobust({
-          ufQueryKey: uQuery,
+          lotteryKey: lKey,
           ymdTarget: ymdSafe,
           targetHourBucket: hourForPrev,
           todayDraws: today,
           schedule,
-          maxBackDays: 7,
+          maxBackDays: 10,
         });
 
         const prevGrupo = prev?.draw ? pickPrize1GrupoFromDraw(prev.draw) : null;
@@ -680,7 +695,14 @@ export default function Top3() {
     } finally {
       setLoading(false);
     }
-  }, [ufQueryKey, ymdSafe, schedule, lookback, bounds?.minDate, bounds?.maxDate]);
+  }, [
+    lotteryKeySafe,
+    ymdSafe,
+    schedule,
+    lookback,
+    bounds?.minDate,
+    bounds?.maxDate,
+  ]);
 
   useEffect(() => {
     load();
@@ -771,7 +793,7 @@ export default function Top3() {
 
     for (const line of r) out.push(line);
 
-    out.push(`Grade PT/RIO respeitada (ignora Federal/20h quando existir).`);
+    out.push(`Grade da loteria respeitada (${lotteryLabel(lotteryKeySafe)}).`);
 
     if (dayEnded) {
       out.push(`Dia encerrado: exibindo o último Top3 do dia (${safeStr(lastHourBucket)}).`);
@@ -801,7 +823,7 @@ export default function Top3() {
         const h = toHourBucket(pickDrawHour(d));
         if (!h) continue;
 
-        // sempre respeita grade PT/RIO
+        // sempre respeita grade da loteria
         if (!schSet.has(h)) continue;
 
         // modo 1: só horário alvo
@@ -1395,7 +1417,7 @@ export default function Top3() {
         .pp_animal.big{ font-size: 20px; }
       }
     `;
-  }, []);
+  }, [lotteryKeySafe, analysisHourBucket, lookbackLabel, prevLabel, dayEnded, lastHourBucket]);
 
   return (
     <div className="pp_wrap">
@@ -1415,12 +1437,16 @@ export default function Top3() {
             <div className="pp_controls">
               <select
                 className="pp_select"
-                value={ufUi}
-                onChange={(e) => setUfUi(e.target.value)}
-                aria-label="UF"
-                title="UF"
+                value={lotteryKeySafe}
+                onChange={(e) => setLotteryKey(e.target.value)}
+                aria-label="Loteria"
+                title="Loteria"
               >
-                <option value="RJ">RJ</option>
+                {LOTTERY_OPTIONS.map((opt) => (
+                  <option key={`lot_${opt.value}`} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
               </select>
 
               <input
@@ -1462,9 +1488,9 @@ export default function Top3() {
           <div className="pp_center">
             <div className="pp_kpis">
               <div className="pp_kpi">
-                <div className="pp_kpiLabel">UF</div>
+                <div className="pp_kpiLabel">Loteria</div>
                 <div className="pp_kpiValue">
-                  <strong>{safeStr(ufUi).toUpperCase() || "RJ"}</strong> • RIO (PT_RIO)
+                  <strong>{lotteryKeySafe}</strong> • {lotteryLabel(lotteryKeySafe)}
                 </div>
               </div>
 
@@ -1517,7 +1543,6 @@ export default function Top3() {
               </div>
             ) : (
               <div className="pp_cards">
-                {/* ✅ FIX: isMain pelo índice (nunca depende do rank) */}
                 {top3.map((x, idx) => {
                   const isMain = idx === 0;
                   const animal = safeStr(x.animal) || "—";
@@ -1583,19 +1608,25 @@ export default function Top3() {
                               <div className="pp_chip">
                                 Trans{" "}
                                 <strong>
-                                  {x.useTrans ? `${x.transHit}/${x.transTotal}` : `(${x.transTotal}↓)`}
+                                  {x.useTrans
+                                    ? `${x.transHit}/${x.transTotal}`
+                                    : `(${x.transTotal}↓)`}
                                 </strong>
                               </div>
                               <div className="pp_chip">
                                 DOW{" "}
                                 <strong>
-                                  {x.useDow ? `${x.dowHit}/${x.transTotalDow}` : `(${x.transTotalDow}↓)`}
+                                  {x.useDow
+                                    ? `${x.dowHit}/${x.transTotalDow}`
+                                    : `(${x.transTotalDow}↓)`}
                                 </strong>
                               </div>
                               <div className="pp_chip">
                                 DOM{" "}
                                 <strong>
-                                  {x.useDom ? `${x.domHit}/${x.transTotalDom}` : `(${x.transTotalDom}↓)`}
+                                  {x.useDom
+                                    ? `${x.domHit}/${x.transTotalDom}`
+                                    : `(${x.transTotalDom}↓)`}
                                 </strong>
                               </div>
                             </div>
@@ -1622,7 +1653,9 @@ export default function Top3() {
                                     className={`pp_milharPill ${has ? "" : "isEmpty"}`}
                                     role="listitem"
                                     title={
-                                      has ? `Dezena ${m.dezena} • Centena ${getCentena3(m.milhar)}` : ""
+                                      has
+                                        ? `Dezena ${m.dezena} • Centena ${getCentena3(m.milhar)}`
+                                        : ""
                                     }
                                   >
                                     <strong>{has ? m.milhar : "0000"}</strong>
