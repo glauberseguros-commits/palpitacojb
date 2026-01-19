@@ -222,10 +222,11 @@ function makeImgVariantsFromGrupo(grupo, size) {
   const s = Number(size) || 96;
 
   // 1) rota “oficial” do bichoMap (se existir)
-  const primary = normalizeImgSrc(getImgFromGrupo?.(g, s) || getImgFromGrupo?.(g) || "");
+  const primary = normalizeImgSrc(
+    getImgFromGrupo?.(g, s) || getImgFromGrupo?.(g) || ""
+  );
 
   // 2) fallback compatível com seu padrão de assets
-  //    (ajuda quando getImgFromGrupo mudar)
   const base = publicBase();
   const g2 = pad2(g);
   const label = safeStr(getAnimalLabel?.(g) || "");
@@ -237,8 +238,9 @@ function makeImgVariantsFromGrupo(grupo, size) {
         .replace(/[^a-z0-9]+/g, "_")
         .replace(/^_+|_+$/g, "")
     : "";
-  const sizedName =
-    slug ? `${base}/assets/animals/animais_${s}_png/${g2}_${slug}_${s}.png` : "";
+  const sizedName = slug
+    ? `${base}/assets/animals/animais_${s}_png/${g2}_${slug}_${s}.png`
+    : "";
 
   const seeds = [primary, sizedName].filter(Boolean);
 
@@ -297,7 +299,14 @@ function ImgSmart({ variants, alt, className }) {
    Grade de horários (PT/RIO)
 ========================= */
 
-const PT_RIO_SCHEDULE_NORMAL = ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
+const PT_RIO_SCHEDULE_NORMAL = [
+  "09:00",
+  "11:00",
+  "14:00",
+  "16:00",
+  "18:00",
+  "21:00",
+];
 const PT_RIO_SCHEDULE_WED_SAT = ["09:00", "11:00", "14:00", "16:00", "21:00"];
 
 function getPtRioScheduleForYmd(ymd) {
@@ -1280,16 +1289,6 @@ export default function Top3() {
         font-size: 22px;
       }
 
-      .pp_meta{
-        margin-top: 6px;
-        color: rgba(255,255,255,0.84);
-        font-weight: 900;
-        font-size: 12px;
-        line-height: 1.25;
-      }
-
-      .pp_meta .pp_gold{ font-weight: 1200; }
-
       .pp_scoreRow{
         display:flex;
         gap: 8px;
@@ -1518,8 +1517,9 @@ export default function Top3() {
               </div>
             ) : (
               <div className="pp_cards">
-                {top3.map((x) => {
-                  const isMain = x.rank === 1;
+                {/* ✅ FIX: isMain pelo índice (nunca depende do rank) */}
+                {top3.map((x, idx) => {
+                  const isMain = idx === 0;
                   const animal = safeStr(x.animal) || "—";
 
                   const bgVariants = Array.isArray(x.imgBg) ? x.imgBg : [];
@@ -1531,11 +1531,12 @@ export default function Top3() {
 
                   return (
                     <div
-                      key={`top3_${x.grupo}_${x.rank}`}
+                      key={`top3_${x.grupo}_${idx}`}
                       className={`pp_card ${isMain ? "pp_cardMain" : ""}`}
                       style={{
-                        "--pp-bg":
-                          bgVariants?.length ? `url("${normalizeImgSrc(bgVariants[0])}")` : "none",
+                        "--pp-bg": bgVariants?.length
+                          ? `url("${normalizeImgSrc(bgVariants[0])}")`
+                          : "none",
                       }}
                     >
                       <div className="pp_cardInner">
@@ -1568,9 +1569,7 @@ export default function Top3() {
                             <div className="pp_scoreRow">
                               <div className="pp_chip">
                                 Score{" "}
-                                <strong>
-                                  {(Number(x.finalScore) || 0).toFixed(3)}
-                                </strong>
+                                <strong>{(Number(x.finalScore) || 0).toFixed(3)}</strong>
                               </div>
                               <div className="pp_chip">
                                 Peso <strong>{x.pct}%</strong>
@@ -1584,25 +1583,19 @@ export default function Top3() {
                               <div className="pp_chip">
                                 Trans{" "}
                                 <strong>
-                                  {x.useTrans
-                                    ? `${x.transHit}/${x.transTotal}`
-                                    : `(${x.transTotal}↓)`}
+                                  {x.useTrans ? `${x.transHit}/${x.transTotal}` : `(${x.transTotal}↓)`}
                                 </strong>
                               </div>
                               <div className="pp_chip">
                                 DOW{" "}
                                 <strong>
-                                  {x.useDow
-                                    ? `${x.dowHit}/${x.transTotalDow}`
-                                    : `(${x.transTotalDow}↓)`}
+                                  {x.useDow ? `${x.dowHit}/${x.transTotalDow}` : `(${x.transTotalDow}↓)`}
                                 </strong>
                               </div>
                               <div className="pp_chip">
                                 DOM{" "}
                                 <strong>
-                                  {x.useDom
-                                    ? `${x.domHit}/${x.transTotalDom}`
-                                    : `(${x.transTotalDom}↓)`}
+                                  {x.useDom ? `${x.domHit}/${x.transTotalDom}` : `(${x.transTotalDom}↓)`}
                                 </strong>
                               </div>
                             </div>
@@ -1629,9 +1622,7 @@ export default function Top3() {
                                     className={`pp_milharPill ${has ? "" : "isEmpty"}`}
                                     role="listitem"
                                     title={
-                                      has
-                                        ? `Dezena ${m.dezena} • Centena ${getCentena3(m.milhar)}`
-                                        : ""
+                                      has ? `Dezena ${m.dezena} • Centena ${getCentena3(m.milhar)}` : ""
                                     }
                                   >
                                     <strong>{has ? m.milhar : "0000"}</strong>
