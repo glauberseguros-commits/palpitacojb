@@ -277,7 +277,7 @@ function resolveAnimalUI(prize) {
 }
 
 /* =========================
-   Dedup de draws (causa da duplicidade)
+   Dedup de draws
 ========================= */
 
 function drawKeyForDedup(d, ufKey, ymd) {
@@ -345,11 +345,9 @@ function formatPrizeNumberByPos(value, pos) {
   if (!digits) return s;
 
   if (pos === 7) {
-    // centena: SEM completar com zero
     return digits.slice(-3);
   }
 
-  // milhar: completa para 4
   return digits.slice(-4).padStart(4, "0");
 }
 
@@ -371,13 +369,11 @@ export default function Results() {
   const [error, setError] = useState("");
   const [draws, setDraws] = useState([]);
 
-  const [showAll, setShowAll] = useState(false);
-  const [fitCount, setFitCount] = useState(0);
+  // ✅ Agora: Resultados mostra TUDO por padrão (não esconde 09h)
+  const [showAll, setShowAll] = useState(true);
   const [needsToggle, setNeedsToggle] = useState(false);
 
   const centerRef = useRef(null);
-  const topbarRef = useRef(null);
-  const sampleCardRef = useRef(null);
 
   const ufQueryKey = useMemo(() => normalizeUfToQueryKey(ufUi), [ufUi]);
   const label = useMemo(
@@ -429,7 +425,8 @@ export default function Results() {
   }, [load]);
 
   useEffect(() => {
-    setShowAll(false);
+    // quando troca UF/data, mantemos "mostrar tudo"
+    setShowAll(true);
   }, [ufQueryKey, ymdSafe]);
 
   const drawsOrdered = useMemo(() => {
@@ -445,109 +442,24 @@ export default function Results() {
     });
   }, [draws]);
 
-  const recomputeFit = useCallback(() => {
-    const centerEl = centerRef.current;
-    if (!centerEl) return;
-
-    const centerH = centerEl.clientHeight || 0;
-
-    const topbarExists = !!topbarRef.current;
-    const topbarH = topbarExists
-      ? (topbarRef.current?.clientHeight || 0) + 10
-      : 0;
-
-    const available = Math.max(0, centerH - topbarH);
-
-    const cardEl = sampleCardRef.current;
-    const cardH = cardEl?.clientHeight || 0;
-
-    const rowGap = 12;
-
-    if (available <= 0 || cardH <= 0) return;
-
-    const rowH = cardH + rowGap;
-    const rowsFit = Math.max(1, Math.floor((available + rowGap) / rowH));
-
-    const isSingleCol = window.matchMedia("(max-width: 980px)").matches;
-    const cols = isSingleCol ? 1 : 2;
-
-    setFitCount(rowsFit * cols);
-  }, []);
-
-  useLayoutEffect(() => {
-    if (!centerRef.current) return;
-
-    recomputeFit();
-
-    const ro = new ResizeObserver(() => recomputeFit());
-    ro.observe(centerRef.current);
-
-    const onWin = () => recomputeFit();
-    window.addEventListener("resize", onWin);
-
-    return () => {
-      ro.disconnect();
-      window.removeEventListener("resize", onWin);
-    };
-  }, [recomputeFit, drawsOrdered.length, loading, error, needsToggle, showAll]);
-
+  // ✅ Toggle só faz sentido se um dia tiver MUITOS cards (não é o caso do PT_RIO)
   useEffect(() => {
-    if (!drawsOrdered.length) {
-      setNeedsToggle(false);
-      return;
-    }
-
-    const effectiveFit = fitCount > 0 ? fitCount : 4;
-
-    if (drawsOrdered.length <= effectiveFit) {
-      setNeedsToggle(false);
-      setShowAll(true);
-    } else {
-      setNeedsToggle(true);
-    }
-  }, [drawsOrdered, fitCount]);
+    setNeedsToggle(drawsOrdered.length > 6);
+  }, [drawsOrdered.length]);
 
   const drawsForView = useMemo(() => {
     if (!drawsOrdered.length) return [];
     if (!needsToggle) return drawsOrdered;
-
-    const effectiveFit = fitCount > 0 ? fitCount : 4;
     if (showAll) return drawsOrdered;
-
-    return drawsOrdered.slice(0, effectiveFit);
-  }, [drawsOrdered, needsToggle, fitCount, showAll]);
-
-  /**
-   * ✅ FIX DO “CORTANDO”:
-   * - quando showAll=true (ou não precisa toggle), o miolo precisa ser scrollável.
-   * - mantemos shell com overflow hidden (premium), e liberamos scroll só no .pp_body
-   */
-  const bodyScrollable = useMemo(() => {
-    const isSmall = window.matchMedia?.("(max-width: 980px)")?.matches;
-    if (isSmall) return true;
-    return showAll || !needsToggle;
-  }, [showAll, needsToggle]);
+    return drawsOrdered.slice(0, 6);
+  }, [drawsOrdered, needsToggle, showAll]);
 
   const styles = useMemo(() => {
     return `
       :root{
         --pp-border: rgba(255,255,255,0.10);
-        --pp-border2: rgba(255,255,255,0.14);
-
         --pp-gold: rgba(201,168,62,0.92);
-        --pp-gold2: rgba(201,168,62,0.55);
-        --pp-goldSoft: rgba(201,168,62,0.16);
-
         --pp-text: rgba(255,255,255,0.92);
-        --pp-muted: rgba(255,255,255,0.62);
-
-        --pp-bg: rgba(0,0,0,0.55);
-        --pp-glass: rgba(10,10,10,0.42);
-
-        --pp-blackA: rgba(0,0,0,0.35);
-        --pp-blackB: rgba(0,0,0,0.65);
-
-        --pp-radius: 18px;
       }
 
       .pp_wrap{
@@ -562,7 +474,7 @@ export default function Results() {
       .pp_shell{
         height: calc(100dvh - 28px);
         border: 1px solid var(--pp-border);
-        border-radius: var(--pp-radius);
+        border-radius: 18px;
         background:
           radial-gradient(1000px 520px at 10% 0%, rgba(201,168,62,0.10), transparent 60%),
           radial-gradient(900px 500px at 90% 10%, rgba(201,168,62,0.08), transparent 62%),
@@ -605,7 +517,7 @@ export default function Results() {
       .pp_input{
         height:34px;
         border-radius: 12px;
-        border: 1px solid var(--pp-border);
+        border: 1px solid rgba(255,255,255,0.10);
         background: rgba(0,0,0,0.55);
         color: var(--pp-text);
         padding: 0 10px;
@@ -616,6 +528,7 @@ export default function Results() {
         font-size: 12px;
         box-sizing: border-box;
       }
+
       .pp_input:focus{
         border-color: rgba(201,168,62,0.55);
         box-shadow: 0 0 0 3px rgba(201,168,62,0.12);
@@ -624,7 +537,7 @@ export default function Results() {
       .pp_btn{
         height:34px;
         border-radius: 12px;
-        border: 1px solid var(--pp-border);
+        border: 1px solid rgba(255,255,255,0.10);
         background: rgba(255,255,255,0.06);
         color: var(--pp-text);
         font-weight: 1100;
@@ -636,20 +549,15 @@ export default function Results() {
         box-sizing: border-box;
       }
       .pp_btn:hover{ background: rgba(255,255,255,0.08); }
-      .pp_btn:active{ transform: translateY(1px); }
 
       .pp_body{
         min-width:0;
         min-height:0;
-        overflow: hidden;
+        overflow: auto;
+        padding-right: 2px;
         display: flex;
         justify-content: center;
         align-items: stretch;
-      }
-
-      .pp_body.isScroll{
-        overflow: auto;
-        padding-right: 2px;
       }
 
       .pp_center{
@@ -664,12 +572,12 @@ export default function Results() {
       }
 
       .pp_state{
-        border: 1px solid var(--pp-border);
+        border: 1px solid rgba(255,255,255,0.10);
         border-radius: 16px;
         background: rgba(0,0,0,0.26);
         padding: 12px 14px;
         font-weight: 850;
-        color: var(--pp-text);
+        color: rgba(255,255,255,0.92);
       }
 
       .pp_topbar{
@@ -708,7 +616,6 @@ export default function Results() {
           linear-gradient(180deg, rgba(201,168,62,0.20), transparent 38%),
           radial-gradient(800px 380px at 15% 0%, rgba(201,168,62,0.16), transparent 62%),
           radial-gradient(700px 360px at 85% 10%, rgba(201,168,62,0.10), transparent 64%);
-        opacity: 1;
       }
 
       .pp_card::after{
@@ -720,10 +627,7 @@ export default function Results() {
           linear-gradient(180deg, rgba(0,0,0,0.32) 0%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0.74) 100%);
       }
 
-      .pp_cardInner{
-        position: relative;
-        z-index: 1;
-      }
+      .pp_cardInner{ position: relative; z-index: 1; }
 
       .pp_cardHead{
         padding: 10px 12px;
@@ -805,7 +709,6 @@ export default function Results() {
         border-color: rgba(201,168,62,0.36);
         background: rgba(201,168,62,0.12);
         color: rgba(201,168,62,0.98);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.25);
       }
 
       .pp_mid{
@@ -825,14 +728,12 @@ export default function Results() {
         place-items:center;
         overflow:hidden;
         flex: 0 0 auto;
-        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
       }
 
       .pp_img{
         width: 32px;
         height: 32px;
         object-fit: contain;
-        filter: drop-shadow(0 2px 0 rgba(0,0,0,0.25));
         display:block;
       }
 
@@ -887,7 +788,6 @@ export default function Results() {
         font-size: 18px;
         letter-spacing: 1px;
         color: rgba(255,255,255,0.95);
-        text-shadow: 0 10px 24px rgba(0,0,0,0.45);
       }
 
       .pp_numHint{
@@ -901,12 +801,9 @@ export default function Results() {
         border-radius: 999px;
       }
 
-      .pp_row:hover{
-        background: rgba(255,255,255,0.03);
-      }
+      .pp_row:hover{ background: rgba(255,255,255,0.03); }
 
       @media (max-width: 980px){
-        .pp_body{ overflow: auto; }
         .pp_grid2{ grid-template-columns: 1fr; }
       }
 
@@ -952,40 +849,31 @@ export default function Results() {
               style={{ minWidth: 150 }}
             />
 
-            <button
-              className="pp_btn"
-              onClick={load}
-              type="button"
-              title="Atualizar"
-            >
+            <button className="pp_btn" onClick={load} type="button" title="Atualizar">
               Atualizar
             </button>
           </div>
         </div>
 
-        <div className={`pp_body ${bodyScrollable ? "isScroll" : ""}`}>
+        <div className="pp_body">
           <div className="pp_center" ref={centerRef}>
             {loading ? (
               <div className="pp_state">Carregando…</div>
             ) : error ? (
               <div className="pp_state">
                 <div style={{ fontWeight: 1100, marginBottom: 6 }}>Erro</div>
-                <div style={{ opacity: 0.9, whiteSpace: "pre-wrap" }}>
-                  {error}
-                </div>
+                <div style={{ opacity: 0.9, whiteSpace: "pre-wrap" }}>{error}</div>
               </div>
             ) : drawsOrdered.length === 0 ? (
               <div className="pp_state">
                 Nenhum resultado para{" "}
-                <span className="pp_gold">
-                  {safeStr(ufUi).toUpperCase() || DEFAULT_UF_UI}
-                </span>{" "}
+                <span className="pp_gold">{safeStr(ufUi).toUpperCase() || DEFAULT_UF_UI}</span>{" "}
                 em <span className="pp_gold">{dateBR}</span>.
               </div>
             ) : (
               <>
                 {needsToggle ? (
-                  <div className="pp_topbar" ref={topbarRef}>
+                  <div className="pp_topbar">
                     <button
                       className="pp_btn"
                       type="button"
@@ -1036,11 +924,7 @@ export default function Results() {
                     const hs = hour ? `${hour.slice(0, 2)}HS` : "—";
 
                     return (
-                      <div
-                        key={`${id}_${idx}`}
-                        className="pp_card"
-                        ref={idx === 0 ? sampleCardRef : null}
-                      >
+                      <div key={`${id}_${idx}`} className="pp_card">
                         <div className="pp_cardInner">
                           <div className="pp_cardHead">
                             <div className="pp_headLeft">
@@ -1054,49 +938,29 @@ export default function Results() {
                           <div className="pp_rows">
                             {rows.map((r) => {
                               const gtxt = r.grupo ? `G${pad2(r.grupo)}` : "—";
-                              const numFmt = r.numero
-                                ? formatPrizeNumberByPos(r.numero, r.pos)
-                                : "";
+                              const numFmt = r.numero ? formatPrizeNumberByPos(r.numero, r.pos) : "";
 
                               return (
-                                <div
-                                  key={`${id}_pos_${r.pos}`}
-                                  className="pp_row"
-                                >
-                                  <div
-                                    className={`pp_posBadge ${prizeRankClass(
-                                      r.pos
-                                    )}`}
-                                  >
+                                <div key={`${id}_pos_${r.pos}`} className="pp_row">
+                                  <div className={`pp_posBadge ${prizeRankClass(r.pos)}`}>
                                     {`${r.pos}º`}
                                   </div>
 
                                   <div className="pp_mid">
-                                    <div
-                                      className="pp_imgFrame"
-                                      aria-hidden="true"
-                                    >
+                                    <div className="pp_imgFrame" aria-hidden="true">
                                       <RowImg
                                         variants={r.imgVariants || []}
-                                        alt={
-                                          r.animalLabel
-                                            ? `Bicho ${r.animalLabel}`
-                                            : "Bicho"
-                                        }
+                                        alt={r.animalLabel ? `Bicho ${r.animalLabel}` : "Bicho"}
                                         fallbackText={gtxt}
                                       />
                                     </div>
 
                                     <div className="pp_textBlock">
                                       <div className="pp_group">
-                                        {r.grupo
-                                          ? `GRUPO ${pad2(r.grupo)}`
-                                          : "GRUPO —"}
+                                        {r.grupo ? `GRUPO ${pad2(r.grupo)}` : "GRUPO —"}
                                       </div>
                                       <div className="pp_animal">
-                                        {r.animalLabel
-                                          ? r.animalLabel.toUpperCase()
-                                          : "—"}
+                                        {r.animalLabel ? r.animalLabel.toUpperCase() : "—"}
                                       </div>
                                     </div>
                                   </div>
@@ -1104,18 +968,11 @@ export default function Results() {
                                   <div className="pp_num">
                                     {r.numero ? (
                                       <>
-                                        <span className="pp_numHint">
-                                          {prizeLabelByPos(r.pos)}
-                                        </span>
-                                        <span className="pp_numValue">
-                                          {numFmt}
-                                        </span>
+                                        <span className="pp_numHint">{prizeLabelByPos(r.pos)}</span>
+                                        <span className="pp_numValue">{numFmt}</span>
                                       </>
                                     ) : (
-                                      <span
-                                        className="pp_numValue"
-                                        style={{ opacity: 0.55 }}
-                                      >
+                                      <span className="pp_numValue" style={{ opacity: 0.55 }}>
                                         —
                                       </span>
                                     )}
