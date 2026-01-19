@@ -8,18 +8,21 @@ const { runImport } = require("./importKingApostas");
 /**
  * AUTO IMPORT — PT_RIO (RJ)
  *
- * Estratégia (custo baixo / sem martelar):
+ * ✅ Estratégia (custo baixo / sem martelar):
  * - Script é chamado pelo Agendador a cada 1 minuto (ex.: 09:05–21:45).
  * - Ele só chama API/Firestore se:
  *   - estiver dentro da janela do slot (ex.: 09:05–09:31 ou 21:05–21:45),
  *   - e já passou do releaseMinute (ex.: >= 09:29; no 21h, >= 21:05),
  *   - e o slot ainda não estiver done.
- * - Assim que capturar (ou já estiver completo), marca done e para de tentar.
+ * - Assim que capturar (ou detectar que já está completo no Firestore), marca done.
  *
- * Regras especiais:
+ * ✅ Regras especiais:
  * - Domingo: só 09/11/14/16. Slots 18/21 ficam N/A no state do dia.
- * - Quarta e sábado: slot 18h faz UMA tentativa única às 18:35 (se capturar, ótimo;
- *   se não capturar, marca como checado e segue o fluxo).
+ * - Quarta e sábado: slot 18h faz UMA tentativa única às 18:35 (ou até +tolerance).
+ *
+ * ✅ Log claro em arquivo:
+ * - backend/logs/autoImportToday.log
+ *   ex.: [AUTO] FS já tem slot=16:09 -> DONE
  */
 
 // Horários oficiais (closeHour base; pode variar +/- 2 min na API)
@@ -39,6 +42,9 @@ const SCHEDULE = [
 const LOTTERY = "PT_RIO";
 const LOG_DIR = path.join(__dirname, "..", "logs");
 
+// Logs
+const LOG_FILE = path.join(LOG_DIR, "autoImportToday.log");
+
 // Lock para evitar concorrência
 const LOCK_FILE = path.join(LOG_DIR, "autoImport.lock");
 const LOCK_TTL_MS = 2 * 60 * 1000 + 20 * 1000; // 2m20s
@@ -55,6 +61,34 @@ const WED_SAT_18H_ONE_SHOT_TOLERANCE = 10; // minutos após 18:35
 /* =========================
    Utils
 ========================= */
+
+function ensureLogDir() {
+  if (!fs.existsSync(LOG_DIR)) fs.mkdirSync(LOG_DIR, { recursive: true });
+}
+
+function tsLocal() {
+  // yyyy-mm-dd HH:MM:SS (local)
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mi = String(d.getMinutes()).padStart(2, "0");
+  const ss = String(d.getSeconds()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
+}
+
+function logLine(msg, level = "INFO") {
+  ensureLogDir();
+  const line = `[${tsLocal()}] [${level}] ${msg}\n`;
+  try {
+    fs.appendFileSync(LOG_FILE, line);
+  } catch {
+    // se falhar arquivo, ainda imprime no console
+  }
+  if (level === "ERROR") console.error(msg);
+  else console.log(msg);
+}
 
 function pad2(n) {
   return String(n).padStart(2, "0");
@@ -92,7 +126,8 @@ function clampMinute(mm) {
 }
 
 function stateFile(date) {
-  return path.join(LOG_DIR, `autoImportState-${date}.json`);
+  // inclui loteria para evitar colisão se você rodar outro UF no futuro
+  return path.join(LOG_DIR, `autoImportState-${LOTTERY}-${date}.json`);
 }
 
 function defaultState() {
@@ -111,6 +146,12 @@ function defaultState() {
     };
   }
   return init;
+}
+
+function safeWriteJson(filePath, obj) {
+  const tmp = `${filePath}.tmp`;
+  fs.writeFileSync(tmp, JSON.stringify(obj, null, 2));
+  fs.renameSync(tmp, filePath);
 }
 
 function loadState(date) {
@@ -159,17 +200,6 @@ function loadState(date) {
   return migrated;
 }
 
-/**
- * Escrita atômica do JSON:
- * - escreve em .tmp
- * - renomeia por cima
- */
-function safeWriteJson(filePath, obj) {
-  const tmp = `${filePath}.tmp`;
-  fs.writeFileSync(tmp, JSON.stringify(obj, null, 2));
-  fs.renameSync(tmp, filePath);
-}
-
 function saveState(date, state) {
   safeWriteJson(stateFile(date), state);
 }
@@ -208,7 +238,6 @@ function slotAppliesToday(slotHour, dow) {
       slotHour === "16:09"
     );
   }
-
   // demais dias: todos se aplicam (inclui 18/21)
   return true;
 }
@@ -258,10 +287,6 @@ function isInWedSat18OneShotWindow(nowMin) {
    Lock (anti-concorrência)
 ========================= */
 
-function ensureLogDir() {
-  if (!fs.existsSync(LOG_DIR)) fs.mkdirSync(LOG_DIR, { recursive: true });
-}
-
 function acquireLock() {
   ensureLogDir();
 
@@ -309,7 +334,7 @@ async function main() {
 
   const lock = acquireLock();
   if (!lock.ok) {
-    console.log(`[AUTO] abortado: ${lock.reason}`);
+    logLine(`[AUTO] abortado: ${lock.reason}`, "INFO");
     return;
   }
 
@@ -337,6 +362,8 @@ async function main() {
           reason: slot.naReason,
         };
         stateTouched = true;
+
+        logLine(`[AUTO] N/A slot=${sched.hour} (${slot.naReason}) -> DONE`, "INFO");
       }
     }
 
@@ -369,10 +396,11 @@ async function main() {
         slot.lastTriedCloses = candidates;
         saveState(date, state);
 
-        console.log(
-          `[AUTO] (ONE-SHOT QUA/SAB) tentando ${date} slot=18:09 @18:${pad2(
+        logLine(
+          `[AUTO] (ONE-SHOT QUA/SAB) tentando ${date} slot=18:09 agora=18:${pad2(
             now.m
-          )} closes=${candidates.join(",")}`
+          )} closes=${candidates.join(",")}`,
+          "INFO"
         );
 
         let doneReason = "CHECKED_NO_DRAW";
@@ -386,7 +414,7 @@ async function main() {
             lastErr = e?.message || String(e);
             slot.lastResult = { ok: false, error: lastErr, closeHourTried: closeHour };
             saveState(date, state);
-            console.log(`[AUTO] erro no import close=${closeHour}: ${lastErr}`);
+            logLine(`[AUTO] erro no import close=${closeHour}: ${lastErr}`, "ERROR");
             continue;
           }
 
@@ -397,6 +425,7 @@ async function main() {
           const captured = Boolean(r?.captured);
           const apiHasPrizes = r?.apiHasPrizes ?? null;
 
+          // DONE se capturou e (gravou algo ou já estava completo)
           const doneNow = captured && (savedCount > 0 || alreadyCompleteAny);
 
           slot.lastResult = {
@@ -414,7 +443,15 @@ async function main() {
           saveState(date, state);
 
           if (doneNow) {
-            doneReason = alreadyCompleteAny ? "ALREADY_COMPLETE" : "CAPTURED";
+            doneReason = alreadyCompleteAny ? "FS_ALREADY_HAS" : "CAPTURED";
+            if (alreadyCompleteAny) {
+              logLine(`[AUTO] FS já tem slot=18:09 (close=${closeHour}) -> DONE`, "INFO");
+            } else {
+              logLine(
+                `[AUTO] CAPTURADO slot=18:09 (close=${closeHour}) saved=${savedCount} writes=${writeCount} -> DONE`,
+                "INFO"
+              );
+            }
             break;
           }
         }
@@ -428,8 +465,9 @@ async function main() {
         };
         saveState(date, state);
 
-        console.log(
-          `[AUTO] (ONE-SHOT QUA/SAB) DONE slot=18:09 (${slot.lastResult.oneShotFinalReason})`
+        logLine(
+          `[AUTO] (ONE-SHOT QUA/SAB) DONE slot=18:09 (${slot.lastResult.oneShotFinalReason})`,
+          lastErr ? "ERROR" : "INFO"
         );
 
         didSomething = true;
@@ -443,9 +481,7 @@ async function main() {
       if (nowMin < w.start || nowMin > w.end) continue;
 
       // dentro da janela, mas antes do release => ainda não tenta importar
-      if (nowMin < w.release) {
-        continue; // não chama API
-      }
+      if (nowMin < w.release) continue;
 
       // a partir daqui: vai tentar capturar (com tolerância +/-2 min no close)
       slot.tries = (slot.tries || 0) + 1;
@@ -455,12 +491,13 @@ async function main() {
       slot.lastTriedCloses = candidates;
       saveState(date, state);
 
-      console.log(
+      logLine(
         `[AUTO] tentando ${date} slot=${sched.hour} window=${pad2(
           Math.floor(w.start / 60)
         )}:${pad2(w.start % 60)}-${pad2(Math.floor(w.end / 60))}:${pad2(
           w.end % 60
-        )} closes=${candidates.join(",")}`
+        )} closes=${candidates.join(",")}`,
+        "INFO"
       );
 
       let lastErr = null;
@@ -474,7 +511,7 @@ async function main() {
           lastErr = e?.message || String(e);
           slot.lastResult = { ok: false, error: lastErr, closeHourTried: closeHour };
           saveState(date, state);
-          console.log(`[AUTO] erro no import close=${closeHour}: ${lastErr}`);
+          logLine(`[AUTO] erro no import close=${closeHour}: ${lastErr}`, "ERROR");
           continue;
         }
 
@@ -513,12 +550,11 @@ async function main() {
           saveState(date, state);
 
           if (alreadyCompleteAny) {
-            console.log(
-              `[AUTO] DONE slot=${sched.hour} via close=${closeHour} (já completo no banco)`
-            );
+            logLine(`[AUTO] FS já tem slot=${sched.hour} (close=${closeHour}) -> DONE`, "INFO");
           } else {
-            console.log(
-              `[AUTO] CAPTURADO slot=${sched.hour} via close=${closeHour} (saved=${savedCount})`
+            logLine(
+              `[AUTO] CAPTURADO slot=${sched.hour} (close=${closeHour}) saved=${savedCount} writes=${writeCount} -> DONE`,
+              "INFO"
             );
           }
 
@@ -530,20 +566,21 @@ async function main() {
       // se tentou e não capturou em nenhum close candidato
       if (!slot.done) {
         if (lastErr) {
-          console.log(`[AUTO] falhou slot=${sched.hour} (erros em closes candidatos)`);
+          logLine(`[AUTO] falhou slot=${sched.hour} (erros em closes candidatos)`, "ERROR");
           didSomething = true;
         } else {
-          console.log(
-            `[AUTO] ainda indisponível slot=${sched.hour} (nenhum close candidato capturou)`
+          logLine(
+            `[AUTO] ainda indisponível slot=${sched.hour} (nenhum close candidato capturou)`,
+            "INFO"
           );
         }
       }
     }
 
     if (isAllDone(state)) {
-      console.log(`[AUTO] DIA COMPLETO (${date}) — slots concluídos`);
+      logLine(`[AUTO] DIA COMPLETO (${date}) — slots concluídos`, "INFO");
     } else if (!didSomething) {
-      console.log(`[AUTO] nada para fazer agora (${date})`);
+      logLine(`[AUTO] nada para fazer agora (${date})`, "INFO");
     }
   } finally {
     releaseLock();
@@ -551,7 +588,7 @@ async function main() {
 }
 
 main().catch((e) => {
-  console.error("ERRO:", e?.message || e);
+  logLine(`ERRO: ${e?.message || e}`, "ERROR");
   releaseLock();
   process.exit(1);
 });

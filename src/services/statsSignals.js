@@ -9,6 +9,12 @@
      (C) Transição filtrada por Dia da Semana (DOW)
      (D) Transição filtrada por Dia do Mês (DOM)
 
+   ✅ FIX IMPORTANTE (produto):
+   - Top3 PRECISA TER 3 ITENS.
+   - Quando o horário alvo tem pouca amostra (baseCounts < 3),
+     fazemos fallback com "base global" (todos horários da grade),
+     para completar candidatos e nunca deixar 1 card.
+
    Entrada:
    - drawsRange: lista de draws (preferencialmente detailed), com prizes embutidos
    - schedule: grade válida do PT_RIO para a data analisada
@@ -31,6 +37,45 @@ function safeStr(v) {
 function isYMD(s) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
 }
+
+/* =========================
+   ✅ Normalização de datas
+========================= */
+
+function brToYMD(br) {
+  const m = String(br || "")
+    .trim()
+    .match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!m) return null;
+  return `${m[3]}-${m[2]}-${m[1]}`;
+}
+
+function normalizeToYMD(input) {
+  if (!input) return null;
+
+  if (input instanceof Date && !Number.isNaN(input.getTime())) {
+    return `${input.getFullYear()}-${pad2(input.getMonth() + 1)}-${pad2(
+      input.getDate()
+    )}`;
+  }
+
+  const s = safeStr(input);
+  if (!s) return null;
+
+  // ISO com ou sem hora
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+
+  // BR "dd/mm/yyyy"
+  const y = brToYMD(s);
+  if (y) return y;
+
+  return null;
+}
+
+/* =========================
+   Horas
+========================= */
 
 function normalizeHourLike(value) {
   const s0 = safeStr(value);
@@ -56,12 +101,15 @@ function toHourBucket(hhmm) {
   return `${m[1]}:00`;
 }
 
+/* =========================
+   Dia (DOW/DOM)
+========================= */
+
 function getDowKey(ymd) {
   if (!isYMD(ymd)) return null;
   const [Y, M, D] = ymd.split("-").map((x) => Number(x));
   const dt = new Date(Y, M - 1, D);
-  // 0=Dom..6=Sáb
-  return dt.getDay();
+  return dt.getDay(); // 0=Dom..6=Sáb
 }
 
 function getDomNumber(ymd) {
@@ -75,7 +123,9 @@ function scheduleSet(schedule) {
   return new Set((Array.isArray(schedule) ? schedule : []).map(toHourBucket));
 }
 
-/* ===== prizes parsing (igual lógica do seu Top3 atual) ===== */
+/* =========================
+   prizes parsing
+========================= */
 
 function guessPrizePos(p) {
   const pos = Number.isFinite(Number(p?.position))
@@ -111,21 +161,25 @@ function pickDrawHour(draw) {
   );
 }
 
+/**
+ * ✅ FIX: normaliza qualquer formato para YYYY-MM-DD
+ */
 function pickDrawYMD(draw) {
-  const y =
-    draw?.ymd ||
-    safeStr(draw?.date || "") ||
-    safeStr(draw?.data || "") ||
-    safeStr(draw?.dt || "") ||
-    "";
-  // se vier dd/mm/yyyy, deixa quieto (o Top3 já manda ymd correto normalmente)
-  return y;
+  const raw =
+    draw?.ymd ??
+    draw?.date ??
+    draw?.data ??
+    draw?.dt ??
+    draw?.day ??
+    draw?.ymdTarget ??
+    null;
+
+  const y = normalizeToYMD(raw);
+  return y && isYMD(y) ? y : null;
 }
 
 /**
- * Extrai grupo do 1º prêmio do draw:
- * - tenta prizes (modo detailed)
- * - tenta alguns campos comuns (fallback)
+ * Extrai grupo do 1º prêmio do draw
  */
 function pickPrize1GrupoFromDraw(draw) {
   const prizes = Array.isArray(draw?.prizes) ? draw.prizes : [];
@@ -184,6 +238,12 @@ function clamp(x, a, b) {
   return Math.max(a, Math.min(b, Number(x || 0)));
 }
 
+function allGroups25() {
+  const out = [];
+  for (let i = 1; i <= 25; i += 1) out.push(i);
+  return out;
+}
+
 /**
  * Motor principal
  */
@@ -201,11 +261,7 @@ export function computeTop3Signals({
 
   const target = toHourBucket(hourBucket);
   if (!target) {
-    return {
-      top: [],
-      scored: [],
-      meta: { reason: "no_target_hour" },
-    };
+    return { top: [], scored: [], meta: { reason: "no_target_hour" } };
   }
 
   const curYmd = safeStr(ymdTarget);
@@ -214,12 +270,13 @@ export function computeTop3Signals({
 
   const prevG = Number.isFinite(Number(prevGrupo)) ? Number(prevGrupo) : null;
 
-  // defaults (mantém seu comportamento atual, mas agora configurável)
+  // ✅ pesos + fallback global
   const W = {
     base: 1.0,
     trans: 0.65,
     dow: 0.35,
     dom: 0.25,
+    global: 0.18, // fallback leve quando hora alvo tem pouca amostra
     ...(weights || {}),
   };
 
@@ -235,13 +292,12 @@ export function computeTop3Signals({
 
   for (const d of list) {
     const y = pickDrawYMD(d);
-    if (!isYMD(y)) continue;
+    if (!y) continue;
 
     const h = toHourBucket(pickDrawHour(d));
     if (!h) continue;
 
-    // ignora horas fora da grade (evita Federal/20h)
-    if (!schSet.has(h)) continue;
+    if (!schSet.has(h)) continue; // ignora fora da grade
 
     const g1 = pickPrize1GrupoFromDraw(d);
     if (!Number.isFinite(Number(g1))) continue;
@@ -249,24 +305,36 @@ export function computeTop3Signals({
     byKey.set(`${y}__${h}`, Number(g1));
   }
 
-  // (A) Base counts no horário alvo
+  // (A) Base no horário alvo
   const baseCounts = new Map();
   let baseTotal = 0;
 
+  // (A2) Base global (todos horários da grade)
+  const globalCounts = new Map();
+  let globalTotal = 0;
+
   for (const [k, g] of byKey.entries()) {
     const hour = k.split("__")[1] || "";
-    if (hour !== target) continue;
-    baseTotal += 1;
-    baseCounts.set(g, (baseCounts.get(g) || 0) + 1);
+
+    // global
+    globalTotal += 1;
+    globalCounts.set(g, (globalCounts.get(g) || 0) + 1);
+
+    // target
+    if (hour === target) {
+      baseTotal += 1;
+      baseCounts.set(g, (baseCounts.get(g) || 0) + 1);
+    }
   }
 
-  if (baseTotal <= 0) {
+  if (baseTotal <= 0 && globalTotal <= 0) {
     return {
       top: [],
       scored: [],
       meta: {
-        reason: "no_samples_base_hour",
+        reason: "no_samples_any",
         hour: target,
+        debug: { byKeySize: byKey.size, targetHour: target },
       },
     };
   }
@@ -288,7 +356,6 @@ export function computeTop3Signals({
     if (prevHourSameDay) {
       pG = byKey.get(`${y}__${toHourBucket(prevHourSameDay)}`) ?? null;
     } else {
-      // primeira hora do dia: pega última do dia anterior
       const yPrev = addDaysYMD(y, -1);
       pG = byKey.get(`${yPrev}__${lastHourInDay}`) ?? null;
     }
@@ -335,11 +402,33 @@ export function computeTop3Signals({
   const useDow = prevG != null && transTotalDow >= MIN.dow;
   const useDom = prevG != null && transTotalDom >= MIN.dom;
 
-  const candidates = Array.from(baseCounts.keys());
+  // ✅ candidatos:
+  // - sempre inclui os que aparecem no horário alvo
+  // - se base < 3, completa com global
+  // - se ainda faltar (muito raro), completa com 1..25
+  const candidatesSet = new Set();
+
+  for (const g of baseCounts.keys()) candidatesSet.add(Number(g));
+
+  const baseHasEnough = candidatesSet.size >= 3;
+  if (!baseHasEnough) {
+    for (const g of globalCounts.keys()) candidatesSet.add(Number(g));
+  }
+
+  if (candidatesSet.size < 3) {
+    for (const g of allGroups25()) candidatesSet.add(Number(g));
+  }
+
+  const candidates = Array.from(candidatesSet).filter((g) =>
+    Number.isFinite(Number(g))
+  );
 
   const scored = candidates.map((g) => {
     const baseHit = baseCounts.get(g) || 0;
     const pBase = prob(baseHit, baseTotal);
+
+    const globHit = globalCounts.get(g) || 0;
+    const pGlob = prob(globHit, globalTotal);
 
     const transHit = transCounts.get(g) || 0;
     const pTrans = prob(transHit, transTotal);
@@ -350,18 +439,34 @@ export function computeTop3Signals({
     const domHit = transCountsDom.get(g) || 0;
     const pDom = prob(domHit, transTotalDom);
 
-    // bônus capados (pra não “explodir” score em amostra pequena)
     const bonusTrans = useTrans ? clamp(pTrans, 0, 0.55) : 0;
     const bonusDow = useDow ? clamp(pDow, 0, 0.40) : 0;
     const bonusDom = useDom ? clamp(pDom, 0, 0.32) : 0;
 
+    // ✅ score:
+    // - base do horário é a principal
+    // - base global é fallback leve (e ajuda a completar 3 cards)
     const finalScore =
-      W.base * pBase + W.trans * bonusTrans + W.dow * bonusDow + W.dom * bonusDom;
+      W.base * pBase +
+      W.global * (baseTotal > 0 ? pGlob : pGlob) +
+      W.trans * bonusTrans +
+      W.dow * bonusDow +
+      W.dom * bonusDom;
 
     const reasons = [];
 
+    if (baseTotal > 0) {
+      reasons.push(
+        `Base do horário ${target}: ${baseHit}/${baseTotal} (${Math.round(
+          pBase * 100
+        )}%)`
+      );
+    } else {
+      reasons.push(`Base do horário ${target}: sem amostra (0)`);
+    }
+
     reasons.push(
-      `Base do horário ${target}: ${baseHit}/${baseTotal} (${Math.round(pBase * 100)}%)`
+      `Base global (grade): ${globHit}/${globalTotal} (${Math.round(pGlob * 100)}%)`
     );
 
     if (prevG == null) {
@@ -398,6 +503,8 @@ export function computeTop3Signals({
       grupo: g,
       baseHit,
       baseTotal,
+      globalHit: globHit,
+      globalTotal,
       prevGrupo: prevG,
       transHit,
       transTotal,
@@ -409,6 +516,7 @@ export function computeTop3Signals({
       useDow,
       useDom,
       pBase,
+      pGlob,
       pTrans,
       pDow,
       pDom,
@@ -421,11 +529,46 @@ export function computeTop3Signals({
     (a, b) =>
       b.finalScore - a.finalScore ||
       b.baseHit - a.baseHit ||
+      b.globalHit - a.globalHit ||
       a.grupo - b.grupo
   );
 
   const best = scored.slice(0, 3);
-  const sum = best.reduce((acc, x) => acc + (Number(x.finalScore) || 0), 0) || 1;
+
+  // ✅ garante 3 itens (se por algum motivo extremo vier <3)
+  while (best.length < 3) {
+    const g = allGroups25().find(
+      (x) => !best.some((b) => Number(b.grupo) === Number(x))
+    );
+    if (!g) break;
+    best.push({
+      grupo: g,
+      baseHit: 0,
+      baseTotal,
+      globalHit: 0,
+      globalTotal,
+      prevGrupo: prevG,
+      transHit: 0,
+      transTotal,
+      dowHit: 0,
+      transTotalDow,
+      domHit: 0,
+      transTotalDom,
+      useTrans,
+      useDow,
+      useDom,
+      pBase: 0,
+      pGlob: 0,
+      pTrans: 0,
+      pDow: 0,
+      pDom: 0,
+      finalScore: 0,
+      reasons: [`Fallback: completando Top3 (sem amostra suficiente)`],
+    });
+  }
+
+  const sum =
+    best.reduce((acc, x) => acc + (Number(x.finalScore) || 0), 0) || 1;
 
   const top = best.map((x, idx) => {
     const pct = Math.round(((Number(x.finalScore) || 0) / sum) * 100);
@@ -444,6 +587,7 @@ export function computeTop3Signals({
     meta: {
       targetHour: target,
       baseTotal,
+      globalTotal,
       prevGrupo: prevG,
       transTotal,
       transTotalDow,
@@ -454,6 +598,10 @@ export function computeTop3Signals({
       weights: W,
       mins: MIN,
       dayContext: { ymd: curYmd, dow: curDow, dom: curDom },
+      fallback: {
+        baseCandidates: baseCounts.size,
+        usedGlobalToComplete: baseCounts.size < 3,
+      },
     },
   };
 }

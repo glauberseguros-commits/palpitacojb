@@ -6,8 +6,6 @@ import {
   getKingBoundsByUf,
 } from "../../services/kingResultsService";
 import { getAnimalLabel, getImgFromGrupo } from "../../constants/bichoMap";
-
-// ✅ NOVO: motor de sinais (analytics)
 import { computeTop3Signals } from "../../services/statsSignals";
 
 /* =========================
@@ -76,9 +74,6 @@ function addDaysYMD(ymd, deltaDays) {
   return `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}`;
 }
 
-/**
- * ✅ Normaliza "horário" para HH:MM
- */
 function normalizeHourLike(value) {
   const s0 = safeStr(value);
   if (!s0) return "";
@@ -97,7 +92,6 @@ function normalizeHourLike(value) {
   return s0;
 }
 
-/** bucket por hora (zera minutos) — "09:09" -> "09:00" */
 function toHourBucket(hhmm) {
   const s = normalizeHourLike(hhmm);
   const m = s.match(/^(\d{2}):(\d{2})$/);
@@ -112,7 +106,6 @@ function hourToInt(hhmm) {
   return Number(m[1]) * 60 + Number(m[2]);
 }
 
-/** Extrai posição/grupo do prize em múltiplos formatos */
 function guessPrizePos(p) {
   const pos = Number.isFinite(Number(p?.position))
     ? Number(p.position)
@@ -219,7 +212,6 @@ function normalizeImgSrc(src) {
 
 /* =========================
    Grade de horários (PT/RIO)
-   ✅ qua (3) e sáb (6) sem 18h
 ========================= */
 
 const PT_RIO_SCHEDULE_NORMAL = ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
@@ -385,7 +377,7 @@ function milharCompareByCentenaAsc(a, b) {
 }
 
 /* =========================
-   Top3 Page (Painel Analytics)
+   Top3 Page
 ========================= */
 
 export default function Top3() {
@@ -423,7 +415,6 @@ export default function Top3() {
   });
 
   const ufQueryKey = useMemo(() => {
-    // ✅ seu service já trava RJ em PT_RIO (RJ Lock)
     const s = safeStr(ufUi).toUpperCase();
     return s === "RJ" ? "RJ" : s;
   }, [ufUi]);
@@ -480,7 +471,6 @@ export default function Top3() {
         // ok
       }
 
-      // hoje (para descobrir último e alvo)
       const outToday = await getKingResultsByDate({
         uf: uQuery,
         date: ymdSafe,
@@ -519,7 +509,6 @@ export default function Top3() {
 
       setRangeInfo({ from: rangeFrom, to: rangeTo });
 
-      // histórico do período (posição 1, detailed)
       const outRange = await getKingResultsByRange({
         uf: uQuery,
         dateFrom: rangeFrom,
@@ -596,7 +585,6 @@ export default function Top3() {
     return `G${pad2(g)}${animal ? " • " + animal.toUpperCase() : ""}${when ? " • " + when : ""}`;
   }, [prevInfo]);
 
-  // ✅ NOVO: Top3 vindo do motor de sinais
   const analytics = useMemo(() => {
     const list = Array.isArray(rangeDraws) ? rangeDraws : [];
     const hour = safeStr(analysisHourBucket);
@@ -610,9 +598,7 @@ export default function Top3() {
       ymdTarget: ymdSafe,
       hourBucket: hour,
       prevGrupo: prevInfo?.prevGrupo ?? null,
-
-      // você pode calibrar aqui depois:
-      weights: { base: 1.0, trans: 0.65, dow: 0.35, dom: 0.25 },
+      weights: { base: 1.0, trans: 0.65, dow: 0.35, dom: 0.25, global: 0.18 },
       mins: { trans: 6, dow: 4, dom: 3 },
     });
 
@@ -672,38 +658,67 @@ export default function Top3() {
   }
 
   /**
-   * ✅ 16 milhares (mesma lógica do seu Top3 atual)
+   * ✅ 16 milhares POR BICHO
+   * - 1º tenta só horário alvo
+   * - fallback: completa com outros horários da grade
+   * - fallback final: relaxa centena única pra fechar 16
    */
   function build16MilharesForGrupo(grupo2) {
     const list = Array.isArray(rangeDraws) ? rangeDraws : [];
     const target = toHourBucket(analysisHourBucket);
+    const schSet = scheduleSet(schedule);
 
     if (!grupo2 || !list.length || !target) {
-      return { dezenas: [], milhares: [], slots: [] };
+      return { dezenas: [], slots: [] };
     }
 
-    const prizes = [];
-    for (const d of list) {
-      const h = toHourBucket(pickDrawHour(d));
-      if (h !== target) continue;
+    const collect = (mode) => {
+      const prizes = [];
+      for (const d of list) {
+        const h = toHourBucket(pickDrawHour(d));
+        if (!h) continue;
 
-      const ps = Array.isArray(d?.prizes) ? d.prizes : [];
-      if (!ps.length) continue;
+        // sempre respeita grade PT/RIO
+        if (!schSet.has(h)) continue;
 
-      const p1 = ps.find((p) => guessPrizePos(p) === 1) || null;
-      if (!p1) continue;
+        // modo 1: só horário alvo
+        if (mode === "target_only" && h !== target) continue;
 
-      const g = guessPrizeGrupo(p1);
-      if (!Number.isFinite(Number(g)) || Number(g) !== Number(grupo2)) continue;
+        const ps = Array.isArray(d?.prizes) ? d.prizes : [];
+        if (!ps.length) continue;
 
-      const m4 = pickPrizeMilhar4(p1);
-      if (!m4) continue;
+        const p1 = ps.find((p) => guessPrizePos(p) === 1) || null;
+        if (!p1) continue;
 
-      prizes.push(m4);
+        const g = guessPrizeGrupo(p1);
+        if (!Number.isFinite(Number(g)) || Number(g) !== Number(grupo2)) continue;
+
+        const m4 = pickPrizeMilhar4(p1);
+        if (!m4) continue;
+
+        prizes.push(m4);
+      }
+      return prizes;
+    };
+
+    // 1) tenta só horário alvo
+    let prizes = collect("target_only");
+
+    // 2) fallback: se pouca base, usa qualquer horário da grade
+    if (prizes.length < 16) {
+      const extra = collect("any_hour");
+      // mistura mantendo uniques primeiro
+      const set = new Set(prizes);
+      for (const m of extra) {
+        if (set.has(m)) continue;
+        prizes.push(m);
+        set.add(m);
+      }
     }
 
-    if (!prizes.length) return { dezenas: [], milhares: [], slots: [] };
+    if (!prizes.length) return { dezenas: [], slots: [] };
 
+    // Contagem por dezena
     const dezCounts = new Map();
     for (const m4 of prizes) {
       const dz = getDezena2(m4);
@@ -711,19 +726,33 @@ export default function Top3() {
       dezCounts.set(dz, (dezCounts.get(dz) || 0) + 1);
     }
 
-    const selectedDezenas = Array.from(dezCounts.entries())
+    let topDezenas = Array.from(dezCounts.entries())
       .sort((a, b) => b[1] - a[1] || dezenaCompareAsc(a[0], b[0]))
       .slice(0, 4)
-      .map((x) => x[0]);
+      .map((x) => x[0])
+      .sort(dezenaCompareAsc);
 
-    const topDezenas = [...selectedDezenas].sort(dezenaCompareAsc);
+    // Se não conseguiu 4 dezenas, completa com as restantes mais fortes
+    if (topDezenas.length < 4) {
+      const allDz = Array.from(dezCounts.entries())
+        .sort((a, b) => b[1] - a[1] || dezenaCompareAsc(a[0], b[0]))
+        .map((x) => x[0]);
 
+      for (const dz of allDz) {
+        if (topDezenas.length >= 4) break;
+        if (!topDezenas.includes(dz)) topDezenas.push(dz);
+      }
+      topDezenas = topDezenas.slice(0, 4).sort(dezenaCompareAsc);
+    }
+
+    // monta 4 milhares por dezena
     const byDezena = new Map();
+
+    // fase A: tenta centena única global
     const usedCentenas = new Set();
 
-    for (const dz of topDezenas) {
+    const pickForDezena = (dz, allowRepeatCentena) => {
       const countsMilhar = new Map();
-
       for (const m4 of prizes) {
         if (getDezena2(m4) !== dz) continue;
         countsMilhar.set(m4, (countsMilhar.get(m4) || 0) + 1);
@@ -733,39 +762,67 @@ export default function Top3() {
         .sort((a, b) => b[1] - a[1] || milharCompareAsc(a[0], b[0]))
         .map((x) => x[0]);
 
-      const pickedThisDz = [];
+      const picked = [];
 
       for (const m4 of ranked) {
-        if (pickedThisDz.length >= 4) break;
+        if (picked.length >= 4) break;
         const cent = getCentena3(m4);
         if (!cent) continue;
-        if (usedCentenas.has(cent)) continue;
-        usedCentenas.add(cent);
-        pickedThisDz.push(m4);
+
+        if (!allowRepeatCentena && usedCentenas.has(cent)) continue;
+
+        if (!allowRepeatCentena) usedCentenas.add(cent);
+        picked.push(m4);
       }
 
-      if (pickedThisDz.length < 4) {
+      // Se ainda faltou, completa (mesmo repetindo milhar)
+      if (picked.length < 4) {
         for (const m4 of ranked) {
-          if (pickedThisDz.length >= 4) break;
-          if (pickedThisDz.includes(m4)) continue;
+          if (picked.length >= 4) break;
+          if (picked.includes(m4)) continue;
+
           const cent = getCentena3(m4);
           if (!cent) continue;
-          if (usedCentenas.has(cent)) continue;
-          usedCentenas.add(cent);
-          pickedThisDz.push(m4);
+
+          if (!allowRepeatCentena && usedCentenas.has(cent)) continue;
+
+          if (!allowRepeatCentena) usedCentenas.add(cent);
+          picked.push(m4);
         }
       }
 
-      pickedThisDz.sort(milharCompareByCentenaAsc);
+      picked.sort(milharCompareByCentenaAsc);
+      return picked.map((m4) => ({ dezena: dz, milhar: m4 }));
+    };
 
-      byDezena.set(dz, pickedThisDz.map((m4) => ({ dezena: dz, milhar: m4 })));
+    // fase A
+    for (const dz of topDezenas) {
+      byDezena.set(dz, pickForDezena(dz, false));
     }
 
-    const slots = [];
+    // se ainda faltar preencher slots vazios, fase B (relaxa centena única)
+    let slots = [];
     for (const dz of topDezenas) {
       const arr = byDezena.get(dz) || [];
       for (let i = 0; i < 4; i += 1) slots.push(arr[i] || { dezena: dz, milhar: "" });
     }
+
+    const emptyCount = slots.filter((s) => !safeStr(s.milhar)).length;
+    if (emptyCount > 0) {
+      // refaz preenchimento relaxando a regra para fechar 16
+      const byDezena2 = new Map();
+      for (const dz of topDezenas) {
+        byDezena2.set(dz, pickForDezena(dz, true));
+      }
+
+      const slots2 = [];
+      for (const dz of topDezenas) {
+        const arr = byDezena2.get(dz) || [];
+        for (let i = 0; i < 4; i += 1) slots2.push(arr[i] || { dezena: dz, milhar: "" });
+      }
+      slots = slots2;
+    }
+
     while (slots.length < 16) slots.push({ dezena: "", milhar: "" });
 
     return { dezenas: topDezenas, slots: slots.slice(0, 16) };
@@ -1250,7 +1307,6 @@ export default function Top3() {
               <div className="pp_cards">
                 {top3.map((x) => {
                   const isMain = x.rank === 1;
-
                   const animal = safeStr(x.animal) || "—";
 
                   const imgSrc = normalizeImgSrc(
