@@ -51,28 +51,82 @@ function cacheSet(map, key, data) {
 const RJ_STATE_CODE = "RJ";
 const RJ_LOTTERY_KEY = "PT_RIO";
 
+// ✅ Escopo canônico para Federal no app
+const FEDERAL_SCOPE_CODE = "FEDERAL";
+
 /**
- * Resolve qual lottery_key usar quando o usuário passar "RJ".
- * Para outros casos, mantemos o valor original (compatível com seu app atual).
+ * ✅ Aliases tolerados (input do usuário / UI)
+ */
+const FEDERAL_INPUT_ALIASES = new Set([
+  "FEDERAL",
+  "FED",
+  "LOT FEDERAL",
+  "LOTERIA FEDERAL",
+  "LOTERIA_FEDERAL",
+  "LT_FEDERAL",
+  "FED_BR",
+]);
+
+// ✅ Possíveis lottery_key no Firestore (tentativa em cascata)
+const FEDERAL_LOTTERY_KEYS = ["FEDERAL", "LOTERIA_FEDERAL", "LT_FEDERAL", "FED"];
+
+/**
+ * (Opcional para UI) — regra de calendário do Federal
+ * - 20h: quarta e sábado
+ */
+export const FEDERAL_DRAW_HOUR = "20:00";
+export const FEDERAL_DRAW_BUCKET = "20h";
+export const FEDERAL_DRAW_DOW = ["WEDNESDAY", "SATURDAY"]; // referência (UI)
+
+/**
+ * Detecta se o usuário está pedindo Federal (por input/alias).
+ */
+function isFederalInput(scopeInput) {
+  const up = String(scopeInput || "").trim().toUpperCase();
+  if (!up) return false;
+  if (up === FEDERAL_SCOPE_CODE) return true;
+  if (FEDERAL_INPUT_ALIASES.has(up)) return true;
+
+  // normaliza espaços/underscores pra captar variações
+  const compact = up.replace(/[\s_]+/g, " ").trim();
+  return (
+    FEDERAL_INPUT_ALIASES.has(compact) ||
+    FEDERAL_INPUT_ALIASES.has(up.replace(/[\s_]+/g, "_"))
+  );
+}
+
+/**
+ * Resolve qual lottery_key usar quando o usuário passar:
+ * - "RJ" -> "PT_RIO"
+ * - "FEDERAL"/aliases -> "FEDERAL" (canônico)
+ * - outros -> mantém o valor original (compatível com seu app atual)
  */
 function resolveLotteryKeyForQuery(ufInput) {
   const uf = String(ufInput || "").trim();
   if (!uf) return "";
-  if (uf.toUpperCase() === RJ_STATE_CODE) return RJ_LOTTERY_KEY;
+  const up = uf.toUpperCase();
+
+  if (up === RJ_STATE_CODE) return RJ_LOTTERY_KEY;
+  if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+
   return uf;
 }
 
 /**
  * ✅ Chave canônica para CACHE:
- * - Se for "RJ" -> usa "PT_RIO"
- * - Se for "pt_rio" -> "PT_RIO"
- * - Se for qualquer outro -> UPPER(TRIM)
+ * - "RJ" -> "PT_RIO"
+ * - Federal (qualquer alias) -> "FEDERAL"
+ * - outros -> UPPER(TRIM)
  */
 function canonicalScopeKey(ufInput) {
   const s = String(ufInput || "").trim();
   if (!s) return "";
   const up = s.toUpperCase();
-  return up === RJ_STATE_CODE ? RJ_LOTTERY_KEY : up;
+
+  if (up === RJ_STATE_CODE) return RJ_LOTTERY_KEY;
+  if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+
+  return up;
 }
 
 /**
@@ -94,8 +148,19 @@ function buildRJLockWhereIfNeeded(fieldName, ufInput) {
 function normalizeValueForField(fieldName, valueInput) {
   const s = String(valueInput || "").trim();
   if (!s) return "";
-  if (fieldName === "uf") return s.toUpperCase();
-  if (fieldName === "lottery_key") return s.toUpperCase();
+
+  if (fieldName === "uf") {
+    const up = s.toUpperCase();
+    if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+    return up;
+  }
+
+  if (fieldName === "lottery_key") {
+    const up = s.toUpperCase();
+    if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+    return up;
+  }
+
   return s;
 }
 
@@ -149,6 +214,11 @@ function normalizeHourLike(value) {
   return s0.trim();
 }
 
+function mhxToInt(v) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+}
+
 /**
  * ✅ Bucket "09h", "11h"…
  */
@@ -157,19 +227,19 @@ function toHourBucket(value) {
   if (!s || s.toLowerCase() === "todos") return null;
 
   const mh = s.match(/^(\d{1,2})h$/i);
-  if (mh) return `${pad2(mh[1])}h`;
+  if (mh) return `${pad2(mhxToInt(mh[1]))}h`;
 
   const m1 = s.match(/^(\d{1,2}):(\d{2})$/);
-  if (m1) return `${pad2(m1[1])}h`;
+  if (m1) return `${pad2(mhxToInt(m1[1]))}h`;
 
   const m2 = s.match(/^(\d{1,2})$/);
-  if (m2) return `${pad2(m2[1])}h`;
+  if (m2) return `${pad2(mhxToInt(m2[1]))}h`;
 
   const m3 = s.match(/^(\d{1,2}):(\d{2}):(\d{2})$/);
-  if (m3) return `${pad2(m3[1])}h`;
+  if (m3) return `${pad2(mhxToInt(m3[1]))}h`;
 
   const m4 = s.match(/^(\d{3,4})$/);
-  if (m4) return `${pad2(String(m4[1]).slice(0, -2))}h`;
+  if (m4) return `${pad2(mhxToInt(String(m4[1]).slice(0, -2)))}h`;
 
   return null;
 }
@@ -181,9 +251,7 @@ function toHourBucket(value) {
 function resolveHourFilter({ closeHour = null, closeHourBucket = null }) {
   const bucket =
     toHourBucket(closeHourBucket) ||
-    (closeHour && !String(closeHour).includes(":")
-      ? toHourBucket(closeHour)
-      : null);
+    (closeHour && !String(closeHour).includes(":") ? toHourBucket(closeHour) : null);
 
   if (bucket) return { kind: "bucket", bucket, hhmm: null };
 
@@ -197,11 +265,7 @@ function drawPassesHourFilter(draw, hourFilter) {
   if (!hourFilter || !hourFilter.kind) return true;
 
   const raw =
-    draw?.close_hour ??
-    draw?.closeHour ??
-    draw?.hour ??
-    draw?.hora ??
-    "";
+    draw?.close_hour ?? draw?.closeHour ?? draw?.hour ?? draw?.hora ?? "";
   const norm = normalizeHourLike(raw);
 
   if (hourFilter.kind === "exact") {
@@ -226,9 +290,7 @@ function normalizeToYMD(input) {
   if (typeof input === "object" && typeof input.toDate === "function") {
     const d = input.toDate();
     if (!Number.isNaN(d.getTime())) {
-      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(
-        d.getDate()
-      )}`;
+      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
     }
   }
 
@@ -243,9 +305,7 @@ function normalizeToYMD(input) {
       : Number(input._seconds);
     const d = new Date(sec * 1000);
     if (!Number.isNaN(d.getTime())) {
-      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(
-        d.getDate()
-      )}`;
+      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
     }
   }
 
@@ -270,9 +330,7 @@ function normalizeToYMD(input) {
 function normalizePositions(positions) {
   const arr =
     Array.isArray(positions) && positions.length
-      ? positions
-          .map(Number)
-          .filter((n) => Number.isFinite(n) && n > 0)
+      ? positions.map(Number).filter((n) => Number.isFinite(n) && n > 0)
       : null;
 
   if (!arr || !arr.length) return null;
@@ -298,7 +356,6 @@ function isValidPosition(n) {
 function extractIntInRange(value, min, max) {
   if (value === null || value === undefined) return null;
 
-  // número puro
   if (typeof value === "number" && Number.isFinite(value)) {
     const n = Math.trunc(value);
     return n >= min && n <= max ? n : null;
@@ -307,13 +364,11 @@ function extractIntInRange(value, min, max) {
   const s = String(value).trim();
   if (!s) return null;
 
-  // se for "02" etc
   if (/^\d+$/.test(s)) {
     const n = Number(s);
     return Number.isFinite(n) && n >= min && n <= max ? n : null;
   }
 
-  // pega o primeiro número de 1-2 dígitos
   const m = s.match(/(\d{1,2})/);
   if (!m) return null;
   const n = Number(m[1]);
@@ -339,6 +394,7 @@ function toPrizeDigitsByPosition(input, position) {
   if (!digits) return null;
 
   const w = prizeWidthByPosition(position);
+
   if (w === 3) {
     const last3 = digits.slice(-3).padStart(3, "0");
     return /^\d{3}$/.test(last3) ? last3 : null;
@@ -419,9 +475,7 @@ function dedupeDrawsLocal(draws) {
 
   function score(d) {
     const prizesLen = Array.isArray(d?.prizes) ? d.prizes.length : 0;
-    const pc = Number.isFinite(Number(d?.prizesCount))
-      ? Number(d.prizesCount)
-      : 0;
+    const pc = Number.isFinite(Number(d?.prizesCount)) ? Number(d.prizesCount) : 0;
     const hasLogical = !!(d?.ymd && d?.close_hour);
     return prizesLen * 1_000_000 + pc * 1_000 + (hasLogical ? 10 : 0);
   }
@@ -611,7 +665,6 @@ async function fetchPrizesForDraw(drawId, positionsArr, embeddedPrizes) {
   const drawKey = String(drawId || "").trim();
   if (!drawKey) return [];
 
-  // 1) tenta usar embedded prizes (se existir)
   if (Array.isArray(embeddedPrizes) && embeddedPrizes.length) {
     const normalized = embeddedPrizes.map((p, idx) =>
       normalizePrize(p, p?.prizeId ?? `emb_${idx}`)
@@ -621,22 +674,16 @@ async function fetchPrizesForDraw(drawId, positionsArr, embeddedPrizes) {
       (x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position)
     );
 
-    // ✅ se há prizes válidos, usa
     if (cleaned.length) {
       const allSorted = sortPrizesByPosition(cleaned);
       return filterPrizesByPositions(allSorted, positionsArr);
     }
-
-    // ✅ se NÃO há prizes válidos, NÃO retorna vazio aqui.
-    // cai no fallback da subcollection, pois o embedded é "agregado/incompleto".
   }
 
-  // 2) cache por subcollection
   const allKey = prizesCacheKeyAll(drawKey);
   const cachedAll = cacheGet(PRIZES_CACHE, allKey);
   if (cachedAll) return filterPrizesByPositions(cachedAll, positionsArr);
 
-  // 3) lê subcollection
   const prizesCol = collection(db, "draws", drawKey, "prizes");
 
   const { snap, error } = await safeGetDocsPreferServer(prizesCol);
@@ -671,7 +718,6 @@ function mapDrawDoc(doc) {
   const ufRaw = d.uf ?? null;
   const lotteryKeyRaw = d.lottery_key ?? d.lotteryKey ?? d.lottery ?? null;
 
-  // ✅ novo: código “da loteria” (PT09, PT11, etc) para filtro de loterias no Late
   const lotteryCodeRaw =
     d.lottery_code ??
     d.lotteryCode ??
@@ -715,9 +761,7 @@ function buildUfWhereClauses(fieldName, uf) {
 
 function normalizeOrderBys(extraOrderBy) {
   if (!extraOrderBy) return [];
-  return Array.isArray(extraOrderBy)
-    ? extraOrderBy.filter(Boolean)
-    : [extraOrderBy];
+  return Array.isArray(extraOrderBy) ? extraOrderBy.filter(Boolean) : [extraOrderBy];
 }
 
 async function queryDrawsByField({
@@ -779,6 +823,26 @@ async function fetchDrawDocsPreferUf({
 
   // 2) fallback por lottery_key
   {
+    // ✅ Federal: tenta em cascata por possíveis lottery_key (sem OR no Firestore)
+    if (isFederalInput(ufUp)) {
+      for (const lk of FEDERAL_LOTTERY_KEYS) {
+        const { snap, error } = await queryDrawsByField({
+          fieldName: "lottery_key",
+          uf: lk,
+          extraWheres,
+          extraOrderBy,
+          extraLimit,
+        });
+
+        if (error) return { docs: [], usedField: "lottery_key", error };
+        if (snap?.docs?.length) {
+          return { docs: snap.docs, usedField: "lottery_key", error: null };
+        }
+      }
+
+      return { docs: [], usedField: "lottery_key", error: null };
+    }
+
     const lotteryKey =
       ufUp === RJ_STATE_CODE ? RJ_LOTTERY_KEY : resolveLotteryKeyForQuery(ufTrim);
 
@@ -820,6 +884,7 @@ function pickMinMaxFromMapped(mapped) {
  * ✅ COMPAT:
  * - aceita getKingBoundsByUf("RJ")
  * - aceita getKingBoundsByUf({ uf: "RJ" })
+ * - aceita getKingBoundsByUf("FEDERAL") (se existir no Firestore)
  */
 export async function getKingBoundsByUf(ufOrObj) {
   const uf = String(extractUfParam(ufOrObj) || "").trim();
@@ -865,29 +930,22 @@ export async function getKingBoundsByUf(ufOrObj) {
     const orderAsc = [orderBy("ymd", "asc"), orderBy(DOC_ID)];
     const orderDesc = [orderBy("ymd", "desc"), orderBy(DOC_ID)];
 
-    const {
-      docs: minDocs,
-      usedField: usedMin,
-      error: eMin,
-    } = await fetchDrawDocsPreferUf({
-      uf,
-      extraOrderBy: orderAsc,
-      extraLimit: limit(SCAN_LIMIT),
-    });
+    const { docs: minDocs, usedField: usedMin, error: eMin } =
+      await fetchDrawDocsPreferUf({
+        uf,
+        extraOrderBy: orderAsc,
+        extraLimit: limit(SCAN_LIMIT),
+      });
 
-    const {
-      docs: maxDocs,
-      usedField: usedMax,
-      error: eMax,
-    } = await fetchDrawDocsPreferUf({
-      uf,
-      extraOrderBy: orderDesc,
-      extraLimit: limit(SCAN_LIMIT),
-    });
+    const { docs: maxDocs, usedField: usedMax, error: eMax } =
+      await fetchDrawDocsPreferUf({
+        uf,
+        extraOrderBy: orderDesc,
+        extraLimit: limit(SCAN_LIMIT),
+      });
 
     if (eMin || eMax) {
-      if (!isIndexError(eMin) && !isIndexError(eMax))
-        firstTryError = eMin || eMax;
+      if (!isIndexError(eMin) && !isIndexError(eMax)) firstTryError = eMin || eMax;
     }
 
     if (minDocs.length && maxDocs.length && !eMin && !eMax) {
@@ -921,15 +979,30 @@ export async function getKingBoundsByUf(ufOrObj) {
     const a = await sampleEdgesByDocId("uf", String(uf).toUpperCase());
 
     const ufUp = String(uf || "").trim().toUpperCase();
+
+    // ✅ Para Federal: tenta bordas por lottery_key em cascata
+    if (!a.ok && isFederalInput(ufUp)) {
+      for (const lk of FEDERAL_LOTTERY_KEYS) {
+        const b = await sampleEdgesByDocId("lottery_key", lk);
+        if (b.ok) {
+          const { minYmd, maxYmd } = pickMinMaxFromMapped(b.merged);
+          return {
+            ok: !!(minYmd && maxYmd),
+            uf,
+            minYmd: minYmd || null,
+            maxYmd: maxYmd || null,
+            source: `fallback_edges_docId_limit=${FALLBACK_EDGE_LIMIT}:lottery_key(${lk}):sampleCount=${b.merged.length}${idxInfo}`,
+          };
+        }
+      }
+    }
+
     const lotteryKey =
       ufUp === RJ_STATE_CODE ? RJ_LOTTERY_KEY : resolveLotteryKeyForQuery(uf);
 
     const b = a.ok
       ? null
-      : await sampleEdgesByDocId(
-          "lottery_key",
-          String(lotteryKey).toUpperCase()
-        );
+      : await sampleEdgesByDocId("lottery_key", String(lotteryKey).toUpperCase());
 
     const merged = a.ok ? a.merged : b?.merged || [];
     const { minYmd, maxYmd } = pickMinMaxFromMapped(merged);
@@ -1046,11 +1119,7 @@ export async function getKingResultsByDate({
   const ordered = sortDrawsLocal(base);
 
   const results = await mapWithConcurrency(ordered, 6, async (item) => {
-    const prizes = await fetchPrizesForDraw(
-      item.drawId,
-      positionsArr,
-      item.prizes
-    );
+    const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
     return { ...item, prizes };
   });
 
@@ -1236,11 +1305,7 @@ export async function getKingResultsByRange({
     const days = daysBetweenInclusiveUTC(ymdFrom, ymdTo);
     const MAX_EMPTY_RANGE_FALLBACK_DAYS = 120;
 
-    if (
-      Number.isFinite(days) &&
-      days > 0 &&
-      days <= MAX_EMPTY_RANGE_FALLBACK_DAYS
-    ) {
+    if (Number.isFinite(days) && days > 0 && days <= MAX_EMPTY_RANGE_FALLBACK_DAYS) {
       const all = [];
       for (let i = 0; i < days; i += 1) {
         const day = addDaysUTC(ymdFrom, i);
@@ -1263,11 +1328,7 @@ export async function getKingResultsByRange({
 
       if (effectiveMode === "aggregated") {
         const out = dedupeDrawsLocal(
-          ordered.map((d) => ({
-            ...d,
-            prizes: [],
-            __mode: "aggregated",
-          }))
+          ordered.map((d) => ({ ...d, prizes: [], __mode: "aggregated" }))
         );
         cacheSet(DRAWS_CACHE, rangeKey, out);
         return out;
@@ -1275,11 +1336,7 @@ export async function getKingResultsByRange({
 
       const conc = chooseRangeConcurrency(ordered.length);
       const results = await mapWithConcurrency(ordered, conc, async (item) => {
-        const prizes = await fetchPrizesForDraw(
-          item.drawId,
-          positionsArr,
-          item.prizes
-        );
+        const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
         return { ...item, prizes };
       });
 
@@ -1313,11 +1370,7 @@ export async function getKingResultsByRange({
   const conc = chooseRangeConcurrency(ordered.length);
 
   const results = await mapWithConcurrency(ordered, conc, async (item) => {
-    const prizes = await fetchPrizesForDraw(
-      item.drawId,
-      positionsArr,
-      item.prizes
-    );
+    const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
     return { ...item, prizes };
   });
 
@@ -1346,11 +1399,7 @@ export async function hydrateKingDrawsWithPrizes({
       : chooseRangeConcurrency(arr.length);
 
   const results = await mapWithConcurrency(arr, conc, async (item) => {
-    const prizes = await fetchPrizesForDraw(
-      item.drawId,
-      positionsArr,
-      item.prizes
-    );
+    const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
     return { ...item, prizes, __mode: "detailed" };
   });
 
@@ -1359,9 +1408,6 @@ export async function hydrateKingDrawsWithPrizes({
 
 /* =========================
    ✅ ATRASADOS (Late) — 100% baseado na SUA base
-   - NÃO chama nada externo
-   - busca “última aparição” por grupo no prêmio escolhido
-   - calcula atraso em dias (UTC)
 ========================= */
 
 function normalizeLotteriesList(lotteries) {
@@ -1375,7 +1421,7 @@ function normalizeLotteriesList(lotteries) {
 function drawPassesLotteriesFilter(draw, lotteriesArr) {
   if (!lotteriesArr || !lotteriesArr.length) return true;
   const code = String(draw?.lottery_code ?? "").trim().toUpperCase();
-  if (!code) return false; // se pediu filtro e o doc não tem code, não entra
+  if (!code) return false;
   return lotteriesArr.includes(code);
 }
 
@@ -1401,20 +1447,13 @@ function lateCacheKey({
   return `late::${scopeKey}::${fromYmd}..${toYmd}::base=${baseYmd}::pos=${pos}::h=${h}::lots=${lots}::chunk=${cd}`;
 }
 
-/**
- * getKingLateByRange
- * - Retorna 25 linhas (01..25) com:
- *   { pos, grupo, lastYmd, lastHour, lastDrawId, lastLottery, atrasoDias }
- *
- * Params:
- * - uf: "RJ"
- * - dateFrom/dateTo: range máximo de busca (ex: bounds ou último ano)
- * - baseDate: data base do “atraso” (default = dateTo)
- * - lotteries: ["PT09","PT11",...] (opcional)
- * - prizePosition: default 1 (1º prêmio)
- * - closeHour/closeHourBucket: se quiser atrasados por um horário específico (opcional)
- * - chunkDays: default 15 (varredura por blocos, performance)
- */
+function hourToNumSafe(hhmm) {
+  const s = normalizeHourLike(hhmm);
+  const m = s.match(/^(\d{2}):(\d{2})$/);
+  if (!m) return Number.POSITIVE_INFINITY; // null/invalid vai pro fim (ASC)
+  return Number(m[1]) * 100 + Number(m[2]);
+}
+
 export async function getKingLateByRange({
   uf,
   dateFrom,
@@ -1457,14 +1496,11 @@ export async function getKingLateByRange({
 
   const posNum = Number(prizePosition) || 1;
 
-  // última aparição por grupo (1..25)
   const lastSeen = new Map(); // grupo -> { ymd, hour, drawId, lottery_code }
 
-  // varrer do final para o início, em blocos (performance)
   let cursorTo = toYmd;
   const chunk = Math.max(3, Math.min(60, Number(chunkDays) || 15));
 
-  // safety: evita loop infinito se range vier invertido
   if (cursorTo < fromYmd) {
     const outEmpty = Array.from({ length: 25 }, (_, i) => ({
       pos: i + 1,
@@ -1483,7 +1519,6 @@ export async function getKingLateByRange({
     let chunkFrom = addDaysUTC(cursorTo, -(chunk - 1));
     if (chunkFrom < fromYmd) chunkFrom = fromYmd;
 
-    // força detailed SEMPRE (late precisa de prizes válidos)
     const draws = await getKingResultsByRange({
       uf,
       dateFrom: chunkFrom,
@@ -1494,7 +1529,6 @@ export async function getKingLateByRange({
       mode: "detailed",
     });
 
-    // processa do mais recente para o mais antigo
     const desc = sortDrawsLocalDesc(dedupeDrawsLocal(draws));
 
     for (const d of desc) {
@@ -1506,11 +1540,8 @@ export async function getKingLateByRange({
       const ymd = d.ymd || normalizeToYMD(d.date);
       if (!ymd || !isYMD(ymd)) continue;
 
-      // prizes já vem filtrado por positions [posNum], mas garante
       const p = Array.isArray(d.prizes)
-        ? d.prizes.find(
-            (x) => Number(x?.position) === posNum && isValidGrupo(x?.grupo)
-          )
+        ? d.prizes.find((x) => Number(x?.position) === posNum && isValidGrupo(x?.grupo))
         : null;
 
       const g = p?.grupo;
@@ -1528,21 +1559,18 @@ export async function getKingLateByRange({
       }
     }
 
-    // move o cursor para antes do bloco atual
     cursorTo = addDaysUTC(chunkFrom, -1);
   }
 
-  // monta as 25 linhas
   const rows = [];
   for (let g = 1; g <= 25; g += 1) {
     const seen = lastSeen.get(g) || null;
     const lastYmd = seen?.ymd || null;
     const diff = lastYmd ? daysDiffUTC(lastYmd, baseYmd) : NaN;
-    const atrasoDias =
-      lastYmd && Number.isFinite(diff) ? Math.max(0, diff) : null;
+    const atrasoDias = lastYmd && Number.isFinite(diff) ? Math.max(0, diff) : null;
 
     rows.push({
-      pos: 0, // será preenchido após ordenação
+      pos: 0,
       grupo: g,
       lastYmd,
       lastHour: seen?.hour ? normalizeHourLike(seen.hour) : null,
@@ -1552,14 +1580,22 @@ export async function getKingLateByRange({
     });
   }
 
-  // ordena: maiores atrasos primeiro; null vai pro fim
+  // ✅ CRITÉRIO DE DESEMPATE (como você pediu):
+  // - atrasoDias DESC
+  // - empate: lastHour ASC (09:00 antes de 21:00)
+  // - depois: grupo ASC
   const sorted = [...rows].sort((a, b) => {
     const aa = Number.isFinite(Number(a?.atrasoDias)) ? Number(a.atrasoDias) : -1;
     const bb = Number.isFinite(Number(b?.atrasoDias)) ? Number(b.atrasoDias) : -1;
-    return bb - aa;
+    if (bb !== aa) return bb - aa;
+
+    const ha = hourToNumSafe(a?.lastHour);
+    const hb = hourToNumSafe(b?.lastHour);
+    if (ha !== hb) return ha - hb;
+
+    return Number(a?.grupo || 0) - Number(b?.grupo || 0);
   });
 
-  // numera posição 1º..25
   const out = sorted.map((r, idx) => ({ ...r, pos: idx + 1 }));
 
   cacheSet(LATE_CACHE, cacheKey, out);
