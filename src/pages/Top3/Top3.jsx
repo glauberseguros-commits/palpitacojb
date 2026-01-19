@@ -71,7 +71,9 @@ function addDaysYMD(ymd, deltaDays) {
   const [Y, M, D] = ymd.split("-").map((x) => Number(x));
   const dt = new Date(Y, M - 1, D);
   dt.setDate(dt.getDate() + Number(deltaDays || 0));
-  return `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}`;
+  return `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(
+    dt.getDate()
+  )}`;
 }
 
 function normalizeHourLike(value) {
@@ -206,8 +208,89 @@ function normalizeImgSrc(src) {
   if (s.startsWith("/")) return `${base}${s}`;
   if (s.startsWith("public/")) return `${base}/${s.slice("public/".length)}`;
   if (s.startsWith("img/")) return `${base}/${s}`;
-
   return `${base}/${s}`;
+}
+
+/**
+ * ✅ tenta múltiplas variações de imagem por grupo/tamanho
+ * (robusto p/ manter premium sem “quebra”)
+ */
+function makeImgVariantsFromGrupo(grupo, size) {
+  const g = Number(grupo);
+  if (!Number.isFinite(g) || g <= 0) return [];
+
+  const s = Number(size) || 96;
+
+  // 1) rota “oficial” do bichoMap (se existir)
+  const primary = normalizeImgSrc(getImgFromGrupo?.(g, s) || getImgFromGrupo?.(g) || "");
+
+  // 2) fallback compatível com seu padrão de assets
+  //    (ajuda quando getImgFromGrupo mudar)
+  const base = publicBase();
+  const g2 = pad2(g);
+  const label = safeStr(getAnimalLabel?.(g) || "");
+  const slug = label
+    ? label
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "")
+    : "";
+  const sizedName =
+    slug ? `${base}/assets/animals/animais_${s}_png/${g2}_${slug}_${s}.png` : "";
+
+  const seeds = [primary, sizedName].filter(Boolean);
+
+  const out = [];
+  for (const seed of seeds) {
+    const clean = String(seed).split("?")[0];
+    if (!clean) continue;
+
+    out.push(clean);
+    if (clean.match(/\.png$/)) out.push(clean.replace(/\.png$/, ".PNG"));
+    if (clean.match(/\.PNG$/)) out.push(clean.replace(/\.PNG$/, ".png"));
+
+    out.push(clean.replace(/\.(png|PNG)$/i, ".jpg"));
+    out.push(clean.replace(/\.(png|PNG|jpg)$/i, ".jpeg"));
+    out.push(`${clean}?v=1`);
+  }
+
+  return Array.from(new Set(out.filter(Boolean)));
+}
+
+function ImgSmart({ variants, alt, className }) {
+  const [failed, setFailed] = useState(false);
+
+  if (!variants?.length || failed) {
+    return (
+      <div className={`pp_imgFallback ${className || ""}`} aria-hidden="true">
+        —
+      </div>
+    );
+  }
+
+  return (
+    <img
+      className={className}
+      src={variants[0]}
+      alt={alt}
+      loading="lazy"
+      data-try="0"
+      onError={(e) => {
+        const imgEl = e.currentTarget;
+        const i = Number(imgEl.dataset.try || "0");
+        const next = variants[i + 1];
+
+        if (next) {
+          imgEl.dataset.try = String(i + 1);
+          imgEl.src = next;
+        } else {
+          setFailed(true);
+        }
+      }}
+    />
+  );
 }
 
 /* =========================
@@ -377,6 +460,21 @@ function milharCompareByCentenaAsc(a, b) {
 }
 
 /* =========================
+   UF mapping (FIX)
+========================= */
+
+const UF_TO_LOTTERY_KEY = {
+  RJ: "PT_RIO",
+};
+
+function normalizeUfToQueryKey(input) {
+  const s = safeStr(input).toUpperCase();
+  if (!s) return "";
+  if (s.includes("_") || s.length > 2) return s; // já é chave
+  return UF_TO_LOTTERY_KEY[s] || s;
+}
+
+/* =========================
    Top3 Page
 ========================= */
 
@@ -398,6 +496,19 @@ export default function Top3() {
   const [lastHourBucket, setLastHourBucket] = useState("");
   const [targetHourBucket, setTargetHourBucket] = useState("");
 
+  const ufQueryKey = useMemo(() => normalizeUfToQueryKey(ufUi), [ufUi]);
+
+  const ymdSafe = useMemo(() => {
+    const y = normalizeToYMD(ymd);
+    return y && isYMD(y) ? y : todayYMDLocal();
+  }, [ymd]);
+
+  const dateBR = useMemo(() => ymdToBR(ymdSafe), [ymdSafe]);
+
+  const schedule = useMemo(() => {
+    return getPtRioScheduleForYmd(ymdSafe);
+  }, [ymdSafe]);
+
   const dayEnded = useMemo(() => {
     return !!safeStr(lastHourBucket) && !safeStr(targetHourBucket);
   }, [lastHourBucket, targetHourBucket]);
@@ -413,22 +524,6 @@ export default function Top3() {
     prevAnimal: "",
     source: "none",
   });
-
-  const ufQueryKey = useMemo(() => {
-    const s = safeStr(ufUi).toUpperCase();
-    return s === "RJ" ? "RJ" : s;
-  }, [ufUi]);
-
-  const ymdSafe = useMemo(() => {
-    const y = normalizeToYMD(ymd);
-    return y && isYMD(y) ? y : todayYMDLocal();
-  }, [ymd]);
-
-  const dateBR = useMemo(() => ymdToBR(ymdSafe), [ymdSafe]);
-
-  const schedule = useMemo(() => {
-    return getPtRioScheduleForYmd(ymdSafe);
-  }, [ymdSafe]);
 
   const lookbackLabel = useMemo(() => {
     if (lookback === LOOKBACK_ALL) return "Toda a base";
@@ -455,6 +550,7 @@ export default function Top3() {
       let minDate = safeStr(bounds?.minDate);
       let maxDate = safeStr(bounds?.maxDate);
 
+      // bounds (quando disponível)
       try {
         const b = await getKingBoundsByUf({ uf: uQuery });
 
@@ -471,6 +567,7 @@ export default function Top3() {
         // ok
       }
 
+      // hoje
       const outToday = await getKingResultsByDate({
         uf: uQuery,
         date: ymdSafe,
@@ -479,10 +576,12 @@ export default function Top3() {
       });
       const today = Array.isArray(outToday) ? outToday : [];
 
+      // último horário encontrado hoje
       const last = findLastDrawInList(today, schedule);
       const lastBucket = last ? toHourBucket(pickDrawHour(last)) : "";
       setLastHourBucket(lastBucket);
 
+      // próximo horário na grade
       const nextFromLast = (() => {
         if (!lastBucket) return null;
         const sch = Array.isArray(schedule) ? schedule : [];
@@ -492,14 +591,14 @@ export default function Top3() {
         return null;
       })();
 
-      const targetBucket = !lastBucket ? (schedule[0] || "") : (nextFromLast || "");
+      const targetBucket = !lastBucket ? schedule[0] || "" : nextFromLast || "";
       const ended = !!lastBucket && !nextFromLast;
-
       setTargetHourBucket(ended ? "" : targetBucket);
 
+      // range alvo
       const rangeTo = ymdSafe;
-
       let rangeFrom = "";
+
       if (lookback === LOOKBACK_ALL) {
         rangeFrom = isYMD(minDate) ? minDate : addDaysYMD(ymdSafe, -180);
       } else {
@@ -509,6 +608,7 @@ export default function Top3() {
 
       setRangeInfo({ from: rangeFrom, to: rangeTo });
 
+      // histórico (somente 1º prêmio)
       const outRange = await getKingResultsByRange({
         uf: uQuery,
         dateFrom: rangeFrom,
@@ -521,7 +621,8 @@ export default function Top3() {
       const hist = Array.isArray(outRange) ? outRange : [];
       setRangeDraws(hist);
 
-      const hourForPrev = ended ? (lastBucket || "") : (targetBucket || "");
+      // sorteio anterior (camada de transição)
+      const hourForPrev = ended ? lastBucket || "" : targetBucket || "";
 
       if (hourForPrev) {
         const prev = await getPreviousDrawRobust({
@@ -534,7 +635,9 @@ export default function Top3() {
         });
 
         const prevGrupo = prev?.draw ? pickPrize1GrupoFromDraw(prev.draw) : null;
-        const prevAnimal = prevGrupo ? safeStr(getAnimalLabel?.(prevGrupo) || "") : "";
+        const prevAnimal = prevGrupo
+          ? safeStr(getAnimalLabel?.(prevGrupo) || "")
+          : "";
 
         setPrevInfo({
           prevYmd: safeStr(prev?.ymd || ""),
@@ -582,7 +685,9 @@ export default function Top3() {
       prevInfo?.prevYmd && prevInfo?.prevHour
         ? `${ymdToBR(prevInfo.prevYmd)} ${prevInfo.prevHour}`
         : "";
-    return `G${pad2(g)}${animal ? " • " + animal.toUpperCase() : ""}${when ? " • " + when : ""}`;
+    return `G${pad2(g)}${animal ? " • " + animal.toUpperCase() : ""}${
+      when ? " • " + when : ""
+    }`;
   }, [prevInfo]);
 
   const analytics = useMemo(() => {
@@ -607,13 +712,22 @@ export default function Top3() {
 
   const top3 = useMemo(() => {
     const arr = Array.isArray(analytics?.top) ? analytics.top : [];
+
     return arr.map((x) => {
       const g = Number(x.grupo);
       const animal = safeStr(getAnimalLabel?.(g) || "");
-      const img =
-        safeStr(getImgFromGrupo?.(g) || "") ||
-        (animal ? `/img/${animal.toLowerCase()}.png` : "");
-      return { ...x, animal, img: normalizeImgSrc(img) };
+      const bg = normalizeImgSrc(
+        safeStr(getImgFromGrupo?.(g, 512) || getImgFromGrupo?.(g) || "")
+      );
+      const iconVariants = makeImgVariantsFromGrupo(g, 96);
+      const bgVariants = bg ? [bg] : makeImgVariantsFromGrupo(g, 512);
+
+      return {
+        ...x,
+        animal,
+        imgBg: bgVariants,
+        imgIcon: iconVariants,
+      };
     });
   }, [analytics]);
 
@@ -701,13 +815,10 @@ export default function Top3() {
       return prizes;
     };
 
-    // 1) tenta só horário alvo
     let prizes = collect("target_only");
 
-    // 2) fallback: se pouca base, usa qualquer horário da grade
     if (prizes.length < 16) {
       const extra = collect("any_hour");
-      // mistura mantendo uniques primeiro
       const set = new Set(prizes);
       for (const m of extra) {
         if (set.has(m)) continue;
@@ -718,7 +829,6 @@ export default function Top3() {
 
     if (!prizes.length) return { dezenas: [], slots: [] };
 
-    // Contagem por dezena
     const dezCounts = new Map();
     for (const m4 of prizes) {
       const dz = getDezena2(m4);
@@ -732,7 +842,6 @@ export default function Top3() {
       .map((x) => x[0])
       .sort(dezenaCompareAsc);
 
-    // Se não conseguiu 4 dezenas, completa com as restantes mais fortes
     if (topDezenas.length < 4) {
       const allDz = Array.from(dezCounts.entries())
         .sort((a, b) => b[1] - a[1] || dezenaCompareAsc(a[0], b[0]))
@@ -745,10 +854,7 @@ export default function Top3() {
       topDezenas = topDezenas.slice(0, 4).sort(dezenaCompareAsc);
     }
 
-    // monta 4 milhares por dezena
     const byDezena = new Map();
-
-    // fase A: tenta centena única global
     const usedCentenas = new Set();
 
     const pickForDezena = (dz, allowRepeatCentena) => {
@@ -775,7 +881,6 @@ export default function Top3() {
         picked.push(m4);
       }
 
-      // Se ainda faltou, completa (mesmo repetindo milhar)
       if (picked.length < 4) {
         for (const m4 of ranked) {
           if (picked.length >= 4) break;
@@ -795,12 +900,10 @@ export default function Top3() {
       return picked.map((m4) => ({ dezena: dz, milhar: m4 }));
     };
 
-    // fase A
     for (const dz of topDezenas) {
       byDezena.set(dz, pickForDezena(dz, false));
     }
 
-    // se ainda faltar preencher slots vazios, fase B (relaxa centena única)
     let slots = [];
     for (const dz of topDezenas) {
       const arr = byDezena.get(dz) || [];
@@ -809,7 +912,6 @@ export default function Top3() {
 
     const emptyCount = slots.filter((s) => !safeStr(s.milhar)).length;
     if (emptyCount > 0) {
-      // refaz preenchimento relaxando a regra para fechar 16
       const byDezena2 = new Map();
       for (const dz of topDezenas) {
         byDezena2.set(dz, pickForDezena(dz, true));
@@ -830,56 +932,77 @@ export default function Top3() {
 
   const styles = useMemo(() => {
     return `
-      .pp_wrap{
+      :root{
         --pp-border: rgba(255,255,255,0.10);
+        --pp-border2: rgba(255,255,255,0.14);
+
         --pp-gold: rgba(201,168,62,0.92);
         --pp-gold2: rgba(201,168,62,0.55);
+        --pp-goldSoft: rgba(201,168,62,0.16);
 
-        padding: 18px;
+        --pp-text: rgba(255,255,255,0.92);
+        --pp-muted: rgba(255,255,255,0.62);
+
+        --pp-bgA: rgba(0,0,0,0.35);
+        --pp-bgB: rgba(0,0,0,0.65);
+
+        --pp-radius: 18px;
+      }
+
+      .pp_wrap{
+        height: 100dvh;
+        min-height: 100vh;
+        padding: 14px;
+        overflow: hidden;
         min-width: 0;
         box-sizing: border-box;
       }
 
       .pp_shell{
+        height: calc(100dvh - 28px);
         border: 1px solid var(--pp-border);
-        border-radius: 18px;
-        background: rgba(0,0,0,0.40);
+        border-radius: var(--pp-radius);
+        background:
+          radial-gradient(1100px 520px at 10% 0%, rgba(201,168,62,0.10), transparent 60%),
+          radial-gradient(900px 500px at 90% 10%, rgba(201,168,62,0.08), transparent 62%),
+          rgba(0,0,0,0.40);
         box-shadow: 0 16px 48px rgba(0,0,0,0.55);
-        padding: 12px;
+        padding: 10px;
         display: grid;
         grid-template-rows: auto 1fr;
         gap: 10px;
+        overflow: hidden;
         min-width: 0;
-        min-height: calc(100dvh - 36px);
       }
 
       .pp_header{
         display:grid;
         grid-template-columns: 1fr auto 1fr;
-        align-items:start;
-        gap:12px;
+        align-items:center;
+        gap: 10px;
         min-width:0;
       }
-      .pp_headerLeft{ min-width:0; }
-      .pp_headerCenter{ min-width:0; text-align:center; }
-      .pp_headerRight{ display:flex; justify-content:flex-end; min-width:0; }
+
+      .pp_headerCenter{
+        text-align:center;
+        min-width:0;
+      }
 
       .pp_title{
-        font-size:18px;
-        font-weight:1000;
-        letter-spacing:0.2px;
-        color: rgba(255,255,255,0.92);
-        line-height:1.1;
-        text-align:center;
+        font-size: 18px;
+        font-weight: 1200;
+        letter-spacing: 0.25px;
+        color: var(--pp-text);
+        line-height: 1.1;
       }
 
       .pp_sub{
-        margin-top:6px;
-        color: rgba(255,255,255,0.64);
-        font-weight:850;
-        line-height:1.25;
-        max-width: 980px;
+        margin-top: 6px;
+        color: var(--pp-muted);
+        font-weight: 900;
+        line-height: 1.25;
         font-size: 12px;
+        max-width: 980px;
         margin-left:auto;
         margin-right:auto;
         text-align:center;
@@ -887,34 +1010,41 @@ export default function Top3() {
 
       .pp_gold{ color: var(--pp-gold); }
 
-      .pp_controls{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+      .pp_controls{
+        display:flex;
+        align-items:center;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content:flex-end;
+      }
 
       .pp_input, .pp_select{
-        height:34px;
-        border-radius:12px;
+        height: 34px;
+        border-radius: 12px;
         border: 1px solid var(--pp-border);
         background: rgba(0,0,0,0.55);
-        color:#fff;
+        color: var(--pp-text);
         padding: 0 10px;
         outline:none;
-        font-weight:900;
+        font-weight: 950;
         letter-spacing:0.2px;
-        min-width:110px;
+        min-width: 110px;
         font-size: 12px;
         box-sizing: border-box;
       }
+
       .pp_input:focus, .pp_select:focus{
         border-color: rgba(201,168,62,0.55);
         box-shadow: 0 0 0 3px rgba(201,168,62,0.12);
       }
 
       .pp_btn{
-        height:34px;
-        border-radius:12px;
+        height: 34px;
+        border-radius: 12px;
         border: 1px solid var(--pp-border);
         background: rgba(255,255,255,0.06);
-        color: rgba(255,255,255,0.92);
-        font-weight:1000;
+        color: var(--pp-text);
+        font-weight: 1100;
         letter-spacing:0.2px;
         padding: 0 14px;
         cursor:pointer;
@@ -922,72 +1052,90 @@ export default function Top3() {
         font-size: 12px;
       }
       .pp_btn:hover{ background: rgba(255,255,255,0.08); }
+      .pp_btn:active{ transform: translateY(1px); }
 
-      .pp_body{ min-width:0; min-height:0; overflow: auto; display:flex; align-items: stretch; justify-content: center; }
+      .pp_body{
+        min-width:0;
+        min-height:0;
+        overflow: auto;
+        display:flex;
+        justify-content:center;
+        align-items: stretch;
+        padding-right: 2px;
+      }
 
       .pp_center{
         width: 100%;
-        max-width: 1100px;
+        max-width: 1180px;
         display:grid;
         grid-template-rows: auto auto;
         gap: 10px;
-        padding-bottom: 10px;
+        padding-bottom: 14px;
+        min-width:0;
       }
 
       .pp_kpis{
         display:flex;
-        gap:10px;
-        flex-wrap:wrap;
+        gap: 10px;
+        flex-wrap: wrap;
         align-items:center;
         justify-content: space-between;
         border: 1px solid var(--pp-border);
-        background: rgba(0,0,0,0.20);
+        background: rgba(0,0,0,0.22);
         border-radius: 16px;
         padding: 10px 12px;
       }
 
-      .pp_kpi{ display:flex; flex-direction:column; gap:3px; min-width: 160px; }
-
+      .pp_kpi{ display:flex; flex-direction:column; gap: 3px; min-width: 160px; }
       .pp_kpiLabel{
         color: rgba(255,255,255,0.60);
         font-weight: 900;
         font-size: 11px;
         letter-spacing: 0.2px;
       }
-
       .pp_kpiValue{
         color: rgba(255,255,255,0.92);
         font-weight: 1000;
         font-size: 14px;
         letter-spacing: 0.2px;
       }
-
-      .pp_kpiValue strong{ color: var(--pp-gold); font-weight: 1100; }
+      .pp_kpiValue strong{ color: var(--pp-gold); font-weight: 1200; }
 
       .pp_state{
         border: 1px solid var(--pp-border);
         border-radius: 16px;
         background: rgba(0,0,0,0.26);
         padding: 14px 16px;
-        font-weight: 850;
+        font-weight: 900;
         color: rgba(255,255,255,0.88);
       }
 
+      /* =========================
+         PREMIUM TOP3 LAYOUT
+      ========================= */
+
       .pp_cards{
         display:grid;
-        grid-template-columns: 1.15fr 1fr 1fr;
+        grid-template-columns: 1.35fr 1fr;
         gap: 12px;
-        align-content: start;
+        align-content:start;
+        min-width:0;
       }
 
       .pp_card{
-        position:relative;
+        position: relative;
         border-radius: 18px;
-        overflow:hidden;
+        overflow: hidden;
         border: 1px solid rgba(255,255,255,0.12);
-        box-shadow: 0 14px 34px rgba(0,0,0,0.45);
+        box-shadow: 0 14px 34px rgba(0,0,0,0.48);
         min-height: 560px;
         display:flex;
+      }
+
+      .pp_cardMain{
+        grid-row: 1 / span 2;
+        border-color: rgba(201,168,62,0.34);
+        box-shadow: 0 18px 48px rgba(0,0,0,0.58);
       }
 
       .pp_card::before{
@@ -997,58 +1145,60 @@ export default function Top3() {
         background-image: var(--pp-bg);
         background-size: cover;
         background-position: center;
-        background-repeat:no-repeat;
-        opacity: 0.82;
-        transform: scale(1.02);
-        filter: saturate(1.05) contrast(1.04);
+        background-repeat: no-repeat;
+        opacity: 0.86;
+        transform: scale(1.03);
+        filter: saturate(1.08) contrast(1.05);
+        pointer-events:none;
       }
 
       .pp_card::after{
         content:"";
         position:absolute;
         inset:0;
-        background:
-          radial-gradient(1000px 420px at 10% 0%, rgba(201,168,62,0.18), transparent 62%),
-          linear-gradient(180deg, rgba(0,0,0,0.40) 0%, rgba(0,0,0,0.30) 28%, rgba(0,0,0,0.55) 70%, rgba(0,0,0,0.78) 100%);
         pointer-events:none;
+        background:
+          radial-gradient(1100px 520px at 10% 0%, rgba(201,168,62,0.18), transparent 62%),
+          radial-gradient(900px 500px at 90% 10%, rgba(201,168,62,0.10), transparent 64%),
+          linear-gradient(180deg, rgba(0,0,0,0.42) 0%, rgba(0,0,0,0.30) 28%, rgba(0,0,0,0.58) 72%, rgba(0,0,0,0.82) 100%);
       }
 
-      .pp_cardMain{ border-color: rgba(201,168,62,0.30); }
-
       .pp_cardInner{
-        position:relative;
+        position: relative;
         z-index: 1;
-        width:100%;
+        width: 100%;
         padding: 12px;
         display:flex;
         flex-direction:column;
         gap: 10px;
+        min-width: 0;
       }
 
       .pp_cardTop{
         display:flex;
         align-items:center;
         justify-content:space-between;
-        gap:10px;
+        gap: 10px;
       }
 
-      .pp_badge{
+      .pp_rankPill{
         display:inline-flex;
         align-items:center;
-        gap:8px;
-        padding: 6px 10px;
+        gap: 8px;
+        padding: 7px 10px;
         border-radius: 999px;
         border: 1px solid rgba(255,255,255,0.14);
-        background: rgba(0,0,0,0.30);
-        backdrop-filter: blur(8px);
+        background: rgba(0,0,0,0.32);
+        backdrop-filter: blur(10px);
         color: rgba(255,255,255,0.92);
-        font-weight: 1000;
+        font-weight: 1150;
         font-size: 12px;
         letter-spacing: 0.2px;
+        white-space: nowrap;
       }
 
-      .pp_badgeGold{
-        border-color: rgba(201,168,62,0.35);
+      .pp_rankPill.isGold{
+        border-color: rgba(201,168,62,0.40);
         background: rgba(201,168,62,0.14);
         color: rgba(201,168,62,0.98);
       }
@@ -1060,43 +1210,106 @@ export default function Top3() {
         white-space: nowrap;
         border: 1px solid rgba(255,255,255,0.12);
         background: rgba(0,0,0,0.26);
-        backdrop-filter: blur(8px);
+        backdrop-filter: blur(10px);
         border-radius: 999px;
-        padding: 6px 10px;
+        padding: 7px 10px;
       }
 
-      .pp_headBox{
+      .pp_hero{
+        display:grid;
+        grid-template-columns: auto 1fr;
+        gap: 12px;
+        align-items:center;
         border: 1px solid rgba(255,255,255,0.12);
         background: rgba(0,0,0,0.30);
-        backdrop-filter: blur(10px);
-        border-radius: 14px;
-        padding: 10px 10px;
+        backdrop-filter: blur(12px);
+        border-radius: 16px;
+        padding: 10px;
+        min-width:0;
       }
 
-      .pp_group{ color: rgba(255,255,255,0.75); font-weight: 950; font-size: 12px; letter-spacing: 0.2px; }
+      .pp_iconFrame{
+        width: 64px;
+        height: 64px;
+        border-radius: 18px;
+        border: 1px solid rgba(201,168,62,0.32);
+        background: rgba(0,0,0,0.22);
+        display:grid;
+        place-items:center;
+        overflow:hidden;
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+        flex: 0 0 auto;
+      }
+
+      .pp_icon{
+        width: 46px;
+        height: 46px;
+        object-fit: contain;
+        display:block;
+        filter: drop-shadow(0 10px 18px rgba(0,0,0,0.35));
+      }
+
+      .pp_imgFallback{
+        font-size: 12px;
+        font-weight: 1200;
+        color: rgba(201,168,62,0.90);
+        letter-spacing: 0.3px;
+        line-height: 1;
+      }
+
+      .pp_group{
+        color: rgba(255,255,255,0.70);
+        font-weight: 950;
+        font-size: 12px;
+        letter-spacing: 0.25px;
+      }
 
       .pp_animal{
+        margin-top: 3px;
         color: rgba(255,255,255,0.96);
-        font-weight: 1100;
-        font-size: 16px;
-        letter-spacing: 0.3px;
+        font-weight: 1250;
+        font-size: 18px;
+        letter-spacing: 0.35px;
         text-transform: uppercase;
         white-space: nowrap;
         overflow:hidden;
         text-overflow:ellipsis;
-        margin-top: 2px;
+      }
+
+      .pp_animal.big{
+        font-size: 22px;
       }
 
       .pp_meta{
-        margin-top: 4px;
-        color: rgba(255,255,255,0.82);
+        margin-top: 6px;
+        color: rgba(255,255,255,0.84);
         font-weight: 900;
         font-size: 12px;
+        line-height: 1.25;
       }
 
-      .pp_meta .pp_gold{ font-weight: 1100; }
+      .pp_meta .pp_gold{ font-weight: 1200; }
 
-      .pp_spacer{ flex: 1 1 auto; min-height: 10px; }
+      .pp_scoreRow{
+        display:flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items:center;
+        margin-top: 8px;
+      }
+
+      .pp_chip{
+        border: 1px solid rgba(255,255,255,0.12);
+        background: rgba(255,255,255,0.05);
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-weight: 1000;
+        font-size: 12px;
+        color: rgba(255,255,255,0.90);
+        white-space: nowrap;
+      }
+
+      .pp_chip strong{ color: var(--pp-gold); font-weight: 1200; }
 
       .pp_bottom{
         margin-top:auto;
@@ -1108,8 +1321,8 @@ export default function Top3() {
       .pp_whyBox{
         border: 1px solid rgba(255,255,255,0.12);
         background: rgba(0,0,0,0.32);
-        backdrop-filter: blur(10px);
-        border-radius: 14px;
+        backdrop-filter: blur(12px);
+        border-radius: 16px;
         padding: 10px 10px;
         min-height: 150px;
       }
@@ -1117,7 +1330,7 @@ export default function Top3() {
       .pp_notesTitle{
         margin: 0;
         font-size: 12px;
-        font-weight: 1100;
+        font-weight: 1150;
         color: rgba(255,255,255,0.92);
         letter-spacing: 0.2px;
       }
@@ -1129,7 +1342,7 @@ export default function Top3() {
         color: rgba(255,255,255,0.84);
         font-weight: 500;
         font-size: 11px;
-        line-height: 1.42;
+        line-height: 1.45;
       }
 
       .pp_milharGrid{
@@ -1138,11 +1351,11 @@ export default function Top3() {
         gap: 7px;
         border: 1px solid rgba(255,255,255,0.12);
         background: rgba(0,0,0,0.28);
-        backdrop-filter: blur(10px);
-        border-radius: 14px;
+        backdrop-filter: blur(12px);
+        border-radius: 16px;
         padding: 10px;
         min-height: 178px;
-        box-sizing:border-box;
+        box-sizing: border-box;
       }
 
       .pp_milharPill{
@@ -1150,39 +1363,37 @@ export default function Top3() {
         background: rgba(255,255,255,0.04);
         border-radius: 12px;
         padding: 6px 8px;
-        font-weight: 1100;
-        letter-spacing: 0.4px;
+        font-weight: 1200;
+        letter-spacing: 0.6px;
         color: rgba(255,255,255,0.92);
         text-align:center;
         display:flex;
         align-items:center;
         justify-content:center;
-        min-height: 30px;
+        min-height: 32px;
         box-sizing: border-box;
         font-size: 12px;
       }
 
-      .pp_milharPill strong{ color: var(--pp-gold); font-weight: 1200; }
+      .pp_milharPill strong{ color: var(--pp-gold); font-weight: 1300; }
 
       .pp_milharPill.isEmpty{
         opacity: 0;
-        pointer-events: none;
+        pointer-events:none;
       }
 
       @media (max-width: 1100px){
         .pp_cards{ grid-template-columns: 1fr; }
+        .pp_cardMain{ grid-row:auto; }
         .pp_card{ min-height: 540px; }
       }
 
       @media (max-width: 720px){
-        .pp_header{
-          grid-template-columns: 1fr;
-          gap: 10px;
-        }
-        .pp_headerRight{ justify-content: stretch; }
+        .pp_header{ grid-template-columns: 1fr; align-items: start; }
         .pp_controls{ justify-content:flex-start; }
-        .pp_input, .pp_select, .pp_btn{ width:100%; min-width:0; }
+        .pp_input, .pp_select, .pp_btn{ width: 100%; min-width: 0; }
         .pp_milharGrid{ grid-template-columns: repeat(2, 1fr); }
+        .pp_animal.big{ font-size: 20px; }
       }
     `;
   }, []);
@@ -1193,7 +1404,7 @@ export default function Top3() {
 
       <div className="pp_shell">
         <div className="pp_header">
-          <div className="pp_headerLeft" aria-hidden="true" />
+          <div aria-hidden="true" />
           <div className="pp_headerCenter" style={{ minWidth: 0 }}>
             <div className="pp_title">Top 3</div>
             <div className="pp_sub">
@@ -1201,7 +1412,7 @@ export default function Top3() {
             </div>
           </div>
 
-          <div className="pp_headerRight">
+          <div>
             <div className="pp_controls">
               <select
                 className="pp_select"
@@ -1284,7 +1495,9 @@ export default function Top3() {
 
               <div className="pp_kpi">
                 <div className="pp_kpiLabel">Sorteio anterior (camada)</div>
-                <div className="pp_kpiValue">{safeStr(analysisHourBucket) ? prevLabel : "—"}</div>
+                <div className="pp_kpiValue">
+                  {safeStr(analysisHourBucket) ? prevLabel : "—"}
+                </div>
               </div>
             </div>
 
@@ -1309,13 +1522,8 @@ export default function Top3() {
                   const isMain = x.rank === 1;
                   const animal = safeStr(x.animal) || "—";
 
-                  const imgSrc = normalizeImgSrc(
-                    safeStr(x.img) ||
-                      (x.grupo
-                        ? safeStr(getImgFromGrupo?.(x.grupo)) ||
-                          `/img/${animal.toLowerCase()}.png`
-                        : "")
-                  );
+                  const bgVariants = Array.isArray(x.imgBg) ? x.imgBg : [];
+                  const iconVariants = Array.isArray(x.imgIcon) ? x.imgIcon : [];
 
                   const why = buildWhyFromReasons(x.reasons);
                   const mil = build16MilharesForGrupo(x.grupo);
@@ -1325,12 +1533,15 @@ export default function Top3() {
                     <div
                       key={`top3_${x.grupo}_${x.rank}`}
                       className={`pp_card ${isMain ? "pp_cardMain" : ""}`}
-                      style={{ "--pp-bg": imgSrc ? `url("${imgSrc}")` : "none" }}
+                      style={{
+                        "--pp-bg":
+                          bgVariants?.length ? `url("${normalizeImgSrc(bgVariants[0])}")` : "none",
+                      }}
                     >
                       <div className="pp_cardInner">
                         <div className="pp_cardTop">
-                          <div className={`pp_badge ${isMain ? "pp_badgeGold" : ""}`}>
-                            #{x.rank} • {x.title}
+                          <div className={`pp_rankPill ${isMain ? "isGold" : ""}`}>
+                            {isMain ? "👑" : "★"} #{x.rank} • {x.title}
                           </div>
 
                           <div className="pp_focus">
@@ -1339,36 +1550,64 @@ export default function Top3() {
                           </div>
                         </div>
 
-                        <div className="pp_headBox">
-                          <div className="pp_group">GRUPO {pad2(x.grupo)}</div>
-                          <div className="pp_animal">{animal}</div>
-                          <div className="pp_meta">
-                            Score:{" "}
-                            <span className="pp_gold">{(Number(x.finalScore) || 0).toFixed(3)}</span>{" "}
-                            • Peso no Top3: <span className="pp_gold">{x.pct}%</span>
+                        <div className="pp_hero">
+                          <div className="pp_iconFrame" aria-hidden="true">
+                            <ImgSmart
+                              variants={iconVariants}
+                              alt={animal ? `Bicho ${animal}` : "Bicho"}
+                              className="pp_icon"
+                            />
                           </div>
 
-                          <div className="pp_meta" style={{ opacity: 0.92 }}>
-                            Camadas:{" "}
-                            <span className="pp_gold">
-                              Base {x.baseHit}/{x.baseTotal}
-                            </span>{" "}
-                            • Trans{" "}
-                            <span className="pp_gold">
-                              {x.useTrans ? `${x.transHit}/${x.transTotal}` : `(${x.transTotal}↓)`}
-                            </span>{" "}
-                            • DOW{" "}
-                            <span className="pp_gold">
-                              {x.useDow ? `${x.dowHit}/${x.transTotalDow}` : `(${x.transTotalDow}↓)`}
-                            </span>{" "}
-                            • DOM{" "}
-                            <span className="pp_gold">
-                              {x.useDom ? `${x.domHit}/${x.transTotalDom}` : `(${x.transTotalDom}↓)`}
-                            </span>
+                          <div style={{ minWidth: 0 }}>
+                            <div className="pp_group">GRUPO {pad2(x.grupo)}</div>
+                            <div className={`pp_animal ${isMain ? "big" : ""}`}>
+                              {animal.toUpperCase()}
+                            </div>
+
+                            <div className="pp_scoreRow">
+                              <div className="pp_chip">
+                                Score{" "}
+                                <strong>
+                                  {(Number(x.finalScore) || 0).toFixed(3)}
+                                </strong>
+                              </div>
+                              <div className="pp_chip">
+                                Peso <strong>{x.pct}%</strong>
+                              </div>
+                              <div className="pp_chip">
+                                Base{" "}
+                                <strong>
+                                  {x.baseHit}/{x.baseTotal}
+                                </strong>
+                              </div>
+                              <div className="pp_chip">
+                                Trans{" "}
+                                <strong>
+                                  {x.useTrans
+                                    ? `${x.transHit}/${x.transTotal}`
+                                    : `(${x.transTotal}↓)`}
+                                </strong>
+                              </div>
+                              <div className="pp_chip">
+                                DOW{" "}
+                                <strong>
+                                  {x.useDow
+                                    ? `${x.dowHit}/${x.transTotalDow}`
+                                    : `(${x.transTotalDow}↓)`}
+                                </strong>
+                              </div>
+                              <div className="pp_chip">
+                                DOM{" "}
+                                <strong>
+                                  {x.useDom
+                                    ? `${x.domHit}/${x.transTotalDom}`
+                                    : `(${x.transTotalDom}↓)`}
+                                </strong>
+                              </div>
+                            </div>
                           </div>
                         </div>
-
-                        <div className="pp_spacer" />
 
                         <div className="pp_bottom">
                           <div className="pp_whyBox">
@@ -1389,7 +1628,11 @@ export default function Top3() {
                                     key={`mil_${x.grupo}_${m?.dezena || "dz"}_${m?.milhar || "empty"}_${i}`}
                                     className={`pp_milharPill ${has ? "" : "isEmpty"}`}
                                     role="listitem"
-                                    title={has ? `Dezena ${m.dezena} • Centena ${getCentena3(m.milhar)}` : ""}
+                                    title={
+                                      has
+                                        ? `Dezena ${m.dezena} • Centena ${getCentena3(m.milhar)}`
+                                        : ""
+                                    }
                                   >
                                     <strong>{has ? m.milhar : "0000"}</strong>
                                   </div>
