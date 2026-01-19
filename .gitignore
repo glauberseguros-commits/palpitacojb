@@ -64,3 +64,6 @@ yarn-error.log*
 Palpitaco-AutoImport.xml
 Palpitaco-AutoImport.backup.xml
 backend/scripts/auditDbDrawsByYmd.js
+Palpitaco-AutoImport.xml
+Palpitaco-AutoImport.backup.xml
+backend/scripts/auditDbDrawsByYmd.js
