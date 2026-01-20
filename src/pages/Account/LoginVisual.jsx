@@ -43,8 +43,7 @@ export default function LoginVisual({ onEnter }) {
         boxSizing: "border-box",
         position: "relative",
         overflow: "hidden",
-        fontFamily:
-          "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
+        fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
       },
 
       glowA: {
@@ -86,8 +85,7 @@ export default function LoginVisual({ onEnter }) {
       header: {
         padding: "clamp(18px, 2.2vw, 22px)",
         borderBottom: "1px solid rgba(255,255,255,0.08)",
-        background:
-          "linear-gradient(180deg, rgba(202,166,75,0.10), rgba(0,0,0,0.10))",
+        background: "linear-gradient(180deg, rgba(202,166,75,0.10), rgba(0,0,0,0.10))",
       },
 
       brandRow: {
@@ -137,8 +135,7 @@ export default function LoginVisual({ onEnter }) {
         height: 48,
         borderRadius: 16,
         border: "1px solid rgba(202,166,75,0.55)",
-        background:
-          "linear-gradient(180deg, rgba(202,166,75,0.22), rgba(202,166,75,0.10))",
+        background: "linear-gradient(180deg, rgba(202,166,75,0.22), rgba(202,166,75,0.10))",
         color: WHITE,
         fontWeight: 950,
         cursor: "pointer",
@@ -188,7 +185,7 @@ export default function LoginVisual({ onEnter }) {
               <div style={ui.mark}>PJ</div>
               <div>
                 <h1 style={ui.title}>Palpitaco JB</h1>
-                <p style={ui.subtitle}>Estatística • Leitura • Análise</p>
+                <p style={ui.subtitle}>Resultados • Estatística • Insights</p>
               </div>
             </div>
           </div>
@@ -198,8 +195,9 @@ export default function LoginVisual({ onEnter }) {
               <button style={ui.btnPrimary} onClick={enterLogin}>
                 ENTRAR
               </button>
+
               <button style={ui.btnSecondary} onClick={enterAsGuest}>
-                ENTRAR SEM LOGIN (PREVIEW)
+                ACESSAR DEMONSTRAÇÃO
               </button>
             </div>
           </div>

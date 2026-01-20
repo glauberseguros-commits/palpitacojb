@@ -376,7 +376,15 @@ function buildSlots(digits) {
   return slots;
 }
 
-function SearchDigitsInput({ value, onChange, loading, onBuscar, onLimpar, canSearch, showLimpar }) {
+function SearchDigitsInput({
+  value,
+  onChange,
+  loading,
+  onBuscar,
+  onLimpar,
+  canSearch,
+  showLimpar,
+}) {
   const digits = normalizeDigitsOnly(value).slice(0, 4);
   const slots = useMemo(() => buildSlots(digits), [digits]);
   const inputRef = useRef(null);
@@ -384,6 +392,28 @@ function SearchDigitsInput({ value, onChange, loading, onBuscar, onLimpar, canSe
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
+
+  const handleKeyDown = useCallback(
+    (e) => {
+      const k = e.key;
+
+      // ✅ ENTER: buscar
+      if (k === "Enter") {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!loading && canSearch) onBuscar?.();
+        return;
+      }
+
+      // ✅ ESC: limpar (atalho premium)
+      if (k === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!loading && showLimpar) onLimpar?.();
+      }
+    },
+    [loading, canSearch, onBuscar, showLimpar, onLimpar]
+  );
 
   return (
     <div className="ppDigitsRoot" role="group" aria-label="Consulta de dezena/centena/milhar">
@@ -397,6 +427,7 @@ function SearchDigitsInput({ value, onChange, loading, onBuscar, onLimpar, canSe
           autoComplete="off"
           value={digits}
           onChange={(e) => onChange(normalizeDigitsOnly(e.target.value).slice(0, 4))}
+          onKeyDown={handleKeyDown}
           aria-label="Digite 2, 3 ou 4 dígitos"
         />
 
@@ -422,7 +453,13 @@ function SearchDigitsInput({ value, onChange, loading, onBuscar, onLimpar, canSe
           {loading ? "Buscando..." : "Buscar"}
         </button>
 
-        <button type="button" className="ppBtn" onClick={onLimpar} disabled={!showLimpar || loading} title="Limpar busca">
+        <button
+          type="button"
+          className="ppBtn"
+          onClick={onLimpar}
+          disabled={!showLimpar || loading}
+          title="Limpar busca"
+        >
           Limpar
         </button>
       </div>
