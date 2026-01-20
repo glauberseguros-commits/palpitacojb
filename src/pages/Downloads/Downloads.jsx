@@ -1,9 +1,6 @@
 // src/pages/Downloads/Downloads.jsx
 import React, { useEffect, useMemo, useState, useCallback } from "react";
-import {
-  getKingResultsByRange,
-  getKingBoundsByUf,
-} from "../../services/kingResultsService";
+import { getKingResultsByRange, getKingBoundsByUf } from "../../services/kingResultsService";
 import { getAnimalLabel } from "../../constants/bichoMap";
 
 const GOLD = "rgba(202,166,75,1)";
@@ -35,9 +32,7 @@ function isYMD(s) {
 }
 
 function ymdToBR(ymd) {
-  const m = String(ymd || "")
-    .trim()
-    .match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const m = String(ymd || "").trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!m) return safeStr(ymd);
   return `${m[3]}/${m[2]}/${m[1]}`;
 }
@@ -73,16 +68,12 @@ function normalizeToYMD(input) {
   if (typeof input === "object" && typeof input.toDate === "function") {
     const d = input.toDate();
     if (d instanceof Date && !Number.isNaN(d.getTime())) {
-      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(
-        d.getDate()
-      )}`;
+      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
     }
   }
 
   if (input instanceof Date && !Number.isNaN(input.getTime())) {
-    return `${input.getFullYear()}-${pad2(input.getMonth() + 1)}-${pad2(
-      input.getDate()
-    )}`;
+    return `${input.getFullYear()}-${pad2(input.getMonth() + 1)}-${pad2(input.getDate())}`;
   }
 
   const s = safeStr(input);
@@ -170,19 +161,17 @@ function pickPrizeMilhar4(p) {
 function getDezena2(milhar4) {
   const s = safeStr(milhar4);
   if (!/^\d{4}$/.test(s)) return "";
-  return s.slice(2, 4); // mantém 00..99
+  return s.slice(2, 4);
 }
 
 function getCentena3(milhar4) {
   const s = safeStr(milhar4);
   if (!/^\d{4}$/.test(s)) return "";
-  return s.slice(1, 4); // mantém 000..999
+  return s.slice(1, 4);
 }
 
 function pickDrawHour(draw) {
-  return normalizeHourLike(
-    draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
-  );
+  return normalizeHourLike(draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || "");
 }
 
 function pickDrawYMD(draw) {
@@ -195,9 +184,7 @@ function pickDrawYMD(draw) {
   return y;
 }
 
-const UF_TO_LOTTERY_KEY = {
-  RJ: "PT_RIO",
-};
+const UF_TO_LOTTERY_KEY = { RJ: "PT_RIO" };
 
 function normalizeUfToQueryKey(input) {
   const s = safeStr(input).toUpperCase();
@@ -215,6 +202,36 @@ function lotteryLabelFromKey(key) {
 }
 
 /* =========================
+   Bounds helpers (FIX principal)
+========================= */
+
+function clampYmd(ymd, minDate, maxDate) {
+  const d = normalizeToYMD(ymd);
+  if (!isYMD(d)) return null;
+
+  let out = d;
+
+  if (isYMD(minDate) && out < minDate) out = minDate;
+  if (isYMD(maxDate) && out > maxDate) out = maxDate;
+
+  return out;
+}
+
+function normalizeRangeWithBounds(fromIn, toIn, minDate, maxDate) {
+  let from = clampYmd(fromIn, minDate, maxDate);
+  let to = clampYmd(toIn, minDate, maxDate);
+
+  const fallback = clampYmd(todayYMDLocal(), minDate, maxDate) || maxDate || minDate || todayYMDLocal();
+
+  if (!from) from = fallback;
+  if (!to) to = from;
+
+  if (from > to) [from, to] = [to, from];
+
+  return { from, to };
+}
+
+/* =========================
    Export helpers
 ========================= */
 
@@ -229,13 +246,6 @@ function downloadBlob(filename, blob) {
   URL.revokeObjectURL(url);
 }
 
-/**
- * ✅ XLSX REAL (extensão nova) — usando SheetJS
- * Requisito do projeto:
- *   npm i xlsx
- *
- * - textCols: índices (0-based) das colunas que devem ser texto para preservar zeros (milhar/centena/dezena)
- */
 async function exportExcelXlsx({
   filename,
   title,
@@ -245,26 +255,21 @@ async function exportExcelXlsx({
   textCols,
   sheetName = "resultados",
 }) {
-  // Import dinâmico para não impactar o bundle inicial
   const mod = await import("xlsx");
-  const XLSX = mod?.default ?? mod; // ✅ robusto (CJS/ESM)
+  const XLSX = mod?.default ?? mod;
 
   const aoa = [];
   aoa.push([String(title || "Exportação")]);
   (metaLines || []).forEach((l) => aoa.push([String(l || "")]));
-  aoa.push([]); // linha em branco
+  aoa.push([]);
   aoa.push(columns.map((c) => String(c ?? "")));
   rows.forEach((r) => aoa.push((r || []).map((v) => String(v ?? ""))));
 
   const ws = XLSX.utils.aoa_to_sheet(aoa);
 
-  // ✅ (Opcional) Congelar até a linha do cabeçalho
-  // Linhas (1-based Excel): 1=title, 2..(m+1)=meta, (m+2)=blank, (m+3)=header
-  const headerRowNumber = 1 + (metaLines?.length || 0) + 1 + 1; // m+3
+  const headerRowNumber = 1 + (metaLines?.length || 0) + 1 + 1;
   ws["!freeze"] = { xSplit: 0, ySplit: headerRowNumber };
 
-  // ✅ Força TEXTO nas colunas críticas (milhar/centena/dezena)
-  // 0-based (aoa): title=0, meta=1..m, blank=m+1, header=m+2, data começa em m+3
   const firstDataRowAoa = (metaLines?.length || 0) + 3;
   const tcols = Array.isArray(textCols) ? textCols : [];
 
@@ -294,9 +299,6 @@ async function exportExcelXlsx({
   downloadBlob(filename, blob);
 }
 
-/**
- * ✅ Excel HTML (XLS antigo) — mantido apenas como fallback
- */
 function exportExcelXls({ filename, title, metaLines, columns, rows, textCols }) {
   const esc = (s) =>
     String(s ?? "")
@@ -308,7 +310,6 @@ function exportExcelXls({ filename, title, metaLines, columns, rows, textCols })
   const isTextCol = (idx) => Array.isArray(textCols) && textCols.includes(idx);
 
   const thead = `<tr>${columns.map((c) => `<th>${esc(c)}</th>`).join("")}</tr>`;
-
   const tbody = rows
     .map((r) => {
       const tds = r
@@ -337,9 +338,7 @@ function exportExcelXls({ filename, title, metaLines, columns, rows, textCols })
             <x:ExcelWorksheet>
               <x:Name>resultados</x:Name>
               <x:WorksheetOptions>
-                <x:Print>
-                  <x:ValidPrinterInfo/>
-                </x:Print>
+                <x:Print><x:ValidPrinterInfo/></x:Print>
               </x:WorksheetOptions>
             </x:ExcelWorksheet>
           </x:ExcelWorksheets>
@@ -354,31 +353,16 @@ function exportExcelXls({ filename, title, metaLines, columns, rows, textCols })
         ${metaHtml}
       </div>
       <table border="1" cellspacing="0" cellpadding="5" style="border-collapse: collapse; font-family: Arial; font-size: 12px;">
-        <thead style="font-weight:700;background:#f2f2f2;">
-          ${thead}
-        </thead>
-        <tbody>
-          ${tbody}
-        </tbody>
+        <thead style="font-weight:700;background:#f2f2f2;">${thead}</thead>
+        <tbody>${tbody}</tbody>
       </table>
     </body>
   </html>`.trim();
 
-  const blob = new Blob([html], {
-    type: "application/vnd.ms-excel;charset=utf-8",
-  });
+  const blob = new Blob([html], { type: "application/vnd.ms-excel;charset=utf-8" });
   downloadBlob(filename, blob);
 }
 
-/**
- * ✅ PDF REAL (gera .pdf e baixa) — usando jsPDF + autoTable
- * Requisito do projeto:
- *   npm i jspdf jspdf-autotable
- *
- * Observação:
- * - NÃO usa pop-up (não cai no bloqueio do navegador).
- * - Suporta muitas linhas (quebra em páginas automaticamente).
- */
 async function exportPdfReal({
   filename,
   title,
@@ -390,28 +374,19 @@ async function exportPdfReal({
   const jsPDFMod = await import("jspdf");
   const jsPDF = jsPDFMod?.jsPDF ?? jsPDFMod?.default ?? jsPDFMod;
 
-  // plugin: ele "patcha" o doc com doc.autoTable(...)
   const autoTableMod = await import("jspdf-autotable");
-  const autoTable =
-    autoTableMod?.default ?? autoTableMod?.autoTable ?? autoTableMod;
+  const autoTable = autoTableMod?.default ?? autoTableMod?.autoTable ?? autoTableMod;
 
-  const doc = new jsPDF({
-    orientation,
-    unit: "pt",
-    format: "a4",
-    compress: true,
-  });
+  const doc = new jsPDF({ orientation, unit: "pt", format: "a4", compress: true });
 
   const pageWidth = doc.internal.pageSize.getWidth();
   const marginX = 34;
   const marginTop = 34;
 
-  // Title
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
   doc.text(String(title || "Relatório"), marginX, marginTop);
 
-  // Meta
   const metas = Array.isArray(metaLines) ? metaLines : [];
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
@@ -430,32 +405,20 @@ async function exportPdfReal({
   const head = [columns.map((c) => String(c ?? ""))];
   const body = (rows || []).map((r) => (r || []).map((v) => String(v ?? "")));
 
-  // Garante plugin disponível
   if (typeof doc.autoTable !== "function") {
-    // Em alguns builds, precisa chamar autoTable(doc, opts)
     if (typeof autoTable === "function") {
       autoTable(doc, {
         startY: y,
         head,
         body,
         theme: "grid",
-        styles: {
-          font: "helvetica",
-          fontSize: 9,
-          cellPadding: 4,
-          overflow: "linebreak",
-          valign: "middle",
-        },
-        headStyles: {
-          fontStyle: "bold",
-        },
+        styles: { font: "helvetica", fontSize: 9, cellPadding: 4, overflow: "linebreak", valign: "middle" },
+        headStyles: { fontStyle: "bold" },
         margin: { left: marginX, right: marginX },
         tableWidth: pageWidth - marginX * 2,
       });
     } else {
-      throw new Error(
-        "Falha ao carregar 'jspdf-autotable'. Confirme: npm i jspdf-autotable"
-      );
+      throw new Error("Falha ao carregar 'jspdf-autotable'. Confirme: npm i jspdf-autotable");
     }
   } else {
     doc.autoTable({
@@ -463,22 +426,13 @@ async function exportPdfReal({
       head,
       body,
       theme: "grid",
-      styles: {
-        font: "helvetica",
-        fontSize: 9,
-        cellPadding: 4,
-        overflow: "linebreak",
-        valign: "middle",
-      },
-      headStyles: {
-        fontStyle: "bold",
-      },
+      styles: { font: "helvetica", fontSize: 9, cellPadding: 4, overflow: "linebreak", valign: "middle" },
+      headStyles: { fontStyle: "bold" },
       margin: { left: marginX, right: marginX },
       tableWidth: pageWidth - marginX * 2,
     });
   }
 
-  // Footer (página X / Y)
   const pageCount = doc.getNumberOfPages();
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
@@ -487,11 +441,7 @@ async function exportPdfReal({
     doc.setPage(i);
     const footer = `Página ${i} / ${pageCount}`;
     const w = doc.getTextWidth(footer);
-    doc.text(
-      footer,
-      pageWidth - marginX - w,
-      doc.internal.pageSize.getHeight() - 18
-    );
+    doc.text(footer, pageWidth - marginX - w, doc.internal.pageSize.getHeight() - 18);
   }
 
   const arrayBuffer = doc.output("arraybuffer");
@@ -510,24 +460,10 @@ function Icon({ name = "file" }) {
   if (name === "pdf") {
     return (
       <svg {...common} aria-hidden="true">
-        <path
-          d="M7 3h7l3 3v15a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"
-          stroke={stroke}
-          strokeWidth="1.6"
-        />
+        <path d="M7 3h7l3 3v15a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" stroke={stroke} strokeWidth="1.6" />
         <path d="M14 3v4a1 1 0 0 0 1 1h4" stroke={stroke} strokeWidth="1.6" />
-        <path
-          d="M7.2 17.2h2.2c1.1 0 1.8-.6 1.8-1.6 0-1-.7-1.6-1.8-1.6H7.2v3.2Zm0-1.6h2.0"
-          stroke={stroke}
-          strokeWidth="1.3"
-          strokeLinecap="round"
-        />
-        <path
-          d="M12.5 17.2h1.7c1.4 0 2.3-1 2.3-2.4 0-1.4-.9-2.4-2.3-2.4h-1.7v4.8Z"
-          stroke={stroke}
-          strokeWidth="1.3"
-          strokeLinecap="round"
-        />
+        <path d="M7.2 17.2h2.2c1.1 0 1.8-.6 1.8-1.6 0-1-.7-1.6-1.8-1.6H7.2v3.2Zm0-1.6h2.0" stroke={stroke} strokeWidth="1.3" strokeLinecap="round" />
+        <path d="M12.5 17.2h1.7c1.4 0 2.3-1 2.3-2.4 0-1.4-.9-2.4-2.3-2.4h-1.7v4.8Z" stroke={stroke} strokeWidth="1.3" strokeLinecap="round" />
       </svg>
     );
   }
@@ -535,36 +471,18 @@ function Icon({ name = "file" }) {
   if (name === "excel") {
     return (
       <svg {...common} aria-hidden="true">
-        <path
-          d="M7 3h7l3 3v15a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"
-          stroke={stroke}
-          strokeWidth="1.6"
-        />
+        <path d="M7 3h7l3 3v15a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" stroke={stroke} strokeWidth="1.6" />
         <path d="M14 3v4a1 1 0 0 0 1 1h4" stroke={stroke} strokeWidth="1.6" />
-        <path
-          d="M8 14l3 4m0-4l-3 4m6-4h2.5"
-          stroke={stroke}
-          strokeWidth="1.4"
-          strokeLinecap="round"
-        />
+        <path d="M8 14l3 4m0-4l-3 4m6-4h2.5" stroke={stroke} strokeWidth="1.4" strokeLinecap="round" />
       </svg>
     );
   }
 
   return (
     <svg {...common} aria-hidden="true">
-      <path
-        d="M7 3h7l3 3v15a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"
-        stroke={stroke}
-        strokeWidth="1.6"
-      />
+      <path d="M7 3h7l3 3v15a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" stroke={stroke} strokeWidth="1.6" />
       <path d="M14 3v4a1 1 0 0 0 1 1h4" stroke={stroke} strokeWidth="1.6" />
-      <path
-        d="M7.5 12.6h9M7.5 15.6h7.2"
-        stroke={stroke}
-        strokeWidth="1.3"
-        strokeLinecap="round"
-      />
+      <path d="M7.5 12.6h9M7.5 15.6h7.2" stroke={stroke} strokeWidth="1.3" strokeLinecap="round" />
     </svg>
   );
 }
@@ -625,12 +543,11 @@ const POS_OPTIONS = [
 export default function Downloads() {
   const [ufUi, setUfUi] = useState("RJ");
   const ufQueryKey = useMemo(() => normalizeUfToQueryKey(ufUi), [ufUi]);
-  const label = useMemo(
-    () => lotteryLabelFromKey(ufQueryKey || ufUi),
-    [ufQueryKey, ufUi]
-  );
+  const label = useMemo(() => lotteryLabelFromKey(ufQueryKey || ufUi), [ufQueryKey, ufUi]);
 
   const [bounds, setBounds] = useState({ minDate: "", maxDate: "" });
+
+  // ✅ estados podem iniciar “fora” do bounds, mas vamos normalizar assim que bounds chegar
   const [dateFrom, setDateFrom] = useState(() => todayYMDLocal());
   const [dateTo, setDateTo] = useState(() => todayYMDLocal());
 
@@ -665,15 +582,14 @@ export default function Downloads() {
 
         setBounds({ minDate, maxDate });
 
+        // ✅ NORMALIZA datas assim que bounds chega (fix do bug do print)
         setDateFrom((prev) => {
-          const p = normalizeToYMD(prev);
-          if (minDate && p && p < minDate) return minDate;
-          return isYMD(p) ? p : minDate || todayYMDLocal();
+          const r = normalizeRangeWithBounds(prev, dateTo, minDate, maxDate);
+          return r.from;
         });
         setDateTo((prev) => {
-          const p = normalizeToYMD(prev);
-          if (maxDate && p && p > maxDate) return maxDate;
-          return isYMD(p) ? p : maxDate || todayYMDLocal();
+          const r = normalizeRangeWithBounds(dateFrom, prev, minDate, maxDate);
+          return r.to;
         });
       } catch {
         // bounds é opcional
@@ -684,7 +600,32 @@ export default function Downloads() {
     return () => {
       alive = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ufQueryKey]);
+
+  // ✅ sempre use bounds atuais para normalizar range nas ações/export
+  const normalizeRange = useCallback(() => {
+    return normalizeRangeWithBounds(dateFrom, dateTo, bounds?.minDate, bounds?.maxDate);
+  }, [dateFrom, dateTo, bounds?.minDate, bounds?.maxDate]);
+
+  // ✅ handlers que impedem “De > Até” e mantêm dentro do bounds
+  const onChangeFrom = useCallback(
+    (v) => {
+      const { from, to } = normalizeRangeWithBounds(v, dateTo, bounds?.minDate, bounds?.maxDate);
+      setDateFrom(from);
+      setDateTo(to);
+    },
+    [dateTo, bounds?.minDate, bounds?.maxDate]
+  );
+
+  const onChangeTo = useCallback(
+    (v) => {
+      const { from, to } = normalizeRangeWithBounds(dateFrom, v, bounds?.minDate, bounds?.maxDate);
+      setDateFrom(from);
+      setDateTo(to);
+    },
+    [dateFrom, bounds?.minDate, bounds?.maxDate]
+  );
 
   const animalOptions = useMemo(() => {
     const opts = [{ v: "ALL", label: "Todos" }];
@@ -698,21 +639,8 @@ export default function Downloads() {
   const hourOptions = useMemo(() => {
     const base = ["ALL", "09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
     const uniq = Array.from(new Set(base));
-    return uniq.map((h) =>
-      h === "ALL" ? { v: "ALL", label: "Todos" } : { v: h, label: h }
-    );
+    return uniq.map((h) => (h === "ALL" ? { v: "ALL", label: "Todos" } : { v: h, label: h }));
   }, []);
-
-  const normalizeRange = useCallback(() => {
-    const f = normalizeToYMD(dateFrom);
-    const t = normalizeToYMD(dateTo);
-
-    const from = isYMD(f) ? f : todayYMDLocal();
-    const to = isYMD(t) ? t : from;
-
-    if (from <= to) return { from, to };
-    return { from: to, to: from };
-  }, [dateFrom, dateTo]);
 
   const applyFiltersToRows = useCallback(
     (rows) => {
@@ -751,8 +679,7 @@ export default function Downloads() {
       for (const p of prizes) {
         const pos = guessPrizePos(p);
         const grupo = guessPrizeGrupo(p);
-        if (!Number.isFinite(Number(pos)) || !Number.isFinite(Number(grupo)))
-          continue;
+        if (!Number.isFinite(Number(pos)) || !Number.isFinite(Number(grupo))) continue;
 
         const milhar = pickPrizeMilhar4(p) || "";
         const animal = safeStr(getAnimalLabel?.(Number(grupo)) || "");
@@ -789,11 +716,7 @@ export default function Downloads() {
     if (fMonth !== "ALL") f.push(`Mês: ${String(fMonth).padStart(2, "0")}`);
     if (fDay !== "ALL") f.push(`Dia: ${String(fDay).padStart(2, "0")}`);
     if (fDow !== "ALL")
-      f.push(
-        `Semana: ${
-          DOW_OPTIONS.find((x) => String(x.v) === String(fDow))?.label || fDow
-        }`
-      );
+      f.push(`Semana: ${DOW_OPTIONS.find((x) => String(x.v) === String(fDow))?.label || fDow}`);
     if (fHour !== "ALL") f.push(`Horário: ${toHourBucket(fHour)}`);
     if (fAnimalGrupo !== "ALL") {
       const g = Number(fAnimalGrupo);
@@ -804,17 +727,7 @@ export default function Downloads() {
     else lines.push(`Filtros: Todos`);
 
     return lines;
-  }, [
-    normalizeRange,
-    ufUi,
-    label,
-    fMonth,
-    fDay,
-    fDow,
-    fHour,
-    fAnimalGrupo,
-    fPos,
-  ]);
+  }, [normalizeRange, ufUi, label, fMonth, fDay, fDow, fHour, fAnimalGrupo, fPos]);
 
   const runExport = useCallback(
     async (type) => {
@@ -855,17 +768,7 @@ export default function Downloads() {
           return Number(a.pos) - Number(b.pos);
         });
 
-        const columns = [
-          "Data",
-          "Horário",
-          "Posição",
-          "Grupo",
-          "Animal",
-          "Milhar",
-          "Centena",
-          "Dezena",
-        ];
-
+        const columns = ["Data", "Horário", "Posição", "Grupo", "Animal", "Milhar", "Centena", "Dezena"];
         const data = filteredRows.map((r) => [
           r.dateBR,
           r.hour || "",
@@ -881,7 +784,6 @@ export default function Downloads() {
         const baseName = `resultados_${safeStr(ufUi).toLowerCase()}_${from}_a_${to}`;
 
         if (type === "pdf") {
-          // ✅ PDF REAL: gera .pdf e baixa (sem pop-up)
           try {
             await exportPdfReal({
               filename: `${baseName}.pdf`,
@@ -902,7 +804,6 @@ export default function Downloads() {
           return;
         }
 
-        // ✅ EXCEL NOVO: .xlsx (real)
         try {
           await exportExcelXlsx({
             filename: `${baseName}.xlsx`,
@@ -936,15 +837,10 @@ export default function Downloads() {
         setExportLoading(false);
       }
     },
-    [
-      ufQueryKey,
-      ufUi,
-      normalizeRange,
-      buildRowsFromDraws,
-      applyFiltersToRows,
-      buildMetaLines,
-    ]
+    [ufQueryKey, ufUi, normalizeRange, buildRowsFromDraws, applyFiltersToRows, buildMetaLines]
   );
+
+  const { from: fromSafe, to: toSafe } = useMemo(() => normalizeRange(), [normalizeRange]);
 
   return (
     <div className="pp-wrap">
@@ -992,6 +888,11 @@ export default function Downloads() {
           justify-content: flex-end;
           flex-wrap: wrap;
           margin-top: 2px;
+        }
+
+        /* ✅ FIX: no mobile não duplica botões */
+        @media (max-width: 740px){
+          .pp-topActions{ display:none; }
         }
 
         .pp-export{
@@ -1200,11 +1101,7 @@ export default function Downloads() {
           <div className="pp-exportBar">
             <div className="pp-field">
               <div className="pp-fieldLabel">UF</div>
-              <select
-                className="pp-select"
-                value={ufUi}
-                onChange={(e) => setUfUi(e.target.value)}
-              >
+              <select className="pp-select" value={ufUi} onChange={(e) => setUfUi(e.target.value)}>
                 <option value="RJ">RJ</option>
               </select>
             </div>
@@ -1214,10 +1111,10 @@ export default function Downloads() {
               <input
                 className="pp-input"
                 type="date"
-                value={normalizeToYMD(dateFrom) || todayYMDLocal()}
+                value={fromSafe}
                 min={bounds?.minDate || undefined}
                 max={bounds?.maxDate || undefined}
-                onChange={(e) => setDateFrom(e.target.value)}
+                onChange={(e) => onChangeFrom(e.target.value)}
               />
             </div>
 
@@ -1226,20 +1123,16 @@ export default function Downloads() {
               <input
                 className="pp-input"
                 type="date"
-                value={normalizeToYMD(dateTo) || todayYMDLocal()}
+                value={toSafe}
                 min={bounds?.minDate || undefined}
                 max={bounds?.maxDate || undefined}
-                onChange={(e) => setDateTo(e.target.value)}
+                onChange={(e) => onChangeTo(e.target.value)}
               />
             </div>
 
             <div className="pp-field">
               <div className="pp-fieldLabel">Mês</div>
-              <select
-                className="pp-select"
-                value={String(fMonth)}
-                onChange={(e) => setFMonth(e.target.value)}
-              >
+              <select className="pp-select" value={String(fMonth)} onChange={(e) => setFMonth(e.target.value)}>
                 {MONTH_OPTIONS.map((m) => (
                   <option key={`m_${m.v}`} value={String(m.v)}>
                     {m.label}
@@ -1250,11 +1143,7 @@ export default function Downloads() {
 
             <div className="pp-field">
               <div className="pp-fieldLabel">Dia</div>
-              <select
-                className="pp-select"
-                value={String(fDay)}
-                onChange={(e) => setFDay(e.target.value)}
-              >
+              <select className="pp-select" value={String(fDay)} onChange={(e) => setFDay(e.target.value)}>
                 <option value="ALL">Todos</option>
                 {Array.from({ length: 31 }).map((_, i) => {
                   const d = i + 1;
@@ -1269,11 +1158,7 @@ export default function Downloads() {
 
             <div className="pp-field">
               <div className="pp-fieldLabel">Semana</div>
-              <select
-                className="pp-select"
-                value={String(fDow)}
-                onChange={(e) => setFDow(e.target.value)}
-              >
+              <select className="pp-select" value={String(fDow)} onChange={(e) => setFDow(e.target.value)}>
                 {DOW_OPTIONS.map((x) => (
                   <option key={`dow_${x.v}`} value={String(x.v)}>
                     {x.label}
@@ -1284,11 +1169,7 @@ export default function Downloads() {
 
             <div className="pp-field">
               <div className="pp-fieldLabel">Horário</div>
-              <select
-                className="pp-select"
-                value={String(fHour)}
-                onChange={(e) => setFHour(e.target.value)}
-              >
+              <select className="pp-select" value={String(fHour)} onChange={(e) => setFHour(e.target.value)}>
                 {hourOptions.map((h) => (
                   <option key={`h_${h.v}`} value={String(h.v)}>
                     {h.label}
@@ -1314,11 +1195,7 @@ export default function Downloads() {
 
             <div className="pp-field">
               <div className="pp-fieldLabel">Posição</div>
-              <select
-                className="pp-select"
-                value={String(fPos)}
-                onChange={(e) => setFPos(e.target.value)}
-              >
+              <select className="pp-select" value={String(fPos)} onChange={(e) => setFPos(e.target.value)}>
                 {POS_OPTIONS.map((p) => (
                   <option key={`p_${p.v}`} value={String(p.v)}>
                     {p.label}
@@ -1361,12 +1238,8 @@ export default function Downloads() {
                 </>
               ) : (
                 <>
-                  <div style={{ fontWeight: 1100, marginBottom: 6, color: WHITE }}>
-                    Aviso / Erro
-                  </div>
-                  <div style={{ opacity: 0.92, whiteSpace: "pre-wrap" }}>
-                    {exportError}
-                  </div>
+                  <div style={{ fontWeight: 1100, marginBottom: 6, color: WHITE }}>Aviso / Erro</div>
+                  <div style={{ opacity: 0.92, whiteSpace: "pre-wrap" }}>{exportError}</div>
                 </>
               )}
             </div>
