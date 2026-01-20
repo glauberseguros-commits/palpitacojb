@@ -1,6 +1,5 @@
 // src/pages/Account/LoginVisual.jsx
 import React, { useEffect, useMemo } from "react";
-import { runAuditRJ } from "../../dev/runAuditRJ";
 
 const ACCOUNT_SESSION_KEY = "pp_session_v1";
 const LS_GUEST_ACTIVE_KEY = "pp_guest_active_v1";
@@ -18,10 +17,22 @@ function safeSetLS(key, value) {
 }
 
 export default function LoginVisual({ onEnter }) {
-  // ✅ executa auditoria RJ (bounds) ao abrir a tela
+  // ✅ auditoria RJ somente em DEV (evita custo/log em produção)
   useEffect(() => {
-    console.log("🔎 Rodando auditoria RJ (bounds)...");
-    runAuditRJ().catch(console.error);
+    if (process.env.NODE_ENV === "production") return;
+
+    (async () => {
+      try {
+        // lazy import pra não empacotar dev tools no build prod
+        const mod = await import("../../dev/runAuditRJ");
+        if (mod?.runAuditRJ) {
+          console.log("🔎 Rodando auditoria RJ (bounds) [DEV]...");
+          await mod.runAuditRJ();
+        }
+      } catch (e) {
+        console.warn("AuditRJ (DEV) falhou:", e);
+      }
+    })();
   }, []);
 
   const ui = useMemo(() => {
@@ -140,28 +151,8 @@ export default function LoginVisual({ onEnter }) {
         fontWeight: 950,
         cursor: "pointer",
       },
-
-      btnSecondary: {
-        height: 44,
-        borderRadius: 16,
-        border: "1px solid rgba(255,255,255,0.16)",
-        background: "rgba(255,255,255,0.06)",
-        color: WHITE,
-        fontWeight: 900,
-        cursor: "pointer",
-      },
     };
   }, []);
-
-  const enterAsGuest = () => {
-    safeSetLS(
-      ACCOUNT_SESSION_KEY,
-      JSON.stringify({ ok: true, type: "guest", plan: "FREE", ts: Date.now() })
-    );
-    safeSetLS(LS_GUEST_ACTIVE_KEY, "1");
-    dispatchSessionChanged();
-    onEnter?.("dashboard");
-  };
 
   const enterLogin = () => {
     safeSetLS(
@@ -194,10 +185,6 @@ export default function LoginVisual({ onEnter }) {
             <div style={ui.btnRow}>
               <button style={ui.btnPrimary} onClick={enterLogin}>
                 ENTRAR
-              </button>
-
-              <button style={ui.btnSecondary} onClick={enterAsGuest}>
-                ACESSAR DEMONSTRAÇÃO
               </button>
             </div>
           </div>
