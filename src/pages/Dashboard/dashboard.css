@@ -81,6 +81,14 @@
     radial-gradient(700px 420px at 18% 10%, rgba(255,255,255,0.035), transparent 55%);
 }
 
+/* ✅ Desktop: trava o Dashboard em “1 tela” (sem scroll da página no notebook) */
+@media (min-width: 981px){
+  .dashRoot{
+    height: calc(100dvh - (var(--pad) * 2));
+    max-height: calc(100dvh - (var(--pad) * 2));
+  }
+}
+
 /* ====== Helpers de Card ====== */
 .dashCard{
   border: 1px solid var(--border);
@@ -213,11 +221,10 @@
 
   min-width: 0;
 
-  /* ✅ PRINCIPAL FIX: não corta conteúdo; rola internamente se precisar */
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
+  /* ✅ Desktop: NÃO queremos scroll interno aqui (para “sem scroll” no notebook) */
+  overflow: hidden;
 
-  /* ✅ evita “pular” layout com scrollbar */
+  /* evita “pular” layout com scrollbar */
   scrollbar-gutter: stable both-edges;
 }
 
@@ -359,7 +366,18 @@
   min-width: 0;
 
   flex: 1 1 auto;
+
+  /* ✅ Desktop: sem scroll interno (para “sem scroll” no notebook) */
   overflow: hidden;
+  scrollbar-gutter: stable both-edges;
+}
+
+/* ✅ Anti scroll fantasma em flex/grid (Windows/Chrome) */
+.dashRoot,
+.dashMain,
+.dashCharts,
+.dashLeft{
+  min-height: 0;
 }
 
 /* Acessibilidade */
@@ -489,6 +507,12 @@
   .dashYearButtons{
     grid-column: 1 / -1;
     justify-content: flex-start;
+  }
+
+  /* em mobile, charts podem crescer sem prender */
+  .dashCharts{
+    overflow: visible;
+    scrollbar-gutter: auto;
   }
 }
 

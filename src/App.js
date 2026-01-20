@@ -156,8 +156,25 @@ function hasActiveSession() {
    Dashboard filters (persist)
 ========================= */
 
+function normalizeLoteriaInput(v) {
+  const raw = String(v ?? "").trim();
+  if (!raw) return "RJ";
+  const key = raw
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (key === "federal" || key === "fed" || key === "br" || key === "brasil")
+    return "FEDERAL";
+  return "RJ";
+}
+
 function getDefaultDashboardFilters() {
   return {
+    // ✅ NOVO: loteria persistente
+    loteria: "RJ",
+
     mes: "Todos",
     diaMes: "Todos",
     diaSemana: "Todos",
@@ -176,11 +193,23 @@ function loadDashboardFilters() {
 
   const base = getDefaultDashboardFilters();
 
+  const loteria = normalizeLoteriaInput(obj.loteria);
+
+  // ✅ coerência: FEDERAL => horário deve ser 20h
+  const horario =
+    loteria === "FEDERAL"
+      ? "20h"
+      : typeof obj.horario === "string"
+      ? obj.horario
+      : base.horario;
+
   return {
+    loteria,
+
     mes: typeof obj.mes === "string" ? obj.mes : base.mes,
     diaMes: typeof obj.diaMes === "string" ? obj.diaMes : base.diaMes,
     diaSemana: typeof obj.diaSemana === "string" ? obj.diaSemana : base.diaSemana,
-    horario: typeof obj.horario === "string" ? obj.horario : base.horario,
+    horario,
     animal: typeof obj.animal === "string" ? obj.animal : base.animal,
     posicao: typeof obj.posicao === "string" ? obj.posicao : base.posicao,
   };
@@ -354,6 +383,18 @@ export default function App() {
   }, [screen]);
 
   const [dashboardFilters, setDashboardFilters] = useState(() => loadDashboardFilters());
+
+  // ✅ garante coerência: FEDERAL => horário 20h (mesmo se algum código setar errado)
+  useEffect(() => {
+    const lot = normalizeLoteriaInput(dashboardFilters?.loteria);
+    if (lot === "FEDERAL" && dashboardFilters?.horario !== "20h") {
+      setDashboardFilters((prev) => ({ ...prev, loteria: "FEDERAL", horario: "20h" }));
+    }
+    if (lot === "RJ" && dashboardFilters?.loteria !== "RJ") {
+      setDashboardFilters((prev) => ({ ...prev, loteria: "RJ" }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dashboardFilters?.loteria]);
 
   useEffect(() => {
     safeWriteLS(DASH_FILTERS_KEY, JSON.stringify(dashboardFilters));

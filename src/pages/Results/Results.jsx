@@ -1,12 +1,5 @@
 // src/pages/Results/Results.jsx
-import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getKingResultsByDate } from "../../services/kingResultsService";
 import {
   getAnimalLabel,
@@ -43,6 +36,38 @@ function todayYMDLocal() {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 
+function ymdToDateLocal(ymd) {
+  const m = String(ymd || "")
+    .trim()
+    .match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return null;
+  // local time (Brasil)
+  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12, 0, 0);
+}
+
+function weekdayLocal(ymd) {
+  const d = ymdToDateLocal(ymd);
+  if (!d || Number.isNaN(d.getTime())) return null;
+  // 0=Dom..6=Sáb
+  return d.getDay();
+}
+
+function isWedOrSat(ymd) {
+  const wd = weekdayLocal(ymd);
+  return wd === 3 || wd === 6; // Quarta ou Sábado
+}
+
+function prevWedOrSatFromYmd(ymd) {
+  const d = ymdToDateLocal(ymd) || new Date();
+  // volta no máximo 7 dias para achar o último (qua/sáb)
+  for (let i = 0; i < 8; i += 1) {
+    const y = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+    if (isWedOrSat(y)) return y;
+    d.setDate(d.getDate() - 1);
+  }
+  return ymd;
+}
+
 /**
  * ✅ Normaliza horário para "HH:MM"
  * Aceita: "09HS", "9 HS", "09HRS", "09HR", "09H", "9h", "09:00", "9", etc.
@@ -72,32 +97,67 @@ function hourToNum(h) {
   return Number(m[1]) * 100 + Number(m[2]);
 }
 
-/**
- * Mapeamento UI (UF) -> chave real do Firestore
- */
-const UF_TO_LOTTERY_KEY = {
-  RJ: "PT_RIO",
-};
+/* =========================
+   Escopos (RJ / Federal)
+========================= */
 
-function normalizeUfToQueryKey(input) {
+const SCOPE_RJ = "RJ";
+const SCOPE_FEDERAL = "FEDERAL";
+
+const FEDERAL_INPUT_ALIASES = new Set([
+  "FEDERAL",
+  "FED",
+  "LOTERIA FEDERAL",
+  "LOTERIA_FEDERAL",
+  "LOT FEDERAL",
+  "LT_FEDERAL",
+  "FED_BR",
+]);
+
+function isFederalInput(scope) {
+  const up = safeStr(scope).toUpperCase();
+  if (!up) return false;
+  if (up === SCOPE_FEDERAL) return true;
+  if (FEDERAL_INPUT_ALIASES.has(up)) return true;
+  const compact = up.replace(/[\s_]+/g, " ").trim();
+  if (FEDERAL_INPUT_ALIASES.has(compact)) return true;
+  const unders = up.replace(/[\s_]+/g, "_");
+  if (FEDERAL_INPUT_ALIASES.has(unders)) return true;
+  return false;
+}
+
+/**
+ * ✅ Mapeamento UI -> query key do service
+ * - Agora o service já entende "RJ" e "FEDERAL", então aqui é só padronização.
+ */
+function normalizeScopeInput(input) {
   const s = safeStr(input).toUpperCase();
-  if (!s) return "";
-  if (s.includes("_") || s.length > 2) return s;
-  return UF_TO_LOTTERY_KEY[s] || s;
+  if (!s) return SCOPE_RJ;
+  if (s === SCOPE_RJ) return SCOPE_RJ;
+  if (isFederalInput(s)) return SCOPE_FEDERAL;
+  return s; // mantém (caso você use outros escopos no futuro)
 }
 
-function lotteryLabelFromKey(key) {
-  const s = safeStr(key).toUpperCase();
-  if (s === "PT_RIO") return "RIO";
-  if (s.length === 2) return s;
-  const parts = s.split("_");
-  return parts[parts.length - 1] || s;
+function scopeDisplayName(scope) {
+  const up = safeStr(scope).toUpperCase();
+  if (up === SCOPE_RJ) return "RIO";
+  if (isFederalInput(up)) return "FEDERAL";
+  return up;
 }
 
 /**
- * ✅ prizeNumber:
- * - Fonte da verdade é p.numero (já vem NORMALIZADO no service)
+ * ✅ Regras do Federal
+ * - 20h (20:00)
+ * - Quarta e Sábado
  */
+const FEDERAL_CLOSE_HOUR_BUCKET = "20h";
+const FEDERAL_CLOSE_HOUR = "20:00";
+
+/* =========================
+   prizeNumber:
+   - Fonte da verdade é p.numero (já vem NORMALIZADO no service)
+========================= */
+
 function guessPrizeNumber(p) {
   if (!p) return "";
 
@@ -280,14 +340,14 @@ function resolveAnimalUI(prize) {
    Dedup de draws
 ========================= */
 
-function drawKeyForDedup(d, ufKey, ymd) {
+function drawKeyForDedup(d, scopeKey, ymd) {
   const id = safeStr(d?.drawId || d?.id || "");
-  if (id) return `ID:${ufKey}|${ymd}|${id}`;
+  if (id) return `ID:${scopeKey}|${ymd}|${id}`;
 
   const hour = normalizeHourLike(
     d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
   );
-  return `DH:${ufKey}|${ymd}|${hour || "??"}`;
+  return `DH:${scopeKey}|${ymd}|${hour || "??"}`;
 }
 
 function countPrizes(d) {
@@ -307,12 +367,12 @@ function pickBetterDraw(a, b) {
   return a;
 }
 
-function dedupeDraws(list, ufKey, ymd) {
+function dedupeDraws(list, scopeKey, ymd) {
   const arr = Array.isArray(list) ? list : [];
   const map = new Map();
 
   for (const d of arr) {
-    const k = drawKeyForDedup(d, ufKey, ymd);
+    const k = drawKeyForDedup(d, scopeKey, ymd);
     const prev = map.get(k);
     if (!prev) map.set(k, d);
     else map.set(k, pickBetterDraw(prev, d));
@@ -334,7 +394,7 @@ function prizeRankClass(pos) {
 
 /**
  * ✅ Formata número por posição:
- * - 7º prêmio = CENTENA (3 dígitos, sem zero à esquerda)
+ * - 7º prêmio = CENTENA (3 dígitos)
  * - demais = MILHAR (4 dígitos, com padStart)
  */
 function formatPrizeNumberByPos(value, pos) {
@@ -355,31 +415,34 @@ function prizeLabelByPos(pos) {
   return pos === 7 ? "CENTENA" : "MILHAR";
 }
 
+function scopePillClass(active) {
+  return active ? "pp_pill isActive" : "pp_pill";
+}
+
 /* =========================
    Page
 ========================= */
 
 export default function Results() {
-  const DEFAULT_UF_UI = "RJ";
+  const DEFAULT_SCOPE = SCOPE_RJ;
 
-  const [ufUi, setUfUi] = useState(DEFAULT_UF_UI);
+  const [scopeUi, setScopeUi] = useState(DEFAULT_SCOPE);
   const [ymd, setYmd] = useState(() => todayYMDLocal());
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [draws, setDraws] = useState([]);
 
-  // ✅ Agora: Resultados mostra TUDO por padrão (não esconde 09h)
+  // ✅ Agora: Resultados mostra TUDO por padrão
   const [showAll, setShowAll] = useState(true);
   const [needsToggle, setNeedsToggle] = useState(false);
 
   const centerRef = useRef(null);
 
-  const ufQueryKey = useMemo(() => normalizeUfToQueryKey(ufUi), [ufUi]);
-  const label = useMemo(
-    () => lotteryLabelFromKey(ufQueryKey || ufUi),
-    [ufQueryKey, ufUi]
-  );
+  const scopeKey = useMemo(() => normalizeScopeInput(scopeUi), [scopeUi]);
+  const isFederal = useMemo(() => isFederalInput(scopeKey), [scopeKey]);
+
+  const label = useMemo(() => scopeDisplayName(scopeKey), [scopeKey]);
 
   const ymdSafe = useMemo(() => {
     const s = safeStr(ymd);
@@ -388,11 +451,16 @@ export default function Results() {
 
   const dateBR = useMemo(() => ymdToBR(ymdSafe), [ymdSafe]);
 
+  const federalScheduleOk = useMemo(() => {
+    if (!isFederal) return true;
+    return isWedOrSat(ymdSafe);
+  }, [isFederal, ymdSafe]);
+
   const load = useCallback(async () => {
-    const uQuery = safeStr(ufQueryKey);
+    const sKey = safeStr(scopeKey);
     const d = safeStr(ymdSafe);
 
-    if (!uQuery || !isYMD(d)) {
+    if (!sKey || !isYMD(d)) {
       setDraws([]);
       setLoading(false);
       setError("");
@@ -403,14 +471,16 @@ export default function Results() {
     setError("");
 
     try {
+      // ✅ Federal: força filtro de horário para não “misturar” outros draws
       const out = await getKingResultsByDate({
-        uf: uQuery,
+        uf: sKey,
         date: d,
-        closeHour: null,
+        closeHour: isFederal ? FEDERAL_CLOSE_HOUR : null,
+        closeHourBucket: isFederal ? FEDERAL_CLOSE_HOUR_BUCKET : null,
         positions: null,
       });
 
-      const deduped = dedupeDraws(Array.isArray(out) ? out : [], uQuery, d);
+      const deduped = dedupeDraws(Array.isArray(out) ? out : [], sKey, d);
       setDraws(deduped);
     } catch (e) {
       setDraws([]);
@@ -418,16 +488,16 @@ export default function Results() {
     } finally {
       setLoading(false);
     }
-  }, [ufQueryKey, ymdSafe]);
+  }, [scopeKey, ymdSafe, isFederal]);
 
   useEffect(() => {
     load();
   }, [load]);
 
   useEffect(() => {
-    // quando troca UF/data, mantemos "mostrar tudo"
+    // quando troca escopo/data, mantemos "mostrar tudo"
     setShowAll(true);
-  }, [ufQueryKey, ymdSafe]);
+  }, [scopeKey, ymdSafe]);
 
   const drawsOrdered = useMemo(() => {
     const list = Array.isArray(draws) ? draws : [];
@@ -442,7 +512,6 @@ export default function Results() {
     });
   }, [draws]);
 
-  // ✅ Toggle só faz sentido se um dia tiver MUITOS cards (não é o caso do PT_RIO)
   useEffect(() => {
     setNeedsToggle(drawsOrdered.length > 6);
   }, [drawsOrdered.length]);
@@ -550,6 +619,34 @@ export default function Results() {
       }
       .pp_btn:hover{ background: rgba(255,255,255,0.08); }
 
+      .pp_pills{
+        display:flex;
+        gap: 6px;
+        align-items:center;
+        flex-wrap: wrap;
+      }
+
+      .pp_pill{
+        height: 34px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,255,255,0.10);
+        background: rgba(255,255,255,0.06);
+        color: rgba(255,255,255,0.90);
+        padding: 0 12px;
+        font-weight: 1200;
+        letter-spacing: 0.35px;
+        cursor: pointer;
+        font-size: 12px;
+        user-select: none;
+      }
+      .pp_pill:hover{ background: rgba(255,255,255,0.08); }
+
+      .pp_pill.isActive{
+        border-color: rgba(201,168,62,0.36);
+        background: rgba(201,168,62,0.12);
+        color: rgba(201,168,62,0.98);
+      }
+
       .pp_body{
         min-width:0;
         min-height:0;
@@ -578,6 +675,16 @@ export default function Results() {
         padding: 12px 14px;
         font-weight: 850;
         color: rgba(255,255,255,0.92);
+      }
+
+      .pp_warn{
+        border: 1px solid rgba(201,168,62,0.26);
+        background: rgba(201,168,62,0.10);
+        color: rgba(255,255,255,0.92);
+        border-radius: 14px;
+        padding: 10px 12px;
+        font-weight: 950;
+        line-height: 1.25;
       }
 
       .pp_topbar{
@@ -818,6 +925,14 @@ export default function Results() {
     `;
   }, []);
 
+  const federalInfoText = useMemo(() => {
+    if (!isFederal) return "";
+    if (federalScheduleOk) {
+      return "Federal: resultado às 20h (quarta e sábado).";
+    }
+    return "Federal só tem sorteio quarta e sábado às 20h. Clique em “Último Federal” para ir para a última data válida.";
+  }, [isFederal, federalScheduleOk]);
+
   return (
     <div className="pp_wrap">
       <style>{styles}</style>
@@ -829,15 +944,26 @@ export default function Results() {
           </div>
 
           <div className="pp_controls">
-            <input
-              className="pp_input"
-              value={ufUi}
-              onChange={(e) => setUfUi(e.target.value)}
-              placeholder="UF (ex.: RJ)"
-              aria-label="UF"
-              inputMode="text"
-              maxLength={12}
-            />
+            {/* ✅ Troca de escopo (RJ | Federal) */}
+            <div className="pp_pills" aria-label="Escopo">
+              <button
+                type="button"
+                className={scopePillClass(scopeKey === SCOPE_RJ)}
+                onClick={() => setScopeUi(SCOPE_RJ)}
+                title="Resultados do Rio (PT_RIO)"
+              >
+                RJ
+              </button>
+
+              <button
+                type="button"
+                className={scopePillClass(isFederal)}
+                onClick={() => setScopeUi(SCOPE_FEDERAL)}
+                title="Loteria Federal (20h qua/sáb)"
+              >
+                FEDERAL
+              </button>
+            </div>
 
             <input
               className="pp_input"
@@ -849,6 +975,17 @@ export default function Results() {
               style={{ minWidth: 150 }}
             />
 
+            {isFederal ? (
+              <button
+                className="pp_btn"
+                type="button"
+                onClick={() => setYmd((prev) => prevWedOrSatFromYmd(prev || todayYMDLocal()))}
+                title="Ir para a última quarta/sábado"
+              >
+                Último Federal
+              </button>
+            ) : null}
+
             <button className="pp_btn" onClick={load} type="button" title="Atualizar">
               Atualizar
             </button>
@@ -857,6 +994,8 @@ export default function Results() {
 
         <div className="pp_body">
           <div className="pp_center" ref={centerRef}>
+            {isFederal ? <div className="pp_warn">{federalInfoText}</div> : null}
+
             {loading ? (
               <div className="pp_state">Carregando…</div>
             ) : error ? (
@@ -867,8 +1006,14 @@ export default function Results() {
             ) : drawsOrdered.length === 0 ? (
               <div className="pp_state">
                 Nenhum resultado para{" "}
-                <span className="pp_gold">{safeStr(ufUi).toUpperCase() || DEFAULT_UF_UI}</span>{" "}
-                em <span className="pp_gold">{dateBR}</span>.
+                <span className="pp_gold">{label || DEFAULT_SCOPE}</span> em{" "}
+                <span className="pp_gold">{dateBR}</span>
+                {isFederal && !federalScheduleOk ? (
+                  <div style={{ marginTop: 8, opacity: 0.9 }}>
+                    Dica: Federal é <b>quarta</b> e <b>sábado</b> às <b>20h</b>.
+                  </div>
+                ) : null}
+                .
               </div>
             ) : (
               <>
@@ -928,7 +1073,7 @@ export default function Results() {
                         <div className="pp_cardInner">
                           <div className="pp_cardHead">
                             <div className="pp_headLeft">
-                              <div className="pp_headTitle">{`Resultado • LT PT ${label}`}</div>
+                              <div className="pp_headTitle">{`Resultado • ${label}`}</div>
                               <div className="pp_headSub">{dateBR}</div>
                             </div>
 
@@ -938,7 +1083,9 @@ export default function Results() {
                           <div className="pp_rows">
                             {rows.map((r) => {
                               const gtxt = r.grupo ? `G${pad2(r.grupo)}` : "—";
-                              const numFmt = r.numero ? formatPrizeNumberByPos(r.numero, r.pos) : "";
+                              const numFmt = r.numero
+                                ? formatPrizeNumberByPos(r.numero, r.pos)
+                                : "";
 
                               return (
                                 <div key={`${id}_pos_${r.pos}`} className="pp_row">

@@ -187,7 +187,7 @@ function getDowKey(ymd) {
   if (!isYMD(ymd)) return null;
   const [Y, M, D] = ymd.split("-").map((x) => Number(x));
   const dt = new Date(Y, M - 1, D);
-  return dt.getDay();
+  return dt.getDay(); // 0 dom ... 6 sáb
 }
 
 /* =========================
@@ -213,7 +213,6 @@ function normalizeImgSrc(src) {
 
 /**
  * ✅ tenta múltiplas variações de imagem por grupo/tamanho
- * (robusto p/ manter premium sem “quebra”)
  */
 function makeImgVariantsFromGrupo(grupo, size) {
   const g = Number(grupo);
@@ -221,12 +220,10 @@ function makeImgVariantsFromGrupo(grupo, size) {
 
   const s = Number(size) || 96;
 
-  // 1) rota “oficial” do bichoMap (se existir)
   const primary = normalizeImgSrc(
     getImgFromGrupo?.(g, s) || getImgFromGrupo?.(g) || ""
   );
 
-  // 2) fallback compatível com seu padrão de assets
   const base = publicBase();
   const g2 = pad2(g);
   const label = safeStr(getAnimalLabel?.(g) || "");
@@ -307,10 +304,17 @@ const PT_RIO_SCHEDULE_NORMAL = [
   "18:00",
   "21:00",
 ];
+
+// (mantive como você tinha)
 const PT_RIO_SCHEDULE_WED_SAT = ["09:00", "11:00", "14:00", "16:00", "21:00"];
 
-// Federal: normalmente um único resultado no dia
+// ✅ Federal: QUARTA (3) e SÁBADO (6) às 20:00
 const FEDERAL_SCHEDULE = ["20:00"];
+
+function isFederalDrawDay(ymd) {
+  const dow = getDowKey(ymd);
+  return dow === 3 || dow === 6;
+}
 
 function getPtRioScheduleForYmd(ymd) {
   const dow = getDowKey(ymd);
@@ -320,7 +324,12 @@ function getPtRioScheduleForYmd(ymd) {
 
 function getScheduleForLottery(lotteryKey, ymd) {
   const key = safeStr(lotteryKey).toUpperCase();
-  if (key === "FEDERAL") return FEDERAL_SCHEDULE;
+
+  // ✅ Regra correta: Federal só existe qua/sáb
+  if (key === "FEDERAL") {
+    return isFederalDrawDay(ymd) ? FEDERAL_SCHEDULE : [];
+  }
+
   return getPtRioScheduleForYmd(ymd);
 }
 
@@ -391,6 +400,10 @@ async function getPreviousDrawRobust({
   for (let i = 1; i <= maxBackDays; i += 1) {
     const day = addDaysYMD(ymdTarget, -i);
     const daySchedule = getScheduleForLottery(lotteryKey, day);
+
+    // ✅ Federal: pula dias que não têm concurso
+    if (safeStr(lotteryKey).toUpperCase() === "FEDERAL" && !daySchedule.length)
+      continue;
 
     const out = await getKingResultsByDate({
       uf: lotteryKey,
@@ -490,7 +503,7 @@ const LOTTERY_OPTIONS = [
 
 function lotteryLabel(lotteryKey) {
   const k = safeStr(lotteryKey).toUpperCase();
-  if (k === "FEDERAL") return "FEDERAL";
+  if (k === "FEDERAL") return "FEDERAL (20h • qua/sáb)";
   if (k === "PT_RIO") return "RIO (PT_RIO)";
   return k || "—";
 }
@@ -533,6 +546,10 @@ export default function Top3() {
     return getScheduleForLottery(lotteryKeySafe, ymdSafe);
   }, [lotteryKeySafe, ymdSafe]);
 
+  const isFederalNonDrawDay = useMemo(() => {
+    return lotteryKeySafe === "FEDERAL" && !schedule.length;
+  }, [lotteryKeySafe, schedule.length]);
+
   const dayEnded = useMemo(() => {
     return !!safeStr(lastHourBucket) && !safeStr(targetHourBucket);
   }, [lastHourBucket, targetHourBucket]);
@@ -569,6 +586,26 @@ export default function Top3() {
 
     setLoading(true);
     setError("");
+
+    // ✅ Regra de negócio: Federal só qua/sáb 20h
+    if (lKey === "FEDERAL" && !isFederalDrawDay(ymdSafe)) {
+      setRangeDraws([]);
+      setLastHourBucket("");
+      setTargetHourBucket("");
+      setPrevInfo({
+        prevYmd: "",
+        prevHour: "",
+        prevGrupo: null,
+        prevAnimal: "",
+        source: "none",
+      });
+      setRangeInfo({ from: "", to: "" });
+      setLoading(false);
+      setError(
+        `Loteria Federal só tem resultado às 20h nas quartas e sábados. (${dateBR} não é dia de concurso)`
+      );
+      return;
+    }
 
     try {
       let minDate = safeStr(bounds?.minDate);
@@ -615,6 +652,7 @@ export default function Top3() {
         return null;
       })();
 
+      // ✅ se ainda não saiu nada no dia, alvo = primeiro slot do schedule
       const targetBucket = !lastBucket ? schedule[0] || "" : nextFromLast || "";
       const ended = !!lastBucket && !nextFromLast;
       setTargetHourBucket(ended ? "" : targetBucket);
@@ -655,7 +693,7 @@ export default function Top3() {
           targetHourBucket: hourForPrev,
           todayDraws: today,
           schedule,
-          maxBackDays: 10,
+          maxBackDays: 14,
         });
 
         const prevGrupo = prev?.draw ? pickPrize1GrupoFromDraw(prev.draw) : null;
@@ -702,6 +740,7 @@ export default function Top3() {
     lookback,
     bounds?.minDate,
     bounds?.maxDate,
+    dateBR,
   ]);
 
   useEffect(() => {
@@ -724,6 +763,7 @@ export default function Top3() {
   const analytics = useMemo(() => {
     const list = Array.isArray(rangeDraws) ? rangeDraws : [];
     const hour = safeStr(analysisHourBucket);
+
     if (!list.length || !hour) {
       return { top: [], meta: null };
     }
@@ -1417,7 +1457,14 @@ export default function Top3() {
         .pp_animal.big{ font-size: 20px; }
       }
     `;
-  }, [lotteryKeySafe, analysisHourBucket, lookbackLabel, prevLabel, dayEnded, lastHourBucket]);
+  }, [
+    lotteryKeySafe,
+    analysisHourBucket,
+    lookbackLabel,
+    prevLabel,
+    dayEnded,
+    lastHourBucket,
+  ]);
 
   return (
     <div className="pp_wrap">
@@ -1532,6 +1579,12 @@ export default function Top3() {
               <div className="pp_state">
                 <div style={{ fontWeight: 1100, marginBottom: 6 }}>Erro</div>
                 <div style={{ opacity: 0.9, whiteSpace: "pre-wrap" }}>{error}</div>
+              </div>
+            ) : isFederalNonDrawDay ? (
+              <div className="pp_state">
+                Loteria Federal só tem resultado às{" "}
+                <span className="pp_gold">20h</span> nas{" "}
+                <span className="pp_gold">quartas e sábados</span>.
               </div>
             ) : top3.length === 0 ? (
               <div className="pp_state">
@@ -1649,7 +1702,9 @@ export default function Top3() {
                                 const has = !!safeStr(m?.milhar);
                                 return (
                                   <div
-                                    key={`mil_${x.grupo}_${m?.dezena || "dz"}_${m?.milhar || "empty"}_${i}`}
+                                    key={`mil_${x.grupo}_${m?.dezena || "dz"}_${
+                                      m?.milhar || "empty"
+                                    }_${i}`}
                                     className={`pp_milharPill ${has ? "" : "isEmpty"}`}
                                     role="listitem"
                                     title={

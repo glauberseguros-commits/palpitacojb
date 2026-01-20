@@ -434,6 +434,19 @@ function clampRangeToBounds(next, minDate, maxDate) {
   return { from, to };
 }
 
+function normalizeLoteriaKey(v) {
+  const raw = String(v ?? "").trim();
+  if (!raw) return "RJ";
+  const key = raw
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (key === "federal" || key === "fed" || key === "br" || key === "brasil") return "FEDERAL";
+  return "RJ";
+}
+
 /**
  * ✅ Dashboard recebe filtros do App.js
  * - filters: objeto
@@ -445,6 +458,7 @@ export default function Dashboard(props) {
 
   const fallbackFilters = useMemo(
     () => ({
+      loteria: "RJ",
       mes: "Todos",
       diaMes: "Todos",
       diaSemana: "Todos",
@@ -465,7 +479,6 @@ export default function Dashboard(props) {
     };
     window.addEventListener("storage", onStorage);
 
-    // checagem leve no mesmo tab
     const t = setInterval(() => setIsGuest(isGuestSession(loadSessionObj())), 1000);
 
     return () => {
@@ -479,9 +492,9 @@ export default function Dashboard(props) {
     return externalFilters && typeof externalFilters === "object" ? externalFilters : fallbackFilters;
   }, [externalFilters, fallbackFilters]);
 
-  // ✅ no guest, força "Todos" (vitrine)
+  // ✅ no guest, força "Todos" (vitrine) — mantém loteria em RJ (não vale FEDERAL no demo)
   const filters = useMemo(() => {
-    if (!isGuest) return rawFilters;
+    if (!isGuest) return { ...fallbackFilters, ...rawFilters };
     return fallbackFilters;
   }, [isGuest, rawFilters, fallbackFilters]);
 
@@ -492,6 +505,22 @@ export default function Dashboard(props) {
     return typeof externalSetFilters === "function" ? externalSetFilters : noopSetFilters;
   }, [externalSetFilters, noopSetFilters, isGuest]);
 
+  const loteriaKey = useMemo(() => normalizeLoteriaKey(filters?.loteria), [filters?.loteria]);
+  const isFederal = loteriaKey === "FEDERAL";
+
+  // ✅ FEDERAL: força horário = 20h (se não for guest)
+  useEffect(() => {
+    if (isGuest) return;
+    if (!isFederal) return;
+    if (String(filters?.horario ?? "") !== "20h") {
+      setFilters((prev) => ({ ...prev, horario: "20h" }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFederal, isGuest]);
+
+  const locationLabel = isFederal ? "FEDERAL (Brasil) — 20h" : "Rio de Janeiro, RJ, Brasil";
+  const uf = isFederal ? "FEDERAL" : "PT_RIO";
+
   // ✅ restaura apenas estado auxiliar (range/anos/grupo) do localStorage
   const savedDashState = useMemo(() => safeReadJSON(DASH_STATE_KEY), []);
 
@@ -499,9 +528,6 @@ export default function Dashboard(props) {
     const g = Number(savedDashState?.selectedGrupo);
     return Number.isFinite(g) && g >= 1 && g <= 25 ? g : null;
   });
-
-  const locationLabel = "Rio de Janeiro, RJ, Brasil";
-  const uf = "PT_RIO";
 
   const [bounds, setBounds] = useState({
     loading: DATA_MODE === "firestore",
@@ -999,15 +1025,18 @@ export default function Dashboard(props) {
       animais.push(lbl || `Grupo ${pad2(g)}`);
     }
 
-    const setBuckets = new Set();
+    // horários disponíveis (RJ) + FEDERAL 20h
+    const baseBuckets = new Set();
     if (Array.isArray(drawsForUi) && drawsForUi.length) {
       for (const d of drawsForUi) {
         const b = normalizeHourBucket(getDrawCloseHour(d));
-        if (b) setBuckets.add(b);
+        if (b) baseBuckets.add(b);
       }
     }
 
-    const horarios = Array.from(setBuckets)
+    if (isFederal) baseBuckets.add("20h");
+
+    const horarios = Array.from(baseBuckets)
       .sort((a, b) => a.localeCompare(b))
       .map((b) => ({ label: b, value: b }));
 
@@ -1039,7 +1068,7 @@ export default function Dashboard(props) {
       diasSemana,
       posicoes,
     };
-  }, [drawsForUi]);
+  }, [drawsForUi, isFederal]);
 
   const yearsAvailable = useMemo(() => {
     const fromDraws = extractYearsFromDraws(drawsForUi);
@@ -1060,8 +1089,10 @@ export default function Dashboard(props) {
     if (!MIN_DATE || !MAX_DATE) return;
     setSelectedYears([]);
     if (isGuest) return;
-    applyDateRange({ from: MIN_DATE, to: MAX_DATE });
-  }, [MIN_DATE, MAX_DATE, applyDateRange, isGuest]);
+    const full = { from: MIN_DATE, to: MAX_DATE };
+    setDateRange(full);
+    setDateRangeQuery(full);
+  }, [MIN_DATE, MAX_DATE, isGuest]);
 
   const onClearYears = useCallback(() => {
     if (isGuest) {
@@ -1094,12 +1125,15 @@ export default function Dashboard(props) {
         const minY = next[0];
         const maxY = next[next.length - 1];
         const yr = yearRangeToDates(minY, maxY);
-        if (yr) applyDateRange(yr);
+        if (yr) {
+          setDateRange(yr);
+          setDateRangeQuery(yr);
+        }
 
         return next;
       });
     },
-    [applyAllYearsFull, applyDateRange, isGuest, showGuestToast]
+    [applyAllYearsFull, isGuest, showGuestToast]
   );
 
   const kpiItems = useMemo(() => {
@@ -1325,13 +1359,8 @@ export default function Dashboard(props) {
 
                 {MIN_DATE && MAX_DATE && dateRange ? (
                   <div style={{ position: "relative", zIndex: 10, pointerEvents: "auto" }}>
-                    {/* Guest: trava UI de período (vitrine) + overlay clicável */}
                     <div style={{ position: "relative" }}>
-                      <div
-                        style={
-                          isGuest ? { opacity: 0.55, filter: "grayscale(0.2)" } : null
-                        }
-                      >
+                      <div style={isGuest ? { opacity: 0.55, filter: "grayscale(0.2)" } : null}>
                         <DateRangeControl
                           value={dateRange}
                           onChange={applyDateRange}
@@ -1386,7 +1415,6 @@ export default function Dashboard(props) {
         </section>
 
         <section className="dashFilters">
-          {/* Guest: trava UI de filtros (vitrine) + overlay clicável */}
           <div style={{ position: "relative" }}>
             <div style={isGuest ? { opacity: 0.65, filter: "grayscale(0.2)" } : null}>
               <FiltersBar filters={filters} onChange={handleFilterChange} options={options} />
