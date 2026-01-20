@@ -145,6 +145,14 @@ const HTTP_RETRY_BASE_MS = Number.isFinite(Number(process.env.HTTP_RETRY_BASE_MS
   : 600;
 
 /**
+ * ✅ fetch por lottery (robusto contra “cap” da API quando manda muitos lotteries[]).
+ * Default: ON
+ * - KING_FETCH_PER_LOTTERY=0 => volta ao modo antigo (1 request com todos lotteries[])
+ */
+const FETCH_PER_LOTTERY =
+  String(process.env.KING_FETCH_PER_LOTTERY || "").trim() === "0" ? false : true;
+
+/**
  * =========================
  * ✅ Regras de negócio: UF x lottery_key
  * =========================
@@ -237,7 +245,7 @@ function isHHMM(s) {
 }
 
 /**
- * Normaliza horário para HH:MM
+ * Normaliza horário para HH:MM (raw)
  * Aceita: "10", "10h", "10:9", "10:09"
  */
 function normalizeHHMM(value) {
@@ -260,6 +268,28 @@ function normalizeHHMM(value) {
   }
 
   return "";
+}
+
+/**
+ * ✅ Normaliza close_hour para SLOT (campo de negócio)
+ * - Para PT_RIO: força minutos = 00 (09:09 -> 09:00)
+ * - Para outros: preserva raw
+ *
+ * Retorna:
+ * - raw: HH:MM (normalizado)
+ * - slot: HH:MM (normalizado para o que o sistema deve usar em consultas/ID)
+ */
+function normalizeCloseHourForLottery(value, lotteryKey) {
+  const lk = String(lotteryKey || "").trim().toUpperCase();
+  const raw = normalizeHHMM(value);
+  if (!raw || !isHHMM(raw)) return { raw: "", slot: "" };
+
+  if (lk === "PT_RIO") {
+    const hh = raw.slice(0, 2);
+    return { raw, slot: `${hh}:00` };
+  }
+
+  return { raw, slot: raw };
 }
 
 /**
@@ -294,6 +324,9 @@ function pickLotteryId(draw) {
 /**
  * Loterias (IDs) capturadas do Network.
  * Observação: a API pode consolidar em 1 draw por close_hour, mesmo havendo múltiplos IDs aqui.
+ *
+ * ✅ Agora aceita override via ENV:
+ * - KING_LOTTERIES_PT_RIO="uuid1,uuid2,..."
  */
 const LOTTERIES_BY_KEY = {
   PT_RIO: [
@@ -306,7 +339,22 @@ const LOTTERIES_BY_KEY = {
   ],
 };
 
-function buildResultsUrl({ date, lotteryKey }) {
+(function applyLotteryOverridesFromEnv() {
+  try {
+    const rawRio = String(process.env.KING_LOTTERIES_PT_RIO || "").trim();
+    if (rawRio) {
+      const arr = rawRio
+        .split(",")
+        .map((s) => String(s || "").trim())
+        .filter(Boolean);
+      if (arr.length) LOTTERIES_BY_KEY.PT_RIO = arr;
+    }
+  } catch {
+    // silencioso
+  }
+})();
+
+function buildResultsUrl({ date, lotteryKey, lotteryId = null }) {
   const base = "https://app_services.apionline.cloud/api/results";
   const lk = String(lotteryKey || "").trim().toUpperCase();
   const lotteries = LOTTERIES_BY_KEY[lk];
@@ -314,8 +362,15 @@ function buildResultsUrl({ date, lotteryKey }) {
 
   const params = new URLSearchParams();
   params.append("dates[]", date);
-  for (const id of lotteries) params.append("lotteries[]", id);
 
+  // ✅ se lotteryId for fornecido -> 1 request por lottery
+  if (lotteryId) {
+    params.append("lotteries[]", lotteryId);
+    return `${base}?${params.toString()}`;
+  }
+
+  // modo antigo (todos lotteries no mesmo request)
+  for (const id of lotteries) params.append("lotteries[]", id);
   return `${base}?${params.toString()}`;
 }
 
@@ -343,10 +398,7 @@ function shouldRetryAxiosError(err) {
   return false;
 }
 
-async function fetchKingResults({ date, lotteryKey }) {
-  const lk = String(lotteryKey || "").trim().toUpperCase();
-  const url = buildResultsUrl({ date, lotteryKey: lk });
-
+async function axiosGetJson(url) {
   let lastErr = null;
 
   for (let attempt = 0; attempt <= HTTP_RETRIES; attempt++) {
@@ -374,14 +426,101 @@ async function fetchKingResults({ date, lotteryKey }) {
 
       const backoff = HTTP_RETRY_BASE_MS * Math.pow(2, attempt);
       console.warn(
-        `[HTTP] tentativa ${attempt + 1}/${HTTP_RETRIES + 1} falhou (${e?.response?.status || e?.code || "err"}). ` +
-          `retry em ${backoff}ms...`
+        `[HTTP] tentativa ${attempt + 1}/${HTTP_RETRIES + 1} falhou (${
+          e?.response?.status || e?.code || "err"
+        }). retry em ${backoff}ms...`
       );
       await sleep(backoff);
     }
   }
 
   throw lastErr || new Error("Falha ao buscar API.");
+}
+
+/**
+ * ✅ Merge + dedup de draws vindos de múltiplos requests
+ * Dedup key: date + close_hour(SLOT) + lottery_id (se existir)
+ */
+function mergeAndDedupDraws(arrays, lotteryKey) {
+  const map = new Map();
+
+  for (const a of arrays) {
+    const list = Array.isArray(a) ? a : [];
+    for (const d of list) {
+      const date = String(d?.date || "").trim();
+      const { slot } = normalizeCloseHourForLottery(d?.close_hour || "", lotteryKey);
+
+      const lid =
+        pickLotteryId(d) || String(d?.lottery_name || d?.name || "").trim() || "NA";
+      const key = `${date}__${slot}__${lid}`;
+
+      if (!map.has(key)) {
+        map.set(key, d);
+      } else {
+        // se duplicado, preferir o que tiver mais prizes preenchidos
+        const prev = map.get(key);
+        const prevCount = countPrizesInDraw(prev);
+        const curCount = countPrizesInDraw(d);
+        if (curCount > prevCount) map.set(key, d);
+      }
+    }
+  }
+
+  return Array.from(map.values());
+}
+
+function countPrizesInDraw(draw) {
+  let c = 0;
+  for (let i = 1; i <= 15; i++) {
+    const v = draw?.[`prize_${i}`];
+    if (v === null || v === undefined || String(v).trim() === "") continue;
+    c++;
+  }
+  return c;
+}
+
+function summarizeCloseHours(draws, lotteryKey) {
+  const set = new Set();
+  for (const d of draws) {
+    const { slot } = normalizeCloseHourForLottery(d?.close_hour || "", lotteryKey);
+    if (slot) set.add(slot);
+  }
+  return Array.from(set).sort();
+}
+
+/**
+ * ✅ Fetch robusto:
+ * - Por default faz 1 request por lotteryId e mescla (evita “cap”/consolidação do endpoint)
+ * - Se KING_FETCH_PER_LOTTERY=0 -> faz 1 request único (modo antigo)
+ */
+async function fetchKingResults({ date, lotteryKey }) {
+  const lk = String(lotteryKey || "").trim().toUpperCase();
+  const lotteries = LOTTERIES_BY_KEY[lk];
+  if (!lotteries?.length) throw new Error(`lotteryKey inválida: ${lk}`);
+
+  if (!FETCH_PER_LOTTERY) {
+    const url = buildResultsUrl({ date, lotteryKey: lk });
+    return await axiosGetJson(url);
+  }
+
+  // ✅ 1 request por lottery (sequencial: mais estável e respeita rate-limit)
+  const parts = [];
+  for (const lotteryId of lotteries) {
+    const url = buildResultsUrl({ date, lotteryKey: lk, lotteryId });
+    const data = await axiosGetJson(url);
+    parts.push(data?.data || []);
+  }
+
+  const merged = mergeAndDedupDraws(parts, lk);
+  const closes = summarizeCloseHours(merged, lk);
+
+  console.log(
+    `[FETCH] ${lk} ${date} per-lottery=${lotteries.length} -> merged_draws=${merged.length} close_hours=[${closes.join(
+      ", "
+    )}]`
+  );
+
+  return { success: true, data: merged };
 }
 
 /**
@@ -399,23 +538,31 @@ function extractPrizes(draw) {
 
 /**
  * Gera drawId e drawRef no mesmo padrão do seu projeto.
+ * ✅ Agora usa close_hour SLOT no ID e guarda close_hour_raw.
  */
 function buildDrawRef({ draw, lotteryKey }) {
   const date = String(draw?.date || "").trim();
-  const close = normalizeHHMM(draw?.close_hour || "");
+
+  const { raw: closeRaw, slot: closeSlot } = normalizeCloseHourForLottery(
+    draw?.close_hour || "",
+    lotteryKey
+  );
+
   const lotteryName = String(draw?.lottery_name || draw?.name || "SEM_NOME").trim();
 
   const lotteryIdFromDraw = pickLotteryId(draw);
   const lotteryIdPart = safeIdPart(lotteryIdFromDraw || lotteryName);
 
-  const drawId = `${safeIdPart(lotteryKey)}__${date}__${safeIdPart(close)}__${lotteryIdPart}`;
+  // ✅ ID por SLOT (evita __09-09__)
+  const drawId = `${safeIdPart(lotteryKey)}__${date}__${safeIdPart(closeSlot)}__${lotteryIdPart}`;
   const drawRef = db.collection("draws").doc(drawId);
 
   return {
     drawId,
     drawRef,
     date,
-    close,
+    closeRaw,
+    closeSlot,
     lotteryName,
     lotteryIdFromDraw,
   };
@@ -479,15 +626,11 @@ async function checkSlotCompletion({ date, closeHour, lotteryKey }) {
 
 /**
  * Importa payload para o Firestore.
- * closeHour (opcional): se informado, importa SOMENTE draws daquele horário.
+ * closeHour (opcional): se informado, importa SOMENTE draws daquele horário (SLOT).
  *
  * Opts extras:
  * - skipIfAlreadyComplete (boolean): se true, e o draw do closeHour já estiver completo no FS,
  *   então NÃO escreve nada (evita ruído e falsos positivos).
- *
- * MÉTRICAS:
- * - totalDrawsUpserted / totalPrizesUpserted => contabiliza operações de escrita realizadas
- * - totalDrawsSaved / totalPrizesSaved => só é "novo" preciso quando CHECK_EXISTENCE=1
  */
 async function importFromPayload({
   payload,
@@ -496,7 +639,7 @@ async function importFromPayload({
   skipIfAlreadyComplete = false,
 } = {}) {
   const lk = String(lotteryKey || "").trim().toUpperCase();
-  const uf = resolveUfFromLotteryKey(lk); // ✅ FIX: UF correta (ex.: RJ)
+  const uf = resolveUfFromLotteryKey(lk); // ✅ UF correta (ex.: RJ)
 
   let batch = db.batch();
   let ops = 0;
@@ -535,7 +678,8 @@ async function importFromPayload({
     targetSavedCount: 0,
   };
 
-  const filterClose = closeHour ? normalizeHHMM(closeHour) : null;
+  // ✅ filtro deve ser SLOT também
+  const filterClose = closeHour ? normalizeCloseHourForLottery(closeHour, lk).slot : null;
   if (filterClose && !isHHMM(filterClose)) {
     throw new Error('Parâmetro "closeHour" inválido. Use HH:MM.');
   }
@@ -547,11 +691,14 @@ async function importFromPayload({
     totalDrawsFromApi++;
 
     const date = String(draw?.date || "").trim();
-    const close = normalizeHHMM(draw?.close_hour || "");
+    const { raw: closeRaw, slot: closeSlot } = normalizeCloseHourForLottery(
+      draw?.close_hour || "",
+      lk
+    );
 
-    // filtro por horário
+    // filtro por horário (SLOT)
     if (filterClose) {
-      if (close !== filterClose) {
+      if (closeSlot !== filterClose) {
         skippedCloseHour++;
         continue;
       }
@@ -559,8 +706,8 @@ async function importFromPayload({
 
     totalDrawsMatchedClose++;
 
-    // validações mínimas
-    if (!isISODate(date) || !isHHMM(close)) {
+    // validações mínimas (slot precisa ser HH:MM)
+    if (!isISODate(date) || !isHHMM(closeSlot)) {
       skippedInvalid++;
       continue;
     }
@@ -626,7 +773,12 @@ async function importFromPayload({
         date,
         ymd,
 
-        close_hour: close,
+        // ✅ campo de negócio (SLOT)
+        close_hour: closeSlot,
+
+        // ✅ guarda o que veio da API (se existir)
+        close_hour_raw: closeRaw || null,
+
         prizesCount: prizes.length,
         importedAt: admin.firestore.FieldValue.serverTimestamp(),
       },
@@ -681,9 +833,6 @@ async function importFromPayload({
   if (proof.filterClose) {
     const slotDate = proof.inferredDate; // se API trouxe o slot, teremos date
 
-    // expectedTargets:
-    // - se API trouxe 1 draw válido -> expected=1
-    // - se por algum motivo trouxer mais -> expected = quantidade que veio
     proof.expectedTargets = Math.max(1, Number(proof.apiReturnedTargetDraws || 0));
 
     if (slotDate) {
@@ -761,7 +910,8 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
     throw new Error(`Parâmetro "lotteryKey" inválido: ${lk}`);
   }
 
-  const normalizedClose = closeHour ? normalizeHHMM(closeHour) : null;
+  // ✅ closeHour do scheduler é slot; normaliza para slot também
+  const normalizedClose = closeHour ? normalizeCloseHourForLottery(closeHour, lk).slot : null;
   if (normalizedClose && !isHHMM(normalizedClose)) {
     throw new Error('Parâmetro "closeHour" inválido. Use HH:MM.');
   }
@@ -824,7 +974,7 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
 
     savedCount: normalizedClose ? savedCount : null,
     writeCount: normalizedClose ? writeCount : null,
-    targetDrawIds: normalizedClose ? (proof.targetDrawIds || []) : null,
+    targetDrawIds: normalizedClose ? proof.targetDrawIds || [] : null,
 
     tookMs: ms,
     ...result,
@@ -852,7 +1002,7 @@ async function main() {
     );
   }
 
-  const normalizedClose = closeHour ? normalizeHHMM(closeHour) : null;
+  const normalizedClose = closeHour ? normalizeCloseHourForLottery(closeHour, lk).slot : null;
   if (normalizedClose && !isHHMM(normalizedClose)) {
     throw new Error(
       "Uso: node archive_backend/backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO] [HH:MM]"
@@ -866,9 +1016,7 @@ async function main() {
   const payload = await fetchKingResults({ date, lotteryKey: lk });
 
   console.log(
-    `[2/3] Processando ${
-      Array.isArray(payload?.data) ? payload.data.length : 0
-    } draws retornados pela API...`
+    `[2/3] Processando ${Array.isArray(payload?.data) ? payload.data.length : 0} draws retornados pela API...`
   );
 
   await importFromPayload({
