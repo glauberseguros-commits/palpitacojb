@@ -102,6 +102,10 @@ function hourToMinutes(hhmm) {
   return hh * 60 + mm;
 }
 
+/**
+ * ✅ Pega a maior close_hour existente em um conjunto de draws
+ * Retorna { ymd, closeHour }.
+ */
 function pickLatestCloseHour(draws) {
   const arr = Array.isArray(draws) ? draws : [];
   let best = null;
@@ -168,7 +172,9 @@ function mergeLateLists(lists, baseYmd) {
   for (let g = 1; g <= 25; g += 1) {
     const rec = byGrupo.get(g) || { grupo: g, lastYmd: null, lastCloseHour: "" };
     const lastYmd = rec?.lastYmd || null;
-    const lastCloseHour = rec?.lastCloseHour ? normalizeHourLike(rec.lastCloseHour) : "";
+    const lastCloseHour = rec?.lastCloseHour
+      ? normalizeHourLike(rec.lastCloseHour)
+      : "";
     const daysLate = lastYmd ? diffDaysUTC(lastYmd, baseYmd) : null;
 
     out.push({
@@ -180,7 +186,7 @@ function mergeLateLists(lists, baseYmd) {
     });
   }
 
-  // ordenação: atraso desc, depois hora asc, depois animal asc
+  // ordenação: atraso desc, depois hora asc, depois grupo asc
   out.sort((a, b) => {
     const aa = a.daysLate == null ? 999999 : a.daysLate;
     const bb = b.daysLate == null ? 999999 : b.daysLate;
@@ -232,7 +238,7 @@ export default function Late() {
   const [error, setError] = useState("");
   const [rows, setRows] = useState([]);
 
-  // Último sorteio importado
+  // Último sorteio importado (INDEPENDENTE do prizeMode / filtro)
   const [lastImported, setLastImported] = useState({
     ymd: "",
     closeHour: "",
@@ -274,6 +280,31 @@ export default function Late() {
 
   const boundsReady = !!(bounds?.minYmd && bounds?.maxYmd);
 
+  /**
+   * ✅ ÚLTIMO SORTEIO IMPORTADO:
+   * sempre calcula por (maxYmd + maior close_hour do dia), sem depender do prizeMode/lottery selecionada.
+   * (pra não “sumir” 21:00/18:00 ou criar falsa ausência)
+   */
+  async function fetchLastImportedFromMaxYmd(maxYmd) {
+    if (!maxYmd) return { ymd: "", closeHour: "" };
+
+    // Observação: getKingResultsByDate sempre hidrata prizes, mas aqui o dia tem poucos draws (custo ok).
+    // Mantemos positions=[1] fixo só para garantir consistência, sem amarrar na UI.
+    const dayDraws = await getKingResultsByDate({
+      uf: UF_CODE,
+      date: maxYmd,
+      closeHour: null,
+      closeHourBucket: null,
+      positions: [1],
+    });
+
+    const latest = pickLatestCloseHour(dayDraws);
+    if (latest?.ymd && latest?.closeHour) {
+      return { ymd: latest.ymd, closeHour: latest.closeHour };
+    }
+    return { ymd: maxYmd, closeHour: "" };
+  }
+
   async function refreshBoundsAndLastDraw() {
     const b = await getKingBoundsByUf({ uf: UF_CODE });
     const minYmd = b?.minYmd || null;
@@ -282,19 +313,8 @@ export default function Late() {
     setBounds({ minYmd, maxYmd, source: b?.source || "" });
 
     if (maxYmd) {
-      const dayDraws = await getKingResultsByDate({
-        uf: UF_CODE,
-        date: maxYmd,
-        closeHour: null,
-        positions: prizePositions,
-      });
-
-      const latest = pickLatestCloseHour(dayDraws);
-      if (latest?.ymd && latest?.closeHour) {
-        setLastImported({ ymd: latest.ymd, closeHour: latest.closeHour });
-      } else {
-        setLastImported({ ymd: maxYmd, closeHour: "" });
-      }
+      const li = await fetchLastImportedFromMaxYmd(maxYmd);
+      setLastImported(li);
     }
 
     return { minYmd, maxYmd };
@@ -480,18 +500,8 @@ export default function Late() {
         const maxYmd = b?.maxYmd || "";
         if (!maxYmd) return;
 
-        const dayDraws = await getKingResultsByDate({
-          uf: UF_CODE,
-          date: maxYmd,
-          closeHour: null,
-          positions: prizePositions,
-        });
-
-        const latest = pickLatestCloseHour(dayDraws);
-        const next = {
-          ymd: latest?.ymd || maxYmd,
-          closeHour: latest?.closeHour || "",
-        };
+        // ✅ sempre calcula lastImported do maxYmd (independente de UI)
+        const next = await fetchLastImportedFromMaxYmd(maxYmd);
 
         const changed =
           String(prev?.ymd || "") !== String(next.ymd || "") ||
@@ -499,6 +509,14 @@ export default function Late() {
 
         if (changed) {
           setLastImported(next);
+
+          // ✅ também atualiza bounds no estado (mantém min/max alinhados)
+          setBounds((old) => ({
+            minYmd: old?.minYmd ?? b?.minYmd ?? null,
+            maxYmd: b?.maxYmd ?? old?.maxYmd ?? null,
+            source: b?.source || old?.source || "",
+          }));
+
           await refresh({ silent: true });
         }
       } catch {
@@ -509,8 +527,9 @@ export default function Late() {
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
+    // ✅ polling NÃO depende de prizeMode/date/filtros
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lotteryOptId, prizeMode, dateYmd, prizePositions]);
+  }, []);
 
   useEffect(() => {
     return () => {

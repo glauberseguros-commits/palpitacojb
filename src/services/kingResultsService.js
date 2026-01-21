@@ -26,6 +26,15 @@ const LATE_CACHE = new Map(); // key -> { ts, data: lateRows[] }
 // ✅ corte seguro (modo auto) — acima disso, tende a ser "agregado" (sem prizes)
 export const AGGREGATED_AUTO_DAYS = 60;
 
+/**
+ * ✅ Política padrão de leitura (custo vs frescor)
+ * - "cache": tenta cache do SDK primeiro (getDocs); se vier vazio, tenta server
+ * - "server": tenta server primeiro; se falhar, cai no cache
+ *
+ * (mantém compat e evita custo desnecessário)
+ */
+const DEFAULT_READ_POLICY = "cache"; // "cache" | "server"
+
 function nowMs() {
   return Date.now();
 }
@@ -246,13 +255,13 @@ function toHourBucket(value) {
 
 /* =========================
    ✅ FIX DEFINITIVO: filtro de horário (bucket vs exato)
+   - bucket SOMENTE via closeHourBucket
+   - exact  SOMENTE via closeHour
+   (elimina ambiguidade e "filtro fantasma")
 ========================= */
 
 function resolveHourFilter({ closeHour = null, closeHourBucket = null }) {
-  const bucket =
-    toHourBucket(closeHourBucket) ||
-    (closeHour && !String(closeHour).includes(":") ? toHourBucket(closeHour) : null);
-
+  const bucket = toHourBucket(closeHourBucket);
   if (bucket) return { kind: "bucket", bucket, hhmm: null };
 
   const hhmm = closeHour ? normalizeHourLike(closeHour) : null;
@@ -537,17 +546,43 @@ async function mapWithConcurrency(items, limitN, mapper) {
 }
 
 /* =========================
-   ✅ Leitura: prefere SERVIDOR
+   ✅ Leitura: smart (custo baixo)
 ========================= */
 
-async function safeGetDocsPreferServer(qRef) {
+async function safeGetDocsSmart(qRef, { policy = DEFAULT_READ_POLICY } = {}) {
+  const p = String(policy || "cache").toLowerCase();
+
+  if (p === "server") {
+    try {
+      const snap = await getDocsFromServer(qRef);
+      return { snap, error: null, source: "server" };
+    } catch (e) {
+      try {
+        const snap = await getDocs(qRef);
+        return { snap, error: null, source: "cache_fallback" };
+      } catch (e2) {
+        return { snap: null, error: e2, source: "error" };
+      }
+    }
+  }
+
+  // ✅ cache-first:
+  // - tenta getDocs (pode vir do cache do SDK)
+  // - se vier vazio, tenta server uma vez (quando possível)
   try {
-    const snap = await getDocsFromServer(qRef);
-    return { snap, error: null, source: "server" };
+    const snapCache = await getDocs(qRef);
+    if (snapCache?.docs?.length) return { snap: snapCache, error: null, source: "cache" };
+
+    try {
+      const snapServer = await getDocsFromServer(qRef);
+      return { snap: snapServer, error: null, source: "server_fallback" };
+    } catch (e2) {
+      return { snap: snapCache, error: null, source: "cache_empty" };
+    }
   } catch (e) {
     try {
-      const snap = await getDocs(qRef);
-      return { snap, error: null, source: "cache_fallback" };
+      const snap = await getDocsFromServer(qRef);
+      return { snap, error: null, source: "server_after_cache_error" };
     } catch (e2) {
       return { snap: null, error: e2, source: "error" };
     }
@@ -686,7 +721,8 @@ async function fetchPrizesForDraw(drawId, positionsArr, embeddedPrizes) {
 
   const prizesCol = collection(db, "draws", drawKey, "prizes");
 
-  const { snap, error } = await safeGetDocsPreferServer(prizesCol);
+  // ✅ prizes: cache-first (custo baixo); se vazio, server fallback
+  const { snap, error } = await safeGetDocsSmart(prizesCol, { policy: "cache" });
   if (error) throw error;
 
   const allRaw = snap.docs.map((d) => normalizePrize(d.data(), d.id));
@@ -770,6 +806,7 @@ async function queryDrawsByField({
   extraWheres = [],
   extraOrderBy = null,
   extraLimit = null,
+  policy = DEFAULT_READ_POLICY,
 }) {
   const drawsCol = collection(db, "draws");
 
@@ -786,7 +823,7 @@ async function queryDrawsByField({
   if (extraLimit) parts.push(extraLimit);
 
   const qRef = query(...parts);
-  return safeGetDocsPreferServer(qRef);
+  return safeGetDocsSmart(qRef, { policy });
 }
 
 function extractUfParam(maybeUfOrObj) {
@@ -802,6 +839,7 @@ async function fetchDrawDocsPreferUf({
   extraWheres = [],
   extraOrderBy = null,
   extraLimit = null,
+  policy = DEFAULT_READ_POLICY,
 }) {
   const ufTrim = String(extractUfParam(uf) || "").trim();
   const ufUp = ufTrim.toUpperCase();
@@ -814,6 +852,7 @@ async function fetchDrawDocsPreferUf({
       extraWheres,
       extraOrderBy,
       extraLimit,
+      policy,
     });
 
     if (!error && snap?.docs?.length)
@@ -832,6 +871,7 @@ async function fetchDrawDocsPreferUf({
           extraWheres,
           extraOrderBy,
           extraLimit,
+          policy,
         });
 
         if (error) return { docs: [], usedField: "lottery_key", error };
@@ -852,6 +892,7 @@ async function fetchDrawDocsPreferUf({
       extraWheres,
       extraOrderBy,
       extraLimit,
+      policy,
     });
 
     if (!error && snap?.docs?.length)
@@ -880,6 +921,54 @@ function pickMinMaxFromMapped(mapped) {
   return { minYmd, maxYmd };
 }
 
+// ✅ bounds (robusto) — evita “maxYmd preso” por fallback baseado em docId
+function utcTodayYmd() {
+  const d = new Date();
+  const y = d.getUTCFullYear();
+  const m = pad2(d.getUTCMonth() + 1);
+  const dd = pad2(d.getUTCDate());
+  return `${y}-${m}-${dd}`;
+}
+
+function ymdToUTCDateLocal(ymd) {
+  const m = String(ymd || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return null;
+  return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+}
+
+function addDaysUTCLocal(ymd, days) {
+  const dt = ymdToUTCDateLocal(ymd);
+  if (!dt) return ymd;
+  dt.setUTCDate(dt.getUTCDate() + Number(days || 0));
+  return `${dt.getUTCFullYear()}-${pad2(dt.getUTCMonth() + 1)}-${pad2(
+    dt.getUTCDate()
+  )}`;
+}
+
+/**
+ * ✅ “Prova de vida” do maxYmd sem depender de índice composto nem de docId:
+ * tenta dias recentes (==) desc até achar pelo menos 1 draw.
+ * (where ymd == dia) usa índice single-field e é MUITO estável.
+ */
+async function probeRecentMaxYmd(uf, lookbackDays = 45) {
+  const base = utcTodayYmd();
+  const n = Math.max(3, Math.min(120, Number(lookbackDays) || 45));
+
+  for (let i = 0; i <= n; i += 1) {
+    const day = addDaysUTCLocal(base, -i);
+    const { docs, error } = await fetchDrawDocsPreferUf({
+      uf,
+      extraWheres: [where("ymd", "==", day)],
+      policy: "server",
+      extraLimit: limit(5),
+    });
+    if (error) return { ok: false, maxYmd: null, error };
+    if (docs && docs.length) return { ok: true, maxYmd: day, error: null };
+  }
+
+  return { ok: false, maxYmd: null, error: null };
+}
+
 /**
  * ✅ COMPAT:
  * - aceita getKingBoundsByUf("RJ")
@@ -898,11 +987,13 @@ export async function getKingBoundsByUf(ufOrObj) {
   const DOC_ID = documentId();
 
   async function sampleEdgesByDocId(fieldName, ufValue) {
+    // ✅ bounds: server-first (frescor > custo)
     const asc = await queryDrawsByField({
       fieldName,
       uf: ufValue,
       extraOrderBy: [orderBy(DOC_ID)],
       extraLimit: limit(FALLBACK_EDGE_LIMIT),
+      policy: "server",
     });
 
     const last = await queryDrawsByField({
@@ -910,6 +1001,7 @@ export async function getKingBoundsByUf(ufOrObj) {
       uf: ufValue,
       extraOrderBy: [orderBy(DOC_ID)],
       extraLimit: limitToLast(FALLBACK_EDGE_LIMIT),
+      policy: "server",
     });
 
     const mappedA = (asc?.snap?.docs || []).map(mapDrawDoc);
@@ -935,6 +1027,7 @@ export async function getKingBoundsByUf(ufOrObj) {
         uf,
         extraOrderBy: orderAsc,
         extraLimit: limit(SCAN_LIMIT),
+        policy: "server",
       });
 
     const { docs: maxDocs, usedField: usedMax, error: eMax } =
@@ -942,6 +1035,7 @@ export async function getKingBoundsByUf(ufOrObj) {
         uf,
         extraOrderBy: orderDesc,
         extraLimit: limit(SCAN_LIMIT),
+        policy: "server",
       });
 
     if (eMin || eMax) {
@@ -967,7 +1061,12 @@ export async function getKingBoundsByUf(ufOrObj) {
     }
   }
 
-  // 2) fallback robusto: bordas via documentId
+  // ✅ 1.5) “anti-trava”: acha maxYmd recente via probe (mesmo se índice faltar)
+  // (isso corrige exatamente o sintoma: UI parando em 15/01 apesar do Firestore ter 20/01)
+  const recentProbe = await probeRecentMaxYmd(uf, 60);
+  const recentMaxYmd = recentProbe?.ok ? recentProbe.maxYmd : null;
+
+  // 2) fallback robusto: bordas via documentId (para min) + correção de max via probe
   {
     const idxInfo = (() => {
       const code = String(firstTryError?.code || "");
@@ -985,13 +1084,22 @@ export async function getKingBoundsByUf(ufOrObj) {
       for (const lk of FEDERAL_LOTTERY_KEYS) {
         const b = await sampleEdgesByDocId("lottery_key", lk);
         if (b.ok) {
-          const { minYmd, maxYmd } = pickMinMaxFromMapped(b.merged);
+          const mm = pickMinMaxFromMapped(b.merged);
+
+          // ✅ força max pelo probe se ele for maior
+          const maxFixed =
+            recentMaxYmd && (!mm.maxYmd || recentMaxYmd > mm.maxYmd)
+              ? recentMaxYmd
+              : mm.maxYmd;
+
           return {
-            ok: !!(minYmd && maxYmd),
+            ok: !!(mm.minYmd && maxFixed),
             uf,
-            minYmd: minYmd || null,
-            maxYmd: maxYmd || null,
-            source: `fallback_edges_docId_limit=${FALLBACK_EDGE_LIMIT}:lottery_key(${lk}):sampleCount=${b.merged.length}${idxInfo}`,
+            minYmd: mm.minYmd || null,
+            maxYmd: maxFixed || null,
+            source: `fallback_edges_docId_limit=${FALLBACK_EDGE_LIMIT}:lottery_key(${lk}):sampleCount=${b.merged.length}${
+              recentMaxYmd ? ":max_probe" : ""
+            }${idxInfo}`,
           };
         }
       }
@@ -1005,16 +1113,22 @@ export async function getKingBoundsByUf(ufOrObj) {
       : await sampleEdgesByDocId("lottery_key", String(lotteryKey).toUpperCase());
 
     const merged = a.ok ? a.merged : b?.merged || [];
-    const { minYmd, maxYmd } = pickMinMaxFromMapped(merged);
+    const mm = pickMinMaxFromMapped(merged);
+
+    // ✅ força max pelo probe se ele for maior
+    const maxFixed =
+      recentMaxYmd && (!mm.maxYmd || recentMaxYmd > mm.maxYmd)
+        ? recentMaxYmd
+        : mm.maxYmd;
 
     return {
-      ok: !!(minYmd && maxYmd),
+      ok: !!(mm.minYmd && maxFixed),
       uf,
-      minYmd: minYmd || null,
-      maxYmd: maxYmd || null,
+      minYmd: mm.minYmd || null,
+      maxYmd: maxFixed || null,
       source: `fallback_edges_docId_limit=${FALLBACK_EDGE_LIMIT}:${
         a.ok ? "uf" : "lottery_key"
-      }:sampleCount=${merged.length}${idxInfo}`,
+      }:sampleCount=${merged.length}${recentMaxYmd ? ":max_probe" : ""}${idxInfo}`,
     };
   }
 }
@@ -1067,6 +1181,7 @@ export async function getKingResultsByDate({
     const { docs: found, error } = await fetchDrawDocsPreferUf({
       uf,
       extraWheres: [where("ymd", "==", ymdDate)],
+      policy: DEFAULT_READ_POLICY,
     });
     if (error) throw error;
     if (found.length) docCandidates.push(...found);
@@ -1079,6 +1194,7 @@ export async function getKingResultsByDate({
       const { docs: found, error } = await fetchDrawDocsPreferUf({
         uf,
         extraWheres: [where("date", "==", rawDate)],
+        policy: DEFAULT_READ_POLICY,
       });
       if (error) throw error;
       if (found.length) docCandidates.push(...found);
@@ -1090,6 +1206,7 @@ export async function getKingResultsByDate({
     const { docs: found, error } = await fetchDrawDocsPreferUf({
       uf,
       extraWheres: [where("date", "==", ymdDate)],
+      policy: DEFAULT_READ_POLICY,
     });
     if (error) throw error;
     if (found.length) docCandidates.push(...found);
@@ -1102,6 +1219,7 @@ export async function getKingResultsByDate({
       const { docs: found, error } = await fetchDrawDocsPreferUf({
         uf,
         extraWheres: [where("date", "==", brDate)],
+        policy: DEFAULT_READ_POLICY,
       });
       if (error) throw error;
       if (found.length) docCandidates.push(...found);
@@ -1245,6 +1363,7 @@ export async function getKingResultsByRange({
     uf,
     extraWheres: [where("ymd", ">=", ymdFrom), where("ymd", "<=", ymdTo)],
     extraOrderBy: rangeOrder,
+    policy: DEFAULT_READ_POLICY,
   });
 
   if (error) {
@@ -1541,7 +1660,9 @@ export async function getKingLateByRange({
       if (!ymd || !isYMD(ymd)) continue;
 
       const p = Array.isArray(d.prizes)
-        ? d.prizes.find((x) => Number(x?.position) === posNum && isValidGrupo(x?.grupo))
+        ? d.prizes.find(
+            (x) => Number(x?.position) === posNum && isValidGrupo(x?.grupo)
+          )
         : null;
 
       const g = p?.grupo;
