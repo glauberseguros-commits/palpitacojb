@@ -533,14 +533,17 @@ async function mapWithConcurrency(items, limitN, mapper) {
   let idx = 0;
 
   async function worker() {
-    while (idx < arr.length) {
-      const current = idx++;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const current = idx;
+      idx += 1;
+      if (current >= arr.length) break;
       results[current] = await mapper(arr[current], current);
     }
   }
 
   await Promise.all(
-    Array.from({ length: Math.min(concurrency, arr.length) }, worker)
+    Array.from({ length: Math.min(concurrency, arr.length) }, () => worker())
   );
   return results;
 }
@@ -576,10 +579,10 @@ async function safeGetDocsSmart(qRef, { policy = DEFAULT_READ_POLICY } = {}) {
     try {
       const snapServer = await getDocsFromServer(qRef);
       return { snap: snapServer, error: null, source: "server_fallback" };
-    } catch (e2) {
+    } catch (_e2) {
       return { snap: snapCache, error: null, source: "cache_empty" };
     }
-  } catch (e) {
+  } catch (_e) {
     try {
       const snap = await getDocsFromServer(qRef);
       return { snap, error: null, source: "server_after_cache_error" };
@@ -1238,7 +1241,7 @@ export async function getKingResultsByDate({
 
   const results = await mapWithConcurrency(ordered, 6, async (item) => {
     const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
-    return { ...item, prizes };
+    return { ...item, prizes, __mode: "detailed" };
   });
 
   const out = dedupeDrawsLocal(results);
@@ -1316,6 +1319,26 @@ export function decideKingRangeMode({ dateFrom, dateTo, mode = "detailed" }) {
   return days >= AGGREGATED_AUTO_DAYS ? "aggregated" : "detailed";
 }
 
+/**
+ * ✅ Fallback barato (SEM prizes): usado quando falta índice composto no RANGE,
+ * ou quando você quer aggregated sem custo de hidratar.
+ */
+async function fetchDrawsDayNoPrizes({ uf, dayYmd }) {
+  const { docs, error } = await fetchDrawDocsPreferUf({
+    uf,
+    extraWheres: [where("ymd", "==", dayYmd)],
+    policy: DEFAULT_READ_POLICY,
+  });
+  if (error) throw error;
+  if (!docs || !docs.length) return [];
+
+  let baseAll = dedupeDrawsLocal(docs.map(mapDrawDoc));
+  baseAll = baseAll.filter((x) => (x.ymd || normalizeToYMD(x.date)) === dayYmd);
+
+  const ordered = sortDrawsLocal(baseAll);
+  return ordered.map((d) => ({ ...d, prizes: [], __mode: "aggregated" }));
+}
+
 export async function getKingResultsByRange({
   uf,
   dateFrom,
@@ -1372,17 +1395,28 @@ export async function getKingResultsByRange({
       const MAX_FALLBACK_DAYS = 31;
 
       if (Number.isFinite(days) && days > 0 && days <= MAX_FALLBACK_DAYS) {
+        // ✅ CORREÇÃO CRÍTICA:
+        // Se estiver em aggregated e faltar índice, NÃO quebra:
+        // faz fallback dia-a-dia SEM prizes (barato) e segue o jogo.
         if (effectiveMode === "aggregated") {
-          const rawCode = String(error?.code || "");
-          const rawMsg = String(error?.message || "");
-          throw new Error(
-            `Firestore: falta índice composto para RANGE (campo ${usedField} + ymd).\n` +
-              `Modo aggregated não usa fallback dia-a-dia.\n` +
-              `Crie/valide o índice no console (Collection: draws | Fields: ${usedField} ASC, ymd ASC, __name__ (documentId) ASC).\n` +
-              (rawCode || rawMsg ? `Detalhe: ${rawCode} ${rawMsg}` : "")
-          );
+          const all = [];
+          for (let i = 0; i < days; i += 1) {
+            const day = addDaysUTC(ymdFrom, i);
+            const dayDraws = await fetchDrawsDayNoPrizes({ uf, dayYmd: day });
+            if (dayDraws.length) all.push(...dayDraws);
+          }
+
+          const baseAll = dedupeDrawsLocal(all);
+          const base = hourFilter?.kind
+            ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+            : baseAll;
+
+          const out = dedupeDrawsLocal(sortDrawsLocal(base));
+          cacheSet(DRAWS_CACHE, rangeKey, out);
+          return out;
         }
 
+        // ✅ detailed: fallback completo (dia-a-dia) com prizes via getKingResultsByDate
         const all = [];
         for (let i = 0; i < days; i += 1) {
           const day = addDaysUTC(ymdFrom, i);
@@ -1412,7 +1446,7 @@ export async function getKingResultsByRange({
       throw new Error(
         `Firestore: falta índice composto para RANGE (campo ${usedField} + ymd).\n` +
           `Crie/valide o índice no console (Collection: draws | Fields: ${usedField} ASC, ymd ASC, __name__ (documentId) ASC).\n` +
-          `Obs: fallback automático só é aplicado para ranges até ${MAX_FALLBACK_DAYS} dias e apenas no modo detailed.\n` +
+          `Obs: fallback automático só é aplicado para ranges até ${MAX_FALLBACK_DAYS} dias.\n` +
           (rawCode || rawMsg ? `Detalhe: ${rawCode} ${rawMsg}` : "")
       );
     }
@@ -1425,6 +1459,27 @@ export async function getKingResultsByRange({
     const MAX_EMPTY_RANGE_FALLBACK_DAYS = 120;
 
     if (Number.isFinite(days) && days > 0 && days <= MAX_EMPTY_RANGE_FALLBACK_DAYS) {
+      // ✅ quando o RANGE volta vazio (muito comum sem índice),
+      // no aggregated fazemos fallback barato (sem prizes).
+      if (effectiveMode === "aggregated") {
+        const all = [];
+        for (let i = 0; i < days; i += 1) {
+          const day = addDaysUTC(ymdFrom, i);
+          const dayDraws = await fetchDrawsDayNoPrizes({ uf, dayYmd: day });
+          if (dayDraws.length) all.push(...dayDraws);
+        }
+
+        const baseAll = dedupeDrawsLocal(all);
+        const base = hourFilter?.kind
+          ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+          : baseAll;
+
+        const out = dedupeDrawsLocal(sortDrawsLocal(base));
+        cacheSet(DRAWS_CACHE, rangeKey, out);
+        return out;
+      }
+
+      // detailed: fallback completo (com prizes) via day
       const all = [];
       for (let i = 0; i < days; i += 1) {
         const day = addDaysUTC(ymdFrom, i);
@@ -1445,18 +1500,10 @@ export async function getKingResultsByRange({
 
       const ordered = sortDrawsLocal(base);
 
-      if (effectiveMode === "aggregated") {
-        const out = dedupeDrawsLocal(
-          ordered.map((d) => ({ ...d, prizes: [], __mode: "aggregated" }))
-        );
-        cacheSet(DRAWS_CACHE, rangeKey, out);
-        return out;
-      }
-
       const conc = chooseRangeConcurrency(ordered.length);
       const results = await mapWithConcurrency(ordered, conc, async (item) => {
         const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
-        return { ...item, prizes };
+        return { ...item, prizes, __mode: "detailed" };
       });
 
       const out = dedupeDrawsLocal(results);
@@ -1490,7 +1537,7 @@ export async function getKingResultsByRange({
 
   const results = await mapWithConcurrency(ordered, conc, async (item) => {
     const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
-    return { ...item, prizes };
+    return { ...item, prizes, __mode: "detailed" };
   });
 
   const out = dedupeDrawsLocal(results);
@@ -1701,7 +1748,7 @@ export async function getKingLateByRange({
     });
   }
 
-  // ✅ CRITÉRIO DE DESEMPATE (como você pediu):
+  // ✅ CRITÉRIO DE DESEMPATE:
   // - atrasoDias DESC
   // - empate: lastHour ASC (09:00 antes de 21:00)
   // - depois: grupo ASC

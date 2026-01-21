@@ -49,6 +49,7 @@ const DASH_STATE_KEY = "pp_dash_state_v1";
    Sessão / Guest (demo)
 ========================= */
 const ACCOUNT_SESSION_KEY = "pp_session_v1";
+const SESSION_POLL_MS = 1500;
 
 function safeParseJSON(s) {
   try {
@@ -76,12 +77,7 @@ function isGuestSession(sess) {
   if (!s || s.ok !== true) return false;
   const t = String(s.loginType || "").toLowerCase();
   const id = String(s.loginId || "").toLowerCase();
-  return (
-    t === "guest" ||
-    id === "guest" ||
-    s.skipped === true ||
-    String(s.mode || "") === "skip"
-  );
+  return t === "guest" || id === "guest" || s.skipped === true || String(s.mode || "") === "skip";
 }
 
 /* =========================
@@ -173,9 +169,7 @@ function normalizeToYMD(input) {
     typeof input === "object" &&
     (Number.isFinite(Number(input.seconds)) || Number.isFinite(Number(input._seconds)))
   ) {
-    const sec = Number.isFinite(Number(input.seconds))
-      ? Number(input.seconds)
-      : Number(input._seconds);
+    const sec = Number.isFinite(Number(input.seconds)) ? Number(input.seconds) : Number(input._seconds);
 
     const d = new Date(sec * 1000);
     if (!Number.isNaN(d.getTime())) {
@@ -337,8 +331,7 @@ function mapRankingJsonToApp(json) {
     dateTo: meta.d2 || null,
     totalDraws: Number(totals.draws || 0),
     totalOcorrencias: Number(totals.ocorrencias || 0),
-    totalDays:
-      Number(totals.days || totals.dias || totals.uniqueDays || totals.unique_days || 0) || 0,
+    totalDays: Number(totals.days || totals.dias || totals.uniqueDays || totals.unique_days || 0) || 0,
     generatedAt: meta.generatedAt || null,
     top3,
   };
@@ -473,16 +466,30 @@ export default function Dashboard(props) {
   const [isGuest, setIsGuest] = useState(() => isGuestSession(loadSessionObj()));
 
   useEffect(() => {
+    const refresh = () => setIsGuest(isGuestSession(loadSessionObj()));
+
     const onStorage = (e) => {
       if (e && e.key && e.key !== ACCOUNT_SESSION_KEY) return;
-      setIsGuest(isGuestSession(loadSessionObj()));
+      refresh();
     };
-    window.addEventListener("storage", onStorage);
 
-    const t = setInterval(() => setIsGuest(isGuestSession(loadSessionObj())), 1000);
+    const onVisibility = () => {
+      // ao voltar pra aba, atualiza imediatamente
+      if (document.visibilityState === "visible") refresh();
+    };
+
+    window.addEventListener("storage", onStorage);
+    document.addEventListener("visibilitychange", onVisibility);
+
+    const t = setInterval(() => {
+      // evita ficar “martelando” quando aba está oculta
+      if (document.visibilityState !== "visible") return;
+      refresh();
+    }, SESSION_POLL_MS);
 
     return () => {
       window.removeEventListener("storage", onStorage);
+      document.removeEventListener("visibilitychange", onVisibility);
       clearInterval(t);
     };
   }, []);
@@ -512,11 +519,12 @@ export default function Dashboard(props) {
   useEffect(() => {
     if (isGuest) return;
     if (!isFederal) return;
-    if (String(filters?.horario ?? "") !== "20h") {
+
+    const cur = String(filters?.horario ?? "");
+    if (cur !== "20h") {
       setFilters((prev) => ({ ...prev, horario: "20h" }));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFederal, isGuest]);
+  }, [isFederal, isGuest, filters?.horario, setFilters]);
 
   const locationLabel = isFederal ? "FEDERAL (Brasil) — 20h" : "Rio de Janeiro, RJ, Brasil";
   const uf = isFederal ? "FEDERAL" : "PT_RIO";
@@ -630,8 +638,7 @@ export default function Dashboard(props) {
     return () => {
       alive = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uf]);
+  }, [uf, dateRange?.from, dateRange?.to, dateRangeQuery?.from, dateRangeQuery?.to]);
 
   const MIN_DATE = bounds.minDate;
   const MAX_DATE = bounds.maxDate;
@@ -648,7 +655,6 @@ export default function Dashboard(props) {
     const full = { from: MIN_DATE, to: MAX_DATE };
     setDateRange(full);
     setDateRangeQuery(full);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isGuest, boundsReady, MIN_DATE, MAX_DATE]);
 
   useEffect(() => {
@@ -880,9 +886,7 @@ export default function Dashboard(props) {
     const wantMes = fMes && fMes !== "todos" ? MONTH_NAME_TO_MM[fMes] || null : null;
 
     const wantDiaMes =
-      fDiaMes && fDiaMes.toLowerCase() !== "todos"
-        ? String(Number(fDiaMes)).padStart(2, "0")
-        : null;
+      fDiaMes && fDiaMes.toLowerCase() !== "todos" ? String(Number(fDiaMes)).padStart(2, "0") : null;
 
     const wantDiaSemana = fDiaSemana && fDiaSemana.toLowerCase() !== "todos" ? fDiaSemana : null;
 
@@ -1174,9 +1178,7 @@ export default function Dashboard(props) {
           setFilters((p) => ({ ...p, animal: "Todos" }));
         } else {
           const row = Array.isArray(rankingDataGlobalForLabels)
-            ? rankingDataGlobalForLabels.find(
-                (r) => Number(String(r?.grupo || "").replace(/^0/, "")) === next
-              )
+            ? rankingDataGlobalForLabels.find((r) => Number(String(r?.grupo || "").replace(/^0/, "")) === next)
             : null;
 
           const label = safeAnimalLabel({ grupo: next, animal: row?.animal || "" });
@@ -1247,9 +1249,7 @@ export default function Dashboard(props) {
       }
 
       const cand128 =
-        typeof getImgFromGrupoFromMap === "function"
-          ? getImgFromGrupoFromMap(Number(selectedGrupo), 128)
-          : "";
+        typeof getImgFromGrupoFromMap === "function" ? getImgFromGrupoFromMap(Number(selectedGrupo), 128) : "";
 
       const candBase =
         typeof getImgFromGrupoFromMap === "function" ? getImgFromGrupoFromMap(Number(selectedGrupo)) : "";
@@ -1377,9 +1377,7 @@ export default function Dashboard(props) {
                         <div
                           role="button"
                           aria-label="Período bloqueado no modo demonstração"
-                          onClick={() =>
-                            showGuestToast("Modo demonstração: período está bloqueado. Faça login para usar.")
-                          }
+                          onClick={() => showGuestToast("Modo demonstração: período está bloqueado. Faça login para usar.")}
                           style={{
                             position: "absolute",
                             inset: 0,

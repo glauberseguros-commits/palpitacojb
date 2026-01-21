@@ -299,6 +299,34 @@ function nowMs() {
   return Date.now();
 }
 
+const INITIAL_BOUNDS = {
+  ok: false,
+  uf: null,
+  minYmd: null,
+  maxYmd: null,
+  source: "none",
+};
+
+const INITIAL_META = {
+  top3: [],
+  totalOcorrencias: 0,
+  totalDraws: 0,
+  mode: "none",
+  date: null,
+  dateFrom: null,
+  dateTo: null,
+
+  palpitesByGrupo: {},
+  palpiteSampleDrawsUsed: 0,
+  palpiteUsedBucket: null,
+
+  bounds: { ...INITIAL_BOUNDS },
+  suggestedRange: { from: null, to: null },
+
+  serviceMode: "detailed",
+  hydrating: false,
+};
+
 export function useKingRanking({
   uf,
   date,
@@ -311,38 +339,14 @@ export function useKingRanking({
   const [error, setError] = useState(null);
 
   const [data, setData] = useState([]);
-  const [meta, setMeta] = useState({
-    top3: [],
-    totalOcorrencias: 0,
-    totalDraws: 0,
-    mode: "none",
-    date: null,
-    dateFrom: null,
-    dateTo: null,
-
-    palpitesByGrupo: {},
-    palpiteSampleDrawsUsed: 0,
-    palpiteUsedBucket: null,
-
-    bounds: { ok: false, uf: null, minYmd: null, maxYmd: null, source: "none" },
-    suggestedRange: { from: null, to: null },
-
-    serviceMode: "detailed",
-    hydrating: false,
-  });
+  const [meta, setMeta] = useState(INITIAL_META);
 
   const [drawsRaw, setDrawsRaw] = useState([]);
 
   // ✅ cache: uf -> { ts, data }
   const boundsCacheRef = useRef(new Map());
 
-  const [bounds, setBounds] = useState({
-    ok: false,
-    uf: null,
-    minYmd: null,
-    maxYmd: null,
-    source: "none",
-  });
+  const [bounds, setBounds] = useState(INITIAL_BOUNDS);
 
   const [boundsRetryTick, setBoundsRetryTick] = useState(0);
   const boundsRetryTimerRef = useRef(null);
@@ -355,7 +359,8 @@ export function useKingRanking({
     const onFocus = () => setBoundsSoftTick((t) => t + 1);
     if (typeof window !== "undefined") window.addEventListener("focus", onFocus);
     return () => {
-      if (typeof window !== "undefined") window.removeEventListener("focus", onFocus);
+      if (typeof window !== "undefined")
+        window.removeEventListener("focus", onFocus);
     };
   }, []);
 
@@ -365,15 +370,7 @@ export function useKingRanking({
     async function loadBounds() {
       const key = String(uf || "").trim();
       if (!key) {
-        if (mounted) {
-          setBounds({
-            ok: false,
-            uf: null,
-            minYmd: null,
-            maxYmd: null,
-            source: "none",
-          });
-        }
+        if (mounted) setBounds(INITIAL_BOUNDS);
         return;
       }
 
@@ -652,9 +649,7 @@ export function useKingRanking({
         let unique = dedupeDrawsLogicalPreferBest(draws).map(normalizeDrawForCharts);
 
         if (bucketNorm) {
-          unique = unique.filter(
-            (d) => toHourBucketLabel(d?.close_hour) === bucketNorm
-          );
+          unique = unique.filter((d) => toHourBucketLabel(d?.close_hour) === bucketNorm);
         }
 
         setDrawsRaw(unique);
@@ -859,6 +854,7 @@ export function useKingRanking({
           rangeBlockedRef.current = true;
         }
 
+        setMeta((prev) => ({ ...prev, hydrating: false }));
         setError(e instanceof Error ? e : new Error("Erro desconhecido"));
       } finally {
         if (mounted && mySeq === refreshSeqRef.current) {
@@ -868,8 +864,10 @@ export function useKingRanking({
     }
 
     if (mode === "none") {
+      setError(null);
       setDrawsRaw([]);
       setData([]);
+      setMeta(INITIAL_META);
       setLoading(false);
       return () => {
         mounted = false;
