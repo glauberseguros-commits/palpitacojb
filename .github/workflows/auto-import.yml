@@ -1,4 +1,4 @@
-name: Auto Import — PalPitaco JB
+name: Auto Import â€” PalPitaco JB
 
 on:
   schedule:
@@ -12,9 +12,15 @@ on:
     - cron: "5-31 17 * * 0-6"
     # BRT 16:05–16:31 => UTC 19:05–19:31
     - cron: "5-31 19 * * 0-6"
-    # BRT 18:05–18:31 => UTC 21:05–21:31 (SEG-SÁB; DOM não)
-    - cron: "5-31 21 * * 1-6"
-    # BRT 21:05–21:45 => UTC 0:05–0:45 (vira o dia no UTC; TER-DOM)
+
+    # BRT 18:05–18:31 => UTC 21:05–21:31 (SEG, TER, QUI, SEX)
+    - cron: "5-31 21 * * 1,2,4,5"
+
+    # BRT 18:35 (one-shot) => UTC 21:35 (QUA e SÁB)
+    - cron: "35 21 * * 3,6"
+
+    # BRT 21:05–21:45 => UTC 0:05–0:45 (vira o dia no UTC; TER–DOM)
+    # (Isso representa SEG–SÁB em BRT)
     - cron: "5-45 0 * * 2-0"
 
     # =========================
@@ -33,6 +39,10 @@ on:
         options:
           - PT_RIO
           - FEDERAL
+
+# Garante que o Node rode em BRT (importante para regras de janela/slot no script)
+env:
+  TZ: America/Sao_Paulo
 
 jobs:
   # ==========================================================
