@@ -6,10 +6,10 @@ const path = require("path");
 const { runImport } = require("./importKingApostas");
 
 /**
- * AUTO IMPORT — PT_RIO (RJ)
+ * AUTO IMPORT — (parametrizável por LOTTERY)
  *
  * ✅ Estratégia (custo baixo / sem martelar):
- * - Script é chamado pelo Agendador a cada 1 minuto (ex.: 09:05–21:45).
+ * - Script é chamado pelo Agendador a cada N minutos (workflow cron).
  * - Ele só chama API/Firestore se:
  *   - estiver dentro da janela do slot (ex.: 09:05–09:31 ou 21:05–21:45),
  *   - e já passou do releaseMinute (ex.: >= 09:29; no 21h, >= 21:05),
@@ -21,8 +21,7 @@ const { runImport } = require("./importKingApostas");
  * - Quarta e sábado: slot 18h faz UMA tentativa única às 18:35 (ou até +tolerance).
  *
  * ✅ Log claro em arquivo:
- * - backend/logs/autoImportToday.log
- *   ex.: [AUTO] FS já tem slot=16:09 -> DONE
+ * - backend/logs/autoImportToday-<LOTTERY>.log
  */
 
 // Horários oficiais (closeHour base; pode variar +/- 2 min na API)
@@ -39,14 +38,19 @@ const SCHEDULE = [
   { hour: "21:09", releaseMinute: 5, windowEndMinute: 45 }, // ✅ 21:05–21:45 (minuto a minuto até capturar)
 ];
 
-const LOTTERY = "PT_RIO";
+// ✅ LOTTERY parametrizável por env (default PT_RIO)
+// Exemplos:
+//   LOTTERY=PT_RIO node scripts/autoImportToday.js
+//   LOTTERY=FEDERAL node scripts/autoImportToday.js   (próximo passo: ajustar SCHEDULE específico FEDERAL)
+const LOTTERY = String(process.env.LOTTERY || "PT_RIO").trim() || "PT_RIO";
+
 const LOG_DIR = path.join(__dirname, "..", "logs");
 
-// Logs
-const LOG_FILE = path.join(LOG_DIR, "autoImportToday.log");
+// Logs (por loteria para não misturar)
+const LOG_FILE = path.join(LOG_DIR, `autoImportToday-${LOTTERY}.log`);
 
-// Lock para evitar concorrência
-const LOCK_FILE = path.join(LOG_DIR, "autoImport.lock");
+// Lock para evitar concorrência (por loteria para não travar outras UFs/jogs)
+const LOCK_FILE = path.join(LOG_DIR, `autoImport-${LOTTERY}.lock`);
 const LOCK_TTL_MS = 2 * 60 * 1000 + 20 * 1000; // 2m20s
 
 // Janela por slot (minutos)
@@ -80,7 +84,7 @@ function tsLocal() {
 
 function logLine(msg, level = "INFO") {
   ensureLogDir();
-  const line = `[${tsLocal()}] [${level}] ${msg}\n`;
+  const line = `[${tsLocal()}] [${level}] [${LOTTERY}] ${msg}\n`;
   try {
     fs.appendFileSync(LOG_FILE, line);
   } catch {
@@ -306,7 +310,7 @@ function acquireLock() {
   try {
     fs.writeFileSync(
       LOCK_FILE,
-      JSON.stringify({ pid: process.pid, at: new Date().toISOString() }, null, 2)
+      JSON.stringify({ pid: process.pid, at: new Date().toISOString(), lottery: LOTTERY }, null, 2)
     );
     return { ok: true };
   } catch {
