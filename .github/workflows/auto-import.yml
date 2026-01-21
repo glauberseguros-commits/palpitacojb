@@ -1,28 +1,51 @@
-name: Auto Import — PalPitaco JB
+name: Auto Import - PalPitaco JB
 
 on:
   schedule:
-    - cron: "0 12 * * 0"
-    - cron: "0 14 * * 0"
-    - cron: "0 17 * * 0"
-    - cron: "0 19 * * 0"
-    - cron: "0 12 * * 1-6"
-    - cron: "0 14 * * 1-6"
-    - cron: "0 17 * * 1-6"
-    - cron: "0 19 * * 1-6"
-    - cron: "0 21 * * 1-6"
-    - cron: "0 0 * * 2-6"
+    # GitHub Actions cron = UTC
+    # BRT (America/Sao_Paulo) = UTC-3
+    #
+    # Janelas desejadas (BRT):
+    # 09:05-09:31 -> UTC 12:05-12:31
+    # 11:05-11:31 -> UTC 14:05-14:31
+    # 14:05-14:31 -> UTC 17:05-17:31
+    # 16:05-16:31 -> UTC 19:05-19:31
+    # 18:05-18:31 -> UTC 21:05-21:31
+    # 21:05-21:45 -> UTC 00:05-00:45 (dia seguinte em UTC)
+    #
+    # Observação: disparamos a cada 5 minutos dentro da janela.
+    # O script faz o gating final (releaseMinute + tolerância etc).
+
+    - cron: "5-30/5 12 * * *"  # 09:05-09:30 BRT
+    - cron: "5-30/5 14 * * *"  # 11:05-11:30 BRT
+    - cron: "5-30/5 17 * * *"  # 14:05-14:30 BRT
+    - cron: "5-30/5 19 * * *"  # 16:05-16:30 BRT
+    - cron: "5-30/5 21 * * *"  # 18:05-18:30 BRT
+    - cron: "5-45/5 0  * * *"  # 21:05-21:45 BRT (UTC do dia seguinte)
+
+    # FEDERAL (Quarta e Sábado) - janela 19:49-20:10 BRT = 22:49-23:10 UTC
+    # ATENÇÃO: seu autoImportToday.js atual está hardcoded em LOTTERY="PT_RIO".
+    # Só habilite estes cron/jobs quando tivermos um script/param para FEDERAL.
+    #
+    # - cron: "50-55/5 22 * * 3,6"
+    # - cron: "0-10/5  23 * * 3,6"
+
   workflow_dispatch:
 
 jobs:
-  run-import:
+  run-import-pt-rio:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: backend
 
+    env:
+      # CRÍTICO: garante que Date() e todayYMD() batem com BRT
+      TZ: America/Sao_Paulo
+      FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+
     steps:
-      - name: Checkout do repositório
+      - name: Checkout do repositorio
         uses: actions/checkout@v4
 
       - name: Setup Node.js
@@ -36,13 +59,12 @@ jobs:
           ls -la
           ls -la scripts
           test -f scripts/autoImportToday.js && echo "OK: scripts/autoImportToday.js existe" || (echo "ERRO: scripts/autoImportToday.js nao existe" && exit 1)
+          node -e "console.log('TZ=', process.env.TZ, 'now=', new Date().toString())"
 
-      - name: Instalar dependências (backend)
+      - name: Instalar dependencias (backend)
         run: npm ci
 
-      - name: Rodar importação automática
-        env:
-          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+      - name: Rodar importacao automatica (PT_RIO)
         run: node scripts/autoImportToday.js
 
       - name: Debug (listar arquivos relevantes)
