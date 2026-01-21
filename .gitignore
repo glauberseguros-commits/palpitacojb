@@ -13,17 +13,17 @@ build/
 # ===============================
 # Backend
 # ===============================
-
-# Ignora apenas o pesado/sensível
 /backend/node_modules/
 /backend/secrets/
 /backend/logs/
 /backend/.env
 /backend/.env.*
+
+# Ignora dumps / jsons gerados
 /backend/**/*.json
 
 # ===============================
-# Archives
+# Archives / Legacy
 # ===============================
 archive/
 archive_backend/
@@ -60,10 +60,9 @@ yarn-error.log*
 .vercel
 .env*.local
 
-
-Palpitaco-AutoImport.xml
-Palpitaco-AutoImport.backup.xml
-backend/scripts/auditDbDrawsByYmd.js
+# ===============================
+# Local tools / backups
+# ===============================
 Palpitaco-AutoImport.xml
 Palpitaco-AutoImport.backup.xml
 backend/scripts/auditDbDrawsByYmd.js
