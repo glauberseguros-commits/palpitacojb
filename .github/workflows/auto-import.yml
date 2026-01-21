@@ -1,51 +1,62 @@
-name: Auto Import - PalPitaco JB
+name: Auto Import — PalPitaco JB
 
 on:
   schedule:
-    # GitHub Actions cron = UTC
-    # BRT (America/Sao_Paulo) = UTC-3
-    #
-    # Janelas desejadas (BRT):
-    # 09:05-09:31 -> UTC 12:05-12:31
-    # 11:05-11:31 -> UTC 14:05-14:31
-    # 14:05-14:31 -> UTC 17:05-17:31
-    # 16:05-16:31 -> UTC 19:05-19:31
-    # 18:05-18:31 -> UTC 21:05-21:31
-    # 21:05-21:45 -> UTC 00:05-00:45 (dia seguinte em UTC)
-    #
-    # Observação: disparamos a cada 5 minutos dentro da janela.
-    # O script faz o gating final (releaseMinute + tolerância etc).
+    # =========================
+    # PT_RIO (RJ) — janelas BRT (UTC-3) convertidas p/ UTC
+    # BRT 09:05–09:31 => UTC 12:05–12:31
+    - cron: "5-31 12 * * 0-6"
+    # BRT 11:05–11:31 => UTC 14:05–14:31
+    - cron: "5-31 14 * * 0-6"
+    # BRT 14:05–14:31 => UTC 17:05–17:31
+    - cron: "5-31 17 * * 0-6"
+    # BRT 16:05–16:31 => UTC 19:05–19:31
+    - cron: "5-31 19 * * 0-6"
+    # BRT 18:05–18:31 => UTC 21:05–21:31 (SEG-SÁB; DOM não)
+    - cron: "5-31 21 * * 1-6"
+    # BRT 21:05–21:45 => UTC 0:05–0:45 (vira o dia no UTC; TER-DOM)
+    - cron: "5-45 0 * * 2-0"
 
-    - cron: "5-30/5 12 * * *"  # 09:05-09:30 BRT
-    - cron: "5-30/5 14 * * *"  # 11:05-11:30 BRT
-    - cron: "5-30/5 17 * * *"  # 14:05-14:30 BRT
-    - cron: "5-30/5 19 * * *"  # 16:05-16:30 BRT
-    - cron: "5-30/5 21 * * *"  # 18:05-18:30 BRT
-    - cron: "5-45/5 0  * * *"  # 21:05-21:45 BRT (UTC do dia seguinte)
-
-    # FEDERAL (Quarta e Sábado) - janela 19:49-20:10 BRT = 22:49-23:10 UTC
-    # ATENÇÃO: seu autoImportToday.js atual está hardcoded em LOTTERY="PT_RIO".
-    # Só habilite estes cron/jobs quando tivermos um script/param para FEDERAL.
-    #
-    # - cron: "50-55/5 22 * * 3,6"
-    # - cron: "0-10/5  23 * * 3,6"
+    # =========================
+    # FEDERAL — Quarta e Sábado — janela BRT 19:49–20:10
+    # BRT 19:49–19:59 => UTC 22:49–22:59
+    - cron: "49-59 22 * * 3,6"
+    # BRT 20:00–20:10 => UTC 23:00–23:10
+    - cron: "0-10 23 * * 3,6"
 
   workflow_dispatch:
+    inputs:
+      lottery:
+        description: "Qual loteria executar"
+        required: true
+        type: choice
+        options:
+          - PT_RIO
+          - FEDERAL
 
 jobs:
+  # ==========================================================
+  # PT_RIO
+  # ==========================================================
   run-import-pt-rio:
+    name: run-import (PT_RIO)
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: backend
 
-    env:
-      # CRÍTICO: garante que Date() e todayYMD() batem com BRT
-      TZ: America/Sao_Paulo
-      FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+    # Roda:
+    # - em schedule, exceto quando for o schedule específico do FEDERAL
+    # - ou manual quando input=PT_RIO
+    if: |
+      (github.event_name == 'schedule' &&
+        github.event.schedule != '49-59 22 * * 3,6' &&
+        github.event.schedule != '0-10 23 * * 3,6'
+      )
+      || (github.event_name == 'workflow_dispatch' && inputs.lottery == 'PT_RIO')
 
     steps:
-      - name: Checkout do repositorio
+      - name: Checkout do repositório
         uses: actions/checkout@v4
 
       - name: Setup Node.js
@@ -53,29 +64,48 @@ jobs:
         with:
           node-version: 20
 
-      - name: Debug (mostrar caminhos e scripts)
-        run: |
-          pwd
-          ls -la
-          ls -la scripts
-          test -f scripts/autoImportToday.js && echo "OK: scripts/autoImportToday.js existe" || (echo "ERRO: scripts/autoImportToday.js nao existe" && exit 1)
-          node -e "console.log('TZ=', process.env.TZ, 'now=', new Date().toString())"
-
-      - name: Instalar dependencias (backend)
+      - name: Instalar dependências (backend)
         run: npm ci
 
-      - name: Rodar importacao automatica (PT_RIO)
+      - name: Rodar importação automática (PT_RIO)
+        env:
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          LOTTERY: PT_RIO
         run: node scripts/autoImportToday.js
 
-      - name: Debug (listar arquivos relevantes)
-        if: failure()
-        run: |
-          pwd
-          ls -la
-          ls -la scripts
-          ls -la service
-          echo "----- grep firebaseAdmin -----"
-          grep -n "firebaseAdmin" scripts/importKingApostas.js || true
-          echo "----- exists -----"
-          node -e "console.log('exists service/firebaseAdmin.js =', require('fs').existsSync('service/firebaseAdmin.js'))"
-          node -e "console.log('exists scripts/importKingApostas.js =', require('fs').existsSync('scripts/importKingApostas.js'))"
+  # ==========================================================
+  # FEDERAL
+  # ==========================================================
+  run-import-federal:
+    name: run-import (FEDERAL)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    # Roda:
+    # - em schedule, SOMENTE nas duas regras do FEDERAL
+    # - ou manual quando input=FEDERAL
+    if: |
+      (github.event_name == 'schedule' &&
+        (github.event.schedule == '49-59 22 * * 3,6' || github.event.schedule == '0-10 23 * * 3,6')
+      )
+      || (github.event_name == 'workflow_dispatch' && inputs.lottery == 'FEDERAL')
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar dependências (backend)
+        run: npm ci
+
+      - name: Rodar importação automática (FEDERAL)
+        env:
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          LOTTERY: FEDERAL
+        run: node scripts/autoImportToday.js
