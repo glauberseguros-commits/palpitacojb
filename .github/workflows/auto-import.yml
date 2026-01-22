@@ -40,6 +40,16 @@ on:
           - PT_RIO
           - FEDERAL
 
+# ✅ Evita sobreposição de runs (você dispara várias vezes por minuto)
+# - Mantém 1 execução por vez
+# - Não cancela a run anterior (mais seguro para importação)
+concurrency:
+  group: auto-import-palpitaco-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
 # Garante que o Node rode em BRT (importante para regras de janela/slot no script)
 env:
   TZ: America/Sao_Paulo
@@ -51,6 +61,7 @@ jobs:
   run-import-pt-rio:
     name: run-import (PT_RIO)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: backend
@@ -90,6 +101,7 @@ jobs:
   run-import-federal:
     name: run-import (FEDERAL)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: backend

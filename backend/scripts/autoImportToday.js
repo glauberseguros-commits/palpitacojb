@@ -11,56 +11,79 @@ const { runImport } = require("./importKingApostas");
  * ✅ Estratégia (custo baixo / sem martelar):
  * - Script é chamado pelo Agendador a cada N minutos (workflow cron).
  * - Ele só chama API/Firestore se:
- *   - estiver dentro da janela do slot (ex.: 09:05–09:31 ou 21:05–21:45),
- *   - e já passou do releaseMinute (ex.: >= 09:29; no 21h, >= 21:05),
+ *   - estiver dentro da janela do slot,
+ *   - e já passou do releaseAt,
  *   - e o slot ainda não estiver done.
  * - Assim que capturar (ou detectar que já está completo no Firestore), marca done.
  *
- * ✅ Regras especiais:
+ * ✅ Regras especiais (PT_RIO):
  * - Domingo: só 09/11/14/16. Slots 18/21 ficam N/A no state do dia.
  * - Quarta e sábado: slot 18h faz UMA tentativa única às 18:35 (ou até +tolerance).
+ *
+ * ✅ FEDERAL:
+ * - Somente quarta e sábado.
+ * - Janela 19:49–20:10 (BRT), com release recomendado às 20:00 (pra evitar martelar cedo).
  *
  * ✅ Log claro em arquivo:
  * - backend/logs/autoImportToday-<LOTTERY>.log
  */
 
-// Horários oficiais (closeHour base; pode variar +/- 2 min na API)
-//
-// ✅ Janelas:
-// - Regra padrão: start HH:05; end = (releaseMinute + 2)
-// - Exceção 21h: end fixo HH:45
-const SCHEDULE = [
-  { hour: "09:09", releaseMinute: 29 }, // janela 09:05–09:31; tenta 09:29–09:31
-  { hour: "11:09", releaseMinute: 29 }, // janela 11:05–11:31; tenta 11:29–11:31
-  { hour: "14:09", releaseMinute: 29 }, // janela 14:05–14:31; tenta 14:29–14:31
-  { hour: "16:09", releaseMinute: 29 }, // janela 16:05–16:31; tenta 16:29–16:31
-  { hour: "18:09", releaseMinute: 29 }, // janela 18:05–18:31; (exc QUA/SAB one-shot 18:35)
-  { hour: "21:09", releaseMinute: 5, windowEndMinute: 45 }, // ✅ 21:05–21:45 (minuto a minuto até capturar)
-];
-
 // ✅ LOTTERY parametrizável por env (default PT_RIO)
-// Exemplos:
-//   LOTTERY=PT_RIO node scripts/autoImportToday.js
-//   LOTTERY=FEDERAL node scripts/autoImportToday.js   (próximo passo: ajustar SCHEDULE específico FEDERAL)
-const LOTTERY = String(process.env.LOTTERY || "PT_RIO").trim() || "PT_RIO";
+const LOTTERY = String(process.env.LOTTERY || "PT_RIO").trim().toUpperCase() || "PT_RIO";
 
 const LOG_DIR = path.join(__dirname, "..", "logs");
 
 // Logs (por loteria para não misturar)
 const LOG_FILE = path.join(LOG_DIR, `autoImportToday-${LOTTERY}.log`);
 
-// Lock para evitar concorrência (por loteria para não travar outras UFs/jogs)
+// Lock para evitar concorrência (por loteria)
 const LOCK_FILE = path.join(LOG_DIR, `autoImport-${LOTTERY}.lock`);
-const LOCK_TTL_MS = 2 * 60 * 1000 + 20 * 1000; // 2m20s
-
-// Janela por slot (minutos)
-const WINDOW_START_MINUTE = 5; // ex.: HH:05
-const WINDOW_END_OFFSET_MINUTES = 2; // padrão: release + 2 (ex.: 29 -> 31)
+// TTL do lock (ambientes locais). Em GitHub Actions, o workspace é isolado por execução.
+const LOCK_TTL_MS = 90 * 1000; // 1m30s
 
 // Regra especial (quarta e sábado): 18h só uma tentativa às 18:35
 const WED_SAT_18H_ONE_SHOT_MINUTE = 35;
-// Opcional: tolerância de janela para esse one-shot (se o agendador disparar 18:36 etc.)
+// Tolerância (se o agendador disparar 18:36 etc.)
 const WED_SAT_18H_ONE_SHOT_TOLERANCE = 10; // minutos após 18:35
+
+/* =========================
+   Schedules (por loteria)
+========================= */
+
+/**
+ * Cada slot tem:
+ * - hour: closeHour base (para closeCandidates)
+ * - windowStart: início janela HH:MM
+ * - releaseAt: só tenta a partir daqui HH:MM
+ * - windowEnd: fim janela HH:MM
+ *
+ * Observação:
+ * - Em PT_RIO você estava usando hour "09:09" etc. Mantive.
+ * - Em FEDERAL, como o closeHour real pode variar na API,
+ *   escolhi hour base "20:00" (e o closeCandidates tenta +/-2 min).
+ */
+const SCHEDULES = {
+  PT_RIO: [
+    { hour: "09:09", windowStart: "09:05", releaseAt: "09:29", windowEnd: "09:31" },
+    { hour: "11:09", windowStart: "11:05", releaseAt: "11:29", windowEnd: "11:31" },
+    { hour: "14:09", windowStart: "14:05", releaseAt: "14:29", windowEnd: "14:31" },
+    { hour: "16:09", windowStart: "16:05", releaseAt: "16:29", windowEnd: "16:31" },
+    // 18h (normal seg/ter/qui/sex e domingo N/A; qua/sáb é one-shot)
+    { hour: "18:09", windowStart: "18:05", releaseAt: "18:29", windowEnd: "18:31" },
+    // 21h: janela longa minuto a minuto
+    { hour: "21:09", windowStart: "21:05", releaseAt: "21:05", windowEnd: "21:45" },
+  ],
+
+  // FEDERAL — quarta e sábado
+  // Janela real do teu workflow: 19:49–20:10
+  // releaseAt recomendado 20:00 pra reduzir tentativas cedo.
+  FEDERAL: [
+    { hour: "20:00", windowStart: "19:49", releaseAt: "20:00", windowEnd: "20:10" },
+  ],
+};
+
+// Seleciona schedule conforme LOTTERY
+const SCHEDULE = Array.isArray(SCHEDULES[LOTTERY]) ? SCHEDULES[LOTTERY] : SCHEDULES.PT_RIO;
 
 /* =========================
    Utils
@@ -71,7 +94,6 @@ function ensureLogDir() {
 }
 
 function tsLocal() {
-  // yyyy-mm-dd HH:MM:SS (local)
   const d = new Date();
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, "0");
@@ -87,9 +109,7 @@ function logLine(msg, level = "INFO") {
   const line = `[${tsLocal()}] [${level}] [${LOTTERY}] ${msg}\n`;
   try {
     fs.appendFileSync(LOG_FILE, line);
-  } catch {
-    // se falhar arquivo, ainda imprime no console
-  }
+  } catch {}
   if (level === "ERROR") console.error(msg);
   else console.log(msg);
 }
@@ -109,28 +129,28 @@ function nowHM() {
 }
 
 function dowLocal() {
-  // 0=Dom, 1=Seg, 2=Ter, 3=Qua, 4=Qui, 5=Sex, 6=Sáb
-  return new Date().getDay();
+  return new Date().getDay(); // 0=Dom..6=Sáb
 }
 
 function toMin(h, m) {
   return Number(h) * 60 + Number(m);
 }
 
+function parseHHMM(hhmm) {
+  const s = String(hhmm || "").trim();
+  const m = s.match(/^(\d{2}):(\d{2})$/);
+  if (!m) return null;
+  return { h: Number(m[1]), m: Number(m[2]) };
+}
+
 function parseHH(hhmm) {
+  // aceita "09:09" etc
   const h = Number(String(hhmm).slice(0, 2));
   const m = Number(String(hhmm).slice(3, 5));
   return { h, m };
 }
 
-function clampMinute(mm) {
-  const n = Number(mm);
-  if (!Number.isFinite(n)) return 0;
-  return Math.max(0, Math.min(59, n));
-}
-
 function stateFile(date) {
-  // inclui loteria para evitar colisão se você rodar outro UF no futuro
   return path.join(LOG_DIR, `autoImportState-${LOTTERY}-${date}.json`);
 }
 
@@ -143,8 +163,6 @@ function defaultState() {
       lastTryISO: null,
       lastResult: null,
       lastTriedCloses: null,
-
-      // extra: motivo de skip/na
       na: false,
       naReason: null,
     };
@@ -229,53 +247,66 @@ function isAllDone(state) {
   return Object.values(state).every((x) => x && x.done === true);
 }
 
-/**
- * Regras do calendário
- */
-function slotAppliesToday(slotHour, dow) {
-  // Domingo: só 09/11/14/16
-  if (dow === 0) {
-    return (
-      slotHour === "09:09" ||
-      slotHour === "11:09" ||
-      slotHour === "14:09" ||
-      slotHour === "16:09"
-    );
-  }
-  // demais dias: todos se aplicam (inclui 18/21)
-  return true;
-}
+/* =========================
+   Regras do calendário
+========================= */
 
 function isWedOrSat(dow) {
   return dow === 3 || dow === 6;
 }
 
 /**
- * Janela do slot:
- * - start = HH:05
- * - release = HH:releaseMinute
- * - end:
- *   - se schedule.windowEndMinute existir: HH:windowEndMinute
- *   - senão: HH:(releaseMinute + WINDOW_END_OFFSET_MINUTES)
+ * Define se o slot se aplica HOJE, baseado na LOTTERY
  */
-function slotWindow(schedule) {
-  const { h } = parseHH(schedule.hour);
-
-  const start = toMin(h, WINDOW_START_MINUTE);
-
-  const rel = clampMinute(schedule.releaseMinute);
-  const release = toMin(h, rel);
-
-  let endMin;
-  if (schedule.windowEndMinute != null) {
-    endMin = clampMinute(schedule.windowEndMinute);
-  } else {
-    endMin = clampMinute(rel + WINDOW_END_OFFSET_MINUTES);
+function slotAppliesToday(slotHour, dow) {
+  if (LOTTERY === "PT_RIO") {
+    // Domingo: só 09/11/14/16
+    if (dow === 0) {
+      return slotHour === "09:09" || slotHour === "11:09" || slotHour === "14:09" || slotHour === "16:09";
+    }
+    return true;
   }
 
-  const end = toMin(h, endMin);
+  if (LOTTERY === "FEDERAL") {
+    // Só quarta e sábado
+    return isWedOrSat(dow);
+  }
 
-  return { start, release, end };
+  // fallback: aplica sempre
+  return true;
+}
+
+/**
+ * Janela do slot usando HH:MM reais (suporta FEDERAL 19:49–20:10)
+ */
+function slotWindow(schedule) {
+  const ws = parseHHMM(schedule.windowStart);
+  const ra = parseHHMM(schedule.releaseAt);
+  const we = parseHHMM(schedule.windowEnd);
+
+  if (!ws || !ra || !we) {
+    // fallback muito defensivo (não quebra)
+    const { h } = parseHH(schedule.hour);
+    return {
+      start: toMin(h, 5),
+      release: toMin(h, 29),
+      end: toMin(h, 31),
+      startLabel: `${pad2(h)}:05`,
+      endLabel: `${pad2(h)}:31`,
+    };
+  }
+
+  const start = toMin(ws.h, ws.m);
+  const release = toMin(ra.h, ra.m);
+  const end = toMin(we.h, we.m);
+
+  return {
+    start,
+    release,
+    end,
+    startLabel: schedule.windowStart,
+    endLabel: schedule.windowEnd,
+  };
 }
 
 /**
@@ -298,9 +329,7 @@ function acquireLock() {
     try {
       const st = fs.statSync(LOCK_FILE);
       const age = Date.now() - st.mtimeMs;
-      if (age < LOCK_TTL_MS) {
-        return { ok: false, reason: "LOCK_ATIVO" };
-      }
+      if (age < LOCK_TTL_MS) return { ok: false, reason: "LOCK_ATIVO" };
       fs.unlinkSync(LOCK_FILE);
     } catch {
       return { ok: false, reason: "LOCK_INACESSIVEL" };
@@ -321,9 +350,7 @@ function acquireLock() {
 function releaseLock() {
   try {
     if (fs.existsSync(LOCK_FILE)) fs.unlinkSync(LOCK_FILE);
-  } catch {
-    // silencioso
-  }
+  } catch {}
 }
 
 /* =========================
@@ -346,7 +373,7 @@ async function main() {
     const state = loadState(date);
     const isoNow = new Date().toISOString();
 
-    // 1) Marca como N/A slots que não se aplicam hoje (apenas uma vez)
+    // 1) Marca N/A slots que não se aplicam hoje (apenas uma vez)
     let stateTouched = false;
 
     for (const sched of SCHEDULE) {
@@ -358,13 +385,13 @@ async function main() {
       if (!applies && !slot.done) {
         slot.done = true;
         slot.na = true;
-        slot.naReason = dow === 0 ? "DOMINGO_NAO_TEM_ESSE_SORTEIO" : "NAO_APLICA";
+
+        if (LOTTERY === "PT_RIO" && dow === 0) slot.naReason = "DOMINGO_NAO_TEM_ESSE_SORTEIO";
+        else if (LOTTERY === "FEDERAL") slot.naReason = "FEDERAL_SO_QUA_SAB";
+        else slot.naReason = "NAO_APLICA";
+
         slot.lastTryISO = isoNow;
-        slot.lastResult = {
-          ok: true,
-          skipped: true,
-          reason: slot.naReason,
-        };
+        slot.lastResult = { ok: true, skipped: true, reason: slot.naReason };
         stateTouched = true;
 
         logLine(`[AUTO] N/A slot=${sched.hour} (${slot.naReason}) -> DONE`, "INFO");
@@ -379,20 +406,14 @@ async function main() {
     for (const sched of SCHEDULE) {
       const slot = state[sched.hour];
       if (!slot) continue;
-
       if (slot.done) continue;
 
-      // se não aplica, já teria sido marcado acima
       if (!slotAppliesToday(sched.hour, dow)) continue;
 
-      // Regra especial: quarta/sábado 18h one-shot 18:35
-      if (sched.hour === "18:09" && isWedOrSat(dow)) {
-        if (!isInWedSat18OneShotWindow(nowMin)) {
-          // fora do momento do one-shot => não faz nada
-          continue;
-        }
+      // Regra especial PT_RIO: quarta/sábado 18h one-shot 18:35
+      if (LOTTERY === "PT_RIO" && sched.hour === "18:09" && isWedOrSat(dow)) {
+        if (!isInWedSat18OneShotWindow(nowMin)) continue;
 
-        // tenta 1 vez e depois marca done (capturou ou não)
         slot.tries = (slot.tries || 0) + 1;
         slot.lastTryISO = isoNow;
 
@@ -401,9 +422,7 @@ async function main() {
         saveState(date, state);
 
         logLine(
-          `[AUTO] (ONE-SHOT QUA/SAB) tentando ${date} slot=18:09 agora=18:${pad2(
-            now.m
-          )} closes=${candidates.join(",")}`,
+          `[AUTO] (ONE-SHOT QUA/SAB) tentando ${date} slot=18:09 agora=18:${pad2(now.m)} closes=${candidates.join(",")}`,
           "INFO"
         );
 
@@ -429,7 +448,6 @@ async function main() {
           const captured = Boolean(r?.captured);
           const apiHasPrizes = r?.apiHasPrizes ?? null;
 
-          // DONE se capturou e (gravou algo ou já estava completo)
           const doneNow = captured && (savedCount > 0 || alreadyCompleteAny);
 
           slot.lastResult = {
@@ -448,14 +466,12 @@ async function main() {
 
           if (doneNow) {
             doneReason = alreadyCompleteAny ? "FS_ALREADY_HAS" : "CAPTURED";
-            if (alreadyCompleteAny) {
-              logLine(`[AUTO] FS já tem slot=18:09 (close=${closeHour}) -> DONE`, "INFO");
-            } else {
-              logLine(
-                `[AUTO] CAPTURADO slot=18:09 (close=${closeHour}) saved=${savedCount} writes=${writeCount} -> DONE`,
-                "INFO"
-              );
-            }
+            logLine(
+              alreadyCompleteAny
+                ? `[AUTO] FS já tem slot=18:09 (close=${closeHour}) -> DONE`
+                : `[AUTO] CAPTURADO slot=18:09 (close=${closeHour}) saved=${savedCount} writes=${writeCount} -> DONE`,
+              "INFO"
+            );
             break;
           }
         }
@@ -478,16 +494,16 @@ async function main() {
         continue;
       }
 
-      // Regra normal: janela HH:05 -> HH:(release+2) (ou HH:45 no 21h)
+      // Regra normal: janela definida em schedule (HH:MM)
       const w = slotWindow(sched);
 
-      // fora da janela => não faz nada
+      // fora da janela
       if (nowMin < w.start || nowMin > w.end) continue;
 
-      // dentro da janela, mas antes do release => ainda não tenta importar
+      // dentro da janela, mas antes do releaseAt
       if (nowMin < w.release) continue;
 
-      // a partir daqui: vai tentar capturar (com tolerância +/-2 min no close)
+      // a partir daqui: tenta capturar
       slot.tries = (slot.tries || 0) + 1;
       slot.lastTryISO = isoNow;
 
@@ -496,11 +512,7 @@ async function main() {
       saveState(date, state);
 
       logLine(
-        `[AUTO] tentando ${date} slot=${sched.hour} window=${pad2(
-          Math.floor(w.start / 60)
-        )}:${pad2(w.start % 60)}-${pad2(Math.floor(w.end / 60))}:${pad2(
-          w.end % 60
-        )} closes=${candidates.join(",")}`,
+        `[AUTO] tentando ${date} slot=${sched.hour} window=${w.startLabel}-${w.endLabel} closes=${candidates.join(",")}`,
         "INFO"
       );
 
@@ -531,7 +543,6 @@ async function main() {
         const captured = Boolean(r?.captured);
         const apiHasPrizes = r?.apiHasPrizes ?? null;
 
-        // DONE se capturou e (gravou algo ou já estava completo)
         const doneNow = captured && (savedCount > 0 || alreadyCompleteAny);
 
         slot.lastResult = {
@@ -553,30 +564,24 @@ async function main() {
           slot.done = true;
           saveState(date, state);
 
-          if (alreadyCompleteAny) {
-            logLine(`[AUTO] FS já tem slot=${sched.hour} (close=${closeHour}) -> DONE`, "INFO");
-          } else {
-            logLine(
-              `[AUTO] CAPTURADO slot=${sched.hour} (close=${closeHour}) saved=${savedCount} writes=${writeCount} -> DONE`,
-              "INFO"
-            );
-          }
+          logLine(
+            alreadyCompleteAny
+              ? `[AUTO] FS já tem slot=${sched.hour} (close=${closeHour}) -> DONE`
+              : `[AUTO] CAPTURADO slot=${sched.hour} (close=${closeHour}) saved=${savedCount} writes=${writeCount} -> DONE`,
+            "INFO"
+          );
 
           didSomething = true;
           break;
         }
       }
 
-      // se tentou e não capturou em nenhum close candidato
       if (!slot.done) {
         if (lastErr) {
           logLine(`[AUTO] falhou slot=${sched.hour} (erros em closes candidatos)`, "ERROR");
           didSomething = true;
         } else {
-          logLine(
-            `[AUTO] ainda indisponível slot=${sched.hour} (nenhum close candidato capturou)`,
-            "INFO"
-          );
+          logLine(`[AUTO] ainda indisponível slot=${sched.hour} (nenhum close candidato capturou)`, "INFO");
         }
       }
     }

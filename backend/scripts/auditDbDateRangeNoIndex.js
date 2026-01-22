@@ -12,7 +12,11 @@ function isISODateStrict(s) {
 
   const [y, m, d] = str.split("-").map(Number);
   const dt = new Date(Date.UTC(y, m - 1, d));
-  return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
+  return (
+    dt.getUTCFullYear() === y &&
+    dt.getUTCMonth() === m - 1 &&
+    dt.getUTCDate() === d
+  );
 }
 
 function normalizeToYMD(input) {
@@ -22,26 +26,33 @@ function normalizeToYMD(input) {
   if (typeof input === "object" && typeof input.toDate === "function") {
     const d = input.toDate();
     if (!Number.isNaN(d.getTime())) {
-      return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
+      return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(
+        d.getUTCDate()
+      )}`;
     }
   }
 
   // Timestamp-like { seconds } / { _seconds }
   if (
     typeof input === "object" &&
-    (Number.isFinite(Number(input.seconds)) || Number.isFinite(Number(input._seconds)))
+    (Number.isFinite(Number(input.seconds)) ||
+      Number.isFinite(Number(input._seconds)))
   ) {
     const sec = Number.isFinite(Number(input.seconds))
       ? Number(input.seconds)
       : Number(input._seconds);
     const d = new Date(sec * 1000);
     if (!Number.isNaN(d.getTime())) {
-      return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
+      return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(
+        d.getUTCDate()
+      )}`;
     }
   }
 
   if (input instanceof Date && !Number.isNaN(input.getTime())) {
-    return `${input.getUTCFullYear()}-${pad2(input.getUTCMonth() + 1)}-${pad2(input.getUTCDate())}`;
+    return `${input.getUTCFullYear()}-${pad2(input.getUTCMonth() + 1)}-${pad2(
+      input.getUTCDate()
+    )}`;
   }
 
   const s = String(input || "").trim();
@@ -69,6 +80,21 @@ function isIndexError(err) {
   );
 }
 
+/**
+ * Pega o primeiro YMD válido dentro de um conjunto de docs.
+ */
+function pickFirstValidYmd(docs, fieldName) {
+  for (const doc of docs || []) {
+    const d = doc?.data ? doc.data() : doc || {};
+    const raw = d?.[fieldName] ?? d?.date ?? d?.ymd;
+    const y = normalizeToYMD(raw);
+    if (y && isISODateStrict(y)) {
+      return { ymd: y, docId: doc?.id || null, raw };
+    }
+  }
+  return { ymd: null, docId: null, raw: null };
+}
+
 function pickMinMaxFromDocs(docs, fieldName) {
   let minYmd = null;
   let maxYmd = null;
@@ -86,37 +112,58 @@ function pickMinMaxFromDocs(docs, fieldName) {
   return { minYmd, maxYmd };
 }
 
-async function tryMinMaxByField(db, fieldName) {
-  const minSnap = await db.collection("draws").orderBy(fieldName, "asc").limit(1).get();
-  const maxSnap = await db.collection("draws").orderBy(fieldName, "desc").limit(1).get();
+/**
+ * ✅ FIX: evita "limit(1)" cair em doc inválido.
+ * Faz scan curto ASC/DESC e pega o primeiro válido.
+ *
+ * Se lotteryKey for passado, filtra por where(lottery_key == lotteryKey).
+ */
+async function tryMinMaxByField(db, fieldName, { lotteryKey = null, scanLimit = 50 } = {}) {
+  const DOC_ID = admin.firestore.FieldPath.documentId();
 
-  const minDoc = minSnap.docs[0];
-  const maxDoc = maxSnap.docs[0];
+  let base = db.collection("draws");
+  if (lotteryKey) {
+    base = base.where("lottery_key", "==", String(lotteryKey).trim().toUpperCase());
+  }
 
-  const minRaw = minDoc ? minDoc.data()?.[fieldName] : null;
-  const maxRaw = maxDoc ? maxDoc.data()?.[fieldName] : null;
+  const ascSnap = await base
+    .orderBy(fieldName, "asc")
+    .orderBy(DOC_ID, "asc")
+    .limit(scanLimit)
+    .get();
 
-  const minYmd = normalizeToYMD(minRaw);
-  const maxYmd = normalizeToYMD(maxRaw);
+  const descSnap = await base
+    .orderBy(fieldName, "desc")
+    .orderBy(DOC_ID, "desc")
+    .limit(scanLimit)
+    .get();
+
+  const minPick = pickFirstValidYmd(ascSnap.docs, fieldName);
+  const maxPick = pickFirstValidYmd(descSnap.docs, fieldName);
 
   return {
-    ok: !!(minYmd && maxYmd && isISODateStrict(minYmd) && isISODateStrict(maxYmd)),
-    minYmd: minYmd && isISODateStrict(minYmd) ? minYmd : null,
-    maxYmd: maxYmd && isISODateStrict(maxYmd) ? maxYmd : null,
-    minDocId: minDoc?.id || null,
-    maxDocId: maxDoc?.id || null,
+    ok: !!(minPick.ymd && maxPick.ymd),
+    minYmd: minPick.ymd,
+    maxYmd: maxPick.ymd,
+    minDocId: minPick.docId,
+    maxDocId: maxPick.docId,
+    minRaw: minPick.raw ?? null,
+    maxRaw: maxPick.raw ?? null,
+    source: `${lotteryKey ? "where(lottery_key)+":""
+      }orderBy(${fieldName})+docId(scan=${scanLimit})`,
   };
 }
 
-async function fallbackBoundsByDocIdEdges(db, edgeLimit) {
+async function fallbackBoundsByDocIdEdges(db, edgeLimit, { lotteryKey = null } = {}) {
   const DOC_ID = admin.firestore.FieldPath.documentId();
 
-  const ascSnap = await db.collection("draws").orderBy(DOC_ID, "asc").limit(edgeLimit).get();
-  const descSnap = await db
-    .collection("draws")
-    .orderBy(DOC_ID, "asc")
-    .limitToLast(edgeLimit)
-    .get();
+  let base = db.collection("draws");
+  if (lotteryKey) {
+    base = base.where("lottery_key", "==", String(lotteryKey).trim().toUpperCase());
+  }
+
+  const ascSnap = await base.orderBy(DOC_ID, "asc").limit(edgeLimit).get();
+  const descSnap = await base.orderBy(DOC_ID, "asc").limitToLast(edgeLimit).get();
 
   const merged = [...ascSnap.docs, ...descSnap.docs];
 
@@ -131,12 +178,23 @@ async function fallbackBoundsByDocIdEdges(db, edgeLimit) {
     sampleCount: merged.length,
     firstDocId: ascSnap.docs[0]?.id || null,
     lastDocId: descSnap.docs[descSnap.docs.length - 1]?.id || null,
+    source: `${lotteryKey ? "where(lottery_key)+" : ""}fallback_edges_docId(limit=${edgeLimit})`,
   };
 }
 
 async function main() {
   const db = getDb();
-  const edgeLimit = Math.max(200, Number(process.argv[2] || 800));
+
+  // argv:
+  // node script.js PT_RIO 800 50
+  const lotteryArg = process.argv[2];
+  const lotteryKey = lotteryArg ? String(lotteryArg).trim().toUpperCase() : null;
+
+  const edgeArg = Number(process.argv[3]);
+  const edgeLimit = Number.isFinite(edgeArg) ? Math.max(200, edgeArg) : 800;
+
+  const scanArg = Number(process.argv[4]);
+  const scanLimit = Number.isFinite(scanArg) ? Math.max(10, scanArg) : 50;
 
   let source = null;
   let note = null;
@@ -150,9 +208,9 @@ async function main() {
 
   // 1) tenta ymd (melhor)
   try {
-    const r1 = await tryMinMaxByField(db, "ymd");
+    const r1 = await tryMinMaxByField(db, "ymd", { lotteryKey, scanLimit });
     if (r1.ok) {
-      source = "orderBy(ymd)";
+      source = r1.source;
       minYmd = r1.minYmd;
       maxYmd = r1.maxYmd;
       minDocId = r1.minDocId;
@@ -169,15 +227,14 @@ async function main() {
   // 2) tenta date
   if (!minYmd || !maxYmd) {
     try {
-      const r2 = await tryMinMaxByField(db, "date");
+      const r2 = await tryMinMaxByField(db, "date", { lotteryKey, scanLimit });
       if (r2.ok) {
-        source = "orderBy(date)";
+        source = r2.source + " (normalized)";
         minYmd = r2.minYmd;
         maxYmd = r2.maxYmd;
         minDocId = r2.minDocId;
         maxDocId = r2.maxDocId;
       } else {
-        // date existe, mas não é ISO consistente
         note = note || "campo date/ymd não está consistente como ISO (vai para fallback).";
       }
     } catch (e) {
@@ -191,8 +248,8 @@ async function main() {
 
   // 3) fallback definitivo (bordas por docId)
   if (!minYmd || !maxYmd) {
-    const fb = await fallbackBoundsByDocIdEdges(db, edgeLimit);
-    source = `fallback_edges_docId(limit=${edgeLimit})`;
+    const fb = await fallbackBoundsByDocIdEdges(db, edgeLimit, { lotteryKey });
+    source = fb.source;
     minYmd = fb.minYmd;
     maxYmd = fb.maxYmd;
     sampleCount = fb.sampleCount;
@@ -201,7 +258,7 @@ async function main() {
   }
 
   console.log("==================================");
-  console.log("[BASE] draws (global)");
+  console.log(`[BASE] draws ${lotteryKey ? `(lottery_key=${lotteryKey})` : "(global)"}`);
   console.log(`source: ${source || "unknown"}`);
   if (note) console.log(`note: ${note}`);
   console.log(`minDate: ${minYmd || "N/A"}`);

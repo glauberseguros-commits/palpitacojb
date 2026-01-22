@@ -1,30 +1,9 @@
 "use strict";
 
 const express = require("express");
-const admin = require("firebase-admin");
+const { getDb } = require("../service/firebaseAdmin");
 
 const router = express.Router();
-
-/**
- * Firestore init (robusto):
- * - tenta reutilizar app já inicializado
- * - se não existir, inicializa com Application Default Credentials (ADC)
- */
-let _db = null;
-
-function getDb() {
-  if (_db) return _db;
-
-  if (!admin.apps.length) {
-    // Usa GOOGLE_APPLICATION_CREDENTIALS (ADC) se estiver definido no ambiente
-    admin.initializeApp({
-      credential: admin.credential.applicationDefault(),
-    });
-  }
-
-  _db = admin.firestore();
-  return _db;
-}
 
 /**
  * Helpers
@@ -46,15 +25,11 @@ function normalizeHHMM(value) {
 
   // "10h" => "10:00"
   const m1 = s.match(/^(\d{1,2})h$/i);
-  if (m1) {
-    return `${String(m1[1]).padStart(2, "0")}:00`;
-  }
+  if (m1) return `${String(m1[1]).padStart(2, "0")}:00`;
 
   // "10" => "10:00"
   const m2 = s.match(/^(\d{1,2})$/);
-  if (m2) {
-    return `${String(m2[1]).padStart(2, "0")}:00`;
-  }
+  if (m2) return `${String(m2[1]).padStart(2, "0")}:00`;
 
   // "10:9" => "10:09"
   const m3 = s.match(/^(\d{1,2}):(\d{1,2})$/);
@@ -80,12 +55,41 @@ function inRangeHHMM(hhmm, from, to) {
   return true;
 }
 
+function upTrim(v) {
+  return String(v ?? "").trim().toUpperCase();
+}
+
 /**
- * KING DRAWS (Opção A) — endpoint técnico (bruto)
+ * Concorrência limitada (evita “flood” e mantém rápido)
+ */
+async function mapWithConcurrency(items, limitN, mapper) {
+  const arr = Array.isArray(items) ? items : [];
+  const concurrency = Math.max(1, Number(limitN) || 6);
+  const results = new Array(arr.length);
+  let idx = 0;
+
+  async function worker() {
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const current = idx;
+      idx += 1;
+      if (current >= arr.length) break;
+      results[current] = await mapper(arr[current], current);
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, arr.length) }, () => worker())
+  );
+  return results;
+}
+
+/**
+ * KING DRAWS (endpoint técnico)
  *
  * GET /api/king/draws?date=2026-01-02&lottery=PT_RIO&from=09:00&to=16:40&includePrizes=1
  *
- * Observação premium (anti-índice composto):
+ * Anti-índice composto:
  * - Query filtra SOMENTE por date
  * - lottery_key e janela de horário são filtrados em memória
  */
@@ -94,7 +98,7 @@ router.get("/draws", async (req, res) => {
     const db = getDb();
 
     const date = String(req.query.date || "").trim();
-    const lottery = String(req.query.lottery || "PT_RIO").trim();
+    const lottery = upTrim(req.query.lottery || "PT_RIO");
 
     const fromRaw = req.query.from != null ? String(req.query.from).trim() : "";
     const toRaw = req.query.to != null ? String(req.query.to).trim() : "";
@@ -137,10 +141,7 @@ router.get("/draws", async (req, res) => {
     }
 
     // Query mínima: SOMENTE date (evita índice composto)
-    const snap = await db
-      .collection("draws")
-      .where("date", "==", date)
-      .get();
+    const snap = await db.collection("draws").where("date", "==", date).get();
 
     const rawDraws = snap.docs.map((doc) => {
       const data = doc.data() || {};
@@ -151,10 +152,8 @@ router.get("/draws", async (req, res) => {
       };
     });
 
-    // Filtra lottery em memória
-    const byLottery = rawDraws.filter(
-      (d) => String(d.lottery_key || "").trim() === lottery
-    );
+    // Filtra lottery em memória (normalizado)
+    const byLottery = rawDraws.filter((d) => upTrim(d.lottery_key) === lottery);
 
     // Ordena por close_hour
     byLottery.sort((a, b) => cmpHHMM(a.close_hour, b.close_hour));
@@ -177,21 +176,20 @@ router.get("/draws", async (req, res) => {
       });
     }
 
-    // Carrega prizes por draw (sequencial, estável)
-    const draws = [];
-    for (const d of drawsWindow) {
-      const docRef = db.collection("draws").doc(d.id);
-
-      const prizesSnap = await docRef
+    // Carrega prizes por draw (concorrência limitada)
+    const draws = await mapWithConcurrency(drawsWindow, 6, async (d) => {
+      const prizesSnap = await db
+        .collection("draws")
+        .doc(d.id)
         .collection("prizes")
         .orderBy("position", "asc")
         .get();
 
-      draws.push({
+      return {
         ...d,
         prizes: prizesSnap.docs.map((p) => p.data()),
-      });
-    }
+      };
+    });
 
     return res.json({
       ok: true,

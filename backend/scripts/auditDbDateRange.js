@@ -103,39 +103,59 @@ function isIndexError(err) {
   );
 }
 
-async function tryBoundsByField(db, lotteryKey, field) {
+/**
+ * ✅ FIX: bounds por campo com SCAN curto (evita pegar 1 doc inválido)
+ * - Busca N docs ASC e pega o primeiro que vira ISO válido
+ * - Busca N docs DESC e pega o primeiro que vira ISO válido
+ * - Inclui desempate por docId (estável)
+ */
+async function tryBoundsByField(db, lotteryKey, field, scanLimit = 50) {
+  const DOC_ID = admin.firestore.FieldPath.documentId();
+
   const base = db.collection("draws").where("lottery_key", "==", lotteryKey);
 
-  const minSnap = await base.orderBy(field, "asc").limit(1).get();
-  const maxSnap = await base.orderBy(field, "desc").limit(1).get();
+  const ascSnap = await base
+    .orderBy(field, "asc")
+    .orderBy(DOC_ID, "asc")
+    .limit(scanLimit)
+    .get();
 
-  if (minSnap.empty || maxSnap.empty) {
+  const descSnap = await base
+    .orderBy(field, "desc")
+    .orderBy(DOC_ID, "desc")
+    .limit(scanLimit)
+    .get();
+
+  if (ascSnap.empty || descSnap.empty) {
     return {
       ok: false,
-      source: `where(lottery_key)+orderBy(${field})`,
+      source: `where(lottery_key)+orderBy(${field})+docId(scan=${scanLimit})`,
     };
   }
 
-  const minDoc = minSnap.docs[0];
-  const maxDoc = maxSnap.docs[0];
+  function pickFirstValidYmdFromDocs(docs, fieldName) {
+    for (const doc of docs || []) {
+      const v = doc?.data()?.[fieldName];
+      const y = normalizeToYMD(v);
+      if (y && isISODate(y)) {
+        return { ymd: y, docId: doc.id, raw: v };
+      }
+    }
+    return { ymd: null, docId: null, raw: null };
+  }
 
-  const minVal = minDoc.data()?.[field];
-  const maxVal = maxDoc.data()?.[field];
-
-  // ✅ normaliza e valida ISO de verdade
-  const minYmdRaw = normalizeToYMD(minVal);
-  const maxYmdRaw = normalizeToYMD(maxVal);
-
-  const minYmd = isISODate(minYmdRaw) ? minYmdRaw : null;
-  const maxYmd = isISODate(maxYmdRaw) ? maxYmdRaw : null;
+  const minPick = pickFirstValidYmdFromDocs(ascSnap.docs, field);
+  const maxPick = pickFirstValidYmdFromDocs(descSnap.docs, field);
 
   return {
-    ok: !!(minYmd && maxYmd),
-    minYmd,
-    maxYmd,
-    source: `where(lottery_key)+orderBy(${field})`,
-    minDocId: minDoc.id,
-    maxDocId: maxDoc.id,
+    ok: !!(minPick.ymd && maxPick.ymd),
+    minYmd: minPick.ymd,
+    maxYmd: maxPick.ymd,
+    source: `where(lottery_key)+orderBy(${field})+docId(scan=${scanLimit})`,
+    minDocId: minPick.docId,
+    maxDocId: maxPick.docId,
+    minRaw: minPick.raw ?? null,
+    maxRaw: maxPick.raw ?? null,
   };
 }
 
@@ -166,9 +186,11 @@ async function main() {
 
   // ✅ edgeLimit robusto (evita NaN)
   const edgeArg = Number(process.argv[3]);
-  const edgeLimit = Number.isFinite(edgeArg)
-    ? Math.max(200, edgeArg)
-    : 800;
+  const edgeLimit = Number.isFinite(edgeArg) ? Math.max(200, edgeArg) : 800;
+
+  // ✅ scanLimit para tentar evitar “doc inválido” no topo/rodapé
+  const scanArg = Number(process.argv[4]);
+  const scanLimit = Number.isFinite(scanArg) ? Math.max(10, scanArg) : 50;
 
   const db = getDb();
 
@@ -177,15 +199,15 @@ async function main() {
 
   // 1) Melhor caso: ymd
   try {
-    result = await tryBoundsByField(db, lotteryKey, "ymd");
+    result = await tryBoundsByField(db, lotteryKey, "ymd", scanLimit);
   } catch (e) {
     warn = e;
   }
 
-  // 2) Fallback: date (somente se normalizar e validar ISO)
+  // 2) Fallback: date (somente se normalizar e validar ISO de verdade)
   if (!result || !result.ok) {
     try {
-      const r2 = await tryBoundsByField(db, lotteryKey, "date");
+      const r2 = await tryBoundsByField(db, lotteryKey, "date", scanLimit);
       if (r2?.minYmd && r2?.maxYmd) {
         result = { ...r2, source: r2.source + " (normalized)" };
       }
@@ -202,21 +224,30 @@ async function main() {
   console.log("==================================");
   console.log(`[AUDIT] lottery_key=${lotteryKey}`);
   console.log(`source: ${result?.source || "unknown"}`);
+
   if (warn && isIndexError(warn)) {
     console.log("note: faltou índice composto em uma tentativa (ok, caiu no fallback).");
   }
+
   if (result?.source?.includes("fallback")) {
     console.log("note: bounds obtidos por fallback (amostragem).");
   }
+
   console.log(`minYmd: ${result?.minYmd || "N/A"}`);
   console.log(`maxYmd: ${result?.maxYmd || "N/A"}`);
+
+  if (result?.minDocId || result?.maxDocId) {
+    console.log(`minDocId: ${result?.minDocId || "N/A"}`);
+    console.log(`maxDocId: ${result?.maxDocId || "N/A"}`);
+  }
+
   if (result?.sampleCount) console.log(`sampleCount: ${result.sampleCount}`);
   if (result?.firstDocId || result?.lastDocId) {
     console.log(`firstDocId(sample): ${result.firstDocId || "N/A"}`);
     console.log(`lastDocId(sample): ${result.lastDocId || "N/A"}`);
   }
-  console.log("==================================");
 
+  console.log("==================================");
   process.exit(0);
 }
 

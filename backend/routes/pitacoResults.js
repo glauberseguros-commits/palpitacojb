@@ -45,20 +45,49 @@ function cmpHHMM(a, b) {
   return String(a || '').localeCompare(String(b || ''));
 }
 
+function upTrim(v) {
+  return String(v ?? '').trim().toUpperCase();
+}
+
+/**
+ * Concorrência limitada (evita flood e acelera)
+ */
+async function mapWithConcurrency(items, limitN, mapper) {
+  const arr = Array.isArray(items) ? items : [];
+  const concurrency = Math.max(1, Number(limitN) || 6);
+  const results = new Array(arr.length);
+  let idx = 0;
+
+  async function worker() {
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const current = idx;
+      idx += 1;
+      if (current >= arr.length) break;
+      results[current] = await mapper(arr[current], current);
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, arr.length) }, () => worker())
+  );
+  return results;
+}
+
 // GET /api/pitaco/results?date=2025-12-29&lottery=PT_RIO
 router.get('/results', async (req, res) => {
   try {
     const date = String(req.query.date || '').trim();
-    const lottery = String(req.query.lottery || 'PT_RIO').trim();
+    const lottery = upTrim(req.query.lottery || 'PT_RIO');
 
     if (!date) {
       return res.status(400).json({ ok: false, error: 'date obrigatório' });
     }
 
-    // Se quiser manter compatível com legado, não obrigo ISO.
-    // Mas se vier fora do padrão, aviso claramente:
     if (!isISODate(date)) {
-      return res.status(400).json({ ok: false, error: 'date inválido (use YYYY-MM-DD)' });
+      return res
+        .status(400)
+        .json({ ok: false, error: 'date inválido (use YYYY-MM-DD)' });
     }
 
     if (!lottery) {
@@ -72,32 +101,33 @@ router.get('/results', async (req, res) => {
      * - Firestore filtra SOMENTE por date
      * - lottery_key filtrado em memória
      */
-    const snap = await db.collection('draws')
-      .where('date', '==', date)
-      .get();
+    const snap = await db.collection('draws').where('date', '==', date).get();
 
-    const draws = [];
+    // 1) filtra docs por lottery em memória, sem bater prizes ainda
+    const docs = snap.docs.filter((doc) => {
+      const d = doc.data() || {};
+      return upTrim(d.lottery_key) === lottery;
+    });
 
-    for (const doc of snap.docs) {
+    // 2) busca prizes com concorrência limitada
+    const draws = await mapWithConcurrency(docs, 6, async (doc) => {
       const d = doc.data() || {};
 
-      // Filtra lottery em memória (evita índice composto date+lottery_key)
-      if (String(d.lottery_key || '').trim() !== lottery) continue;
-
-      const prizesSnap = await doc.ref.collection('prizes')
+      const prizesSnap = await doc.ref
+        .collection('prizes')
         .orderBy('position', 'asc')
         .get();
 
-      draws.push({
+      return {
         id: doc.id,
         ...d,
         // normaliza close_hour para ordenação estável
         close_hour: normalizeHHMM(d.close_hour),
         prizes: prizesSnap.docs.map((p) => p.data()),
-      });
-    }
+      };
+    });
 
-    // Ordenar por horário (HH:MM) já normalizado
+    // Ordenar por horário (HH:MM) já normalizado (vazio vai primeiro; se preferir, eu mando vazio pro fim)
     draws.sort((a, b) => cmpHHMM(a.close_hour, b.close_hour));
 
     return res.json({ ok: true, date, lottery, draws });

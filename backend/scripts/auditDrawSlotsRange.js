@@ -42,12 +42,24 @@ function addDaysISO(ymd, days) {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+/**
+ * ✅ Hora robusta:
+ * aceita "11:09", "11:09:00", "11h", "11hs", "11", "09-09", "09hs", etc.
+ * retorna "HH" (2 dígitos) ou null
+ */
 function hourFromCloseHour(closeHour) {
-  const s = String(closeHour || "").trim();
-  // "11:09" -> "11"
-  const m = s.match(/^(\d{2}):(\d{2})$/);
-  if (m) return m[1];
-  return null;
+  const s0 = String(closeHour || "").trim();
+  if (!s0) return null;
+
+  // pega os 1-2 primeiros dígitos de hora
+  // exemplos: "09:09" -> 09 | "9:09" -> 9 | "09-09" -> 09 | "09hs" -> 09
+  const m = s0.match(/(\d{1,2})/);
+  if (!m) return null;
+
+  const hh = Number(m[1]);
+  if (!Number.isFinite(hh) || hh < 0 || hh > 23) return null;
+
+  return pad2(hh);
 }
 
 function parseArg(name) {
@@ -72,7 +84,7 @@ async function main() {
   }
 
   const details = process.argv.includes("--details");
-  const limitPrint = Number(parseArg("limit") || 50);
+  const limitPrint = Math.max(1, Number(parseArg("limit") || 50));
 
   if (lotteryKey !== "PT_RIO") {
     throw new Error(
@@ -89,101 +101,108 @@ async function main() {
   console.log(`range: ${startYmd} -> ${endYmd}`);
   console.log("==================================");
 
-  // Map: ymd -> hour -> count
-  const counts = new Map();
-
-  const base = db
-    .collection("draws")
-    .where("lottery_key", "==", lotteryKey)
-    .where("ymd", ">=", startYmd)
-    .where("ymd", "<=", endYmd)
-    .orderBy("ymd", "asc");
-
-  const pageSize = 500;
-  let lastDoc = null;
-  let scanned = 0;
-  let pages = 0;
-
-  while (true) {
-    let q = base.limit(pageSize);
-    if (lastDoc) q = q.startAfter(lastDoc);
-
-    const snap = await q.get();
-    if (snap.empty) break;
-
-    pages += 1;
-
-    for (const doc of snap.docs) {
-      scanned += 1;
-      const d = doc.data() || {};
-      const ymd = String(d.ymd || "").trim();
-      const hh = hourFromCloseHour(d.close_hour);
-
-      if (!isISODate(ymd) || !hh) continue;
-
-      if (!counts.has(ymd)) counts.set(ymd, new Map());
-      const dayMap = counts.get(ymd);
-
-      dayMap.set(hh, (dayMap.get(hh) || 0) + 1);
-    }
-
-    lastDoc = snap.docs[snap.docs.length - 1];
-
-    if (pages % 20 === 0) {
-      console.log(`[PROGRESS] pages=${pages} scanned=${scanned}`);
-    }
-  }
-
-  // Agora valida slots esperados por dia
+  /**
+   * ✅ Estratégia anti-índice composto:
+   * - consulta por DIA: where("ymd","==",dia) (índice single-field)
+   * - filtra lottery_key em memória
+   * - conta horas e valida no mesmo loop
+   */
+  let scannedDocs = 0;
   let totalDays = 0;
+
   let expectedSlotsTotal = 0;
   let foundSlotsTotal = 0;
   let missingSlotsTotal = 0;
-  let duplicateSlotsTotal = 0;
+
+  let duplicateSlotsExtraDocs = 0;
+
+  let unexpectedSlotsTotal = 0; // horas que existem mas não deveriam existir naquele dia
+  let daysWithUnexpected = 0;
 
   const missingByDay = [];
   const dupByDay = [];
+  const unexpectedByDay = [];
+
+  const progressEvery = 30; // dias
 
   for (let ymd = startYmd; ymd <= endYmd; ymd = addDaysISO(ymd, 1)) {
     totalDays += 1;
 
     const dow = ymdToDowSP(ymd);
     const expectedHours = expectedHoursPT_RIO(dow);
+    const expectedSet = new Set(expectedHours);
+
     expectedSlotsTotal += expectedHours.length;
 
-    const dayMap = counts.get(ymd) || new Map();
+    // Query mínima: SOMENTE ymd (não exige índice composto)
+    const snap = await db.collection("draws").where("ymd", "==", ymd).get();
 
+    // conta horas SOMENTE do PT_RIO
+    const dayMap = new Map(); // hh -> count
+
+    for (const doc of snap.docs) {
+      scannedDocs += 1;
+      const d = doc.data() || {};
+
+      if (String(d.lottery_key || "").trim().toUpperCase() !== lotteryKey) continue;
+
+      const hh = hourFromCloseHour(d.close_hour ?? d.closeHour ?? d.hour ?? d.hora);
+      if (!hh) continue;
+
+      dayMap.set(hh, (dayMap.get(hh) || 0) + 1);
+    }
+
+    // valida esperado (missing/dup) + inesperado
     const missing = [];
     const dup = [];
 
     for (const hh of expectedHours) {
       const c = dayMap.get(hh) || 0;
+
       if (c <= 0) missing.push(hh);
       if (c > 1) dup.push({ hh, count: c });
 
       if (c > 0) foundSlotsTotal += 1;
       if (c <= 0) missingSlotsTotal += 1;
-      if (c > 1) duplicateSlotsTotal += (c - 1);
+      if (c > 1) duplicateSlotsExtraDocs += (c - 1);
     }
+
+    // horas inesperadas (existem no dayMap mas não estão no esperado)
+    const unexpected = [];
+    for (const [hh, c] of dayMap.entries()) {
+      if (!expectedSet.has(hh)) {
+        unexpected.push({ hh, count: c });
+        unexpectedSlotsTotal += c;
+      }
+    }
+    if (unexpected.length) daysWithUnexpected += 1;
 
     if (missing.length) missingByDay.push({ ymd, dow, missing });
     if (dup.length) dupByDay.push({ ymd, dow, dup });
+    if (unexpected.length) unexpectedByDay.push({ ymd, dow, unexpected });
+
+    if (totalDays % progressEvery === 0) {
+      console.log(`[PROGRESS] days=${totalDays} scannedDocs=${scannedDocs}`);
+    }
   }
 
   const report = {
     lotteryKey,
     startYmd,
     endYmd,
-    scannedDocs: scanned,
+    scannedDocs,
     totalDays,
     expectedSlotsTotal,
     foundSlotsTotal,
     missingSlotsTotal,
-    duplicateSlotsExtraDocs: duplicateSlotsTotal,
+    duplicateSlotsExtraDocs,
+    unexpectedSlotsTotal,
     daysWithMissing: missingByDay.length,
     daysWithDuplicates: dupByDay.length,
+    daysWithUnexpected,
     missingByDay,
     dupByDay,
+    unexpectedByDay,
     generatedAt: new Date().toISOString(),
   };
 
@@ -195,7 +214,7 @@ async function main() {
   fs.writeFileSync(outFile, JSON.stringify(report, null, 2));
 
   console.log("==================================");
-  console.log(`[RESULT] docs_scanned=${scanned}`);
+  console.log(`[RESULT] scannedDocs=${scannedDocs}`);
   console.log(
     `[RESULT] days=${totalDays} expectedSlots=${expectedSlotsTotal} foundSlots=${foundSlotsTotal}`
   );
@@ -203,7 +222,10 @@ async function main() {
     `[RESULT] missingSlots=${missingSlotsTotal} daysWithMissing=${missingByDay.length}`
   );
   console.log(
-    `[RESULT] duplicateExtraDocs=${duplicateSlotsTotal} daysWithDup=${dupByDay.length}`
+    `[RESULT] duplicateExtraDocs=${duplicateSlotsExtraDocs} daysWithDup=${dupByDay.length}`
+  );
+  console.log(
+    `[RESULT] unexpectedSlots=${unexpectedSlotsTotal} daysWithUnexpected=${daysWithUnexpected}`
   );
   console.log(`[OUTPUT] ${outFile}`);
   console.log("==================================");
@@ -226,8 +248,20 @@ async function main() {
     }
   }
 
+  if (unexpectedByDay.length) {
+    console.log(
+      `\n[UNEXPECTED] primeiros ${Math.min(limitPrint, unexpectedByDay.length)} dias:`
+    );
+    for (const r of unexpectedByDay.slice(0, limitPrint)) {
+      const s = r.unexpected.map((x) => `${x.hh}(${x.count})`).join(", ");
+      console.log(`- ${r.ymd} unexpected: ${s}`);
+    }
+  } else {
+    console.log("\n[UNEXPECTED] nenhum slot inesperado detectado no intervalo.");
+  }
+
   if (details) {
-    console.log("\n[DETAILS] missingByDay completo e dupByDay completo estão no JSON.");
+    console.log("\n[DETAILS] missingByDay / dupByDay / unexpectedByDay completos estão no JSON.");
   }
 }
 

@@ -20,16 +20,29 @@ const axios = require("axios");
     const envPath = path.join(__dirname, "..", ".env.local");
     if (!fs.existsSync(envPath)) return;
 
-    const raw = fs.readFileSync(envPath, "utf8");
+    let raw = fs.readFileSync(envPath, "utf8");
+    raw = raw.replace(/^\uFEFF/, ""); // remove BOM invisível
+
     raw.split(/\r?\n/).forEach((line) => {
-      const s = String(line || "").trim();
+      let s = String(line || "").trim();
       if (!s || s.startsWith("#")) return;
+
+      // suporta "export KEY=VAL"
+      if (/^export\s+/i.test(s)) s = s.replace(/^export\s+/i, "").trim();
 
       const i = s.indexOf("=");
       if (i <= 0) return;
 
       const k = s.slice(0, i).trim();
-      const v = s.slice(i + 1).trim();
+      let v = s.slice(i + 1).trim();
+
+      // suporta KEY="valor" / KEY='valor'
+      if (
+        (v.startsWith('"') && v.endsWith('"')) ||
+        (v.startsWith("'") && v.endsWith("'"))
+      ) {
+        v = v.slice(1, -1);
+      }
 
       if (k && v && !process.env[k]) process.env[k] = v;
     });
@@ -590,8 +603,9 @@ async function checkAlreadyComplete(drawRef) {
 }
 
 /**
- * ✅ Prova forte por SLOT (não depende de docId)
- * - Busca draws por campos: date + close_hour + lottery_key
+ * ✅ Prova forte por SLOT (anti-índice composto)
+ * - Query filtra SOMENTE por date
+ * - close_hour + lottery_key filtrados em memória
  * - Conta quantos estão completos (prizes)
  */
 async function checkSlotCompletion({ date, closeHour, lotteryKey }) {
@@ -599,20 +613,25 @@ async function checkSlotCompletion({ date, closeHour, lotteryKey }) {
     const snap = await db
       .collection("draws")
       .where("date", "==", date)
-      .where("close_hour", "==", closeHour)
-      .where("lottery_key", "==", lotteryKey)
-      .limit(50)
+      .limit(500)
       .get();
 
     if (snap.empty) {
       return { docs: 0, complete: 0 };
     }
 
-    let complete = 0;
+    // filtra em memória
     const refs = [];
-    snap.forEach((d) => refs.push(d.ref));
+    snap.forEach((doc) => {
+      const d = doc.data() || {};
+      if (String(d.lottery_key || "").trim() !== String(lotteryKey || "").trim()) return;
+      if (String(d.close_hour || "").trim() !== String(closeHour || "").trim()) return;
+      refs.push(doc.ref);
+    });
 
-    // checa completude doc-a-doc (forte)
+    if (!refs.length) return { docs: 0, complete: 0 };
+
+    let complete = 0;
     for (const ref of refs) {
       const ok = await checkAlreadyComplete(ref);
       if (ok) complete += 1;
@@ -829,7 +848,7 @@ async function importFromPayload({
 
   if (ops > 0) await batch.commit();
 
-  // ✅ flags finais de complete (por SLOT via query)
+  // ✅ flags finais de complete (por SLOT via query anti-índice)
   if (proof.filterClose) {
     const slotDate = proof.inferredDate; // se API trouxe o slot, teremos date
 
