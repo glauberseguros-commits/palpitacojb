@@ -288,21 +288,31 @@ function normalizeHHMM(value) {
  * - Para PT_RIO: força minutos = 00 (09:09 -> 09:00)
  * - Para outros: preserva raw
  *
+ * Correção crítica (seu caso):
+ * - A API do PT_RIO costuma devolver HH:09 como "marcação" e NÃO um minuto real.
+ * - Portanto, para PT_RIO, se raw terminar em ":09", tratamos como "sem minuto real"
+ *   e NÃO persistimos close_hour_raw (vira "").
+ *
  * Retorna:
- * - raw: HH:MM (normalizado)
+ * - raw: HH:MM (normalizado) OU "" quando for "sintético" (PT_RIO HH:09)
  * - slot: HH:MM (normalizado para o que o sistema deve usar em consultas/ID)
  */
 function normalizeCloseHourForLottery(value, lotteryKey) {
   const lk = String(lotteryKey || "").trim().toUpperCase();
-  const raw = normalizeHHMM(value);
-  if (!raw || !isHHMM(raw)) return { raw: "", slot: "" };
+  const raw0 = normalizeHHMM(value);
+  if (!raw0 || !isHHMM(raw0)) return { raw: "", slot: "" };
 
   if (lk === "PT_RIO") {
-    const hh = raw.slice(0, 2);
+    const hh = raw0.slice(0, 2);
+    const mm = raw0.slice(3, 5);
+
+    // ✅ se vier HH:09, é marcação (não minuto real) -> não grava close_hour_raw
+    const raw = mm === "09" ? "" : raw0;
+
     return { raw, slot: `${hh}:00` };
   }
 
-  return { raw, slot: raw };
+  return { raw: raw0, slot: raw0 };
 }
 
 /**
@@ -551,7 +561,7 @@ function extractPrizes(draw) {
 
 /**
  * Gera drawId e drawRef no mesmo padrão do seu projeto.
- * ✅ Agora usa close_hour SLOT no ID e guarda close_hour_raw.
+ * ✅ Agora usa close_hour SLOT no ID e guarda close_hour_raw (quando fizer sentido).
  */
 function buildDrawRef({ draw, lotteryKey }) {
   const date = String(draw?.date || "").trim();
@@ -795,7 +805,8 @@ async function importFromPayload({
         // ✅ campo de negócio (SLOT)
         close_hour: closeSlot,
 
-        // ✅ guarda o que veio da API (se existir)
+        // ✅ guarda o que veio da API SOMENTE quando fizer sentido
+        // (PT_RIO HH:09 vira "", então cai em null)
         close_hour_raw: closeRaw || null,
 
         prizesCount: prizes.length,
@@ -1035,7 +1046,9 @@ async function main() {
   const payload = await fetchKingResults({ date, lotteryKey: lk });
 
   console.log(
-    `[2/3] Processando ${Array.isArray(payload?.data) ? payload.data.length : 0} draws retornados pela API...`
+    `[2/3] Processando ${
+      Array.isArray(payload?.data) ? payload.data.length : 0
+    } draws retornados pela API...`
   );
 
   await importFromPayload({

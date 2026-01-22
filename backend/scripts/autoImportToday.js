@@ -5,6 +5,9 @@ const fs = require("fs");
 const path = require("path");
 const { runImport } = require("./importKingApostas");
 
+// ✅ PT_RIO calendário CORE/OPCIONAL/RARA (gerado do Firestore)
+const { getPtRioSlotsByDate } = require("./ptRioCalendar");
+
 /**
  * AUTO IMPORT — (parametrizável por LOTTERY)
  *
@@ -17,8 +20,9 @@ const { runImport } = require("./importKingApostas");
  * - Assim que capturar (ou detectar que já está completo no Firestore), marca done.
  *
  * ✅ Regras especiais (PT_RIO):
- * - Domingo: só 09/11/14/16. Slots 18/21 ficam N/A no state do dia.
- * - Quarta e sábado: slot 18h faz UMA tentativa única às 18:35 (ou até +tolerance).
+ * - Slots a tentar no dia = CORE + OPCIONAL (via ptRioCalendarRules).
+ * - Slots RARA viram N/A automaticamente no state do dia (não tenta).
+ * - Quarta e sábado: se 18:00 estiver habilitado (CORE/OPCIONAL), faz UMA tentativa única às 18:35 (+tolerance).
  *
  * ✅ FEDERAL:
  * - Somente quarta e sábado.
@@ -29,7 +33,8 @@ const { runImport } = require("./importKingApostas");
  */
 
 // ✅ LOTTERY parametrizável por env (default PT_RIO)
-const LOTTERY = String(process.env.LOTTERY || "PT_RIO").trim().toUpperCase() || "PT_RIO";
+const LOTTERY =
+  String(process.env.LOTTERY || "PT_RIO").trim().toUpperCase() || "PT_RIO";
 
 const LOG_DIR = path.join(__dirname, "..", "logs");
 
@@ -68,9 +73,9 @@ const SCHEDULES = {
     { hour: "11:09", windowStart: "11:05", releaseAt: "11:29", windowEnd: "11:31" },
     { hour: "14:09", windowStart: "14:05", releaseAt: "14:29", windowEnd: "14:31" },
     { hour: "16:09", windowStart: "16:05", releaseAt: "16:29", windowEnd: "16:31" },
-    // 18h (normal seg/ter/qui/sex e domingo N/A; qua/sáb é one-shot)
+    // 18h (normal seg/ter/qui/sex; qua/sáb pode ser one-shot; domingo costuma ser RARA)
     { hour: "18:09", windowStart: "18:05", releaseAt: "18:29", windowEnd: "18:31" },
-    // 21h: janela longa minuto a minuto
+    // 21h: janela longa minuto a minuto (mas pode ser RARA em alguns dias)
     { hour: "21:09", windowStart: "21:05", releaseAt: "21:05", windowEnd: "21:45" },
   ],
 
@@ -83,7 +88,9 @@ const SCHEDULES = {
 };
 
 // Seleciona schedule conforme LOTTERY
-const SCHEDULE = Array.isArray(SCHEDULES[LOTTERY]) ? SCHEDULES[LOTTERY] : SCHEDULES.PT_RIO;
+const SCHEDULE = Array.isArray(SCHEDULES[LOTTERY])
+  ? SCHEDULES[LOTTERY]
+  : SCHEDULES.PT_RIO;
 
 /* =========================
    Utils
@@ -148,6 +155,12 @@ function parseHH(hhmm) {
   const h = Number(String(hhmm).slice(0, 2));
   const m = Number(String(hhmm).slice(3, 5));
   return { h, m };
+}
+
+// Converte schedule.hour "09:09" -> slot "09:00" (para comparar com CORE/OPCIONAL/RARA)
+function scheduleHourToSlot(hourHHMM) {
+  const { h } = parseHH(hourHHMM);
+  return `${pad2(h)}:00`;
 }
 
 function stateFile(date) {
@@ -256,24 +269,50 @@ function isWedOrSat(dow) {
 }
 
 /**
- * Define se o slot se aplica HOJE, baseado na LOTTERY
+ * Retorna status do slot para HOJE:
+ * - CORE / OPCIONAL / RARA / OFF
+ *
+ * PT_RIO: baseado em ptRioCalendarRules (ano+dow).
+ * FEDERAL: somente quarta/sábado (senão OFF).
  */
-function slotAppliesToday(slotHour, dow) {
+function buildTodaySlotStatusMap(dateYMD, dow) {
+  const map = new Map(); // schedule.hour -> status
+
   if (LOTTERY === "PT_RIO") {
-    // Domingo: só 09/11/14/16
-    if (dow === 0) {
-      return slotHour === "09:09" || slotHour === "11:09" || slotHour === "14:09" || slotHour === "16:09";
+    const cal = getPtRioSlotsByDate(dateYMD);
+    const core = new Set(cal.core || []);
+    const opt = new Set(cal.opcional || []);
+    const rare = new Set(cal.rara || []);
+
+    for (const sched of SCHEDULE) {
+      const slot = scheduleHourToSlot(sched.hour); // "09:00" etc
+      let status = "OFF";
+      if (core.has(slot)) status = "CORE";
+      else if (opt.has(slot)) status = "OPCIONAL";
+      else if (rare.has(slot)) status = "RARA";
+      map.set(sched.hour, status);
     }
-    return true;
+
+    // log diagnóstico (uma linha)
+    logLine(
+      `[CAL] date=${dateYMD} dow=${dow} source=${cal.source} CORE=${(cal.core||[]).join(",")||"—"} OPC=${(cal.opcional||[]).join(",")||"—"} RARA=${(cal.rara||[]).join(",")||"—"}`,
+      "INFO"
+    );
+
+    return map;
   }
 
   if (LOTTERY === "FEDERAL") {
-    // Só quarta e sábado
-    return isWedOrSat(dow);
+    const ok = isWedOrSat(dow);
+    for (const sched of SCHEDULE) {
+      map.set(sched.hour, ok ? "CORE" : "OFF");
+    }
+    return map;
   }
 
-  // fallback: aplica sempre
-  return true;
+  // fallback: tudo CORE
+  for (const sched of SCHEDULE) map.set(sched.hour, "CORE");
+  return map;
 }
 
 /**
@@ -339,7 +378,11 @@ function acquireLock() {
   try {
     fs.writeFileSync(
       LOCK_FILE,
-      JSON.stringify({ pid: process.pid, at: new Date().toISOString(), lottery: LOTTERY }, null, 2)
+      JSON.stringify(
+        { pid: process.pid, at: new Date().toISOString(), lottery: LOTTERY },
+        null,
+        2
+      )
     );
     return { ok: true };
   } catch {
@@ -373,28 +416,39 @@ async function main() {
     const state = loadState(date);
     const isoNow = new Date().toISOString();
 
-    // 1) Marca N/A slots que não se aplicam hoje (apenas uma vez)
+    // ✅ status do dia (CORE/OPCIONAL/RARA/OFF) por schedule.hour
+    const statusMap = buildTodaySlotStatusMap(date, dow);
+
+    // 1) Marca N/A slots que não se aplicam hoje (RARA/OFF)
     let stateTouched = false;
 
     for (const sched of SCHEDULE) {
       const slot = state[sched.hour];
       if (!slot) continue;
 
-      const applies = slotAppliesToday(sched.hour, dow);
+      const st = statusMap.get(sched.hour) || "OFF";
+      const applies = st === "CORE" || st === "OPCIONAL";
 
       if (!applies && !slot.done) {
         slot.done = true;
         slot.na = true;
 
-        if (LOTTERY === "PT_RIO" && dow === 0) slot.naReason = "DOMINGO_NAO_TEM_ESSE_SORTEIO";
-        else if (LOTTERY === "FEDERAL") slot.naReason = "FEDERAL_SO_QUA_SAB";
-        else slot.naReason = "NAO_APLICA";
+        if (LOTTERY === "PT_RIO") {
+          slot.naReason = st === "RARA" ? "CALENDARIO_RARA" : "CALENDARIO_OFF";
+        } else if (LOTTERY === "FEDERAL") {
+          slot.naReason = "FEDERAL_SO_QUA_SAB";
+        } else {
+          slot.naReason = "NAO_APLICA";
+        }
 
         slot.lastTryISO = isoNow;
         slot.lastResult = { ok: true, skipped: true, reason: slot.naReason };
         stateTouched = true;
 
-        logLine(`[AUTO] N/A slot=${sched.hour} (${slot.naReason}) -> DONE`, "INFO");
+        logLine(
+          `[AUTO] N/A slot=${sched.hour} (${slot.naReason}) -> DONE`,
+          "INFO"
+        );
       }
     }
 
@@ -402,15 +456,17 @@ async function main() {
 
     let didSomething = false;
 
-    // 2) Processa slots
+    // 2) Processa slots aplicáveis (CORE/OPCIONAL)
     for (const sched of SCHEDULE) {
       const slot = state[sched.hour];
       if (!slot) continue;
       if (slot.done) continue;
 
-      if (!slotAppliesToday(sched.hour, dow)) continue;
+      const st = statusMap.get(sched.hour) || "OFF";
+      const applies = st === "CORE" || st === "OPCIONAL";
+      if (!applies) continue;
 
-      // Regra especial PT_RIO: quarta/sábado 18h one-shot 18:35
+      // Regra especial PT_RIO: quarta/sábado 18h one-shot 18:35 (somente se 18:00 estiver habilitado hoje)
       if (LOTTERY === "PT_RIO" && sched.hour === "18:09" && isWedOrSat(dow)) {
         if (!isInWedSat18OneShotWindow(nowMin)) continue;
 
@@ -422,7 +478,9 @@ async function main() {
         saveState(date, state);
 
         logLine(
-          `[AUTO] (ONE-SHOT QUA/SAB) tentando ${date} slot=18:09 agora=18:${pad2(now.m)} closes=${candidates.join(",")}`,
+          `[AUTO] (ONE-SHOT QUA/SAB) tentando ${date} slot=18:09 agora=18:${pad2(
+            now.m
+          )} closes=${candidates.join(",")}`,
           "INFO"
         );
 
@@ -441,8 +499,12 @@ async function main() {
             continue;
           }
 
-          const savedCount = Number.isFinite(Number(r?.savedCount)) ? Number(r.savedCount) : 0;
-          const writeCount = Number.isFinite(Number(r?.writeCount)) ? Number(r.writeCount) : 0;
+          const savedCount = Number.isFinite(Number(r?.savedCount))
+            ? Number(r.savedCount)
+            : 0;
+          const writeCount = Number.isFinite(Number(r?.writeCount))
+            ? Number(r.writeCount)
+            : 0;
 
           const alreadyCompleteAny = Boolean(r?.alreadyCompleteAny);
           const captured = Boolean(r?.captured);
@@ -512,7 +574,7 @@ async function main() {
       saveState(date, state);
 
       logLine(
-        `[AUTO] tentando ${date} slot=${sched.hour} window=${w.startLabel}-${w.endLabel} closes=${candidates.join(",")}`,
+        `[AUTO] tentando ${date} slot=${sched.hour} (${st}) window=${w.startLabel}-${w.endLabel} closes=${candidates.join(",")}`,
         "INFO"
       );
 
@@ -531,8 +593,12 @@ async function main() {
           continue;
         }
 
-        const savedCount = Number.isFinite(Number(r?.savedCount)) ? Number(r.savedCount) : 0;
-        const writeCount = Number.isFinite(Number(r?.writeCount)) ? Number(r.writeCount) : 0;
+        const savedCount = Number.isFinite(Number(r?.savedCount))
+          ? Number(r.savedCount)
+          : 0;
+        const writeCount = Number.isFinite(Number(r?.writeCount))
+          ? Number(r.writeCount)
+          : 0;
 
         const alreadyCompleteAny = Boolean(r?.alreadyCompleteAny);
         const alreadyCompleteAll = Boolean(r?.alreadyCompleteAll);

@@ -6,30 +6,41 @@ const path = require("path");
 const admin = require("firebase-admin");
 
 let _db = null;
-let _inited = false;
+let _initialized = false;
 
-/**
- * Carrega variáveis do backend/.env.local (se existir)
- * Só define se ainda não existir no process.env
- */
+/* =========================
+   .env.local loader (robusto)
+========================= */
 (function loadEnvLocal() {
   try {
     const envPath = path.join(__dirname, "..", ".env.local");
     if (!fs.existsSync(envPath)) return;
 
-    const raw = fs.readFileSync(envPath, "utf8");
+    let raw = fs.readFileSync(envPath, "utf8");
+    raw = String(raw || "").replace(/^\uFEFF/, "");
+
     raw.split(/\r?\n/).forEach((line) => {
-      let s = String(line || "");
-      s = s.replace(/^\uFEFF/, "").trim(); // remove BOM invisível
+      let s = String(line || "").trim();
       if (!s || s.startsWith("#")) return;
+
+      if (/^export\s+/i.test(s)) s = s.replace(/^export\s+/i, "").trim();
 
       const i = s.indexOf("=");
       if (i <= 0) return;
 
-      const k = s.slice(0, i).trim().replace(/^\uFEFF/, "");
-      const v = s.slice(i + 1).trim();
+      const key = s.slice(0, i).trim();
+      let val = s.slice(i + 1).trim();
 
-      if (k && v && !process.env[k]) process.env[k] = v;
+      if (
+        (val.startsWith('"') && val.endsWith('"')) ||
+        (val.startsWith("'") && val.endsWith("'"))
+      ) {
+        val = val.slice(1, -1);
+      }
+
+      if (key && val && !process.env[key]) {
+        process.env[key] = val;
+      }
     });
   } catch {
     // silencioso por design
@@ -40,136 +51,151 @@ let _inited = false;
    Helpers
 ========================= */
 
-function normalizePath(p) {
-  let s = String(p || "").trim().replace(/^\uFEFF/, "");
-
-  // remove aspas se vier "C:\..." ou 'C:\...'
-  if (
-    (s.startsWith('"') && s.endsWith('"')) ||
-    (s.startsWith("'") && s.endsWith("'"))
-  ) {
-    s = s.slice(1, -1).trim();
-  }
-
-  // aceita caminho relativo (a partir da raiz do repo)
-  if (s && !path.isAbsolute(s)) {
-    s = path.resolve(path.join(__dirname, "..", ".."), s);
-  }
-
-  return s || "";
+function fail(msg) {
+  throw new Error(`🔥 Firebase Admin init error:\n${msg}`);
 }
 
-function resolveCredentialsPath() {
-  const raw = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-  const p = normalizePath(raw);
-  if (!p) return null;
-
+function safeJsonParse(v) {
   try {
-    if (fs.existsSync(p) && fs.lstatSync(p).isFile()) return p;
-  } catch {
-    // ignore
-  }
-  return null;
-}
-
-function safeJsonParse(s) {
-  try {
-    const obj = JSON.parse(String(s || ""));
-    return obj && typeof obj === "object" ? obj : null;
+    const o = JSON.parse(String(v || ""));
+    return o && typeof o === "object" ? o : null;
   } catch {
     return null;
   }
 }
 
 function normalizePrivateKey(sa) {
-  // Corrige casos de private_key vindo com "\\n" nas envs
-  if (sa && sa.private_key && typeof sa.private_key === "string") {
+  if (sa && typeof sa.private_key === "string") {
     sa.private_key = sa.private_key.replace(/\\n/g, "\n");
   }
   return sa;
 }
 
-function readServiceAccountFromEnv() {
-  // 1) JSON direto
-  const rawJson = process.env.FIREBASE_ADMIN_SA_JSON;
-  if (rawJson) {
-    const sa = safeJsonParse(rawJson);
-    if (sa) return normalizePrivateKey(sa);
+function isValidServiceAccount(sa) {
+  if (!sa || typeof sa !== "object") return false;
+
+  return (
+    typeof sa.project_id === "string" &&
+    typeof sa.client_email === "string" &&
+    typeof sa.private_key === "string" &&
+    sa.client_email.includes("@") &&
+    sa.private_key.includes("BEGIN PRIVATE KEY") &&
+    sa.private_key.includes("END PRIVATE KEY")
+  );
+}
+
+function resolveCredentialsPath() {
+  const raw = String(process.env.GOOGLE_APPLICATION_CREDENTIALS || "").trim();
+  if (!raw) return null;
+
+  let p = raw.replace(/^['"]|['"]$/g, "");
+
+  if (!path.isAbsolute(p)) {
+    p = path.resolve(path.join(__dirname, "..", ".."), p);
   }
 
-  // 2) JSON em base64
-  const rawB64 = process.env.FIREBASE_ADMIN_SA_BASE64;
-  if (rawB64) {
-    try {
-      const decoded = Buffer.from(String(rawB64), "base64").toString("utf8");
-      const sa = safeJsonParse(decoded);
-      if (sa) return normalizePrivateKey(sa);
-    } catch {
-      // ignore
+  if (!fs.existsSync(p)) {
+    fail(`GOOGLE_APPLICATION_CREDENTIALS aponta para caminho inexistente:\n${p}`);
+  }
+
+  return p;
+}
+
+function readServiceAccountFromEnv() {
+  if (process.env.FIREBASE_ADMIN_SA_JSON) {
+    const sa = safeJsonParse(process.env.FIREBASE_ADMIN_SA_JSON);
+    if (!sa) {
+      fail("FIREBASE_ADMIN_SA_JSON existe, mas NÃO é JSON válido.");
     }
+    normalizePrivateKey(sa);
+    if (!isValidServiceAccount(sa)) {
+      fail("FIREBASE_ADMIN_SA_JSON é JSON, mas NÃO é um service account válido.");
+    }
+    return sa;
+  }
+
+  if (process.env.FIREBASE_ADMIN_SA_BASE64) {
+    let decoded;
+    try {
+      decoded = Buffer.from(
+        String(process.env.FIREBASE_ADMIN_SA_BASE64),
+        "base64"
+      ).toString("utf8");
+    } catch {
+      fail("FIREBASE_ADMIN_SA_BASE64 não é base64 válido.");
+    }
+
+    const sa = safeJsonParse(decoded);
+    if (!sa) {
+      fail("FIREBASE_ADMIN_SA_BASE64 decodificou, mas NÃO virou JSON.");
+    }
+
+    normalizePrivateKey(sa);
+    if (!isValidServiceAccount(sa)) {
+      fail("FIREBASE_ADMIN_SA_BASE64 é JSON, mas NÃO é um service account válido.");
+    }
+    return sa;
   }
 
   return null;
 }
 
-function initAdmin() {
-  if (_inited) return admin;
+/* =========================
+   Init
+========================= */
 
-  // Se já existe app inicializado (hot reload / múltiplos imports)
+function initAdmin() {
+  if (_initialized) return admin;
+
   if (admin.apps && admin.apps.length) {
-    _inited = true;
+    _initialized = true;
     return admin;
   }
 
-  // ✅ Preferência 1: credencial por ENV (melhor pra deploy)
   const saFromEnv = readServiceAccountFromEnv();
   if (saFromEnv) {
     admin.initializeApp({
       credential: admin.credential.cert(saFromEnv),
     });
-    _inited = true;
+    _initialized = true;
     return admin;
   }
 
-  // ✅ Preferência 2: caminho do arquivo via GOOGLE_APPLICATION_CREDENTIALS
-  const credsPath = resolveCredentialsPath();
-  if (credsPath) {
-    const json = JSON.parse(fs.readFileSync(credsPath, "utf8"));
+  if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+    const p = resolveCredentialsPath();
+    const json = JSON.parse(fs.readFileSync(p, "utf8"));
+    normalizePrivateKey(json);
+
+    if (!isValidServiceAccount(json)) {
+      fail(`Service account inválido no arquivo:\n${p}`);
+    }
+
     admin.initializeApp({
-      credential: admin.credential.cert(normalizePrivateKey(json)),
+      credential: admin.credential.cert(json),
     });
-    _inited = true;
+    _initialized = true;
     return admin;
   }
 
-  // ✅ Preferência 3: ADC (funciona em alguns ambientes cloud)
+  // ADC só se NÃO houver nenhuma tentativa de credencial
   try {
     admin.initializeApp({
       credential: admin.credential.applicationDefault(),
     });
-    _inited = true;
+    _initialized = true;
     return admin;
   } catch (e) {
-    const hint =
-      "Credenciais Firebase Admin ausentes.\n\n" +
-      "Escolha UMA das opções:\n" +
-      "A) Arquivo (local): defina GOOGLE_APPLICATION_CREDENTIALS apontando para o JSON.\n" +
-      '   PowerShell: $env:GOOGLE_APPLICATION_CREDENTIALS="C:\\\\caminho\\\\sua-chave.json"\n' +
-      '   Relativo:   $env:GOOGLE_APPLICATION_CREDENTIALS="backend\\\\secrets\\\\firebase-admin.json"\n\n' +
-      "B) Deploy (recomendado): cole o JSON do service account em FIREBASE_ADMIN_SA_JSON\n" +
-      "   (ou base64 em FIREBASE_ADMIN_SA_BASE64)\n\n";
-
-    throw new Error(
-      hint + (e && e.message ? `Detalhe: ${e.message}\n` : "")
+    fail(
+      "Nenhuma credencial válida encontrada.\n" +
+        "Use UMA opção:\n" +
+        "- FIREBASE_ADMIN_SA_JSON\n" +
+        "- FIREBASE_ADMIN_SA_BASE64\n" +
+        "- GOOGLE_APPLICATION_CREDENTIALS\n\n" +
+        (e?.message || "")
     );
   }
 }
 
-/**
- * Retorna Firestore admin.
- * - Lazy: só inicializa quando acessado.
- * - forceNew: útil em debugging (não use em produção).
- */
 function getDb(forceNew = false) {
   if (_db && !forceNew) return _db;
 
@@ -178,11 +204,10 @@ function getDb(forceNew = false) {
   return _db;
 }
 
-/**
- * ✅ Compat:
- * scripts antigos fazem:
- * const { admin, db } = require("../service/firebaseAdmin")
- */
+/* =========================
+   Exports (compat)
+========================= */
+
 const exportsObj = {
   admin,
   initAdmin,
