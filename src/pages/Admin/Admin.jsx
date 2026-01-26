@@ -13,7 +13,10 @@ import {
   where,
 } from "firebase/firestore";
 import { auth, db } from "../../services/firebase";
-import { USERS_COLLECTION as USERS_COLLECTION_RAW } from "./adminKeys";
+import {
+  ADMINS_COLLECTION as ADMINS_COLLECTION_RAW,
+  USERS_COLLECTION as USERS_COLLECTION_RAW,
+} from "./adminKeys";
 
 const GOLD = "rgba(202,166,75,1)";
 const GOLD_SOFT = "rgba(202,166,75,0.16)";
@@ -25,6 +28,7 @@ const SHADOW = "0 18px 45px rgba(0,0,0,0.55)";
 const PANEL_BG = "rgba(0,0,0,0.42)";
 
 const USERS_COLLECTION = String(USERS_COLLECTION_RAW || "").trim() || "users";
+const ADMINS_COLLECTION = String(ADMINS_COLLECTION_RAW || "").trim() || "admins";
 
 /* =========================
    Helpers
@@ -79,7 +83,7 @@ function humanizeFsError(e) {
     code.includes("permission-denied") ||
     msg.toLowerCase().includes("permission")
   ) {
-    return "Permissões ausentes ou insuficientes. Confirme se este login é Admin e se as Rules permitem ler/escrever em /users.";
+    return "Permissões ausentes ou insuficientes. Confirme se este login é Admin e se as Rules permitem ler /admins e ler/escrever em /users.";
   }
   if (code.includes("unavailable")) return "Firestore indisponível no momento. Tente novamente.";
   return msg;
@@ -89,6 +93,20 @@ function isEmailLike(v) {
   const s = String(v ?? "").trim();
   if (!s) return false;
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+}
+
+/* =========================
+   Admin gate via /admins/{uid}
+========================= */
+
+async function isUidAdmin(uid) {
+  const id = safeStr(uid);
+  if (!id) return false;
+  const ref = doc(db, ADMINS_COLLECTION, id);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return false;
+  const data = snap.data() || {};
+  return data.active === true;
 }
 
 /* =========================
@@ -232,12 +250,11 @@ export default function Admin({ onExit, onLogout }) {
     }
     setMsg(isErr ? "" : text);
     setErr(isErr ? text : "");
-    if (!isErr) {
-      clearToastTimerRef.current = setTimeout(() => {
-        setMsg("");
-        clearToastTimerRef.current = null;
-      }, 2500);
-    }
+    clearToastTimerRef.current = setTimeout(() => {
+      setMsg("");
+      setErr("");
+      clearToastTimerRef.current = null;
+    }, 2600);
   };
 
   useEffect(() => {
@@ -297,30 +314,54 @@ export default function Admin({ onExit, onLogout }) {
     setDisabled(!!r?.disabled);
   };
 
-  // ✅ carrega lista quando auth está pronto
+  // ✅ carrega lista quando auth está pronto + valida admin
   useEffect(() => {
-    let unsub = null;
+    let mounted = true;
 
-    unsub = onAuthStateChanged(auth, async (user) => {
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (!mounted) return;
+
       if (!user) {
         setRows([]);
         clearEditor();
         return;
       }
+
       try {
         setBusy(true);
         setErr("");
+
+        // garante token atualizado
         await user.getIdToken(true);
+
+        // Gate: confirma se este UID é admin em /admins/{uid} com { active:true }
+        const okAdmin = await isUidAdmin(user.uid);
+
+        if (!okAdmin) {
+          setRows([]);
+          clearEditor();
+          toast("Acesso negado: este usuário não é Admin.", true);
+          try {
+            await signOut(auth);
+          } catch {}
+          onLogout?.();
+          return;
+        }
+
         const list = await fetchLastUsers();
+        if (!mounted) return;
         setRows(list);
       } catch (e) {
+        if (!mounted) return;
         setErr(humanizeFsError(e));
       } finally {
+        if (!mounted) return;
         setBusy(false);
       }
     });
 
     return () => {
+      mounted = false;
       try {
         unsub?.();
       } catch {}
@@ -710,14 +751,10 @@ export default function Admin({ onExit, onLogout }) {
           </div>
 
           {msg ? (
-            <div style={{ marginTop: 10, color: "rgba(120,255,180,0.95)" }}>
-              {msg}
-            </div>
+            <div style={{ marginTop: 10, color: "rgba(120,255,180,0.95)" }}>{msg}</div>
           ) : null}
           {err ? (
-            <div style={{ marginTop: 10, color: "rgba(255,120,120,0.95)" }}>
-              {err}
-            </div>
+            <div style={{ marginTop: 10, color: "rgba(255,120,120,0.95)" }}>{err}</div>
           ) : null}
 
           <div style={{ marginTop: 12, overflowX: "auto" }}>
@@ -780,9 +817,7 @@ export default function Admin({ onExit, onLogout }) {
                           >
                             {r?.name || "—"}
                           </div>
-                          <div style={{ fontSize: 11, color: WHITE_70 }}>
-                            {eff.toUpperCase()}
-                          </div>
+                          <div style={{ fontSize: 11, color: WHITE_70 }}>{eff.toUpperCase()}</div>
                         </td>
 
                         <td
@@ -804,9 +839,7 @@ export default function Admin({ onExit, onLogout }) {
                             borderBottom: `1px solid ${BORDER}`,
                           }}
                         >
-                          <span style={{ color: WHITE_70, fontSize: 12 }}>
-                            {r?.email || "-"}
-                          </span>
+                          <span style={{ color: WHITE_70, fontSize: 12 }}>{r?.email || "-"}</span>
                         </td>
 
                         <td
@@ -840,9 +873,7 @@ export default function Admin({ onExit, onLogout }) {
                             borderBottom: `1px solid ${BORDER}`,
                           }}
                         >
-                          <span style={{ color: proOn ? GOLD : WHITE_70 }}>
-                            {fmtBR(pro)}
-                          </span>
+                          <span style={{ color: proOn ? GOLD : WHITE_70 }}>{fmtBR(pro)}</span>
                         </td>
 
                         <td

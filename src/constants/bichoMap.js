@@ -43,13 +43,39 @@ function pad2(n) {
   return String(Number(n) || 0).padStart(2, "0");
 }
 
+function stripSlashes(s) {
+  return String(s || "").replace(/\/+$/, "");
+}
+
 /**
- * ✅ Base de assets do CRA (para deploy em subpasta via "homepage")
- * - Se não existir, retorna "" (raiz).
+ * ✅ Base pública do app:
+ * - Vite: import.meta.env.BASE_URL (normalmente "/")
+ * - CRA: process.env.PUBLIC_URL
+ * - fallback: ""
+ *
+ * Retorna "" (raiz) ou "/subpasta" (sem barra no final).
  */
 function getPublicBase() {
-  const b = String(process.env.PUBLIC_URL || "").trim();
-  return b && b !== "/" ? b : "";
+  // Vite (preferência)
+  try {
+    const viteBase =
+      typeof import.meta !== "undefined" &&
+      import.meta.env &&
+      typeof import.meta.env.BASE_URL === "string"
+        ? String(import.meta.env.BASE_URL).trim()
+        : "";
+
+    // BASE_URL do Vite normalmente vem como "/" ou "/sub/"
+    if (viteBase && viteBase !== "/") return stripSlashes(viteBase);
+  } catch {
+    // noop
+  }
+
+  // CRA
+  const craBase = String(process.env.PUBLIC_URL || "").trim();
+  if (craBase && craBase !== "/") return stripSlashes(craBase);
+
+  return "";
 }
 
 /**
@@ -67,14 +93,18 @@ function coerceGrupoNumber(input) {
 
   if (typeof input === "number") {
     const g = Math.trunc(input);
-    return Number.isFinite(g) ? g : null;
+    if (!Number.isFinite(g)) return null;
+    if (g < 1 || g > 25) return null;
+    return g;
   }
 
   const dig = onlyDigits(input);
   if (!dig) return null;
 
   const g = Number(dig);
-  return Number.isFinite(g) ? g : null;
+  if (!Number.isFinite(g)) return null;
+  if (g < 1 || g > 25) return null;
+  return g;
 }
 
 /* =========================
@@ -141,7 +171,9 @@ export function getBichoByAnimalName(animal) {
  * - getAnimalLabel("ÁGUIA")
  */
 export function getAnimalLabel(input = null) {
-  if (typeof input === "number" || /^\d+$/.test(String(input || "").trim())) {
+  // número puro (ou string numérica pura)
+  const s = String(input ?? "").trim();
+  if (typeof input === "number" || (s && /^\d+$/.test(s))) {
     const byGrupo = getBichoByGrupo(input);
     return byGrupo?.animal ? byGrupo.animal : "";
   }
@@ -230,12 +262,9 @@ function normalizeAllowedSize(size) {
  * /assets/animals/animais_<size>_png/<grupo2>_<slug>.png
  *
  * Compat extra (sem inflar projeto):
- * - expõe uma propriedade `.fallback` com o caminho alternativo
- *   (caso alguma pasta tenha arquivos no formato antigo com _<size>)
+ * - expõe uma função de fallback com sufixo do tamanho no nome
  *
  * OBS: o React <img> não "tenta" fallback sozinho; ele precisa de onError.
- * Por isso, mantemos o retorno como STRING (padrão do app) e
- * disponibilizamos `getImgFromGrupoFallback()` para quem quiser usar.
  */
 export function getImgFromGrupo(grupo, size = null) {
   const b = getBichoByGrupo(grupo);

@@ -49,11 +49,14 @@ function humanizeFirebaseAuthError(error) {
     return "API KEY do Firebase inválida no frontend. Verifique src/services/firebase.js (apiKey) e reinicie o npm start.";
   }
 
-  if (code === "auth/invalid-credential") return "Credenciais inválidas. Confira e-mail e senha.";
+  if (code === "auth/invalid-credential")
+    return "Credenciais inválidas. Confira e-mail e senha.";
   if (code === "auth/user-not-found") return "Usuário não encontrado.";
   if (code === "auth/wrong-password") return "Senha incorreta.";
-  if (code === "auth/too-many-requests") return "Muitas tentativas. Aguarde alguns minutos e tente novamente.";
-  if (code === "auth/network-request-failed") return "Falha de rede. Verifique a conexão e tente novamente.";
+  if (code === "auth/too-many-requests")
+    return "Muitas tentativas. Aguarde alguns minutos e tente novamente.";
+  if (code === "auth/network-request-failed")
+    return "Falha de rede. Verifique a conexão e tente novamente.";
 
   return msg || "Falha no login.";
 }
@@ -62,7 +65,10 @@ function humanizeFirestoreError(error) {
   const code = String(error?.code || "");
   const msg = String(error?.message || "");
 
-  if (code.includes("permission-denied") || msg.toLowerCase().includes("permission")) {
+  if (
+    code.includes("permission-denied") ||
+    msg.toLowerCase().includes("permission")
+  ) {
     return "Sem permissão para validar Admin. Confirme as Rules e se o doc /admins/<UID> está acessível para o próprio UID.";
   }
   if (code.includes("unavailable")) {
@@ -74,13 +80,21 @@ function humanizeFirestoreError(error) {
   return msg || "Falha ao validar permissões no Firestore.";
 }
 
+/**
+ * ✅ Regra oficial do projeto:
+ * admin = doc existe em /admins/<UID> e { active: true }
+ */
 async function isUidAdmin(uid) {
   try {
-    const ref = doc(db, ADMINS_COLLECTION, String(uid || ""));
+    const id = safeStr(uid);
+    if (!id) return false;
+
+    const ref = doc(db, ADMINS_COLLECTION, id);
     const snap = await getDoc(ref);
     if (!snap.exists()) return false;
+
     const data = snap.data() || {};
-    return data.active !== false; // default true
+    return data.active === true;
   } catch (e) {
     // Propaga para exibir mensagem decente no UI
     const err = new Error(humanizeFirestoreError(e));
@@ -346,7 +360,8 @@ export default function AdminLogin({ onAuthed, onCancel }) {
               {err}
               {String(err || "").toLowerCase().includes("rules") ? (
                 <div style={{ marginTop: 6, color: WHITE_70, fontSize: 12 }}>
-                  Se quiser validar: o doc deve existir em <b>/{ADMINS_COLLECTION}/&lt;UID&gt;</b> e permitir leitura pelo próprio UID.
+                  Se quiser validar: o doc deve existir em <b>/{ADMINS_COLLECTION}/&lt;UID&gt;</b>{" "}
+                  e permitir leitura pelo próprio UID.
                 </div>
               ) : null}
             </div>
@@ -392,7 +407,8 @@ export default function AdminLogin({ onAuthed, onCancel }) {
           </div>
 
           <div style={{ marginTop: 8, fontSize: 12, color: "rgba(255,255,255,0.55)" }}>
-            Dica: no Firestore, crie o doc <b>/{ADMINS_COLLECTION}/&lt;UID&gt;</b> com <b>{`{ active: true }`}</b>.
+            Dica: no Firestore, crie o doc <b>/{ADMINS_COLLECTION}/&lt;UID&gt;</b> com{" "}
+            <b>{`{ active: true }`}</b>.
           </div>
         </form>
       </div>

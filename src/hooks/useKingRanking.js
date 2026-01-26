@@ -172,9 +172,7 @@ function dedupeDrawsLogicalPreferBest(draws) {
 
   const score = (d) => {
     const prizesLen = Array.isArray(d?.prizes) ? d.prizes.length : 0;
-    const pc = Number.isFinite(Number(d?.prizesCount))
-      ? Number(d.prizesCount)
-      : 0;
+    const pc = Number.isFinite(Number(d?.prizesCount)) ? Number(d.prizesCount) : 0;
     const ymd = normalizeToYMD(getDrawDateRaw(d));
     const hhmm = normHHMM(getDrawHourRaw(d));
     const hasLogical = !!(ymd && hhmm);
@@ -374,12 +372,12 @@ export function useKingRanking({
         return;
       }
 
-      // ✅ cache com expiração
+      // ✅ cache com expiração (vale inclusive para ok=false, pra não martelar)
       if (boundsCacheRef.current.has(key)) {
         const cachedWrap = boundsCacheRef.current.get(key);
         const age = nowMs() - Number(cachedWrap?.ts || 0);
 
-        if (cachedWrap?.data?.ok && Number.isFinite(age) && age < BOUNDS_TTL_MS) {
+        if (cachedWrap?.data && Number.isFinite(age) && age < BOUNDS_TTL_MS) {
           if (mounted) setBounds(cachedWrap.data);
           return;
         }
@@ -401,6 +399,7 @@ export function useKingRanking({
 
         if (mounted) setBounds(safe);
 
+        // retry controlado (apenas se não ok)
         if (mounted && !safe.ok) {
           if (boundsRetryTimerRef.current) clearTimeout(boundsRetryTimerRef.current);
           boundsRetryTimerRef.current = setTimeout(() => {
