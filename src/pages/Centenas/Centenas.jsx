@@ -1,4 +1,4 @@
-﻿// src/pages/Centenas/Centenas.jsx
+// src/pages/Centenas/Centenas.jsx
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getKingBoundsByUf, getKingResultsByRange } from "../../services/kingResultsService";
 import {

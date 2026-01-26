@@ -1,4 +1,4 @@
-﻿// src/pages/Account/account.hooks.js
+// src/pages/Account/account.hooks.js
 
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { buildAccountUI } from "./account.ui";
