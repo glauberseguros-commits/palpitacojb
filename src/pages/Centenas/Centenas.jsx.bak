@@ -1,44 +1,10 @@
-﻿// src/pages/Centenas/Centenas.jsx
+// src/pages/Centenas/Centenas.jsx
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getKingBoundsByUf, getKingResultsByRange } from "../../services/kingResultsService";
 import {
   getAnimalLabel as getAnimalLabelFn,
   getImgFromGrupo as getImgFromGrupoFn,
 } from "../../constants/bichoMap";
-
-import {
-  pad2,
-  isYMD,
-  ymdToBR,
-  todayYMDLocal,
-  sortPTBR,
-  isTodos,
-  normalizeHourLike,
-  toHourBucketHH00,
-  extractHourFromText,
-  pickDrawYmd,
-  pickDrawHour,
-  getWeekdayPTBRFromYMD,
-  monthNamePTBR,
-  dezenasDoGrupo,
-  centenas40DoGrupo,
-  digitsOnly,
-  pickMilhar4,
-  pickCentena3,
-  pickDezenaFinal,
-  inferGrupoFromPrize,
-  pickPrizePositionNumber,
-  splitRangeIntoChunks,
-  normalizeDrawsResult,
-  normalizePrizesArray,
-  pickPrizeYmd,
-  pickPrizeHour,
-  digitFromKey,
-  dailyDigitForRow,
-  mapWithConcurrency,
-  upgradeImg,
-  tryGetImg,
-} from "./centenas.utils";
 
 /**
  * Centenas+ (PREMIUM)
@@ -74,6 +40,412 @@ const FILTERS_LS_KEY = "pp_centenas_filters_v1";
 // tuning
 const CHUNK_DAYS = 45; // manter < 60 para não cair no aggregated
 const CHUNKS_CONCURRENCY = 3;
+
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
+function isYMD(s) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
+}
+function ymdToBR(ymd) {
+  const m = String(ymd || "").trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return "";
+  return `${m[3]}/${m[2]}/${m[1]}`;
+}
+function ymdToUTCDate(ymd) {
+  const m = String(ymd || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return null;
+  return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+}
+function addDaysUTC(ymd, days) {
+  const dt = ymdToUTCDate(ymd);
+  if (!dt) return ymd;
+  dt.setUTCDate(dt.getUTCDate() + Number(days || 0));
+  const y = dt.getUTCFullYear();
+  const m = pad2(dt.getUTCMonth() + 1);
+  const d = pad2(dt.getUTCDate());
+  return `${y}-${m}-${d}`;
+}
+function todayYMDLocal() {
+  const d = new Date();
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+function sortPTBR(a, b) {
+  return String(a).localeCompare(String(b), "pt-BR", { sensitivity: "base" });
+}
+function isTodos(v) {
+  return String(v || "").trim().toLowerCase() === "todos";
+}
+
+/**
+ * Normaliza "hora" em formato HH:MM (quando possível)
+ */
+function normalizeHourLike(value) {
+  const s0 = String(value ?? "").trim();
+  if (!s0) return "";
+  const s = s0.replace(/\s+/g, "");
+
+  const mhx = s.match(/^(\d{1,2})(?:h|hs|hr|hrs)$/i);
+  if (mhx) return `${pad2(mhx[1])}:00`;
+
+  const mISO = s.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
+  if (mISO) return `${pad2(mISO[1])}:${pad2(mISO[2])}`;
+
+  const m2 = s.match(/^(\d{1,2})$/);
+  if (m2) return `${pad2(m2[1])}:00`;
+
+  return s0.trim();
+}
+
+/**
+ * ✅ Bucketiza para HH:00, ignorando minutos/segundos.
+ * Ex: "21:10" -> "21:00", "21h" -> "21:00", "09:00" -> "09:00"
+ */
+function toHourBucketHH00(value) {
+  const norm = normalizeHourLike(value);
+  if (!norm) return "";
+  const m = String(norm).match(/^(\d{2})/);
+  if (!m) return "";
+  const hh = m[1];
+  const n = Number(hh);
+  if (!Number.isFinite(n) || n < 0 || n > 23) return "";
+  return `${hh}:00`;
+}
+
+function extractHourFromText(text) {
+  const s = String(text ?? "").trim();
+  if (!s) return "";
+  const mh = s.match(/\b(\d{1,2})\s*(?:h|hs|hr|hrs)\b/i);
+  if (mh) return `${pad2(mh[1])}:00`;
+  const mIso = s.match(/\b(\d{1,2}):(\d{2})(?::\d{2})?\b/);
+  if (mIso) return `${pad2(mIso[1])}:${pad2(mIso[2])}`;
+  const mBare = s.match(/(?:^|\D)(\d{1,2})(?:\D|$)/);
+  if (mBare) {
+    const n = Number(mBare[1]);
+    if (Number.isFinite(n) && n >= 0 && n <= 23) return `${pad2(n)}:00`;
+  }
+  return "";
+}
+
+function pickDrawYmd(draw) {
+  const y =
+    draw?.dateYmd ||
+    draw?.ymd ||
+    draw?.date ||
+    draw?.data ||
+    draw?.day ||
+    draw?.date_ymd ||
+    draw?.drawYmd ||
+    "";
+  return isYMD(y) ? y : "";
+}
+function pickDrawHour(draw) {
+  const directCandidates = [draw?.closeHour, draw?.hour, draw?.horario, draw?.close_hour, draw?.close];
+  for (const c of directCandidates) {
+    const norm = normalizeHourLike(c);
+    if (norm) return norm;
+  }
+
+  const nested = draw?.lottery || draw?.loteria || draw?.meta || null;
+  if (nested) {
+    const nestedCandidates = [
+      nested?.closeHour,
+      nested?.close_hour,
+      nested?.hour,
+      nested?.horario,
+      nested?.close,
+      nested?.drawHour,
+      nested?.draw_hour,
+    ];
+    for (const c of nestedCandidates) {
+      const norm = normalizeHourLike(c);
+      if (norm) return norm;
+    }
+  }
+
+  const textCandidates = [
+    draw?.lotteryLabel,
+    draw?.lotteryName,
+    draw?.loteriaLabel,
+    draw?.loteriaName,
+    draw?.label,
+    draw?.name,
+    draw?.title,
+    draw?.descricao,
+    draw?.description,
+    draw?.key,
+    nested?.label,
+    nested?.name,
+    nested?.title,
+    nested?.key,
+  ];
+  for (const t of textCandidates) {
+    const ex = extractHourFromText(t);
+    if (ex) return ex;
+  }
+
+  return "";
+}
+
+function getWeekdayPTBRFromYMD(ymd) {
+  const dt = ymdToUTCDate(ymd);
+  if (!dt) return "";
+  const day = dt.getUTCDay();
+  const map = ["Domingo", "Segunda-Feira", "Terça-Feira", "Quarta-Feira", "Quinta-Feira", "Sexta-Feira", "Sábado"];
+  return map[day] || "";
+}
+function monthNamePTBR(m) {
+  const map = [
+    "Janeiro",
+    "Fevereiro",
+    "Março",
+    "Abril",
+    "Maio",
+    "Junho",
+    "Julho",
+    "Agosto",
+    "Setembro",
+    "Outubro",
+    "Novembro",
+    "Dezembro",
+  ];
+  return map[(Number(m) || 0) - 1] || "";
+}
+
+/* ========= centenas por grupo ========= */
+
+function dezenasDoGrupo(grupo) {
+  const g = Number(grupo);
+  if (!Number.isFinite(g) || g < 1 || g > 25) return [];
+  const start = (g - 1) * 4 + 1;
+  return [start, start + 1, start + 2, start + 3].map((n) => pad2(n));
+}
+function centenas40DoGrupo(grupo) {
+  const dezenas = dezenasDoGrupo(grupo);
+  const out = [];
+  for (const dz of dezenas) {
+    for (let p = 0; p <= 9; p += 1) out.push(`${p}${dz}`);
+  }
+  return out;
+}
+
+/* ========= prize extractors ========= */
+
+function digitsOnly(v) {
+  return String(v ?? "").replace(/\D+/g, "");
+}
+
+function pickMilhar4(prize) {
+  const candidates = [
+    prize?.milhar4,
+    prize?.milhar,
+    prize?.numero,
+    prize?.number,
+    prize?.num,
+    prize?.n,
+    prize?.valor,
+    prize?.value,
+    prize?.resultado,
+    prize?.result,
+  ];
+  for (const c of candidates) {
+    const d = digitsOnly(c);
+    if (!d) continue;
+    if (d.length >= 4) return d.slice(-4).padStart(4, "0");
+  }
+  return "";
+}
+
+function pickCentena3(prize) {
+  const direct = [prize?.centena3, prize?.centena, prize?.centena_3, prize?.centena3dig, prize?.c3];
+  for (const c of direct) {
+    const d = digitsOnly(c);
+    if (!d) continue;
+    if (d.length === 3) return d.padStart(3, "0");
+    if (d.length > 3) return d.slice(-3).padStart(3, "0");
+  }
+  const milhar4 = pickMilhar4(prize);
+  if (milhar4 && milhar4.length === 4) return milhar4.slice(1); // ex 3033 -> 033
+  return "";
+}
+
+function pickDezenaFinal(prize) {
+  const c3 = pickCentena3(prize);
+  if (!/^\d{3}$/.test(c3)) return "";
+  return c3.slice(1);
+}
+
+function inferGrupoFromPrize(prize) {
+  const gRaw = Number(prize?.grupo ?? prize?.grupo2 ?? prize?.group ?? prize?.grupo_num);
+  if (Number.isFinite(gRaw) && gRaw >= 1 && gRaw <= 25) return gRaw;
+
+  const dz = pickDezenaFinal(prize);
+  if (!/^\d{2}$/.test(dz)) return null;
+
+  const d = Number(dz);
+  if (!Number.isFinite(d) || d < 1 || d > 100) return null;
+
+  return Math.floor((d - 1) / 4) + 1;
+}
+
+/* ========= posição robusta ========= */
+function pickPrizePositionNumber(prize) {
+  const direct = prize?.position;
+  const nDirect = direct === null || direct === undefined || direct === "" ? NaN : Number(direct);
+  if (Number.isFinite(nDirect) && nDirect > 0) return nDirect;
+
+  const candidates = [prize?.posicao, prize?.pos, prize?.colocacao, prize?.place, prize?.prizePosition];
+  for (const c of candidates) {
+    const s = String(c ?? "").trim();
+    if (!s) continue;
+    const m = s.match(/(\d{1,2})/);
+    const n = m ? Number(m[1]) : NaN;
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+  return null;
+}
+
+/* ========= chunking ========= */
+
+function splitRangeIntoChunks(fromYmd, toYmd, chunkDays = CHUNK_DAYS) {
+  const out = [];
+  if (!isYMD(fromYmd) || !isYMD(toYmd)) return out;
+  if (fromYmd > toYmd) return out;
+
+  let curFrom = fromYmd;
+  while (curFrom <= toYmd) {
+    const curTo = addDaysUTC(curFrom, chunkDays - 1);
+    const boundedTo = curTo > toYmd ? toYmd : curTo;
+    out.push({ from: curFrom, to: boundedTo });
+    const next = addDaysUTC(boundedTo, 1);
+    if (next <= curFrom) break;
+    curFrom = next;
+  }
+  return out;
+}
+
+function normalizeDrawsResult(maybe) {
+  if (Array.isArray(maybe)) return maybe;
+  if (Array.isArray(maybe?.draws)) return maybe.draws;
+  if (Array.isArray(maybe?.drawsRaw)) return maybe.drawsRaw;
+  if (Array.isArray(maybe?.data)) return maybe.data;
+  if (Array.isArray(maybe?.results)) return maybe.results;
+  return [];
+}
+
+/**
+ * ✅ Pega prizes flat vindas do service em qualquer chave comum
+ */
+function normalizePrizesArray(res) {
+  const candidates = [
+    res?.prizesAllSorted,
+    res?.prizesAll,
+    res?.prizes,
+    res?.prizeRows,
+    res?.items,
+    res?.data?.prizesAllSorted,
+    res?.data?.prizesAll,
+    res?.data?.prizes,
+  ];
+  for (const c of candidates) {
+    if (Array.isArray(c)) return c;
+  }
+  return [];
+}
+
+/**
+ * ✅ Extrai ymd/hora direto da prize (para quando draws vierem sem prizes)
+ */
+function pickPrizeYmd(prize) {
+  const candidates = [
+    prize?.dateYmd,
+    prize?.ymd,
+    prize?.date_ymd,
+    prize?.drawYmd,
+    prize?.draw_ymd,
+    prize?.date,
+    prize?.data,
+    prize?.day,
+  ];
+  for (const c of candidates) {
+    const s = String(c ?? "").trim();
+    if (isYMD(s)) return s;
+  }
+  return "";
+}
+
+function pickPrizeHour(prize) {
+  const candidates = [
+    prize?.closeHour,
+    prize?.close_hour,
+    prize?.hour,
+    prize?.horario,
+    prize?.drawHour,
+    prize?.draw_hour,
+    prize?.lotteryCloseHour,
+  ];
+  for (const c of candidates) {
+    const n = normalizeHourLike(c);
+    if (n) return n;
+  }
+  const textCandidates = [prize?.lotteryLabel, prize?.loteriaLabel, prize?.label, prize?.name, prize?.title];
+  for (const t of textCandidates) {
+    const ex = extractHourFromText(t);
+    if (ex) return ex;
+  }
+  return "";
+}
+
+/* ========= milhar palpite ========= */
+
+function digitFromKey(key) {
+  const s = String(key || "");
+  let h = 0;
+  for (let i = 0; i < s.length; i += 1) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return String(h % 10);
+}
+function dailyDigitForRow(ymd, grupo2, centena3) {
+  return digitFromKey(`${String(ymd || "")}#${String(grupo2 || "")}#${String(centena3 || "")}`);
+}
+
+/* ========= utils: concorrência ========= */
+
+async function mapWithConcurrency(items, limitN, mapper) {
+  const arr = Array.isArray(items) ? items : [];
+  const concurrency = Math.max(1, Number(limitN) || 3);
+  const results = new Array(arr.length);
+  let idx = 0;
+
+  async function worker() {
+    while (idx < arr.length) {
+      const current = idx++;
+      results[current] = await mapper(arr[current], current);
+    }
+  }
+
+  await Promise.all(Array.from({ length: Math.min(concurrency, arr.length) }, worker));
+  return results;
+}
+
+/* ========= imagem: tentar _128 ========= */
+
+function upgradeImg(src, target = 128) {
+  const s = String(src || "").trim();
+  if (!s) return "";
+  return s.replace(/_(64|96|128)\.(png|jpg|jpeg|webp)$/i, `_${target}.$2`);
+}
+
+function tryGetImg(getImgFromGrupo, grupo, size) {
+  try {
+    const v = getImgFromGrupo?.(grupo, size);
+    if (v) return String(v);
+  } catch {}
+  try {
+    const v2 = getImgFromGrupo?.(grupo);
+    if (v2) return String(v2);
+  } catch {}
+  return "";
+}
 
 export default function Centenas() {
   const LOTTERY_OPTIONS = useMemo(
@@ -359,8 +731,7 @@ export default function Centenas() {
 
           const entries = [];
 
-          // (A) caminho 1: draws vêm hidratados com prizes (quando existir)
-          const coveredKeys = new Set(); // ymd#bucket
+          // (A) caminho 1: draws já vêm hidratados com prizes
           for (const d of drawsChunk || []) {
             const ymd = pickDrawYmd(d);
             if (!ymd) continue;
@@ -371,16 +742,13 @@ export default function Centenas() {
 
             const prizes = Array.isArray(d?.prizes) ? d.prizes : null;
             if (prizes && prizes.length) {
-              const key = `${ymd}#${hourBucket || "??"}`;
-              coveredKeys.add(key);
               entries.push({ ymd, hourNorm, hourBucket, prizes });
             }
           }
 
-          // (B) caminho 2: COMPLEMENTA usando prizesFlat agrupadas por (ymd + hourBucket)
-          if (Array.isArray(prizesFlat) && prizesFlat.length) {
+          // (B) caminho 2: draws sem prizes -> usa prizesFlat agrupadas por (ymd + hourBucket)
+          if (!entries.length && Array.isArray(prizesFlat) && prizesFlat.length) {
             const map = new Map(); // key -> { ymd, hourNorm, hourBucket, prizes: [] }
-
             for (const p of prizesFlat) {
               const ymd = pickPrizeYmd(p);
               if (!ymd) continue;
@@ -398,12 +766,7 @@ export default function Centenas() {
               if (!map.has(key)) map.set(key, { ymd, hourNorm, hourBucket, prizes: [] });
               map.get(key).prizes.push(p);
             }
-
-            // adiciona SOMENTE as chaves não cobertas por draws hidratados
-            for (const [key, val] of map.entries()) {
-              if (coveredKeys.has(key)) continue;
-              if (val?.prizes?.length) entries.push(val);
-            }
+            entries.push(...Array.from(map.values()));
           }
 
           setProgress((p) => ({
