@@ -45,7 +45,8 @@ function normalizeToYMD(input) {
   if (typeof input === "object" && typeof input.toDate === "function") {
     const d = input.toDate();
     if (d instanceof Date && !Number.isNaN(d.getTime())) {
-      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+      // ✅ UTC para não "voltar um dia" por timezone
+      return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
     }
   }
 
@@ -60,13 +61,15 @@ function normalizeToYMD(input) {
 
     const d = new Date(sec * 1000);
     if (!Number.isNaN(d.getTime())) {
-      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+      // ✅ UTC para não "voltar um dia" por timezone
+      return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
     }
   }
 
   // Date
   if (input instanceof Date && !Number.isNaN(input.getTime())) {
-    return `${input.getFullYear()}-${pad2(input.getMonth() + 1)}-${pad2(input.getDate())}`;
+    // ✅ UTC para consistência total
+    return `${input.getUTCFullYear()}-${pad2(input.getUTCMonth() + 1)}-${pad2(input.getUTCDate())}`;
   }
 
   const s = String(input).trim();

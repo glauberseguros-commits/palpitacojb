@@ -112,7 +112,8 @@ function getPrizePosition(prize) {
     safeNum(prize.place) ??
     null;
 
-  if (!n || n < 1 || n > 10) return null;
+  // ✅ FIX: Alinhado com o app (posições 1..7)
+  if (!n || n < 1 || n > 7) return null;
   return n;
 }
 
@@ -131,8 +132,6 @@ function countAparicoesGlobal(drawsRawGlobal) {
 
   for (const d of draws) {
     const prizes = Array.isArray(d?.prizes) ? d.prizes : [];
-    // Conta cada prize como 1 aparição (posições normalmente 1..7)
-    // Se vier sujo, ainda assim conta o item existente (sem “chute”).
     apar += prizes.length;
   }
 
@@ -267,7 +266,6 @@ export default function KpiCards({
   const data = useMemo(() => {
     let out = baseData;
 
-    // ✅ KPI global opcional (não polui por padrão)
     if (showGlobalAparicoes) {
       out = [
         ...out,
@@ -326,7 +324,7 @@ export default function KpiCards({
           key: "draws_animal_pos",
           title: `Draws com ocorrência na posição ${pos}º${nameSuffix}`,
           value: computedAnimal.drawsComOcorrenciaNaPosicao,
-          icon: "calendar",
+          icon: "ticket",
         }
       );
     }
@@ -380,7 +378,6 @@ export default function KpiCards({
         pointerEvents: "none",
       },
 
-      // ✅ CENTRALIZA o topo
       head: {
         display: "flex",
         alignItems: "center",
@@ -401,7 +398,6 @@ export default function KpiCards({
         boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.05)",
       },
 
-      // ✅ título centralizado
       title: {
         fontSize: "clamp(13px, 0.9vw, 15px)",
         fontWeight: 850,
@@ -424,7 +420,6 @@ export default function KpiCards({
         opacity: 0.9,
       },
 
-      // ✅ CENTRALIZA o número + mantém “descer” p/ casar com banner
       numberArea: {
         display: "grid",
         alignItems: "center",
@@ -435,7 +430,6 @@ export default function KpiCards({
         transform: "translateY(6px)",
       },
 
-      // ✅ garante centralização do conteúdo interno também
       numberRow: {
         display: "flex",
         alignItems: "baseline",
@@ -527,6 +521,7 @@ export default function KpiCards({
 
       <div className="pp_kpis_wrap" style={ui.wrap}>
         {data.map((kpi, idx) => {
+          // ✅ key estável (prioriza kpi.key)
           const key = String(kpi?.key || kpi?.title || `kpi_${idx}`);
 
           return (

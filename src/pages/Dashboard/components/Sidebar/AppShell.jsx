@@ -50,6 +50,7 @@ function readSession() {
     const obj = JSON.parse(raw);
     return { ok: true, ...obj };
   } catch {
+    // fallback conservador (não quebra UI)
     return { ok: true, type: "user", plan: "FREE" };
   }
 }
@@ -58,11 +59,13 @@ function useViewport() {
   const [vw, setVw] = useState(() =>
     typeof window !== "undefined" ? window.innerWidth : 1200
   );
+
   useEffect(() => {
     const onR = () => setVw(window.innerWidth);
     window.addEventListener("resize", onR);
     return () => window.removeEventListener("resize", onR);
   }, []);
+
   return vw;
 }
 
@@ -94,19 +97,49 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
         return;
       }
 
+      // sem user -> se guest ativo, mantém preview
       if (safeReadLS(LS_GUEST_ACTIVE_KEY) === "1") {
         safeWriteLS(
           ACCOUNT_SESSION_KEY,
           JSON.stringify({ type: "guest", plan: "FREE" })
         );
         setSession(readSession());
+        return;
       }
+
+      // ✅ sem user e sem guest: limpa (evita sessão stale)
+      safeRemoveLS(ACCOUNT_SESSION_KEY);
+      setSession({ ok: false });
     });
 
     return () => unsub();
   }, []);
 
   const isGuest = session?.type === "guest";
+
+  /* ======================
+     Mobile UX: trava scroll + ESC fecha
+  ====================== */
+  useEffect(() => {
+    if (!isMobile) return;
+
+    const prevOverflow = document?.body?.style?.overflow;
+    if (sidebarOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = prevOverflow || "";
+    }
+
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") setSidebarOpen(false);
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = prevOverflow || "";
+    };
+  }, [isMobile, sidebarOpen]);
 
   /* ======================
      Navegação
@@ -231,6 +264,7 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
       paddingTop: 10,
       alignItems: "center",
       overflow: "auto",
+      flex: 1, // ✅ permite scroll sem “empurrar” brand
     };
 
     const btn = (isActive) => ({
@@ -263,7 +297,6 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
       ? {
           position: "sticky",
           top: 10,
-          left: 10,
           zIndex: 20,
           margin: "10px 0 0 10px",
           width: 42,
@@ -279,15 +312,20 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
         }
       : { display: "none" };
 
-    const mainInner = isMobile
-      ? {
-          minWidth: 0,
-        }
-      : {
-          minWidth: 0,
-        };
+    const mainInner = { minWidth: 0 };
 
-    return { shell, sidebar, overlay, brand, plan, nav, btn, main, mobileMenuBtn, mainInner };
+    return {
+      shell,
+      sidebar,
+      overlay,
+      brand,
+      plan,
+      nav,
+      btn,
+      main,
+      mobileMenuBtn,
+      mainInner,
+    };
   }, [isMobile, sidebarOpen]);
 
   // ✅ MENU
@@ -311,28 +349,36 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
         aria-hidden="true"
       />
 
-      <aside style={UI.sidebar}>
+      <aside style={UI.sidebar} aria-label="Menu lateral">
         <div style={UI.brand}>
           <MiniLogo />
           <div style={UI.plan}>{isGuest ? "PREVIEW" : "FREE"}</div>
         </div>
 
-        <nav style={UI.nav}>
-          {menu.map((m) => (
-            <button
-              key={m.key}
-              onClick={() => handleNavigate(m.key)}
-              title={m.title}
-              style={UI.btn(active === m.key)}
-            >
-              <Icon name={m.icon} />
-            </button>
-          ))}
+        <nav style={UI.nav} role="navigation" aria-label="Navegação principal">
+          {menu.map((m) => {
+            const isActive = active === m.key;
+            return (
+              <button
+                key={m.key}
+                onClick={() => handleNavigate(m.key)}
+                title={m.title}
+                style={UI.btn(isActive)}
+                aria-current={isActive ? "page" : undefined}
+                aria-label={m.title}
+                type="button"
+              >
+                <Icon name={m.icon} />
+              </button>
+            );
+          })}
 
           <button
             onClick={() => handleNavigate("__LOGOUT__")}
             title={isGuest ? "Sair do Preview" : "Sair"}
             style={UI.btn(false)}
+            aria-label={isGuest ? "Sair do Preview" : "Sair"}
+            type="button"
           >
             <Icon name="logout" />
           </button>

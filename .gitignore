@@ -74,3 +74,6 @@ tmp_patch_*.js
 
 src/pages/Top3/Top3View.jsx
 
+
+.vercel
+.env*.local

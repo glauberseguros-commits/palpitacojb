@@ -84,8 +84,18 @@ export default function Icon({ name = "home" }) {
           strokeWidth="2"
           strokeLinecap="round"
         />
-        <path d="M12 11v4" stroke={stroke} strokeWidth="2" strokeLinecap="round" />
-        <path d="M8 21h8M10 15h4" stroke={stroke} strokeWidth="2" strokeLinecap="round" />
+        <path
+          d="M12 11v4"
+          stroke={stroke}
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+        <path
+          d="M8 21h8M10 15h4"
+          stroke={stroke}
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
       </svg>
     );
   }
@@ -112,12 +122,13 @@ export default function Icon({ name = "home" }) {
   if (name === "search") {
     return (
       <svg {...common}>
+        <path d="M11 19a8 8 0 1 0-8-8 8 8 0 0 0 8 8Z" stroke={stroke} strokeWidth="2" />
         <path
-          d="M11 19a8 8 0 1 0-8-8 8 8 0 0 0 8 8Z"
-          stroke={stroke}
+          d="M21 21l-4.3-4.3"
+          stroke={gold}
           strokeWidth="2"
+          strokeLinecap="round"
         />
-        <path d="M21 21l-4.3-4.3" stroke={gold} strokeWidth="2" strokeLinecap="round" />
       </svg>
     );
   }
@@ -164,6 +175,18 @@ export default function Icon({ name = "home" }) {
     );
   }
 
+  // ✅ NOVO: hash (#) — usado em "Centenas"
+  if (name === "hash") {
+    return (
+      <svg {...common}>
+        <path d="M9 3L7 21" stroke={stroke} strokeWidth="2" strokeLinecap="round" />
+        <path d="M17 3l-2 18" stroke={stroke} strokeWidth="2" strokeLinecap="round" />
+        <path d="M5 8h16" stroke={gold} strokeWidth="2" strokeLinecap="round" />
+        <path d="M3 16h16" stroke={gold} strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    );
+  }
+
   if (name === "back") {
     return (
       <svg {...common}>
@@ -200,10 +223,11 @@ export default function Icon({ name = "home" }) {
     );
   }
 
+  // fallback
   return (
     <svg {...common}>
-      <path d="M12 2v20" stroke={stroke} strokeWidth="2" />
-      <path d="M2 12h20" stroke={gold} strokeWidth="2" />
+      <path d="M12 2v20" stroke={stroke} strokeWidth="2" strokeLinecap="round" />
+      <path d="M2 12h20" stroke={gold} strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }

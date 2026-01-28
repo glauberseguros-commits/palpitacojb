@@ -364,10 +364,7 @@ export default function FiltersBar({
       border: `1px solid ${PP.strokeStrong}`,
       borderRadius: PP.rCard,
       background: `linear-gradient(180deg, ${PP.surface}, ${PP.surface2})`,
-
-      // ✅ compactado
       padding: 12,
-
       boxShadow: PP.shadowGlow,
       overflow: "hidden",
       minWidth: 0,
@@ -376,10 +373,7 @@ export default function FiltersBar({
     grid: {
       display: "grid",
       gridTemplateColumns: "repeat(12, minmax(0, 1fr))",
-
-      // ✅ compactado
       gap: 10,
-
       alignItems: "end",
       minWidth: 0,
     },
@@ -527,7 +521,7 @@ export default function FiltersBar({
         return;
       }
 
-      // ✅ Troca loteria: se FEDERAL, força horário = 20h (e reseta filtros inconsistentes)
+      // ✅ Troca loteria: se FEDERAL, força horário = 20h
       if (name === "loteria") {
         const nextLot = normalizeLoteriaInput(next);
         onChange("loteria", nextLot);
@@ -535,7 +529,6 @@ export default function FiltersBar({
         if (nextLot === "FEDERAL") {
           onChange("horario", "20h");
         } else {
-          // volta para RJ: deixa horário em "Todos" se estava 20h
           const curH = String(filters?.horario ?? "Todos");
           if (curH === "20h") onChange("horario", "Todos");
         }
@@ -600,6 +593,15 @@ export default function FiltersBar({
 
     const finalDisabled = !!disabledAll || !!disabled;
 
+    const block = (e) => {
+      if (!finalDisabled) return;
+      try {
+        e?.preventDefault?.();
+        e?.stopPropagation?.();
+      } catch {}
+      if (typeof onBlocked === "function") onBlocked(name);
+    };
+
     return (
       <div className={wrapClassName} style={{ ...wrapStyle, minWidth: 0 }}>
         <div style={ui.item}>
@@ -610,7 +612,14 @@ export default function FiltersBar({
           <div style={ui.selectWrap}>
             <select
               value={normalizedValue}
-              disabled={finalDisabled}
+              aria-disabled={finalDisabled ? "true" : "false"}
+              onMouseDownCapture={block} // ✅ impede abrir
+              onClickCapture={block}
+              onKeyDownCapture={(e) => {
+                if (!finalDisabled) return;
+                // Enter / Space / ArrowDown / ArrowUp / Home / End etc.
+                block(e);
+              }}
               onChange={(e) => handleChange(name, e.target.value)}
               style={{
                 ...ui.select,

@@ -23,9 +23,9 @@ import React, { useCallback, useMemo, useRef, useState } from "react";
  * - Após clicar, o chip dá blur para não ficar marcado.
  * - Seleção visual fica SOMENTE pelo chipActive.
  *
- * ✅ DEMO safe (novo):
+ * ✅ DEMO safe:
  * - prop `disabled`: trava inputs / slider / chips / calendário
- * - prop `onBlocked`: callback quando tenta interagir bloqueado
+ * - prop `onBlocked(kind)`: callback quando tenta interagir bloqueado
  */
 
 function pad2(n) {
@@ -135,7 +135,7 @@ export default function DateRangeControl({
   onToggleYear = () => {},
   onClearYears = () => {},
 
-  // ✅ DEMO safe (novo)
+  // ✅ DEMO safe
   disabled = false,
   onBlocked = null,
 }) {
@@ -151,6 +151,19 @@ export default function DateRangeControl({
 
   const rawFrom = isISODate(value?.from) ? value.from : "";
   const rawTo = isISODate(value?.to) ? value.to : "";
+
+  const fireBlocked = useCallback(
+    (kind, e) => {
+      if (!disabled) return false;
+      try {
+        e?.preventDefault?.();
+        e?.stopPropagation?.();
+      } catch {}
+      if (typeof onBlocked === "function") onBlocked(kind);
+      return true;
+    },
+    [disabled, onBlocked]
+  );
 
   // fallback visual quando bounds existem (sem auto-commit)
   const viewFrom = useMemo(() => {
@@ -221,7 +234,6 @@ export default function DateRangeControl({
 
   const openPickerByRef = useCallback(
     (ref) => {
-      // ✅ DEMO safe
       if (disabled) {
         if (typeof onBlocked === "function") onBlocked("datePicker");
         return;
@@ -250,7 +262,6 @@ export default function DateRangeControl({
   // commit que funciona COM ou SEM bounds
   const commit = useCallback(
     (nextFrom, nextTo) => {
-      // ✅ DEMO safe
       if (disabled) {
         if (typeof onBlocked === "function") onBlocked("dateRange");
         return;
@@ -286,6 +297,10 @@ export default function DateRangeControl({
   const onInputTo = (e) => commit(normalized.from, e.target.value);
 
   const onSliderFrom = (e) => {
+    if (disabled) {
+      if (typeof onBlocked === "function") onBlocked("slider");
+      return;
+    }
     if (!boundsReady) return;
     const nextFrom = Number(e.target.value);
     const safeFrom = clamp(nextFrom, 0, toOffset);
@@ -293,6 +308,10 @@ export default function DateRangeControl({
   };
 
   const onSliderTo = (e) => {
+    if (disabled) {
+      if (typeof onBlocked === "function") onBlocked("slider");
+      return;
+    }
     if (!boundsReady) return;
     const nextTo = Number(e.target.value);
     const safeTo = clamp(nextTo, fromOffset, totalDays);
@@ -323,8 +342,8 @@ export default function DateRangeControl({
       display: "flex",
       alignItems: "flex-start",
       justifyContent: "flex-start",
-      opacity: disabled ? 0.72 : 1, // ✅ DEMO safe
-      filter: disabled ? "grayscale(0.18)" : "none", // ✅ DEMO safe
+      opacity: disabled ? 0.72 : 1,
+      filter: disabled ? "grayscale(0.18)" : "none",
     },
 
     // ✅ grid que estica e ocupa 100%
@@ -336,7 +355,7 @@ export default function DateRangeControl({
       gridAutoColumns: "minmax(76px, 1fr)",
       gap: 10,
       alignItems: "center",
-      pointerEvents: disabled ? "none" : "auto", // ✅ DEMO safe
+      // ❌ NÃO usar pointerEvents:none aqui (senão não chama onBlocked)
     },
 
     chip: {
@@ -348,13 +367,14 @@ export default function DateRangeControl({
       fontWeight: 800,
       fontSize: 12,
       letterSpacing: 0.15,
-      cursor: "pointer",
+      cursor: disabled ? "not-allowed" : "pointer",
       userSelect: "none",
       width: "100%",
       textAlign: "center",
       whiteSpace: "nowrap",
       transition: "transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease",
       outline: "none",
+      opacity: disabled ? 0.72 : 1,
     },
 
     chipActive: {
@@ -381,8 +401,8 @@ export default function DateRangeControl({
       minWidth: 0,
       position: "relative",
       zIndex: 10,
-      opacity: disabled ? 0.72 : 1, // ✅ DEMO safe
-      filter: disabled ? "grayscale(0.18)" : "none", // ✅ DEMO safe
+      opacity: disabled ? 0.72 : 1,
+      filter: disabled ? "grayscale(0.18)" : "none",
     },
 
     inputWrap: { position: "relative", minWidth: 0, zIndex: 11 },
@@ -401,15 +421,11 @@ export default function DateRangeControl({
       minWidth: 0,
       position: "relative",
       zIndex: 12,
-      cursor: "pointer",
+      cursor: disabled ? "not-allowed" : "pointer",
       boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.28)",
       transition: "border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease",
-    },
-
-    inputDisabled: {
-      opacity: 0.68,
-      cursor: "not-allowed",
-      filter: "grayscale(0.18)",
+      opacity: disabled ? 0.68 : 1,
+      filter: disabled ? "grayscale(0.18)" : "none",
     },
 
     iconBtn: {
@@ -426,17 +442,13 @@ export default function DateRangeControl({
       background: "rgba(0,0,0,0.35)",
       color: "rgba(255,255,255,0.92)",
       boxShadow: "0 0 0 1px rgba(0,0,0,0.35), 0 10px 20px rgba(0,0,0,0.45)",
-      cursor: "pointer",
+      cursor: disabled ? "not-allowed" : "pointer",
       zIndex: 20,
       padding: 0,
       transition:
         "transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease, color 160ms ease",
-    },
-
-    iconBtnDisabled: {
-      cursor: "not-allowed",
-      opacity: 0.6,
-      filter: "grayscale(0.18)",
+      opacity: disabled ? 0.6 : 1,
+      filter: disabled ? "grayscale(0.18)" : "none",
     },
 
     sliderWrap: {
@@ -444,8 +456,8 @@ export default function DateRangeControl({
       height: 28,
       minWidth: 0,
       zIndex: 1,
-      opacity: boundsReady && !disabled ? 1 : 0.35, // ✅ DEMO safe
-      pointerEvents: boundsReady && !disabled ? "auto" : "none", // ✅ DEMO safe
+      opacity: boundsReady && !disabled ? 1 : 0.35,
+      // ❌ NÃO usar pointerEvents:none (senão não chama onBlocked)
     },
 
     track: {
@@ -482,7 +494,8 @@ export default function DateRangeControl({
       WebkitAppearance: "none",
       outline: "none",
       margin: 0,
-      pointerEvents: "auto",
+      pointerEvents: boundsReady ? "auto" : "none",
+      cursor: disabled ? "not-allowed" : "pointer",
     },
 
     styleTag: `
@@ -579,32 +592,24 @@ export default function DateRangeControl({
 
   const handleClearYears = useCallback(
     (e) => {
-      // ✅ DEMO safe
-      if (disabled) {
-        if (typeof onBlocked === "function") onBlocked("years");
-        return;
-      }
+      if (fireBlocked("years", e)) return;
       try {
         e?.currentTarget?.blur?.();
       } catch {}
       onClearYears();
     },
-    [disabled, onBlocked, onClearYears]
+    [fireBlocked, onClearYears]
   );
 
   const handleToggleYear = useCallback(
     (y, e) => {
-      // ✅ DEMO safe
-      if (disabled) {
-        if (typeof onBlocked === "function") onBlocked("years");
-        return;
-      }
+      if (fireBlocked("years", e)) return;
       try {
         e?.currentTarget?.blur?.();
       } catch {}
       onToggleYear(y);
     },
-    [disabled, onBlocked, onToggleYear]
+    [fireBlocked, onToggleYear]
   );
 
   const renderTop = () => {
@@ -651,7 +656,10 @@ export default function DateRangeControl({
     );
   };
 
-  const rangeDisabled = disabled || !boundsReady;
+  // ✅ Em modo demo: NÃO usar disabled nos inputs (senão não dá pra detectar tentativa).
+  // Vamos bloquear por wrapper capture + handler checks.
+  const inputIsInteractable = !disabled;
+  const sliderIsInteractable = boundsReady && !disabled;
 
   return (
     <div className="pp_range" style={ui.wrap}>
@@ -660,7 +668,15 @@ export default function DateRangeControl({
       {renderTop()}
 
       <div className="pp_range_row" style={ui.row}>
-        <div style={ui.inputWrap}>
+        <div
+          style={ui.inputWrap}
+          onMouseDownCapture={(e) => {
+            if (!inputIsInteractable) fireBlocked("datePicker", e);
+          }}
+          onClickCapture={(e) => {
+            if (!inputIsInteractable) fireBlocked("datePicker", e);
+          }}
+        >
           <input
             ref={fromRef}
             type="date"
@@ -668,26 +684,38 @@ export default function DateRangeControl({
             min={minISO || undefined}
             max={maxISO || undefined}
             onChange={onInputFrom}
-            style={{ ...ui.input, ...(disabled ? ui.inputDisabled : null) }} // ✅ DEMO safe
+            style={ui.input}
             aria-label="Data inicial"
-            disabled={disabled} // ✅ DEMO safe
+            disabled={false}
+            readOnly={disabled}
           />
 
           <button
             type="button"
             className="pp_calbtn"
-            style={{ ...ui.iconBtn, ...(disabled ? ui.iconBtnDisabled : null) }} // ✅ DEMO safe
+            style={ui.iconBtn}
             aria-label="Abrir calendário (data inicial)"
             onMouseDown={(e) => e.preventDefault()}
-            onClick={() => openPickerByRef(fromRef)}
+            onClick={(e) => {
+              if (fireBlocked("datePicker", e)) return;
+              openPickerByRef(fromRef);
+            }}
             title={disabled ? "Bloqueado no modo demonstração" : "Abrir calendário"}
-            disabled={disabled} // ✅ DEMO safe
+            disabled={false}
           >
             <CalendarIcon />
           </button>
         </div>
 
-        <div style={ui.inputWrap}>
+        <div
+          style={ui.inputWrap}
+          onMouseDownCapture={(e) => {
+            if (!inputIsInteractable) fireBlocked("datePicker", e);
+          }}
+          onClickCapture={(e) => {
+            if (!inputIsInteractable) fireBlocked("datePicker", e);
+          }}
+        >
           <input
             ref={toRef}
             type="date"
@@ -695,27 +723,39 @@ export default function DateRangeControl({
             min={minISO || undefined}
             max={maxISO || undefined}
             onChange={onInputTo}
-            style={{ ...ui.input, ...(disabled ? ui.inputDisabled : null) }} // ✅ DEMO safe
+            style={ui.input}
             aria-label="Data final"
-            disabled={disabled} // ✅ DEMO safe
+            disabled={false}
+            readOnly={disabled}
           />
 
           <button
             type="button"
             className="pp_calbtn"
-            style={{ ...ui.iconBtn, ...(disabled ? ui.iconBtnDisabled : null) }} // ✅ DEMO safe
+            style={ui.iconBtn}
             aria-label="Abrir calendário (data final)"
             onMouseDown={(e) => e.preventDefault()}
-            onClick={() => openPickerByRef(toRef)}
+            onClick={(e) => {
+              if (fireBlocked("datePicker", e)) return;
+              openPickerByRef(toRef);
+            }}
             title={disabled ? "Bloqueado no modo demonstração" : "Abrir calendário"}
-            disabled={disabled} // ✅ DEMO safe
+            disabled={false}
           >
             <CalendarIcon />
           </button>
         </div>
       </div>
 
-      <div style={ui.sliderWrap}>
+      <div
+        style={ui.sliderWrap}
+        onMouseDownCapture={(e) => {
+          if (!sliderIsInteractable) fireBlocked("slider", e);
+        }}
+        onTouchStartCapture={(e) => {
+          if (!sliderIsInteractable) fireBlocked("slider", e);
+        }}
+      >
         <div style={ui.track} />
         <div style={ui.highlight} />
 
@@ -725,13 +765,22 @@ export default function DateRangeControl({
           max={totalDays}
           value={fromOffset}
           onChange={onSliderFrom}
-          onPointerDown={() => setActiveThumb("from")}
-          onMouseDown={() => setActiveThumb("from")}
-          onTouchStart={() => setActiveThumb("from")}
+          onPointerDown={(e) => {
+            if (fireBlocked("slider", e)) return;
+            setActiveThumb("from");
+          }}
+          onMouseDown={(e) => {
+            if (fireBlocked("slider", e)) return;
+            setActiveThumb("from");
+          }}
+          onTouchStart={(e) => {
+            if (fireBlocked("slider", e)) return;
+            setActiveThumb("from");
+          }}
           onPointerUp={() => setActiveThumb(null)}
           onMouseUp={() => setActiveThumb(null)}
           onTouchEnd={() => setActiveThumb(null)}
-          disabled={rangeDisabled}
+          disabled={false}
           style={{ ...ui.slider, zIndex: zFrom }}
           aria-label="Ajustar data inicial"
         />
@@ -742,13 +791,22 @@ export default function DateRangeControl({
           max={totalDays}
           value={toOffset}
           onChange={onSliderTo}
-          onPointerDown={() => setActiveThumb("to")}
-          onMouseDown={() => setActiveThumb("to")}
-          onTouchStart={() => setActiveThumb("to")}
+          onPointerDown={(e) => {
+            if (fireBlocked("slider", e)) return;
+            setActiveThumb("to");
+          }}
+          onMouseDown={(e) => {
+            if (fireBlocked("slider", e)) return;
+            setActiveThumb("to");
+          }}
+          onTouchStart={(e) => {
+            if (fireBlocked("slider", e)) return;
+            setActiveThumb("to");
+          }}
           onPointerUp={() => setActiveThumb(null)}
           onMouseUp={() => setActiveThumb(null)}
           onTouchEnd={() => setActiveThumb(null)}
-          disabled={rangeDisabled}
+          disabled={false}
           style={{ ...ui.slider, zIndex: zTo }}
           aria-label="Ajustar data final"
         />
