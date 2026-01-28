@@ -1,5 +1,5 @@
 // src/pages/Late/Late.jsx
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import {
   getKingBoundsByUf,
   getKingResultsByDate,
@@ -13,7 +13,7 @@ import {
 /**
  * Late (Atrasados) — Premium
  *
- * ✅ Agora 100% em cima da SUA base:
+ * ✅ 100% em cima da SUA base:
  * - Usa getKingLateByRange() (varre histórico interno com prizes)
  * - NÃO chama nada externo
  *
@@ -75,6 +75,10 @@ function sortPTBR(a, b) {
   return String(a).localeCompare(String(b), "pt-BR", { sensitivity: "base" });
 }
 
+/**
+ * Normaliza entradas como:
+ * "09h" / "09HS" / "9" / "09:10" -> "09:00" ou "09:10"
+ */
 function normalizeHourLike(value) {
   const s0 = String(value ?? "").trim();
   if (!s0) return "";
@@ -92,6 +96,9 @@ function normalizeHourLike(value) {
   return s0.trim();
 }
 
+/**
+ * Converte "09:00" -> 540
+ */
 function hourToMinutes(hhmm) {
   const s = normalizeHourLike(hhmm);
   const m = String(s).match(/^(\d{2}):(\d{2})$/);
@@ -103,21 +110,46 @@ function hourToMinutes(hhmm) {
 }
 
 /**
+ * Converte um label de loteria (closeHour) pra bucket "09h"
+ * Aceita "09:00" / "09h" / "09HS" / "9" etc.
+ */
+function toHourBucket(value) {
+  const hhmm = normalizeHourLike(value);
+  const m = String(hhmm).match(/^(\d{2}):/);
+  if (!m) return null;
+  return `${m[1]}h`;
+}
+
+/**
+ * ✅ Extrai array de draws de qualquer retorno comum do service
+ */
+function unwrapDraws(maybe) {
+  if (Array.isArray(maybe)) return maybe;
+  if (maybe && typeof maybe === "object") {
+    if (Array.isArray(maybe.drawsRaw)) return maybe.drawsRaw;
+    if (Array.isArray(maybe.draws)) return maybe.draws;
+    if (Array.isArray(maybe.rows)) return maybe.rows;
+    if (Array.isArray(maybe.data)) return maybe.data;
+  }
+  return [];
+}
+
+/**
  * ✅ Pega a maior close_hour existente em um conjunto de draws
  * Retorna { ymd, closeHour }.
  */
-function pickLatestCloseHour(draws) {
-  const arr = Array.isArray(draws) ? draws : [];
+function pickLatestCloseHour(drawsLike) {
+  const arr = unwrapDraws(drawsLike);
   let best = null;
   let bestMin = -1;
 
   for (const d of arr) {
-    const ch = normalizeHourLike(d?.close_hour || d?.closeHour || "");
+    const ch = normalizeHourLike(d?.close_hour || d?.closeHour || d?.hour || d?.hora || "");
     const min = hourToMinutes(ch);
     if (min == null) continue;
     if (min > bestMin) {
       bestMin = min;
-      best = { ymd: d?.ymd || "", closeHour: ch || "" };
+      best = { ymd: d?.ymd || d?.date || "", closeHour: ch || "" };
     }
   }
 
@@ -126,7 +158,6 @@ function pickLatestCloseHour(draws) {
 
 // escolhe "mais recente" entre (ymd + closeHour)
 function isMoreRecent(a, b) {
-  // a/b: { lastYmd, lastCloseHour }
   const ay = String(a?.lastYmd || "");
   const by = String(b?.lastYmd || "");
   if (ay && by && ay !== by) return ay > by;
@@ -135,7 +166,6 @@ function isMoreRecent(a, b) {
   const bm = hourToMinutes(b?.lastCloseHour || "");
   if (am != null && bm != null && am !== bm) return am > bm;
 
-  // se só um tem data, ele é mais recente
   if (ay && !by) return true;
   if (!ay && by) return false;
 
@@ -172,9 +202,7 @@ function mergeLateLists(lists, baseYmd) {
   for (let g = 1; g <= 25; g += 1) {
     const rec = byGrupo.get(g) || { grupo: g, lastYmd: null, lastCloseHour: "" };
     const lastYmd = rec?.lastYmd || null;
-    const lastCloseHour = rec?.lastCloseHour
-      ? normalizeHourLike(rec.lastCloseHour)
-      : "";
+    const lastCloseHour = rec?.lastCloseHour ? normalizeHourLike(rec.lastCloseHour) : "";
     const daysLate = lastYmd ? diffDaysUTC(lastYmd, baseYmd) : null;
 
     out.push({
@@ -201,7 +229,6 @@ function mergeLateLists(lists, baseYmd) {
     return a.grupo - b.grupo;
   });
 
-  // adiciona posição (1..25)
   return out.map((r, idx) => ({ ...r, pos: idx + 1 }));
 }
 
@@ -212,12 +239,12 @@ export default function Late() {
   const LOTTERY_OPTIONS = useMemo(
     () => [
       { id: "ALL", label: "Todas as loterias", closeHour: null },
-      { id: "09", label: "LT PT RIO 09HS", closeHour: "09:00" },
-      { id: "11", label: "LT PT RIO 11HS", closeHour: "11:00" },
-      { id: "14", label: "LT PT RIO 14HS", closeHour: "14:00" },
-      { id: "16", label: "LT PT RIO 16HS", closeHour: "16:00" },
-      { id: "18", label: "LT PT RIO 18HS", closeHour: "18:00" },
-      { id: "21", label: "LT PT RIO 21HS", closeHour: "21:00" },
+      { id: "09", label: "LT PT RIO 09HS", closeHour: "09h" },
+      { id: "11", label: "LT PT RIO 11HS", closeHour: "11h" },
+      { id: "14", label: "LT PT RIO 14HS", closeHour: "14h" },
+      { id: "16", label: "LT PT RIO 16HS", closeHour: "16h" },
+      { id: "18", label: "LT PT RIO 18HS", closeHour: "18h" },
+      { id: "21", label: "LT PT RIO 21HS", closeHour: "21h" },
     ],
     []
   );
@@ -256,19 +283,16 @@ export default function Late() {
   const abortedRef = useRef(false);
   const pollRef = useRef(null);
 
-  const getAnimalLabel = useMemo(() => getAnimalLabelFn, []);
-  const getImgFromGrupo = useMemo(() => getImgFromGrupoFn, []);
-
   const selectedLottery = useMemo(() => {
-    return (
-      LOTTERY_OPTIONS.find((x) => x.id === lotteryOptId) || LOTTERY_OPTIONS[0]
-    );
+    return LOTTERY_OPTIONS.find((x) => x.id === lotteryOptId) || LOTTERY_OPTIONS[0];
   }, [lotteryOptId, LOTTERY_OPTIONS]);
 
-  const selectedCloseHour = useMemo(() => {
-    return selectedLottery?.closeHour
-      ? normalizeHourLike(selectedLottery.closeHour)
-      : null;
+  // ✅ bucket "09h" etc (preferível pra bater na base)
+  const selectedCloseHourBucket = useMemo(() => {
+    const raw = selectedLottery?.closeHour;
+    if (!raw) return null;
+    // se já veio "09h", ótimo; se vier "09:00" converte
+    return String(raw).includes("h") ? String(raw).trim() : toHourBucket(raw);
   }, [selectedLottery]);
 
   const prizePositions = useMemo(() => {
@@ -280,27 +304,63 @@ export default function Late() {
 
   const boundsReady = !!(bounds?.minYmd && bounds?.maxYmd);
 
+  // ✅ label e img robustos (assinam variações)
+  const safeGetAnimalLabel = useCallback((grupoNum) => {
+    const g = Number(grupoNum);
+    if (!Number.isFinite(g)) return "";
+    try {
+      if (typeof getAnimalLabelFn === "function") {
+        const a1 = getAnimalLabelFn({ grupo: g, animal: "" });
+        const s1 = String(a1 ?? "").trim();
+        if (s1) return s1;
+      }
+    } catch {}
+    try {
+      if (typeof getAnimalLabelFn === "function") {
+        const a2 = getAnimalLabelFn(g);
+        const s2 = String(a2 ?? "").trim();
+        if (s2) return s2;
+      }
+    } catch {}
+    return "";
+  }, []);
+
+  const safeGetImg = useCallback((grupoNum) => {
+    const g = Number(grupoNum);
+    if (!Number.isFinite(g)) return "";
+    try {
+      if (typeof getImgFromGrupoFn === "function") {
+        const c128 = String(getImgFromGrupoFn(g, 128) || "").trim();
+        if (c128) return c128;
+        const c96 = String(getImgFromGrupoFn(g, 96) || "").trim();
+        if (c96) return c96;
+        const c64 = String(getImgFromGrupoFn(g, 64) || "").trim();
+        if (c64) return c64;
+        const base = String(getImgFromGrupoFn(g) || "").trim();
+        if (base) return base;
+      }
+    } catch {}
+    return "";
+  }, []);
+
   /**
    * ✅ ÚLTIMO SORTEIO IMPORTADO:
    * sempre calcula por (maxYmd + maior close_hour do dia), sem depender do prizeMode/lottery selecionada.
-   * (pra não “sumir” 21:00/18:00 ou criar falsa ausência)
    */
   async function fetchLastImportedFromMaxYmd(maxYmd) {
     if (!maxYmd) return { ymd: "", closeHour: "" };
 
-    // Observação: getKingResultsByDate sempre hidrata prizes, mas aqui o dia tem poucos draws (custo ok).
-    // Mantemos positions=[1] fixo só para garantir consistência, sem amarrar na UI.
-    const dayDraws = await getKingResultsByDate({
+    const dayResult = await getKingResultsByDate({
       uf: UF_CODE,
       date: maxYmd,
       closeHour: null,
       closeHourBucket: null,
-      positions: [1],
+      positions: [1], // leve, só pra “forçar” consistência se o service exigir positions
     });
 
-    const latest = pickLatestCloseHour(dayDraws);
+    const latest = pickLatestCloseHour(dayResult);
     if (latest?.ymd && latest?.closeHour) {
-      return { ymd: latest.ymd, closeHour: latest.closeHour };
+      return { ymd: String(latest.ymd || maxYmd), closeHour: String(latest.closeHour || "") };
     }
     return { ymd: maxYmd, closeHour: "" };
   }
@@ -329,32 +389,20 @@ export default function Late() {
     }
 
     if (targetYmd < minYmd)
-      return {
-        effective: minYmd,
-        note: `Data fora do bounds. Usando ${ymdToBR(minYmd)}.`,
-      };
+      return { effective: minYmd, note: `Data fora do bounds. Usando ${ymdToBR(minYmd)}.` };
     if (targetYmd > maxYmd)
-      return {
-        effective: maxYmd,
-        note: `Data fora do bounds. Usando ${ymdToBR(maxYmd)}.`,
-      };
+      return { effective: maxYmd, note: `Data fora do bounds. Usando ${ymdToBR(maxYmd)}.` };
 
     return { effective: targetYmd, note: "" };
   }
 
   async function buildLateList({ targetYmd, effBounds }) {
-    const { effective: safeTarget, note } = getEffectiveTargetYmd(
-      targetYmd,
-      effBounds
-    );
+    const { effective: safeTarget, note } = getEffectiveTargetYmd(targetYmd, effBounds);
     if (note) setError(note);
 
     const minYmd = effBounds?.minYmd || null;
     if (!minYmd) {
-      return {
-        rows: [],
-        meta: { effectiveTargetYmd: safeTarget },
-      };
+      return { rows: [], meta: { effectiveTargetYmd: safeTarget } };
     }
 
     // 1) Consulta atrasados por posição (1 ou várias) via SUA base
@@ -363,16 +411,17 @@ export default function Late() {
       const list = await getKingLateByRange({
         uf: UF_CODE,
         dateFrom: minYmd,
-        dateTo: safeTarget, // não olha além da data alvo
+        dateTo: safeTarget,
         baseDate: safeTarget,
         prizePosition: pos,
-        closeHour: selectedCloseHour || null,
-        closeHourBucket: null,
-        // lotteries: null (evita filtrar fora por falta de lottery_code nos docs)
+
+        // ✅ aqui é o pulo do gato: filtra por bucket "09h" etc
+        closeHour: null,
+        closeHourBucket: selectedCloseHourBucket || null,
+
         chunkDays: 15,
       });
 
-      // normaliza para o formato da UI
       const mapped = (Array.isArray(list) ? list : []).map((r) => ({
         grupo: Number(r?.grupo),
         lastYmd: r?.lastYmd || null,
@@ -388,15 +437,9 @@ export default function Late() {
     // 3) Injeta label/imagem
     const out = merged.map((r) => {
       const g = Number(r?.grupo);
-      const animalLabel = (getAnimalLabel && getAnimalLabel(g)) || "";
-      const img = (getImgFromGrupo && getImgFromGrupo(g)) || "";
-      return {
-        ...r,
-        grupo: g,
-        grupo2: toGrupo2(g),
-        animal: animalLabel,
-        img,
-      };
+      const animalLabel = safeGetAnimalLabel(g) || "";
+      const img = safeGetImg(g) || "";
+      return { ...r, grupo: g, grupo2: toGrupo2(g), animal: animalLabel, img };
     });
 
     // 4) desempate com animal (estável e bonito)
@@ -417,47 +460,40 @@ export default function Late() {
       return a.grupo - b.grupo;
     });
 
-    // renumera posição
     const finalRows = out.map((r, idx) => ({ ...r, pos: idx + 1 }));
 
-    return {
-      rows: finalRows,
-      meta: { effectiveTargetYmd: safeTarget },
-    };
+    return { rows: finalRows, meta: { effectiveTargetYmd: safeTarget } };
   }
 
-  async function refresh({ silent = false } = {}) {
-    abortedRef.current = false;
-    if (!silent) {
-      setLoading(true);
-      setError("");
-    }
-
-    try {
-      if (kind !== "grupo") {
-        setError(
-          "Por enquanto, o modo ativo é apenas: Grupo (os demais entram na próxima etapa)."
-        );
-        setKind("grupo");
+  const refresh = useCallback(
+    async ({ silent = false } = {}) => {
+      abortedRef.current = false;
+      if (!silent) {
+        setLoading(true);
+        setError("");
       }
 
-      const effBounds = await refreshBoundsAndLastDraw();
+      try {
+        if (kind !== "grupo") {
+          setError("Por enquanto, o modo ativo é apenas: Grupo (os demais entram na próxima etapa).");
+          setKind("grupo");
+        }
 
-      const result = await buildLateList({
-        targetYmd: dateYmd,
-        effBounds,
-      });
-      if (abortedRef.current) return;
+        const effBounds = await refreshBoundsAndLastDraw();
+        const result = await buildLateList({ targetYmd: dateYmd, effBounds });
+        if (abortedRef.current) return;
 
-      setRows(result.rows);
-      setMeta({ effectiveTargetYmd: result.meta.effectiveTargetYmd });
-    } catch (e) {
-      if (abortedRef.current) return;
-      if (!silent) setError(String(e?.message || e));
-    } finally {
-      if (!abortedRef.current && !silent) setLoading(false);
-    }
-  }
+        setRows(result.rows);
+        setMeta({ effectiveTargetYmd: result.meta.effectiveTargetYmd });
+      } catch (e) {
+        if (abortedRef.current) return;
+        if (!silent) setError(String(e?.message || e));
+      } finally {
+        if (!abortedRef.current && !silent) setLoading(false);
+      }
+    },
+    [dateYmd, kind, prizePositions, selectedCloseHourBucket] // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
   // primeiro load
   useEffect(() => {
@@ -500,7 +536,6 @@ export default function Late() {
         const maxYmd = b?.maxYmd || "";
         if (!maxYmd) return;
 
-        // ✅ sempre calcula lastImported do maxYmd (independente de UI)
         const next = await fetchLastImportedFromMaxYmd(maxYmd);
 
         const changed =
@@ -510,7 +545,6 @@ export default function Late() {
         if (changed) {
           setLastImported(next);
 
-          // ✅ também atualiza bounds no estado (mantém min/max alinhados)
           setBounds((old) => ({
             minYmd: old?.minYmd ?? b?.minYmd ?? null,
             maxYmd: b?.maxYmd ?? old?.maxYmd ?? null,
@@ -527,9 +561,8 @@ export default function Late() {
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
-    // ✅ polling NÃO depende de prizeMode/date/filtros
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [refresh]);
 
   useEffect(() => {
     return () => {
@@ -539,10 +572,7 @@ export default function Late() {
   }, []);
 
   const titleDateBR = useMemo(() => ymdToBR(dateYmd), [dateYmd]);
-  const effectiveDateBR = useMemo(
-    () => ymdToBR(meta?.effectiveTargetYmd || ""),
-    [meta?.effectiveTargetYmd]
-  );
+  const effectiveDateBR = useMemo(() => ymdToBR(meta?.effectiveTargetYmd || ""), [meta?.effectiveTargetYmd]);
 
   const lastImportedBR = useMemo(() => {
     const d = lastImported?.ymd ? ymdToBR(lastImported.ymd) : "";
@@ -717,10 +747,7 @@ export default function Late() {
         <div className="ppLateControls">
           <div className="ppCtl">
             <label>Loterias</label>
-            <select
-              value={lotteryOptId}
-              onChange={(e) => setLotteryOptId(String(e.target.value || "ALL"))}
-            >
+            <select value={lotteryOptId} onChange={(e) => setLotteryOptId(String(e.target.value || "ALL"))}>
               {LOTTERY_OPTIONS.map((x) => (
                 <option key={x.id} value={x.id}>
                   {x.label}
@@ -731,32 +758,18 @@ export default function Late() {
 
           <div className="ppCtl">
             <label>Tipo</label>
-            <select
-              value={kind}
-              onChange={(e) => setKind(String(e.target.value || "grupo"))}
-            >
+            <select value={kind} onChange={(e) => setKind(String(e.target.value || "grupo"))}>
               <option value="grupo">Grupo</option>
-              <option value="milhar" disabled>
-                Milhar
-              </option>
-              <option value="centena" disabled>
-                Centena
-              </option>
-              <option value="dezena" disabled>
-                Dezena
-              </option>
-              <option value="unidade" disabled>
-                Unidade
-              </option>
+              <option value="milhar" disabled>Milhar</option>
+              <option value="centena" disabled>Centena</option>
+              <option value="dezena" disabled>Dezena</option>
+              <option value="unidade" disabled>Unidade</option>
             </select>
           </div>
 
           <div className="ppCtl">
             <label>Prêmio</label>
-            <select
-              value={prizeMode}
-              onChange={(e) => setPrizeMode(String(e.target.value || "1"))}
-            >
+            <select value={prizeMode} onChange={(e) => setPrizeMode(String(e.target.value || "1"))}>
               <option value="1">1º Prêmio</option>
               <option value="2">2º Prêmio</option>
               <option value="3">3º Prêmio</option>
@@ -771,17 +784,11 @@ export default function Late() {
             <input
               type="date"
               value={dateYmd}
-              onChange={(e) =>
-                setDateYmd(String(e.target.value || todayYMDLocal()))
-              }
+              onChange={(e) => setDateYmd(String(e.target.value || todayYMDLocal()))}
             />
           </div>
 
-          <button
-            className="ppBtn"
-            onClick={() => refresh()}
-            disabled={loading || !boundsReady}
-          >
+          <button className="ppBtn" onClick={() => refresh()} disabled={loading || !boundsReady}>
             {loading ? "Carregando..." : "Atualizar"}
           </button>
         </div>
@@ -813,10 +820,7 @@ export default function Late() {
                     <td className="ppPos">{idx + 1}º</td>
 
                     <td className="ppImgCell">
-                      <span
-                        className="ppImg"
-                        title={`Grupo ${r.grupo2} · ${r.animal}`}
-                      >
+                      <span className="ppImg" title={`Grupo ${r.grupo2} · ${r.animal}`}>
                         {r.img ? <img src={r.img} alt={r.animal} /> : null}
                       </span>
                     </td>

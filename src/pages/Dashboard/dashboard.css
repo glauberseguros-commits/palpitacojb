@@ -527,3 +527,41 @@
     padding: 10px;
   }
 }
+
+
+/* =========================
+   FIX: LEFT RANKING NÃO PODE SER CORTADO
+   - Sem scroll interno no ranking
+   - A página (window) que deve rolar
+   - Impede containers de “prender” altura/overflow
+========================= */
+.dashRoot{
+  height: auto !important;
+  min-height: 100vh !important;
+  overflow: visible !important;
+}
+
+.dashLeft{
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+  align-self: flex-start !important;
+}
+
+.dashMain{
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+.dashCharts,
+.dashTop,
+.dashFilters{
+  overflow: visible !important;
+}
+
+/* se algum wrapper estiver usando grid/flex com min-height travando */
+.dashRoot *{
+  min-height: 0;
+}
+

@@ -65,10 +65,7 @@ export default function SearchInput({
 
   const slots = useMemo(() => buildSlots(digits), [digits]);
 
-  const canSubmit = useMemo(
-    () => digits.length >= 2 && !loading,
-    [digits, loading]
-  );
+  const canSubmit = useMemo(() => digits.length >= 2 && !loading, [digits, loading]);
 
   const focusInput = useCallback(() => {
     if (loading) return;
@@ -99,6 +96,7 @@ export default function SearchInput({
           flex-direction:column;
           gap:10px;
           min-height:120px;
+          min-width:0; /* ✅ permite encolher sem cortar */
         }
 
         /* ✅ TÍTULO CENTRALIZADO */
@@ -118,6 +116,7 @@ export default function SearchInput({
           justify-content:space-between;
           gap:12px;
           width:100%;
+          min-width:0;
         }
 
         .ppInputCenter{
@@ -135,6 +134,7 @@ export default function SearchInput({
           justify-content:flex-end;
           gap:10px;
           padding-left:6px;
+          min-width:0;
         }
 
         .ppBoxesWrap{
@@ -143,6 +143,7 @@ export default function SearchInput({
           align-items:center;
           justify-content:center;
           outline:none;
+          min-width:0;
         }
 
         .ppHiddenInput{
@@ -163,8 +164,8 @@ export default function SearchInput({
         }
 
         .ppBox{
-          width:54px;
-          height:54px;
+          width:clamp(44px, 4.2vw, 54px);
+          height:clamp(44px, 4.2vw, 54px);
           border-radius:14px;
           display:flex;
           align-items:center;
@@ -172,7 +173,7 @@ export default function SearchInput({
           border:1px solid rgba(202,166,75,0.22);
           background:rgba(0,0,0,0.55);
           box-shadow:0 12px 34px rgba(0,0,0,0.30);
-          font-size:20px;
+          font-size:clamp(18px, 1.6vw, 20px);
           font-weight:900;
           color:#e9e9e9;
           transition:all 0.12s ease;
@@ -212,12 +213,14 @@ export default function SearchInput({
           justify-content:space-between;
           gap:12px;
           padding-top:2px;
+          min-width:0;
         }
         .ppMiniCol{
           display:flex;
           flex-direction:column;
           gap:2px;
           min-width:0;
+          flex:1 1 0; /* ✅ divide o espaço e permite shrink */
         }
         .ppMiniT{
           font-size:10px;
@@ -232,7 +235,7 @@ export default function SearchInput({
           white-space:nowrap;
           overflow:hidden;
           text-overflow:ellipsis;
-          max-width: 520px;
+          max-width:100%; /* ✅ remove teto fixo (520px) */
         }
         .ppMiniV b{ color:#caa64b; }
 
@@ -251,7 +254,11 @@ export default function SearchInput({
             align-items:center;
             text-align:center;
           }
-          .ppMiniV{ max-width: 100%; }
+          .ppMiniCol{
+            width:100%;
+            align-items:center;
+            text-align:center;
+          }
         }
       `}</style>
 
@@ -264,8 +271,8 @@ export default function SearchInput({
             onClick={focusInput}
             role="button"
             tabIndex={0}
+            aria-label="Digite a dezena, centena ou milhar"
             onKeyDown={(e) => {
-              // Enter/Space foca; Enter também pode submeter (se já focado e válido)
               if (e.key === "Enter") {
                 e.preventDefault();
                 if (focused) trySubmit();
@@ -336,9 +343,9 @@ export default function SearchInput({
           </div>
         </div>
 
-        <div className="ppMiniCol" style={{ textAlign: "right" }}>
+        <div className="ppMiniCol" style={{ textAlign: "right", alignItems: "flex-end" }}>
           <div className="ppMiniT">Consulta</div>
-          <div className="ppMiniV">
+          <div className="ppMiniV" title={consultaLabel}>
             <b>{consultaLabel}</b>
           </div>
         </div>

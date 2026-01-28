@@ -97,6 +97,22 @@ function hourToNum(h) {
   return Number(m[1]) * 100 + Number(m[2]);
 }
 
+/**
+ * ✅ Extrai array de draws de qualquer retorno comum do service
+ * (evita "vazio" quando out = { drawsRaw: [...] } etc.)
+ */
+function unwrapDraws(maybe) {
+  if (Array.isArray(maybe)) return maybe;
+  if (maybe && typeof maybe === "object") {
+    if (Array.isArray(maybe.drawsRaw)) return maybe.drawsRaw;
+    if (Array.isArray(maybe.draws)) return maybe.draws;
+    if (Array.isArray(maybe.rows)) return maybe.rows;
+    if (Array.isArray(maybe.data)) return maybe.data;
+    if (maybe.result && Array.isArray(maybe.result)) return maybe.result;
+  }
+  return [];
+}
+
 /* =========================
    Escopos (RJ / Federal)
 ========================= */
@@ -135,7 +151,7 @@ function normalizeScopeInput(input) {
   if (!s) return SCOPE_RJ;
   if (s === SCOPE_RJ) return SCOPE_RJ;
   if (isFederalInput(s)) return SCOPE_FEDERAL;
-  return s; // mantém (caso você use outros escopos no futuro)
+  return s;
 }
 
 function scopeDisplayName(scope) {
@@ -221,6 +237,31 @@ function guessPrizePos(p) {
     ? Number(p.pos)
     : null;
   return pos;
+}
+
+/* =========================
+   Label robusto (bichoMap)
+========================= */
+
+function safeGetAnimalLabel(grupo, animalFallback) {
+  const g = Number(grupo);
+  if (!Number.isFinite(g)) return safeStr(animalFallback || "");
+
+  // tenta assinatura "objeto" primeiro
+  try {
+    const a1 = getAnimalLabel({ grupo: g, animal: safeStr(animalFallback || "") });
+    const s1 = safeStr(a1);
+    if (s1) return s1;
+  } catch {}
+
+  // tenta assinatura "número"
+  try {
+    const a2 = getAnimalLabel(g);
+    const s2 = safeStr(a2);
+    if (s2) return s2;
+  } catch {}
+
+  return safeStr(animalFallback || "");
 }
 
 /* =========================
@@ -327,7 +368,7 @@ function resolveAnimalUI(prize) {
   const animalRaw = guessPrizeAnimal(prize);
 
   if (grupo) {
-    const label = safeStr(getAnimalLabel(grupo)) || (animalRaw ? animalRaw : "");
+    const label = safeGetAnimalLabel(grupo, animalRaw);
     const variants = makeImgVariantsFromGrupo(grupo, 96);
     return { grupo, label, imgVariants: variants };
   }
@@ -480,7 +521,9 @@ export default function Results() {
         positions: null,
       });
 
-      const deduped = dedupeDraws(Array.isArray(out) ? out : [], sKey, d);
+      // ✅ robusto: aceita array OU objeto com arrays
+      const list = unwrapDraws(out);
+      const deduped = dedupeDraws(list, sKey, d);
       setDraws(deduped);
     } catch (e) {
       setDraws([]);
@@ -979,7 +1022,9 @@ export default function Results() {
               <button
                 className="pp_btn"
                 type="button"
-                onClick={() => setYmd((prev) => prevWedOrSatFromYmd(prev || todayYMDLocal()))}
+                onClick={() =>
+                  setYmd((prev) => prevWedOrSatFromYmd(prev || todayYMDLocal()))
+                }
                 title="Ir para a última quarta/sábado"
               >
                 Último Federal

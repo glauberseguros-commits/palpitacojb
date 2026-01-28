@@ -19,6 +19,10 @@ import {
  *
  * ✅ DEMO safe:
  * - prop `disabled`: bloqueia ordenação e seleção (sem depender de overlay externo)
+ *
+ * ✅ FIX (corte no header):
+ * - "Grupo" / "Apar." / "Palpite" não podem virar "Gr..." / "Ap..."
+ * - dá mais largura nessas colunas + remove ellipsis do label curto
  */
 
 function digitsOnly(v) {
@@ -256,7 +260,6 @@ export default function LeftRankingTable({
         case "grupo":
           vA = Number(A.grupo || 0);
           vB = Number(B.grupo || 0);
-          // ✅ desempate estável por grupo2/grupo (não dança)
           if (vA === vB) return 0;
           return (vA - vB) * dirMul;
 
@@ -266,7 +269,6 @@ export default function LeftRankingTable({
           {
             const c = cmpText(vA, vB) * dirMul;
             if (c !== 0) return c;
-            // ✅ desempate: grupo
             return (Number(A.grupo || 0) - Number(B.grupo || 0)) * 1;
           }
 
@@ -277,7 +279,6 @@ export default function LeftRankingTable({
           {
             const c = (vA - vB) * dirMul;
             if (c !== 0) return c;
-            // ✅ desempate: grupo
             return (Number(A.grupo || 0) - Number(B.grupo || 0)) * 1;
           }
       }
@@ -315,7 +316,6 @@ export default function LeftRankingTable({
 
   const canSelect = !disabled && typeof onSelectGrupo === "function";
 
-  // ✅ Toggle real: clicar no mesmo grupo desmarca (null)
   const handleSelectGrupo = (grupo) => {
     if (!canSelect) return;
     const g = Number(grupo);
@@ -524,7 +524,7 @@ export default function LeftRankingTable({
             title={disabled ? "Bloqueado no modo demonstração" : "Ordenar por Grupo"}
             disabled={disabled}
           >
-            <span style={ui.thLabel}>Grupo</span>
+            <span style={{ ...ui.thLabel, ...ui.thLabelNoClip }}>Grupo</span>
             <span style={{ ...ui.sortIcon, opacity: disabled ? 0.18 : arrowOpacity("grupo") }}>
               {sortArrow("grupo")}
             </span>
@@ -559,14 +559,14 @@ export default function LeftRankingTable({
             title={disabled ? "Bloqueado no modo demonstração" : "Ordenar por Aparições"}
             disabled={disabled}
           >
-            <span style={ui.thLabel}>Apar.</span>
+            <span style={{ ...ui.thLabel, ...ui.thLabelNoClip }}>Apar.</span>
             <span style={{ ...ui.sortIcon, opacity: disabled ? 0.18 : arrowOpacity("apar") }}>
               {sortArrow("apar")}
             </span>
           </button>
 
           <div style={{ ...ui.th, ...ui.hRight, ...ui.palpiteHeader }} title="Palpite">
-            Palpite
+            <span style={ui.thLabelNoClip}>Palpite</span>
           </div>
         </div>
 
@@ -576,8 +576,12 @@ export default function LeftRankingTable({
   );
 }
 
+/**
+ * ✅ FIX: colunas um pouco mais largas para não “comer” header.
+ * (principalmente quando o aside fica estreito)
+ */
 const GRID_COLS =
-  "58px minmax(46px, 56px) minmax(120px, 1fr) minmax(46px, 56px) minmax(50px, 66px)";
+  "58px minmax(58px, 68px) minmax(130px, 1fr) minmax(58px, 68px) minmax(66px, 78px)";
 
 const ui = {
   wrap: {
@@ -632,7 +636,7 @@ const ui = {
     display: "grid",
     gridTemplateColumns: GRID_COLS,
     alignItems: "end",
-    padding: "7px 5px 6px 6px",
+    padding: "7px 6px 6px 6px",
     borderBottom: "2px solid rgba(255,255,255,0.55)",
     background: "rgba(0,0,0,0.35)",
     columnGap: 6,
@@ -645,9 +649,20 @@ const ui = {
     fontSize: 12,
     letterSpacing: 0.12,
     opacity: 0.95,
-    whiteSpace: "nowrap",
+
+    /* ✅ header pode quebrar (até 2 linhas) sem aumentar largura */
+    whiteSpace: "normal",
     overflow: "hidden",
-    textOverflow: "ellipsis",
+    textOverflow: "clip",
+    lineHeight: 1.05,
+    maxHeight: 16,            // ~2 linhas
+    wordBreak: "break-word",
+
+    /* clamp (Chrome/Edge) */
+    display: "-webkit-box",
+    WebkitLineClamp: 1,
+    WebkitBoxOrient: "vertical",
+
     minWidth: 0,
   },
 
@@ -661,8 +676,8 @@ const ui = {
     padding: 0,
     margin: 0,
     display: "flex",
-    alignItems: "baseline",
-    gap: 4,
+    alignItems: "center",
+    gap: 3,
     fontWeight: 800,
     fontSize: 12,
     letterSpacing: 0.12,
@@ -680,17 +695,35 @@ const ui = {
   },
 
   thLabel: {
+    /* ✅ permite 2 linhas no label do header */
+    whiteSpace: "normal",
     overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
+    textOverflow: "clip",
+    lineHeight: 1.05,
+    maxHeight: 16,
+    wordBreak: "break-word",
+
+    display: "-webkit-box",
+    WebkitLineClamp: 1,
+    WebkitBoxOrient: "vertical",
+
     minWidth: 0,
   },
 
+  // ✅ label curto não pode cortar
+  thLabelNoClip: {
+    overflow: "visible",
+    textOverflow: "clip",
+    whiteSpace: "nowrap",
+    minWidth: "auto",
+    flex: "0 0 auto",
+  },
+
   sortIcon: {
-    width: 10,
-    flex: "0 0 10px",
+    width: 9,
+    flex: "0 0 9px",
     textAlign: "center",
-    fontSize: 12,
+    fontSize: 11.5,
     transform: "translateY(-0.5px)",
   },
 
@@ -706,7 +739,7 @@ const ui = {
     display: "grid",
     gridTemplateColumns: GRID_COLS,
     alignItems: "center",
-    padding: "3px 5px 3px 6px",
+    padding: "3px 6px 3px 6px",
     borderTop: "1px solid rgba(255,255,255,0.28)",
     columnGap: 6,
     transition:
@@ -770,8 +803,8 @@ const ui = {
 
   right: { textAlign: "right" },
 
-  palpiteCell: { paddingRight: 2 },
-  palpiteHeader: { paddingRight: 2 },
+  palpiteCell: { paddingRight: 6 },
+  palpiteHeader: { paddingRight: 6 },
 
   cellImg: { display: "flex", alignItems: "center" },
 
@@ -834,3 +867,5 @@ const ui = {
     .pp_left_scroll::-webkit-scrollbar { width: 0px; height: 0px; }
   `,
 };
+
+

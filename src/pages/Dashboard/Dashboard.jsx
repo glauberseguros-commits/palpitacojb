@@ -122,14 +122,30 @@ function preloadImage(src) {
 ========================= */
 
 function normalizeHourBucket(h) {
-  const s = String(h || "").trim();
-  if (!s || s.toLowerCase() === "todos") return null;
+  const raw = String(h ?? "").trim();
+  if (!raw || raw.toLowerCase() === "todos") return null;
 
-  const m1 = s.match(/^(\d{1,2})h$/i);
-  if (m1) return `${String(m1[1]).padStart(2, "0")}h`;
+  // normaliza: remove espaços e deixa upper pra pegar HS/hs
+  const s = raw.replace(/\s+/g, "").toUpperCase();
 
-  const m2 = s.match(/^(\d{1,2}):(\d{2})$/);
-  if (m2) return `${String(m2[1]).padStart(2, "0")}h`;
+  // 1) "09HS" / "9HS" / "09H" / "9H"
+  let m = s.match(/^(\d{1,2})(?:H|HS)$/);
+  if (m) return `${String(m[1]).padStart(2, "0")}h`;
+
+  // 2) "09:10" / "9:10" / "09:10:00"
+  m = s.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+  if (m) return `${String(m[1]).padStart(2, "0")}h`;
+
+  // 3) "09" / "9"
+  m = s.match(/^(\d{1,2})$/);
+  if (m) return `${String(m[1]).padStart(2, "0")}h`;
+
+  // 4) fallback: extrai a 1ª hora que aparecer ("...09HS..." etc.)
+  m = s.match(/(\d{1,2})/);
+  if (m) {
+    const hh = Number(m[1]);
+    if (Number.isFinite(hh) && hh >= 0 && hh <= 23) return `${String(hh).padStart(2, "0")}h`;
+  }
 
   return null;
 }
@@ -201,7 +217,20 @@ function getDrawDate(d) {
 
 function getDrawCloseHour(d) {
   if (!d) return "";
-  return String(d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? "").trim();
+
+  // tenta campos mais comuns primeiro (inclui raw)
+  const cand =
+    d.close_hour_raw ??
+    d.closeHourRaw ??
+    d.close_hour ??
+    d.closeHour ??
+    d.close_hour_bucket ??
+    d.closeHourBucket ??
+    d.hour ??
+    d.hora ??
+    "";
+
+  return String(cand ?? "").trim();
 }
 
 function yearRangeToDates(minYear, maxYear) {
@@ -1491,3 +1520,4 @@ export default function Dashboard(props) {
     </div>
   );
 }
+

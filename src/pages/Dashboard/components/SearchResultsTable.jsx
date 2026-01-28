@@ -348,6 +348,7 @@ export default function SearchResultsTable({
           overflow:hidden;
           flex:1 1 auto;
           min-height:0;
+          min-width:0;
           display:flex;
           flex-direction:column;
         }
@@ -363,6 +364,7 @@ export default function SearchResultsTable({
           justify-content:space-between;
           align-items:center;
           flex:0 0 auto;
+          min-width:0;
         }
 
         .ppSearchTableBody{
@@ -370,24 +372,33 @@ export default function SearchResultsTable({
           min-height:0;
           padding:10px 10px 12px;
           flex:1 1 auto;
+          min-width:0;
         }
 
         .ppTable{
           width:100%;
           display:flex;
           justify-content:center;
+          min-width:0;
         }
+
+        /* ✅ CRÍTICO: aqui está o fix do "corte"
+           - container permite scroll horizontal quando a largura não couber
+           - tabela tem min-width (não encolhe até cortar colunas)
+        */
         .ppTableInner{
-          width: 820px; /* ✅ mais espaço, sem “abreviar” */
-          max-width: 100%;
+          width: 100%;
+          max-width: 980px;      /* ✅ cresce quando tem espaço */
+          min-width: 0;
           border-radius:14px;
-          overflow:hidden;
+          overflow:auto;          /* ✅ scroll horizontal/vertical interno do "inner" */
           border:1px solid rgba(255,255,255,0.06);
           background:rgba(0,0,0,0.18);
         }
 
         table{
-          width:820px;
+          width:100%;
+          min-width:820px;       /* ✅ mantém layout original como mínimo */
           border-collapse:collapse;
           table-layout:fixed;
         }
@@ -442,6 +453,7 @@ export default function SearchResultsTable({
           display:flex;
           align-items:center;
           justify-content:center;
+          flex: 0 0 auto;
         }
         .imgFrame img{
           width:100%;
