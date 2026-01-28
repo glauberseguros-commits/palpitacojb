@@ -74,10 +74,16 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
   const vw = useViewport();
   const isMobile = vw < 980;
 
-  // ✅ Mobile: sidebar vira off-canvas (fechada por padrão)
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const isDashboard = active === ROUTES.DASHBOARD;
 
-  // Se virar desktop, mantém aberto; se voltar pro mobile, fecha
+  // ✅ Mobile: sidebar vira off-canvas (fechada por padrão)
+  // ✅ Desktop: sidebar aberta por padrão (evita flicker)
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return window.innerWidth >= 980;
+  });
+
+  // ✅ Se virar desktop, mantém aberto; se voltar pro mobile, fecha
   useEffect(() => {
     if (!isMobile) setSidebarOpen(true);
     else setSidebarOpen(false);
@@ -124,6 +130,7 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
     if (!isMobile) return;
 
     const prevOverflow = document?.body?.style?.overflow;
+
     if (sidebarOpen) {
       document.body.style.overflow = "hidden";
     } else {
@@ -182,7 +189,7 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
       height: "100dvh",
       background: BG,
       position: "relative",
-      overflow: "hidden", // main que rola
+      overflow: "hidden", // ✅ a shell nunca rola
       display: "flex",
       flexDirection: "row",
     };
@@ -264,7 +271,8 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
       paddingTop: 10,
       alignItems: "center",
       overflow: "auto",
-      flex: 1, // ✅ permite scroll sem “empurrar” brand
+      flex: 1, // ✅ scroll só dentro da coluna de botões
+      WebkitOverflowScrolling: "touch",
     };
 
     const btn = (isActive) => ({
@@ -282,11 +290,14 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
       boxShadow: isActive ? "0 14px 36px rgba(0,0,0,0.55)" : "none",
     });
 
+    // ✅ REGRA:
+    // - Dashboard: SEM scroll no container principal (evita “página rolando”)
+    // - Demais páginas: COM scroll no container principal
     const main = {
       flex: 1,
       minWidth: 0,
       height: "100%",
-      overflow: "auto",
+      overflow: isDashboard ? "hidden" : "auto",
       WebkitOverflowScrolling: "touch",
       position: "relative",
       zIndex: 1,
@@ -312,7 +323,11 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
         }
       : { display: "none" };
 
-    const mainInner = { minWidth: 0 };
+    // ✅ Dashboard: garante “tela cheia” sem depender de scroll do main
+    // ✅ Outras páginas: deixa fluir normalmente
+    const mainInner = isDashboard
+      ? { minWidth: 0, height: "100%", overflow: "hidden" }
+      : { minWidth: 0 };
 
     return {
       shell,
@@ -326,7 +341,7 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
       mobileMenuBtn,
       mainInner,
     };
-  }, [isMobile, sidebarOpen]);
+  }, [isMobile, sidebarOpen, active]); // ✅ inclui active (e isDashboard deriva dele)
 
   // ✅ MENU
   const menu = [
