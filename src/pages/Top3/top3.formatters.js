@@ -66,6 +66,13 @@ export function addDaysYMD(ymd, deltaDays) {
   return `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}`;
 }
 
+/**
+ * Normaliza diversos formatos para "HH:MM"
+ * - "9" => "09:00"
+ * - "9h" => "09:00"
+ * - "09:0" => "09:00"
+ * - "09:00" => "09:00"
+ */
 export function normalizeHourLike(value) {
   const s0 = safeStr(value);
   if (!s0) return "";
@@ -84,16 +91,49 @@ export function normalizeHourLike(value) {
   return s0;
 }
 
+/**
+ * ✅ BUCKET CANÔNICO DO PROJETO: "HHh"
+ * - "09:00" => "09h"
+ * - "9h" => "09h"
+ * - "09" => "09h"
+ * Se não reconhecer, devolve string normalizada.
+ */
 export function toHourBucket(hhmm) {
   const s = normalizeHourLike(hhmm);
-  const m = s.match(/^(\d{2}):(\d{2})$/);
-  if (!m) return s;
-  return `${m[1]}:00`;
+
+  // caso já venha "09h"
+  const mh = safeStr(s).match(/^(\d{1,2})h$/i);
+  if (mh) return `${pad2(mh[1])}h`;
+
+  // caso venha "HH:MM"
+  const m = safeStr(s).match(/^(\d{2}):(\d{2})$/);
+  if (m) return `${m[1]}h`;
+
+  // caso venha só "HH"
+  const m2 = safeStr(s).match(/^(\d{1,2})$/);
+  if (m2) return `${pad2(m2[1])}h`;
+
+  return safeStr(s);
 }
 
+/**
+ * Converte hora em minutos (para sorting)
+ * Aceita:
+ * - "09h"
+ * - "09:00"
+ * - "9h"
+ * - "9"
+ */
 export function hourToInt(hhmm) {
-  const s = normalizeHourLike(hhmm);
-  const m = s.match(/^(\d{2}):(\d{2})$/);
+  const raw = safeStr(hhmm);
+  if (!raw) return -1;
+
+  const b = toHourBucket(raw); // "HHh" se possível
+  const mh = safeStr(b).match(/^(\d{2})h$/i);
+  if (mh) return Number(mh[1]) * 60;
+
+  const s = normalizeHourLike(raw);
+  const m = safeStr(s).match(/^(\d{2}):(\d{2})$/);
   if (!m) return -1;
   return Number(m[1]) * 60 + Number(m[2]);
 }
