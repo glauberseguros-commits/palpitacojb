@@ -3,8 +3,9 @@
 /* =========================
    DASHBOARD (Premium Frame)
    - Layout e estrutura SOMENTE do Dashboard
-   - Scroll do app é controlado pelo <main> do AppShell (overflow: auto)
-   - Evita “corte” por height fixa no topo (coluna direita com scroll interno)
+   - Desktop: dashboard TRAVADO (sem scroll na janela / sem scroll no main)
+   - Ranking: NÃO corta (scroll interno no painel esquerdo)
+   - Mobile: deixa crescer (overflow visível) para não cortar conteúdo
 ========================= */
 
 /* ====== Base / Tokens ====== */
@@ -60,7 +61,6 @@
   margin: 0;
 
   /* Dashboard ocupa o container do AppShell main */
-  min-height: 100%;
   height: 100%;
   min-height: 0;
 
@@ -73,7 +73,7 @@
 
   align-items: stretch;
 
-  /* importante: evita scroll duplo interno (quem rola é o main do AppShell) */
+  /* ✅ Desktop: sem scroll do dashboard (nem da window) */
   overflow: hidden;
 
   background:
@@ -81,7 +81,7 @@
     radial-gradient(700px 420px at 18% 10%, rgba(255,255,255,0.035), transparent 55%);
 }
 
-/* ✅ Desktop: trava o Dashboard em “1 tela” (sem scroll da página no notebook) */
+/* ✅ Desktop: trava o Dashboard em “1 tela” */
 @media (min-width: 981px){
   .dashRoot{
     height: calc(100dvh - (var(--pad) * 2));
@@ -115,7 +115,7 @@
   position: sticky;
   top: var(--pad);
 
-  /* ✅ sticky confiável: não estoura a viewport do AppShell */
+  /* ✅ sticky confiável */
   max-height: calc(100dvh - (var(--pad) * 2));
   min-height: 0;
 
@@ -124,6 +124,30 @@
 
   /* ✅ anti-corte em flex */
   min-width: 0;
+}
+
+/* ✅ CORREÇÃO CERTA (substitui o “FIX” antigo):
+   - Não libera scroll da página
+   - Ranking não corta: rolagem fica dentro do painel esquerdo */
+.dashLeft{
+  height: 100%;
+}
+
+/* tenta pegar wrappers comuns (se existirem) */
+.dashLeft .tableWrap,
+.dashLeft .dashTableWrap,
+.dashLeft .rankingWrap{
+  min-height: 0;
+  overflow: auto;
+  flex: 1 1 auto;
+}
+
+/* fallback seguro: o último filho do painel esquerdo vira área rolável */
+.dashLeft > *:last-child{
+  min-height: 0;
+  overflow: auto;
+  flex: 1 1 auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ====== Área principal ====== */
@@ -137,7 +161,7 @@
 
   height: 100%;
 
-  /* mantém o layout “travado”; quem rola é o AppShell main */
+  /* mantém o layout “travado”; quem rola é interno quando necessário */
   overflow: hidden;
 }
 
@@ -221,7 +245,7 @@
 
   min-width: 0;
 
-  /* ✅ Desktop: NÃO queremos scroll interno aqui (para “sem scroll” no notebook) */
+  /* ✅ Desktop: NÃO queremos scroll interno aqui */
   overflow: hidden;
 
   /* evita “pular” layout com scrollbar */
@@ -367,7 +391,7 @@
 
   flex: 1 1 auto;
 
-  /* ✅ Desktop: sem scroll interno (para “sem scroll” no notebook) */
+  /* ✅ Desktop: sem scroll interno */
   overflow: hidden;
   scrollbar-gutter: stable both-edges;
 }
@@ -460,23 +484,27 @@
     padding: 12px;
     padding-left: 12px;
 
-    /* mantém o padrão: scroll do AppShell main */
-    height: 100%;
-    overflow: hidden;
+    /* ✅ mobile: deixa crescer para não cortar conteúdo */
+    height: auto;
+    max-height: none;
+    overflow: visible;
   }
 
   .dashLeft{
     position: relative;
     top: auto;
     max-height: none;
-
-    /* em mobile, evita “grudar” e ficar gigante */
+    height: auto;
     overflow: hidden;
   }
 
+  .dashLeft > *:last-child{
+    overflow: visible;
+  }
+
   .dashMain{
-    height: 100%;
-    overflow: hidden;
+    height: auto;
+    overflow: visible;
   }
 
   .dashTop{
@@ -489,8 +517,6 @@
     max-height: var(--topH);
   }
 
-  /* ✅ em mobile não faz sentido fixar altura no right;
-     deixa ele crescer naturalmente (sem corte) */
   .dashTopRight{
     height: auto;
     min-height: 0;
@@ -509,7 +535,6 @@
     justify-content: flex-start;
   }
 
-  /* em mobile, charts podem crescer sem prender */
   .dashCharts{
     overflow: visible;
     scrollbar-gutter: auto;
@@ -528,40 +553,10 @@
   }
 }
 
-
 /* =========================
-   FIX: LEFT RANKING NÃO PODE SER CORTADO
-   - Sem scroll interno no ranking
-   - A página (window) que deve rolar
-   - Impede containers de “prender” altura/overflow
+   ALTERAÇÃO SOLICITADA
+   - Diminuir o tamanho da fonte SOMENTE da coluna ANIMAL
 ========================= */
-.dashRoot{
-  height: auto !important;
-  min-height: 100vh !important;
-  overflow: visible !important;
+.dashLeft table tbody td:nth-child(3){
+  font-size: 11px;
 }
-
-.dashLeft{
-  height: auto !important;
-  max-height: none !important;
-  overflow: visible !important;
-  align-self: flex-start !important;
-}
-
-.dashMain{
-  height: auto !important;
-  max-height: none !important;
-  overflow: visible !important;
-}
-
-.dashCharts,
-.dashTop,
-.dashFilters{
-  overflow: visible !important;
-}
-
-/* se algum wrapper estiver usando grid/flex com min-height travando */
-.dashRoot *{
-  min-height: 0;
-}
-

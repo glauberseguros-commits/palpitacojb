@@ -11,18 +11,14 @@ import {
  * LeftRankingTable
  * - Ordenável: Grupo | Animal | Apar.
  * - Não ordenável: Imagem | Palpite
- * - Premium safe: Palpite NÃO pode cortar
  *
- * ✅ Ajuste premium:
- * - Sem scroll interno (ranking não rola; a página que rola)
- * - Moldura da imagem menos arredondada + padding interno (não corta foto)
+ * ✅ CORREÇÃO PRINCIPAL (scroll/corte):
+ * - Header "sticky" dentro do painel
+ * - Body com overflow auto (scroll interno só no ranking)
+ * - Sem depender de <table> (é grid em divs)
  *
  * ✅ DEMO safe:
- * - prop `disabled`: bloqueia ordenação e seleção (sem depender de overlay externo)
- *
- * ✅ FIX (corte no header):
- * - "Grupo" / "Apar." / "Palpite" não podem virar "Gr..." / "Ap..."
- * - dá mais largura nessas colunas + remove ellipsis do label curto
+ * - prop `disabled`: bloqueia ordenação e seleção
  */
 
 function digitsOnly(v) {
@@ -122,7 +118,7 @@ export default function LeftRankingTable({
   aparGlobalByGrupo = null,
   fillMissingGroups = false,
 
-  // ✅ novo: trava ações no DEMO
+  // ✅ trava ações no DEMO
   disabled = false,
 }) {
   const [sort, setSort] = useState({ key: "apar", dir: "desc" });
@@ -360,7 +356,7 @@ export default function LeftRankingTable({
     }
 
     return (
-      <div style={ui.bodyNoScroll}>
+      <div className="pp_left_body" style={ui.bodyScroll}>
         {sortedRows.map((r) => {
           const isSel = Number(selectedGrupo) === Number(r.grupo);
           const dim = hasSelection && !isSel;
@@ -497,7 +493,7 @@ export default function LeftRankingTable({
   };
 
   return (
-    <div style={ui.wrap}>
+    <div className="pp_left" style={ui.wrap}>
       <style>{ui._styleTag}</style>
 
       <div style={ui.locationRow}>
@@ -507,8 +503,8 @@ export default function LeftRankingTable({
         </div>
       </div>
 
-      <div style={ui.tableShell}>
-        <div style={ui.headerRow}>
+      <div className="pp_left_shell" style={ui.tableShell}>
+        <div className="pp_left_header" style={ui.headerRow}>
           <div style={{ ...ui.th, ...ui.hLeft }} title="Imagem">
             Imagem
           </div>
@@ -577,8 +573,7 @@ export default function LeftRankingTable({
 }
 
 /**
- * ✅ FIX: colunas um pouco mais largas para não “comer” header.
- * (principalmente quando o aside fica estreito)
+ * ✅ GRID: um pouco mais largo para não cortar header
  */
 const GRID_COLS =
   "58px minmax(58px, 68px) minmax(130px, 1fr) minmax(58px, 68px) minmax(66px, 78px)";
@@ -590,6 +585,8 @@ const ui = {
     flexDirection: "column",
     gap: 8,
     minWidth: 0,
+    minHeight: 0,
+    height: "100%",
     boxSizing: "border-box",
   },
 
@@ -603,6 +600,7 @@ const ui = {
     opacity: 0.98,
     minWidth: 0,
     boxSizing: "border-box",
+    flex: "0 0 auto",
   },
 
   locationDot: {
@@ -630,6 +628,8 @@ const ui = {
     display: "flex",
     flexDirection: "column",
     boxSizing: "border-box",
+    minHeight: 0,
+    flex: "1 1 auto",
   },
 
   headerRow: {
@@ -642,6 +642,10 @@ const ui = {
     columnGap: 6,
     boxSizing: "border-box",
     flex: "0 0 auto",
+    position: "sticky",
+    top: 0,
+    zIndex: 5,
+    backdropFilter: "blur(6px)",
   },
 
   th: {
@@ -649,20 +653,15 @@ const ui = {
     fontSize: 12,
     letterSpacing: 0.12,
     opacity: 0.95,
-
-    /* ✅ header pode quebrar (até 2 linhas) sem aumentar largura */
     whiteSpace: "normal",
     overflow: "hidden",
     textOverflow: "clip",
     lineHeight: 1.05,
-    maxHeight: 16,            // ~2 linhas
+    maxHeight: 16,
     wordBreak: "break-word",
-
-    /* clamp (Chrome/Edge) */
     display: "-webkit-box",
     WebkitLineClamp: 1,
     WebkitBoxOrient: "vertical",
-
     minWidth: 0,
   },
 
@@ -695,22 +694,18 @@ const ui = {
   },
 
   thLabel: {
-    /* ✅ permite 2 linhas no label do header */
     whiteSpace: "normal",
     overflow: "hidden",
     textOverflow: "clip",
     lineHeight: 1.05,
     maxHeight: 16,
     wordBreak: "break-word",
-
     display: "-webkit-box",
     WebkitLineClamp: 1,
     WebkitBoxOrient: "vertical",
-
     minWidth: 0,
   },
 
-  // ✅ label curto não pode cortar
   thLabelNoClip: {
     overflow: "visible",
     textOverflow: "clip",
@@ -731,8 +726,12 @@ const ui = {
   hCenter: { textAlign: "center", justifyContent: "center" },
   hRight: { textAlign: "right", justifyContent: "flex-end" },
 
-  bodyNoScroll: {
-    overflow: "visible",
+  // ✅ AGORA O SCROLL É AQUI
+  bodyScroll: {
+    overflow: "auto",
+    minHeight: 0,
+    flex: "1 1 auto",
+    WebkitOverflowScrolling: "touch",
   },
 
   row: {
@@ -776,9 +775,10 @@ const ui = {
     fontFeatureSettings: '"tnum" 1, "lnum" 1',
   },
 
+  // ✅ coluna ANIMAL menor (sem depender de CSS do dashboard)
   animalTxt: {
     fontWeight: 800,
-    fontSize: 12.8,
+    fontSize: 10.8,
     letterSpacing: 0.18,
     whiteSpace: "nowrap",
     overflow: "hidden",
@@ -864,8 +864,9 @@ const ui = {
   emptyHint: { fontSize: 12.5, opacity: 0.75, lineHeight: 1.35 },
 
   _styleTag: `
-    .pp_left_scroll::-webkit-scrollbar { width: 0px; height: 0px; }
+    .pp_left_body::-webkit-scrollbar { width: 10px; height: 10px; }
+    .pp_left_body::-webkit-scrollbar-track { background: rgba(255,255,255,0.06); border-radius: 999px; }
+    .pp_left_body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); border-radius: 999px; border: 2px solid rgba(0,0,0,0.45); }
+    .pp_left_body::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.26); }
   `,
 };
-
-
