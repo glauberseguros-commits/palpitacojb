@@ -33,8 +33,14 @@ jobs:
       GOOGLE_CLOUD_PROJECT: palpitacojb-app
       GCLOUD_PROJECT: palpitacojb-app
 
+      # Defaults (schedule)
       DAYS_DEFAULT: "60"
-      LIMIT_DAYS_DEFAULT: "14"    
+      LIMIT_DAYS_DEFAULT: "14"
+
+      # 🔒 Guardrails CI
+      MAX_DAYS: "60"
+      MAX_LIMIT_DAYS: "14"
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -50,9 +56,42 @@ jobs:
         working-directory: backend
         run: npm ci
 
+      - name: Guardrails (validate inputs)
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          DAYS="${{ github.event_name == 'workflow_dispatch' && inputs.days || env.DAYS_DEFAULT }}"
+          LIMIT_DAYS="${{ github.event_name == 'workflow_dispatch' && inputs.limitDays || env.LIMIT_DAYS_DEFAULT }}"
+
+          is_int() { [[ "$1" =~ ^[0-9]+$ ]]; }
+
+          if ! is_int "$DAYS"; then
+            echo "::error::Input 'days' inválido (precisa ser inteiro). Recebido: $DAYS"
+            exit 1
+          fi
+
+          if ! is_int "$LIMIT_DAYS"; then
+            echo "::error::Input 'limitDays' inválido (precisa ser inteiro). Recebido: $LIMIT_DAYS"
+            exit 1
+          fi
+
+          if (( DAYS > ${MAX_DAYS} )); then
+            echo "::error::Guardrail: days=$DAYS excede MAX_DAYS=${MAX_DAYS}. Use <= ${MAX_DAYS}."
+            exit 1
+          fi
+
+          if (( LIMIT_DAYS > ${MAX_LIMIT_DAYS} )); then
+            echo "::error::Guardrail: limitDays=$LIMIT_DAYS excede MAX_LIMIT_DAYS=${MAX_LIMIT_DAYS}. Use <= ${MAX_LIMIT_DAYS}."
+            exit 1
+          fi
+
+          echo "DAYS=$DAYS" >> "$GITHUB_ENV"
+          echo "LIMIT_DAYS=$LIMIT_DAYS" >> "$GITHUB_ENV"
+
+          echo "Resolved inputs:"
+          echo "  DAYS=$DAYS"
+          echo "  LIMIT_DAYS=$LIMIT_DAYS"
+
       - name: Run autoMaintainBackfill (PT_RIO)
-        run: node backend/scripts/autoMaintainBackfill.js --lottery=PT_RIO --days=${{ github.event_name == 'workflow_dispatch' && inputs.days || env.DAYS_DEFAULT }} --limitDays=${{ github.event_name == 'workflow_dispatch' && inputs.limitDays || env.LIMIT_DAYS_DEFAULT }} --baseMins=0,9 --tolMin=2
-
-
-
-
+        run: node backend/scripts/autoMaintainBackfill.js --lottery=PT_RIO --days=${{ env.DAYS }} --limitDays=${{ env.LIMIT_DAYS }} --baseMins=0,9 --tolMin=2
