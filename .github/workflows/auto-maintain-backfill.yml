@@ -19,10 +19,13 @@ concurrency:
   group: autopitaco-maintain-backfill
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
   maintain:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     env:
       TZ: America/Sao_Paulo
 
