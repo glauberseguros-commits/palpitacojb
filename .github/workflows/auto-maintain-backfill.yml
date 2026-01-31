@@ -1,0 +1,36 @@
+name: Auto Maintain Backfill (PT_RIO)
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    # Domingo 06:15 (BRT = UTC-3) => 09:15 UTC
+    - cron: "15 9 * * 0"
+
+concurrency:
+  group: autopitaco-maintain-backfill
+  cancel-in-progress: false
+
+jobs:
+  maintain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      TZ: America/Sao_Paulo
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install deps (backend)
+        working-directory: backend
+        run: npm ci
+
+      - name: Run autoMaintainBackfill (PT_RIO)
+        run: node backend/scripts/autoMaintainBackfill.js --lottery=PT_RIO --days=60 --limitDays=14 --baseMins=0,9 --tolMin=2
