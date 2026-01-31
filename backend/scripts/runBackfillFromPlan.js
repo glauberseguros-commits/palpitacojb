@@ -113,6 +113,12 @@ async function runImportWithTimeout(args) {
   ]);
 }
 
+function toAbsPlanPath(planPathArg) {
+  const p = String(planPathArg || "").trim();
+  if (!p) return "";
+  return path.isAbsolute(p) ? p : path.join(process.cwd(), p);
+}
+
 async function main() {
   const planPathArg = process.argv[2];
   if (!planPathArg) {
@@ -125,24 +131,19 @@ async function main() {
   const baseMins = parseBaseMins(parseArg("baseMins"), [9]);
   const tolMin = Math.max(0, Number(parseArg("tolMin") || 2));
 
-  const planPath = path.isAbsolute(planPathArg)
-    ? planPathArg
-    : path.join(process.cwd(), planPathArg);
-
+  const planPath = toAbsPlanPath(planPathArg);
   if (!fs.existsSync(planPath)) throw new Error(`Arquivo não encontrado: ${planPath}`);
 
   const plan = JSON.parse(fs.readFileSync(planPath, "utf8"));
   const lottery = String(plan?.lottery || "PT_RIO").trim().toUpperCase();
 
-  // compatibilidade: seu plan atual usa "rows" com "missingHard"
-  const rows = Array.isArray(plan?.rows) ? plan.rows : [];
+  // ✅ Fonte preferencial: plan.backfillDays (já vem pronto do planBackfillFromAudit.js)
+  const planBackfillDays = Array.isArray(plan?.backfillDays) ? plan.backfillDays : [];
 
-  // extrai dias a backfill (estável + seguro)
-  const backfillDays = rows
-    .filter((r) => r && r.shouldBackfill)
-    .map((r) => {
-      const ymd = safeStr(r.ymd);
-      const missingHoursRaw = Array.isArray(r.missingHard) ? r.missingHard : [];
+  let backfillDays = planBackfillDays
+    .map((d) => {
+      const ymd = safeStr(d?.ymd);
+      const missingHoursRaw = Array.isArray(d?.missingHours) ? d.missingHours : [];
       const missingHours = Array.from(
         new Set(
           missingHoursRaw
@@ -154,13 +155,33 @@ async function main() {
     })
     .filter((x) => isISODate(x.ymd) && x.missingHours.length);
 
+  // ✅ Fallback compat: plan.rows com shouldBackfill + missingHard
   if (!backfillDays.length) {
-    console.log("[BACKFILL] Nenhum dia para backfill (plan sem rows/shouldBackfill).");
+    const rows = Array.isArray(plan?.rows) ? plan.rows : [];
+    backfillDays = rows
+      .filter((r) => r && r.shouldBackfill)
+      .map((r) => {
+        const ymd = safeStr(r.ymd);
+        const missingHoursRaw = Array.isArray(r.missingHard) ? r.missingHard : [];
+        const missingHours = Array.from(
+          new Set(
+            missingHoursRaw
+              .map((x) => normalizeHH(x))
+              .filter((x) => typeof x === "string" && /^\d{2}$/.test(x))
+          )
+        ).sort();
+        return { ymd, missingHours };
+      })
+      .filter((x) => isISODate(x.ymd) && x.missingHours.length);
+  }
+
+  if (!backfillDays.length) {
+    console.log("[BACKFILL] Nenhum dia para backfill.");
     return;
   }
 
   const runId = ts();
-  const LOG_DIR = path.join(process.cwd(), "backend", "logs");
+  const LOG_DIR = path.join(process.cwd(), "logs");
   ensureDir(LOG_DIR);
 
   const outFile = path.join(LOG_DIR, `backfillRun-${lottery}-${runId}.json`);
@@ -173,9 +194,7 @@ async function main() {
     `[BACKFILL] days in plan=${backfillDays.length} | running now=${picked.length} (limitDays=${limitDays})`
   );
   console.log(`[BACKFILL] baseMins=${baseMins.join(",")} tolMin=${tolMin}`);
-  console.log(
-    `[BACKFILL] attemptTimeoutMs=${envInt("IMPORT_ATTEMPT_TIMEOUT_MS", 60_000)}`
-  );
+  console.log(`[BACKFILL] attemptTimeoutMs=${envInt("IMPORT_ATTEMPT_TIMEOUT_MS", 60_000)}`);
   console.log(`[BACKFILL] output=${outFile}`);
   console.log("==================================");
 
@@ -255,10 +274,50 @@ async function main() {
         const valid = Number.isFinite(Number(r?.totalDrawsValid)) ? Number(r.totalDrawsValid) : null;
         const fromApi = Number.isFinite(Number(r?.totalDrawsFromApi)) ? Number(r.totalDrawsFromApi) : null;
 
+        const blocked = Boolean(r?.blocked);
+        const blockedReason = String(r?.blockedReason || "").trim();
+
+        // ✅ Se a fonte disse "não existe sorteio nesse slot", não é furo.
+        // Para backfill, isso deve encerrar o slot como API_NO_SLOT imediatamente.
+        if (blocked && blockedReason === "no_draw_for_slot") {
+          slotRes.tries.push({
+            closeHour,
+            ok: true,
+            blocked,
+            blockedReason,
+            captured: false,
+            alreadyCompleteAny: false,
+            savedCount,
+            writeCount,
+            apiHasPrizes,
+            totalDrawsFromApi: fromApi,
+            totalDrawsMatchedClose: matchedClose,
+            totalDrawsValid: valid,
+            targetDrawIds: r?.targetDrawIds ?? null,
+            tookMs: r?.tookMs ?? null,
+          });
+
+          slotRes.last = slotRes.tries[slotRes.tries.length - 1];
+
+          slotRes.ok = false;
+          slotRes.doneReason = "API_NO_SLOT";
+          dayRes.summary.apiNoSlot += 1;
+
+          console.log(
+            "    [NO_DRAW] close=" +
+              closeHour +
+              " API_NO_SLOT (blockedReason=no_draw_for_slot)"
+          );
+
+          slotDone = true;
+          break;
+        }
+
         if (matchedClose != null && matchedClose > 0) anyMatchedClose = true;
 
         // “Any” summary info (melhor que só primeira leitura)
-        if (matchedClose != null) slotRes.api.matchedCloseAny = Math.max(slotRes.api.matchedCloseAny, matchedClose);
+        if (matchedClose != null)
+          slotRes.api.matchedCloseAny = Math.max(slotRes.api.matchedCloseAny, matchedClose);
         if (slotRes.api.validAny == null && valid != null) slotRes.api.validAny = valid;
         if (slotRes.api.fromApiAny == null && fromApi != null) slotRes.api.fromApiAny = fromApi;
 
@@ -310,7 +369,7 @@ async function main() {
             valid,
             apiHasPrizes,
           };
-          // aqui, outros minutos dificilmente mudam o fato de “sem prizes”
+
           console.log(
             `    ⚠ close=${closeHour} SLOT_EMPTY (matchedClose=${matchedClose}; valid=0; sem prizes)`
           );

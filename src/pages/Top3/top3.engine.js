@@ -103,7 +103,11 @@ export function isFederalDrawDay(ymd) {
   return dow === 3 || dow === 6; // qua/sáb
 }
 
-export function getPtRioScheduleForYmd(ymd, PT_RIO_SCHEDULE_NORMAL, PT_RIO_SCHEDULE_WED_SAT) {
+export function getPtRioScheduleForYmd(
+  ymd,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT
+) {
   const dow = getDowKey(ymd);
   if (dow === 3 || dow === 6) return PT_RIO_SCHEDULE_WED_SAT;
   return PT_RIO_SCHEDULE_NORMAL;
@@ -122,7 +126,11 @@ export function getScheduleForLottery({
     return isFederalDrawDay(ymd) ? FEDERAL_SCHEDULE : [];
   }
 
-  return getPtRioScheduleForYmd(ymd, PT_RIO_SCHEDULE_NORMAL, PT_RIO_SCHEDULE_WED_SAT);
+  return getPtRioScheduleForYmd(
+    ymd,
+    PT_RIO_SCHEDULE_NORMAL,
+    PT_RIO_SCHEDULE_WED_SAT
+  );
 }
 
 export function scheduleSet(schedule) {
@@ -223,6 +231,286 @@ export async function getPreviousDrawRobust({
   }
 
   return { draw: null, ymd: "", hour: "", source: "none" };
+}
+
+/* =========================
+   ✅ NOVO: Próximo sorteio (slot válido)
+========================= */
+
+function ymdHourToTs(ymd, hourBucket) {
+  if (!isYMD(ymd)) return Number.POSITIVE_INFINITY;
+  const [Y, M, D] = ymd.split("-").map((x) => Number(x));
+  const base = Date.UTC(Y, M - 1, D);
+  const mins = hourToInt(hourBucket);
+  const add = mins >= 0 ? mins * 60 * 1000 : 0;
+  return base + add;
+}
+
+/**
+ * Retorna o próximo slot (ymd/hour) respeitando a grade REAL da loteria.
+ * - Se houver próximo horário no mesmo dia -> (ymd, próximo horário)
+ * - Se for o último horário do dia -> pula para o próximo dia COM SORTEIO e pega o primeiro horário
+ * - Federal: pula para o próximo dia de concurso (qua/sáb) às 20h
+ */
+export function getNextSlotForLottery({
+  lotteryKey,
+  ymd,
+  hourBucket,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+  maxForwardDays = 21,
+}) {
+  const key = safeStr(lotteryKey).toUpperCase();
+  const y0 = safeStr(ymd);
+  const h0 = toHourBucket(hourBucket);
+
+  if (!isYMD(y0) || !safeStr(h0)) return { ymd: "", hour: "" };
+
+  // Federal: só um horário (20h) em qua/sáb -> próximo concurso
+  if (key === "FEDERAL") {
+    for (let i = 1; i <= maxForwardDays; i += 1) {
+      const day = addDaysYMD(y0, i);
+      const sch = getScheduleForLottery({
+        lotteryKey: key,
+        ymd: day,
+        PT_RIO_SCHEDULE_NORMAL,
+        PT_RIO_SCHEDULE_WED_SAT,
+        FEDERAL_SCHEDULE,
+      });
+      if (Array.isArray(sch) && sch.length) return { ymd: day, hour: toHourBucket(sch[0]) };
+    }
+    return { ymd: "", hour: "" };
+  }
+
+  // PT_RIO: tenta no mesmo dia
+  const sch0 = getScheduleForLottery({
+    lotteryKey: key,
+    ymd: y0,
+    PT_RIO_SCHEDULE_NORMAL,
+    PT_RIO_SCHEDULE_WED_SAT,
+    FEDERAL_SCHEDULE,
+  });
+
+  const idx = (Array.isArray(sch0) ? sch0 : []).findIndex(
+    (x) => toHourBucket(x) === h0
+  );
+
+  if (idx >= 0 && idx < sch0.length - 1) {
+    return { ymd: y0, hour: toHourBucket(sch0[idx + 1]) };
+  }
+
+  // próximo dia com grade
+  for (let i = 1; i <= maxForwardDays; i += 1) {
+    const day = addDaysYMD(y0, i);
+    const sch = getScheduleForLottery({
+      lotteryKey: key,
+      ymd: day,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+    });
+    if (Array.isArray(sch) && sch.length) return { ymd: day, hour: toHourBucket(sch[0]) };
+  }
+
+  return { ymd: "", hour: "" };
+}
+
+/* =========================
+   ✅ NOVO: ranking condicionado (1º do último sorteio -> próximo sorteio)
+========================= */
+
+/**
+ * Cria índice rápido: "YYYY-MM-DD|HHh" -> draw
+ */
+export function indexDrawsByYmdHour(draws) {
+  const map = new Map();
+  const list = Array.isArray(draws) ? draws : [];
+  for (const d of list) {
+    const y = pickDrawYMD(d);
+    const h = toHourBucket(pickDrawHour(d));
+    if (!isYMD(y) || !h) continue;
+    map.set(`${y}|${h}`, d);
+  }
+  return map;
+}
+
+/**
+ * Última aparição (timestamp) por grupo considerando TODAS as aparições do range.
+ * Isso alimenta o desempate "mais atrasado".
+ */
+export function computeLastSeenByGrupo(draws) {
+  const last = new Map(); // grupo -> ts
+  const list = Array.isArray(draws) ? draws : [];
+  for (const d of list) {
+    const y = pickDrawYMD(d);
+    const h = toHourBucket(pickDrawHour(d));
+    if (!isYMD(y) || !h) continue;
+    const ts = ymdHourToTs(y, h);
+
+    const ps = Array.isArray(d?.prizes) ? d.prizes : [];
+    for (const p of ps) {
+      const g = guessPrizeGrupo(p);
+      if (!Number.isFinite(Number(g)) || Number(g) <= 0) continue;
+      const gg = Number(g);
+      const prev = last.get(gg);
+      if (!Number.isFinite(prev) || ts > prev) last.set(gg, ts);
+    }
+  }
+  return last;
+}
+
+/**
+ * Conta aparições (1º..7º) por grupo em um draw.
+ */
+export function countAparicoesByGrupoInDraw(draw) {
+  const counts = new Map();
+  const ps = Array.isArray(draw?.prizes) ? draw.prizes : [];
+  for (const p of ps) {
+    const pos = guessPrizePos(p);
+    if (!Number.isFinite(Number(pos)) || Number(pos) < 1 || Number(pos) > 7) continue;
+    const g = guessPrizeGrupo(p);
+    if (!Number.isFinite(Number(g)) || Number(g) <= 0) continue;
+    const gg = Number(g);
+    counts.set(gg, (counts.get(gg) || 0) + 1);
+  }
+  return counts;
+}
+
+/**
+ * Motor principal:
+ * - Pega o último draw (drawLast)
+ * - Usa o grupo do 1º lugar desse último draw como "gatilho"
+ * - Procura no histórico todos os draws que têm:
+ *   - 1º lugar == grupo gatilho
+ *   - mesmo DOW do drawLast
+ *   - mesmo horário do drawLast
+ * - Para cada ocorrência, pega o "próximo sorteio" (slot válido) e soma aparições
+ * - Ordena por:
+ *   - freq desc
+ *   - atraso (lastSeen mais antigo) asc
+ *   - grupo asc (estável)
+ */
+export function computeConditionalNextTop3({
+  lotteryKey,
+  drawsRange,
+  drawLast,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+  topN = 3,
+}) {
+  const list = Array.isArray(drawsRange) ? drawsRange : [];
+  if (!list.length || !drawLast) {
+    return { top: [], meta: null };
+  }
+
+  const lastY = pickDrawYMD(drawLast);
+  const lastH = toHourBucket(pickDrawHour(drawLast));
+  const lastDow = getDowKey(lastY);
+  const triggerGrupo = pickPrize1GrupoFromDraw(drawLast);
+
+  if (!isYMD(lastY) || !lastH || lastDow == null || !Number.isFinite(Number(triggerGrupo))) {
+    return { top: [], meta: null };
+  }
+
+  const nextSlot = getNextSlotForLottery({
+    lotteryKey,
+    ymd: lastY,
+    hourBucket: lastH,
+    PT_RIO_SCHEDULE_NORMAL,
+    PT_RIO_SCHEDULE_WED_SAT,
+    FEDERAL_SCHEDULE,
+  });
+
+  const drawsIndex = indexDrawsByYmdHour(list);
+  const lastSeen = computeLastSeenByGrupo(list);
+
+  let samples = 0;
+  const freq = new Map(); // grupo -> total aparições
+
+  // percorre o range buscando ocorrências do cenário
+  for (const d of list) {
+    const y = pickDrawYMD(d);
+    const h = toHourBucket(pickDrawHour(d));
+    if (!isYMD(y) || !h) continue;
+
+    // mesmo DOW e mesmo horário do último draw
+    if (getDowKey(y) !== lastDow) continue;
+    if (h !== lastH) continue;
+
+    // 1º == triggerGrupo
+    const g1 = pickPrize1GrupoFromDraw(d);
+    if (Number(g1) !== Number(triggerGrupo)) continue;
+
+    // próximo sorteio da ocorrência
+    const ns = getNextSlotForLottery({
+      lotteryKey,
+      ymd: y,
+      hourBucket: h,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+    });
+
+    if (!ns?.ymd || !ns?.hour) continue;
+    const nextDraw = drawsIndex.get(`${ns.ymd}|${toHourBucket(ns.hour)}`) || null;
+    if (!nextDraw) continue;
+
+    samples += 1;
+
+    const c = countAparicoesByGrupoInDraw(nextDraw);
+    for (const [gg, n] of c.entries()) {
+      freq.set(gg, (freq.get(gg) || 0) + Number(n || 0));
+    }
+  }
+
+  const ranked = Array.from(freq.entries())
+    .map(([grupo, n]) => {
+      const ls = lastSeen.get(Number(grupo));
+      return {
+        grupo: Number(grupo),
+        freq: Number(n || 0),
+        lastSeenTs: Number.isFinite(ls) ? ls : Number.POSITIVE_INFINITY,
+      };
+    })
+    .sort((a, b) => {
+      // 1) freq desc
+      if (b.freq !== a.freq) return b.freq - a.freq;
+      // 2) mais atrasado = lastSeen mais antigo => ts menor primeiro
+      if (a.lastSeenTs !== b.lastSeenTs) return a.lastSeenTs - b.lastSeenTs;
+      // 3) estável
+      return a.grupo - b.grupo;
+    })
+    .slice(0, Math.max(1, Number(topN || 3)));
+
+  const top = ranked.map((x, idx) => ({
+    rank: idx + 1,
+    title: idx === 0 ? "Mais frequente" : idx === 1 ? "2º mais frequente" : "3º mais frequente",
+    grupo: x.grupo,
+    freq: x.freq,
+    // para o view montar a leitura
+    reasons: [
+      `Condição: 1º lugar = G${String(triggerGrupo).padStart(2, "0")} no mesmo dia/horário do último sorteio`,
+      `Próximo sorteio analisado: ${nextSlot?.ymd ? nextSlot.ymd : "—"} ${nextSlot?.hour ? toHourBucket(nextSlot.hour) : ""}`,
+      `Amostras (ocorrências do cenário no histórico): ${samples}`,
+      `Desempate: empate em frequência → mais atrasado (última aparição mais antiga)`,
+    ],
+    meta: {
+      trigger: { ymd: lastY, hour: lastH, dow: lastDow, grupo: Number(triggerGrupo) },
+      next: { ymd: safeStr(nextSlot?.ymd), hour: safeStr(toHourBucket(nextSlot?.hour)) },
+      samples,
+    },
+  }));
+
+  return {
+    top,
+    meta: {
+      trigger: { ymd: lastY, hour: lastH, dow: lastDow, grupo: Number(triggerGrupo) },
+      next: { ymd: safeStr(nextSlot?.ymd), hour: safeStr(toHourBucket(nextSlot?.hour)) },
+      samples,
+    },
+  };
 }
 
 /* =========================

@@ -92,7 +92,14 @@ jobs:
         env:
           # ✅ nome correto que o firebaseAdmin.js lê
           FIREBASE_ADMIN_SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+
           LOTTERY: PT_RIO
+
+          # ✅ ALERTA REAL (auditoria)
+          # - Se houver furo CRÍTICO, o job falha (run vermelha)
+          FAIL_ON_CRITICAL: "1"
+          AUDIT_WARN_MIN: "20"
+          AUDIT_CRIT_MIN: "60"
         run: node scripts/autoImportToday.js
 
   # ==========================================================
@@ -131,5 +138,11 @@ jobs:
         env:
           # ✅ nome correto que o firebaseAdmin.js lê
           FIREBASE_ADMIN_SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+
           LOTTERY: FEDERAL
+
+          # ✅ ALERTA REAL (auditoria)
+          FAIL_ON_CRITICAL: "1"
+          AUDIT_WARN_MIN: "20"
+          AUDIT_CRIT_MIN: "60"
         run: node scripts/autoImportToday.js

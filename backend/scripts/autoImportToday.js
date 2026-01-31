@@ -3,8 +3,8 @@
 
 const fs = require("fs");
 const path = require("path");
-const { runImport } = require("./importKingApostas");
 
+const { runImport } = require("./importKingApostas");
 // ✅ PT_RIO calendário CORE/OPCIONAL/RARA (gerado do Firestore)
 const { getPtRioSlotsByDate } = require("./ptRioCalendar");
 
@@ -30,6 +30,16 @@ const { getPtRioSlotsByDate } = require("./ptRioCalendar");
  *
  * ✅ Log claro em arquivo:
  * - backend/logs/autoImportToday-<LOTTERY>.log
+ *
+ * ✅ NOVO (2026-01):
+ * - Hard-guard de data futura (America/Sao_Paulo) => NÃO importa / NÃO contamina.
+ * - Auditoria de furo crítico (warning/critical) + relatório JSON em backend/logs/
+ * - FAIL_ON_CRITICAL=1 => exit(2) quando houver CRÍTICO (bom pro CI ficar vermelho)
+ *
+ * ✅ FIX (2026-01-31):
+ * - Se o backend indicar dayStatus=holiday_no_draw (blocked=true),
+ *   fecha o dia marcando slots aplicáveis como N/A (HOLIDAY_NO_DRAW),
+ *   evitando CRITICAL falso na auditoria.
  */
 
 // ✅ LOTTERY parametrizável por env (default PT_RIO)
@@ -43,6 +53,7 @@ const LOG_FILE = path.join(LOG_DIR, `autoImportToday-${LOTTERY}.log`);
 
 // Lock para evitar concorrência (por loteria)
 const LOCK_FILE = path.join(LOG_DIR, `autoImport-${LOTTERY}.lock`);
+
 // TTL do lock (ambientes locais). Em GitHub Actions, o workspace é isolado por execução.
 const LOCK_TTL_MS = 90 * 1000; // 1m30s
 
@@ -51,49 +62,74 @@ const WED_SAT_18H_ONE_SHOT_MINUTE = 35;
 // Tolerância (se o agendador disparar 18:36 etc.)
 const WED_SAT_18H_ONE_SHOT_TOLERANCE = 10; // minutos após 18:35
 
+// Auditoria: thresholds (minutos)
+const WARN_AFTER_MIN = Number(process.env.AUDIT_WARN_MIN || 20);
+const CRIT_AFTER_MIN = Number(process.env.AUDIT_CRIT_MIN || 60);
+const FAIL_ON_CRITICAL =
+  String(process.env.FAIL_ON_CRITICAL || "0").trim() === "1";
+
+/**
+ * ✅ Base URL do backend (pra ler dayStatus sem duplicar regra)
+ * - Local default: http://127.0.0.1:3333
+ * - Override: PITACO_API_BASE="https://seu-dominio"
+ */
+const PITACO_API_BASE = String(process.env.PITACO_API_BASE || "http://127.0.0.1:3333").trim();
+
 /* =========================
    Schedules (por loteria)
 ========================= */
-
 const SCHEDULES = {
   PT_RIO: [
     { hour: "09:00", windowStart: "09:05", releaseAt: "09:29", windowEnd: "09:31" },
     { hour: "11:00", windowStart: "11:05", releaseAt: "11:29", windowEnd: "11:31" },
     { hour: "14:00", windowStart: "14:05", releaseAt: "14:29", windowEnd: "14:31" },
     { hour: "16:00", windowStart: "16:05", releaseAt: "16:29", windowEnd: "16:31" },
+
     // 18h (normal seg/ter/qui/sex; qua/sáb pode ser one-shot; domingo costuma ser RARA)
     { hour: "18:00", windowStart: "18:05", releaseAt: "18:29", windowEnd: "18:31" },
+
     // 21h: janela longa minuto a minuto (mas pode ser RARA em alguns dias)
     { hour: "21:00", windowStart: "21:05", releaseAt: "21:05", windowEnd: "21:45" },
   ],
 
   // FEDERAL — quarta e sábado
-  FEDERAL: [
-    { hour: "20:00", windowStart: "19:49", releaseAt: "20:00", windowEnd: "20:10" },
-  ],
+  FEDERAL: [{ hour: "20:00", windowStart: "19:49", releaseAt: "20:00", windowEnd: "20:10" }],
 };
 
-const SCHEDULE = Array.isArray(SCHEDULES[LOTTERY])
-  ? SCHEDULES[LOTTERY]
-  : SCHEDULES.PT_RIO;
+const SCHEDULE = Array.isArray(SCHEDULES[LOTTERY]) ? SCHEDULES[LOTTERY] : SCHEDULES.PT_RIO;
 
 /* =========================
    Utils
 ========================= */
-
 function ensureLogDir() {
   if (!fs.existsSync(LOG_DIR)) fs.mkdirSync(LOG_DIR, { recursive: true });
 }
 
 function tsLocal() {
-  const d = new Date();
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  const hh = String(d.getHours()).padStart(2, "0");
-  const mi = String(d.getMinutes()).padStart(2, "0");
-  const ss = String(d.getSeconds()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
+  // log no fuso do Brasil (pra bater com tua operação)
+  try {
+    const fmt = new Intl.DateTimeFormat("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+    // pt-BR vem como "dd/mm/aaaa hh:mm:ss"
+    return fmt.format(new Date()).replace(",", "");
+  } catch {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    const hh = String(d.getHours()).padStart(2, "0");
+    const mi = String(d.getMinutes()).padStart(2, "0");
+    const ss = String(d.getSeconds()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
+  }
 }
 
 function logLine(msg, level = "INFO") {
@@ -101,7 +137,9 @@ function logLine(msg, level = "INFO") {
   const line = `[${tsLocal()}] [${level}] [${LOTTERY}] ${msg}\n`;
   try {
     fs.appendFileSync(LOG_FILE, line);
-  } catch {}
+  } catch {
+    // ignora falha em log
+  }
   if (level === "ERROR") console.error(msg);
   else console.log(msg);
 }
@@ -110,18 +148,63 @@ function pad2(n) {
   return String(n).padStart(2, "0");
 }
 
-function todayYMD() {
-  const d = new Date();
-  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+function isISODate(s) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
 }
 
-function nowHM() {
-  const d = new Date();
-  return { h: d.getHours(), m: d.getMinutes() };
+function todayYMDInSaoPaulo() {
+  try {
+    // en-CA => YYYY-MM-DD
+    const fmt = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Sao_Paulo",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+    return fmt.format(new Date());
+  } catch {
+    const d = new Date();
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  }
 }
 
-function dowLocal() {
-  return new Date().getDay(); // 0=Dom..6=Sáb
+function nowHMInSaoPaulo() {
+  try {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "America/Sao_Paulo",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    })
+      .format(new Date())
+      .split(":");
+    return { h: Number(parts[0]), m: Number(parts[1]) };
+  } catch {
+    const d = new Date();
+    return { h: d.getHours(), m: d.getMinutes() };
+  }
+}
+
+function dowInSaoPaulo() {
+  // 0=Dom..6=Sáb
+  try {
+    // trick: pega weekday em en-US e mapeia
+    const wd = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Sao_Paulo",
+      weekday: "short",
+    }).format(new Date());
+    const map = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+    return typeof map[wd] === "number" ? map[wd] : new Date().getDay();
+  } catch {
+    return new Date().getDay();
+  }
+}
+
+function isFutureISODate(ymd) {
+  if (!isISODate(ymd)) return false;
+  const todayBR = todayYMDInSaoPaulo();
+  // ISO lexicográfico funciona
+  return String(ymd) > String(todayBR);
 }
 
 function toMin(h, m) {
@@ -143,7 +226,9 @@ function parseHH(hhmm) {
 
 // Converte schedule.hour "09:09" -> slot "09:00"
 function scheduleHourToSlot(hourHHMM) {
-  const { h } = parseHH(hourHHMM);
+  const parsed = parseHH(hourHHMM);
+  if (!parsed) return String(hourHHMM || "").trim();
+  const { h } = parsed;
   return `${pad2(h)}:00`;
 }
 
@@ -168,6 +253,7 @@ function defaultState() {
 }
 
 function safeWriteJson(filePath, obj) {
+  ensureLogDir();
   const tmp = `${filePath}.tmp`;
   fs.writeFileSync(tmp, JSON.stringify(obj, null, 2));
   fs.renameSync(tmp, filePath);
@@ -175,7 +261,6 @@ function safeWriteJson(filePath, obj) {
 
 function loadState(date) {
   const f = stateFile(date);
-
   if (!fs.existsSync(f)) {
     const init = defaultState();
     safeWriteJson(f, init);
@@ -193,7 +278,6 @@ function loadState(date) {
 
   // Migração / merge defensivo
   const migrated = defaultState();
-
   for (const s of SCHEDULE) {
     const v = parsed?.[s.hour];
 
@@ -223,12 +307,18 @@ function saveState(date, state) {
   safeWriteJson(stateFile(date), state);
 }
 
+function isAllDone(state) {
+  return Object.values(state).every((x) => x && x.done === true);
+}
+
 /**
  * Gera closes candidatos (tolerância de minutos)
- * Ex.: "11:00" => ["11:00","11:01","10:59","11:02","10:58","11:09","11:10","11:08","11:11","11:07"]
+ * Ex.: "11:00" => ["11:00","11:01","10:59","11:02","10:58","11:09",...]
  */
 function closeCandidates(hhmm) {
-  const { h, m } = parseHH(hhmm);
+  const parsed = parseHH(hhmm);
+  if (!parsed) return [];
+  const { h, m } = parsed;
 
   const bases = [m];
   if (m === 0) bases.push(9);
@@ -246,21 +336,17 @@ function closeCandidates(hhmm) {
   return Array.from(new Set(out));
 }
 
-function isAllDone(state) {
-  return Object.values(state).every((x) => x && x.done === true);
-}
-
 /* =========================
    Regras do calendário
 ========================= */
-
 function isWedOrSat(dow) {
   return dow === 3 || dow === 6;
 }
 
 function buildTodaySlotStatusMap(dateYMD, dow) {
-  const map = new Map(); // schedule.hour -> status
+  const map = new Map();
 
+  // schedule.hour -> status
   if (LOTTERY === "PT_RIO") {
     const cal = getPtRioSlotsByDate(dateYMD);
     const core = new Set(cal.core || []);
@@ -277,10 +363,9 @@ function buildTodaySlotStatusMap(dateYMD, dow) {
     }
 
     logLine(
-      `[CAL] date=${dateYMD} dow=${dow} source=${cal.source} CORE=${(cal.core||[]).join(",")||"—"} OPC=${(cal.opcional||[]).join(",")||"—"} RARA=${(cal.rara||[]).join(",")||"—"}`,
+      `[CAL] date=${dateYMD} dow=${dow} source=${cal.source} CORE=${(cal.core || []).join(",") || "—"} OPC=${(cal.opcional || []).join(",") || "—"} RARA=${(cal.rara || []).join(",") || "—"}`,
       "INFO"
     );
-
     return map;
   }
 
@@ -308,6 +393,7 @@ function slotWindow(schedule) {
       release: toMin(h, 29),
       end: toMin(h, 31),
       startLabel: `${pad2(h)}:05`,
+      releaseLabel: `${pad2(h)}:29`,
       endLabel: `${pad2(h)}:31`,
     };
   }
@@ -321,20 +407,21 @@ function slotWindow(schedule) {
     release,
     end,
     startLabel: schedule.windowStart,
+    releaseLabel: schedule.releaseAt,
     endLabel: schedule.windowEnd,
   };
 }
 
 function isInWedSat18OneShotWindow(nowMin) {
   const start = toMin(18, WED_SAT_18H_ONE_SHOT_MINUTE);
-  const end = start + Math.max(0, Number(WED_SAT_18H_ONE_SHOT_TOLERANCE || 0));
+  const end =
+    start + Math.max(0, Number(WED_SAT_18H_ONE_SHOT_TOLERANCE || 0));
   return nowMin >= start && nowMin <= end;
 }
 
 /* =========================
    Lock (anti-concorrência)
 ========================= */
-
 function acquireLock() {
   ensureLogDir();
 
@@ -367,18 +454,172 @@ function acquireLock() {
 function releaseLock() {
   try {
     if (fs.existsSync(LOCK_FILE)) fs.unlinkSync(LOCK_FILE);
-  } catch {}
+  } catch {
+    // ignore
+  }
+}
+
+/* =========================
+   DayStatus guard (holiday_no_draw)
+========================= */
+async function fetchDayStatusFromBackend({ date, lottery }) {
+  try {
+    const u = `${PITACO_API_BASE.replace(/\/+$/, "")}/api/pitaco/results?date=${encodeURIComponent(
+      String(date || "").trim()
+    )}&lottery=${encodeURIComponent(String(lottery || "").trim())}`;
+
+    // Node 18+ tem fetch global; se não tiver, simplesmente falha no catch
+    const res = await fetch(u, { method: "GET" });
+    if (!res.ok) return null;
+
+    const j = await res.json().catch(() => null);
+    if (!j || typeof j !== "object") return null;
+
+    return {
+      ok: Boolean(j.ok),
+      dayStatus: String(j.dayStatus || "").trim(),
+      blocked: Boolean(j.blocked),
+      blockedReason: String(j.blockedReason || "").trim(),
+      count: Number.isFinite(Number(j.count)) ? Number(j.count) : null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function applyHolidayNoDrawToState({ state, statusMap, isoNow }) {
+  // marca apenas slots aplicáveis (CORE/OPCIONAL) como N/A + DONE
+  let touched = 0;
+
+  for (const sched of SCHEDULE) {
+    const slot = state?.[sched.hour];
+    if (!slot) continue;
+
+    const st = statusMap.get(sched.hour) || "OFF";
+    const applies = st === "CORE" || st === "OPCIONAL";
+    if (!applies) continue;
+
+    if (slot.done && slot.na && slot.naReason === "HOLIDAY_NO_DRAW") continue;
+
+    slot.done = true;
+    slot.na = true;
+    slot.naReason = "HOLIDAY_NO_DRAW";
+    slot.lastTryISO = isoNow;
+    slot.lastResult = { ok: true, skipped: true, reason: "HOLIDAY_NO_DRAW" };
+    touched += 1;
+  }
+
+  return touched;
+}
+
+/* =========================
+   Auditoria de Furos (warning/critical)
+========================= */
+function auditOutFile(dateYMD) {
+  return path.join(LOG_DIR, `auditCritical-${LOTTERY}-${dateYMD}.json`);
+}
+
+function buildAuditReport({ date, nowMin, isoNow, dow, statusMap, state }) {
+  const todayBR = todayYMDInSaoPaulo();
+  const missing = [];
+  const warnings = [];
+
+  for (const sched of SCHEDULE) {
+    const slotState = state?.[sched.hour];
+    if (!slotState) continue;
+
+    const st = statusMap.get(sched.hour) || "OFF";
+    const applies = st === "CORE" || st === "OPCIONAL";
+    if (!applies) continue;
+
+    if (slotState.na) continue;
+    if (slotState.done) continue;
+
+    // calcula referência de "release" por regra
+    let releaseMin = null;
+    let releaseLabel = null;
+    let windowEndLabel = null;
+    let rule = "window";
+
+    if (LOTTERY === "PT_RIO" && sched.hour === "18:00" && isWedOrSat(dow)) {
+      // one-shot: referência é 18:35 (quando tentamos)
+      releaseMin = toMin(18, WED_SAT_18H_ONE_SHOT_MINUTE);
+      releaseLabel = `18:${pad2(WED_SAT_18H_ONE_SHOT_MINUTE)}`;
+      windowEndLabel = `18:${pad2(
+        WED_SAT_18H_ONE_SHOT_MINUTE + WED_SAT_18H_ONE_SHOT_TOLERANCE
+      )}`;
+      rule = "wed_sat_one_shot";
+    } else {
+      const w = slotWindow(sched);
+      releaseMin = w.release;
+      releaseLabel = w.releaseLabel;
+      windowEndLabel = w.endLabel;
+      rule = "window";
+    }
+
+    // se ainda não passou do release, não é furo (ainda)
+    if (nowMin < releaseMin) continue;
+
+    const since = nowMin - releaseMin;
+
+    const item = {
+      slot: sched.hour,
+      calendar: st,
+      rule,
+      releaseAt: releaseLabel,
+      windowEnd: windowEndLabel,
+      sinceMinutes: since,
+      tries: Number(slotState.tries || 0),
+      lastTryISO: slotState.lastTryISO || null,
+      lastResult: slotState.lastResult || null,
+    };
+
+    if (since >= CRIT_AFTER_MIN) missing.push(item);
+    else if (since >= WARN_AFTER_MIN) warnings.push(item);
+  }
+
+  let status = "ok";
+  if (missing.length) status = "critical";
+  else if (warnings.length) status = "warning";
+
+  return {
+    ok: true,
+    lottery: LOTTERY,
+    date,
+    todayBR,
+    isoNow,
+    dow,
+    thresholds: { warnAfterMin: WARN_AFTER_MIN, critAfterMin: CRIT_AFTER_MIN },
+    status,
+    criticalCount: missing.length,
+    warningCount: warnings.length,
+    critical: missing,
+    warning: warnings,
+  };
 }
 
 /* =========================
    Main
 ========================= */
-
 async function main() {
-  const date = todayYMD();
-  const now = nowHM();
+  // ✅ data base: pode sobrescrever por env (útil em backfill manual/CI)
+  const envDate = String(process.env.DATE || "").trim();
+  const date = envDate && isISODate(envDate) ? envDate : todayYMDInSaoPaulo();
+
+  // ✅ HARD GUARD: bloqueia data futura (Brasil)
+  if (isFutureISODate(date)) {
+    const todayBR = todayYMDInSaoPaulo();
+    logLine(
+      `[GUARD] FUTURE_DATE_BLOCKED date=${date} todayBR=${todayBR} (não vamos importar)`,
+      "ERROR"
+    );
+    process.exit(2);
+    return;
+  }
+
+  const now = nowHMInSaoPaulo();
   const nowMin = toMin(now.h, now.m);
-  const dow = dowLocal();
+  const dow = dowInSaoPaulo();
 
   // ✅ Flags por execução (NÃO persistir em JSON)
   const catchupTried = new Set(); // key = `${date}::${sched.hour}`
@@ -392,12 +633,10 @@ async function main() {
   try {
     const state = loadState(date);
     const isoNow = new Date().toISOString();
-
     const statusMap = buildTodaySlotStatusMap(date, dow);
 
     // 1) Marca N/A slots que não se aplicam hoje (RARA/OFF)
     let stateTouched = false;
-
     for (const sched of SCHEDULE) {
       const slot = state[sched.hour];
       if (!slot) continue;
@@ -421,14 +660,41 @@ async function main() {
         slot.lastResult = { ok: true, skipped: true, reason: slot.naReason };
         stateTouched = true;
 
-        logLine(
-          `[AUTO] N/A slot=${sched.hour} (${slot.naReason}) -> DONE`,
-          "INFO"
-        );
+        logLine(`[AUTO] N/A slot=${sched.hour} (${slot.naReason}) -> DONE`, "INFO");
       }
     }
-
     if (stateTouched) saveState(date, state);
+
+    /**
+     * ✅ 1.5) DayStatus guard: feriado sem sorteio
+     * Só faz sentido se o backend estiver acessível (local/CI).
+     * Se detectado holiday_no_draw + blocked, fecha o dia marcando slots aplicáveis como N/A.
+     */
+    const ds = await fetchDayStatusFromBackend({ date, lottery: LOTTERY });
+    if (ds && ds.blocked && String(ds.dayStatus || "") === "holiday_no_draw") {
+      const touched = applyHolidayNoDrawToState({ state, statusMap, isoNow });
+      if (touched > 0) saveState(date, state);
+
+      // gera audit OK (sem furos) porque tudo aplicável virou N/A
+      try {
+        const report = buildAuditReport({
+          date,
+          nowMin,
+          isoNow: new Date().toISOString(),
+          dow,
+          statusMap,
+          state,
+        });
+        safeWriteJson(auditOutFile(date), report);
+      } catch {}
+
+      logLine(
+        `[DAY_STATUS] holiday_no_draw confirmado pelo backend (blockedReason=${ds.blockedReason || "—"}). ` +
+          `Slots aplicáveis marcados como N/A (HOLIDAY_NO_DRAW). Encerrando.`,
+        "INFO"
+      );
+      return;
+    }
 
     let didSomething = false;
 
@@ -475,18 +741,16 @@ async function main() {
             continue;
           }
 
-          const savedCount = Number.isFinite(Number(r?.savedCount))
-            ? Number(r.savedCount)
-            : 0;
-          const writeCount = Number.isFinite(Number(r?.writeCount))
-            ? Number(r.writeCount)
-            : 0;
+          const savedCount = Number.isFinite(Number(r?.savedCount)) ? Number(r.savedCount) : 0;
+          const writeCount = Number.isFinite(Number(r?.writeCount)) ? Number(r.writeCount) : 0;
 
           const alreadyCompleteAny = Boolean(r?.alreadyCompleteAny);
+          const alreadyCompleteAll = Boolean(r?.alreadyCompleteAll);
+
           const captured = Boolean(r?.captured);
           const apiHasPrizes = r?.apiHasPrizes ?? null;
 
-          const doneNow = captured && (savedCount > 0 || alreadyCompleteAny);
+          const doneNow = captured && (savedCount > 0 || alreadyCompleteAll);
 
           slot.lastResult = {
             ok: true,
@@ -494,6 +758,7 @@ async function main() {
             closeHourTried: closeHour,
             captured,
             alreadyCompleteAny,
+            alreadyCompleteAll,
             savedCount,
             writeCount,
             apiHasPrizes,
@@ -503,10 +768,10 @@ async function main() {
           saveState(date, state);
 
           if (doneNow) {
-            doneReason = alreadyCompleteAny ? "FS_ALREADY_HAS" : "CAPTURED";
+            doneReason = alreadyCompleteAll ? "FS_ALREADY_HAS_ALL" : "CAPTURED";
             logLine(
-              alreadyCompleteAny
-                ? `[AUTO] FS já tem slot=18:00 (close=${closeHour}) -> DONE`
+              alreadyCompleteAll
+                ? `[AUTO] FS já tem slot=18:00 COMPLETO (close=${closeHour}) -> DONE`
                 : `[AUTO] CAPTURADO slot=18:00 (close=${closeHour}) saved=${savedCount} writes=${writeCount} -> DONE`,
               "INFO"
             );
@@ -542,23 +807,17 @@ async function main() {
 
       if (!inWindow) {
         if (!afterRelease) continue;
-
         const key = `${date}::${sched.hour}`;
         if (catchupTried.has(key)) continue;
         catchupTried.add(key);
 
         logLine(
-          `[AUTO] CATCH-UP pós-release ${date} slot=${sched.hour} (${st}) release=${w.startLabel}~${w.endLabel} (fora da janela)`,
+          `[AUTO] CATCH-UP pós-release ${date} slot=${sched.hour} (${st}) releaseAt=${w.releaseLabel} window=${w.startLabel}~${w.endLabel} (fora da janela)`,
           "INFO"
         );
       }
 
-      // gate correto
-      if (inWindow) {
-        if (!afterRelease) continue;
-      } else {
-        if (!afterRelease) continue;
-      }
+      if (!afterRelease) continue;
 
       // tenta capturar
       slot.tries = (slot.tries || 0) + 1;
@@ -588,15 +847,12 @@ async function main() {
           continue;
         }
 
-        const savedCount = Number.isFinite(Number(r?.savedCount))
-          ? Number(r.savedCount)
-          : 0;
-        const writeCount = Number.isFinite(Number(r?.writeCount))
-          ? Number(r.writeCount)
-          : 0;
+        const savedCount = Number.isFinite(Number(r?.savedCount)) ? Number(r.savedCount) : 0;
+        const writeCount = Number.isFinite(Number(r?.writeCount)) ? Number(r.writeCount) : 0;
 
         const alreadyCompleteAny = Boolean(r?.alreadyCompleteAny);
         const alreadyCompleteAll = Boolean(r?.alreadyCompleteAll);
+
         const skippedAlreadyComplete = Number.isFinite(Number(r?.skippedAlreadyComplete))
           ? Number(r.skippedAlreadyComplete)
           : null;
@@ -604,7 +860,7 @@ async function main() {
         const captured = Boolean(r?.captured);
         const apiHasPrizes = r?.apiHasPrizes ?? null;
 
-        const doneNow = captured && (savedCount > 0 || alreadyCompleteAny);
+        const doneNow = captured && (savedCount > 0 || alreadyCompleteAll);
 
         slot.lastResult = {
           ok: true,
@@ -626,8 +882,8 @@ async function main() {
           saveState(date, state);
 
           logLine(
-            alreadyCompleteAny
-              ? `[AUTO] FS já tem slot=${sched.hour} (close=${closeHour}) -> DONE`
+            alreadyCompleteAll
+              ? `[AUTO] FS já tem slot=${sched.hour} COMPLETO (close=${closeHour}) -> DONE`
               : `[AUTO] CAPTURADO slot=${sched.hour} (close=${closeHour}) saved=${savedCount} writes=${writeCount} -> DONE`,
             "INFO"
           );
@@ -642,9 +898,50 @@ async function main() {
           logLine(`[AUTO] falhou slot=${sched.hour} (erros em closes candidatos)`, "ERROR");
           didSomething = true;
         } else {
-          logLine(`[AUTO] ainda indisponível slot=${sched.hour} (nenhum close candidato capturou)`, "INFO");
+          logLine(
+            `[AUTO] ainda indisponível slot=${sched.hour} (nenhum close candidato capturou)`,
+            "INFO"
+          );
         }
       }
+    }
+
+    // 3) Auditoria pós-execução: warning/critical (gera relatório)
+    try {
+      const report = buildAuditReport({
+        date,
+        nowMin,
+        isoNow: new Date().toISOString(),
+        dow,
+        statusMap,
+        state,
+      });
+
+      safeWriteJson(auditOutFile(date), report);
+
+      if (report.status === "critical") {
+        logLine(
+          `[AUDIT] CRITICAL missing=${report.criticalCount} warning=${report.warningCount} (relatório salvo em ${path.basename(
+            auditOutFile(date)
+          )})`,
+          "ERROR"
+        );
+        if (FAIL_ON_CRITICAL) {
+          logLine(`[AUDIT] FAIL_ON_CRITICAL=1 => exit(2)`, "ERROR");
+          process.exitCode = 2;
+        }
+      } else if (report.status === "warning") {
+        logLine(
+          `[AUDIT] WARNING missing=${report.warningCount} (relatório salvo em ${path.basename(
+            auditOutFile(date)
+          )})`,
+          "INFO"
+        );
+      } else {
+        logLine(`[AUDIT] OK (sem furos acima de ${WARN_AFTER_MIN} min)`, "INFO");
+      }
+    } catch (e) {
+      logLine(`[AUDIT] erro ao gerar relatório: ${e?.message || e}`, "ERROR");
     }
 
     if (isAllDone(state)) {

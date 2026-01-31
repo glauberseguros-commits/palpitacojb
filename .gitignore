@@ -90,3 +90,7 @@ src/pages/Top3/Top3View.jsx
 !backend/data/no_draw_days/
 !backend/data/no_draw_days/*.json
 
+
+# artifacts / debug
+backend/details-*.html
+

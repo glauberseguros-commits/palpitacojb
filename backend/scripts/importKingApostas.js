@@ -1,4 +1,4 @@
-// backend/scripts/importKingApostas.js
+﻿// backend/scripts/importKingApostas.js
 "use strict";
 
 const fs = require("fs");
@@ -223,7 +223,7 @@ function todayYMDLocal() {
     return fmt.format(new Date()); // YYYY-MM-DD
   } catch {
     const d = new Date();
-    return ${d.getFullYear()}--;
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
   }
 }
 
@@ -332,7 +332,7 @@ function normalizeHHMM(value) {
  * Correção crítica (seu caso):
  * - A API do PT_RIO costuma devolver HH:09 como "marcação" e NÃO um minuto real.
  * - Portanto, para PT_RIO, se raw terminar em ":09", tratamos como "sem minuto real"
- *   e NÃO persistimos close_hour_raw (vira ""). 
+ *   e NÃO persistimos close_hour_raw (vira "").
  *
  * Retorna:
  * - raw: HH:MM (normalizado) OU "" quando for "sintético" (PT_RIO HH:09)
@@ -504,6 +504,123 @@ async function axiosGetJson(url) {
   throw lastErr || new Error("Falha ao buscar API.");
 }
 
+/* =========================
+   DETAILS (HTML) fallback — PT_RIO 18h
+========================= */
+function buildDetailsUrl({ date, lotteryKey }) {
+  const lk = String(lotteryKey || "").trim().toUpperCase();
+  // Para PT_RIO: a rota web usa "PtRio" (como no app)
+  const lot = lk === "PT_RIO" ? "PtRio" : encodeURIComponent(lk.replace(/_/g, ""));
+  return `https://app.kingapostas.com/results/details?lottery=${lot}&date=${encodeURIComponent(
+    String(date || "").trim()
+  )}`;
+}
+
+async function axiosGetText(url) {
+  let lastErr = null;
+
+  for (let attempt = 0; attempt <= HTTP_RETRIES; attempt++) {
+    try {
+      const { data } = await axios.get(url, {
+        headers: {
+          Accept:
+            "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          Origin: "https://app.kingapostas.com",
+          Referer: "https://app.kingapostas.com/",
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36",
+        },
+        timeout: 30000,
+        responseType: "text",
+        validateStatus: (s) => s >= 200 && s < 400,
+      });
+      return String(data || "");
+    } catch (e) {
+      lastErr = e;
+      const canRetry = attempt < HTTP_RETRIES && shouldRetryAxiosError(e);
+      if (!canRetry) break;
+
+      const backoff = HTTP_RETRY_BASE_MS * Math.pow(2, attempt);
+      console.warn(
+        `[HTTP] tentativa ${attempt + 1}/${HTTP_RETRIES + 1} (HTML) falhou (${
+          e?.response?.status || e?.code || "err"
+        }). retry em ${backoff}ms...`
+      );
+      await new Promise((r) => setTimeout(r, backoff));
+    }
+  }
+
+  throw lastErr || new Error("Falha ao buscar HTML");
+}
+
+/**
+ * Detecta se o HTML é uma página de login/redirect (evita falso positivo).
+ */
+function detectDetailsHtmlKind(html) {
+  const h = String(html || "");
+  const low = h.toLowerCase();
+
+  // sinais que você já viu na prática:
+  if (low.includes("/login/sign-in") || low.includes("formlogin")) return "login";
+  if (low.includes("bailout_to_client_side_rendering")) return "csr_bailout";
+  if (low.includes("app/login") || low.includes("sign-in")) return "login_like";
+
+  // fallback: parece uma página de results
+  if (low.includes("results/details") || low.includes("kingapostas")) return "results_like";
+
+  return "unknown";
+}
+
+// Heurística: só diagnosticar se o HTML "parece" ter o slot e algum conteúdo de prêmios
+function parseDetailsHtmlForSlot(html, slotHHMM) {
+  const out = {
+    hasSlot: false,
+    hasAnyPrize: false,
+    kind: "unknown",
+  };
+  const h = String(html || "");
+  const slot = String(slotHHMM || "").trim();
+  if (!h || !slot) return out;
+
+  out.kind = detectDetailsHtmlKind(h);
+
+  // Se é login/redirect, não confia em nada
+  if (out.kind === "login" || out.kind === "login_like") {
+    return out;
+  }
+
+  if (h.toLowerCase().includes(slot.toLowerCase())) out.hasSlot = true;
+
+  // mantém sua heurística, mas só vale quando não for login
+  if (/(prize[_\s-]?\d+)|(\b\d{4}\b)/i.test(h)) out.hasAnyPrize = true;
+
+  return out;
+}
+
+async function tryHtmlDetailsFallback({ date, lotteryKey, closeHour }) {
+  const lk = String(lotteryKey || "").trim().toUpperCase();
+  const slot = normalizeCloseHourForLottery(closeHour || "", lk).slot;
+  if (!slot || !isHHMM(slot)) return { ok: false, reason: "bad_slot" };
+
+  // por enquanto: só PT_RIO 18:00 (não altera outros horários)
+  if (!(lk === "PT_RIO" && slot === "18:00")) {
+    return { ok: false, reason: "not_applicable" };
+  }
+
+  const url = buildDetailsUrl({ date, lotteryKey: lk });
+  const html = await axiosGetText(url);
+  const parsed = parseDetailsHtmlForSlot(html, slot);
+
+  return {
+    ok: true,
+    url,
+    slot,
+    hasSlot: parsed.hasSlot,
+    hasAnyPrize: parsed.hasAnyPrize,
+    kind: parsed.kind,
+  };
+}
+
 /**
  * ✅ Merge + dedup de draws vindos de múltiplos requests
  * Dedup key: date + close_hour(SLOT) + lottery_id (se existir)
@@ -515,10 +632,7 @@ function mergeAndDedupDraws(arrays, lotteryKey) {
     const list = Array.isArray(a) ? a : [];
     for (const d of list) {
       const date = String(d?.date || "").trim();
-      const { slot } = normalizeCloseHourForLottery(
-        d?.close_hour || "",
-        lotteryKey
-      );
+      const { slot } = normalizeCloseHourForLottery(d?.close_hour || "", lotteryKey);
 
       const lid =
         pickLotteryId(d) ||
@@ -585,7 +699,7 @@ async function fetchKingResults({ date, lotteryKey }) {
 
   const summarizeCloseHoursPart = (list) => {
     const set = new Set();
-    for (const d of (Array.isArray(list) ? list : [])) {
+    for (const d of Array.isArray(list) ? list : []) {
       const c = closeFromDraw(d);
       if (c) set.add(c);
     }
@@ -611,7 +725,7 @@ async function fetchKingResults({ date, lotteryKey }) {
     } catch (e) {
       const msg = e?.response?.status
         ? `HTTP_${e.response.status}`
-        : (e?.code || e?.message || "ERR");
+        : e?.code || e?.message || "ERR";
 
       errors.push({ lotteryId, msg });
 
@@ -811,7 +925,9 @@ async function importFromPayload({
   };
 
   // ✅ filtro deve ser SLOT também
-  const filterClose = closeHour ? normalizeCloseHourForLottery(closeHour, lk).slot : null;
+  const filterClose = closeHour
+    ? normalizeCloseHourForLottery(closeHour, lk).slot
+    : null;
   if (filterClose && !isHHMM(filterClose)) {
     throw new Error('Parâmetro "closeHour" inválido. Use HH:MM.');
   }
@@ -1032,6 +1148,10 @@ async function importFromPayload({
 /**
  * Função principal para uso pelo server/scheduler.
  * Retorna um objeto com métricas e flags úteis (captured, savedCount, alreadyComplete).
+ *
+ * ✅ NOVO:
+ * - se normalizedClose NÃO existir nos close_hours do dia, retorna blocked/no_draw_for_slot
+ *   (isso NÃO é furo)
  */
 async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {}) {
   if (!date || !isISODate(date)) {
@@ -1040,7 +1160,7 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
 
   const lk = String(lotteryKey || "").trim().toUpperCase();
   if (!lk || !LOTTERIES_BY_KEY[lk]) {
-    throw new Error(`Parâmetro "lotteryKey" inválido: ${lk}`);
+    throw new Error(`Parâmetro "lotteryKey" inválida: ${lk}`);
   }
 
   // ✅ BLINDAGEM: nunca importar data futura (evita “sujar” FS por engano)
@@ -1099,9 +1219,7 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
   }
 
   // ✅ closeHour do scheduler é slot; normaliza para slot também
-  const normalizedClose = closeHour
-    ? normalizeCloseHourForLottery(closeHour, lk).slot
-    : null;
+  const normalizedClose = closeHour ? normalizeCloseHourForLottery(closeHour, lk).slot : null;
   if (normalizedClose && !isHHMM(normalizedClose)) {
     throw new Error('Parâmetro "closeHour" inválido. Use HH:MM.');
   }
@@ -1109,6 +1227,125 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
   const startedAt = Date.now();
 
   const payload = await fetchKingResults({ date, lotteryKey: lk });
+
+  // ✅ NOVO: se pediram closeHour e ele NÃO existe no dia (close_hours do FETCH),
+  // retorna blocked/no_draw_for_slot e NÃO tenta importar nem gerar "furo".
+  if (normalizedClose) {
+    const closes = summarizeCloseHours(
+      Array.isArray(payload?.data) ? payload.data : [],
+      lk
+    );
+    const hasTarget = closes.includes(normalizedClose);
+
+    if (!hasTarget) {
+      // ainda assim, loga fallback HTML apenas para diagnóstico (não muda o blocked)
+      try {
+        const fb = await tryHtmlDetailsFallback({
+          date,
+          lotteryKey: lk,
+          closeHour: normalizedClose,
+        });
+
+        if (fb.ok) {
+          console.warn(
+            `[FALLBACK:DETAILS] lk=${lk} date=${date} slot=${fb.slot} kind=${fb.kind} hasSlot=${fb.hasSlot} hasAnyPrize=${fb.hasAnyPrize} url=${fb.url}`
+          );
+        }
+      } catch (e) {
+        console.warn(
+          `[FALLBACK:DETAILS] erro: ${String(e?.message || e || "unknown")}`
+        );
+      }
+
+      const ms0 = Date.now() - startedAt;
+
+      return {
+        ok: true,
+        lotteryKey: lk,
+        date,
+        closeHour: normalizedClose,
+
+        blocked: true,
+        blockedReason: "no_draw_for_slot",
+        todayBR,
+
+        // aqui é crucial: não é capturado porque não existe slot
+        captured: false,
+        apiHasPrizes: false,
+        alreadyCompleteAny: false,
+        alreadyCompleteAll: false,
+
+        expectedTargets: 0,
+        alreadyCompleteCount: 0,
+        slotDocsFound: 0,
+        apiReturnedTargetDraws: 0,
+
+        savedCount: 0,
+        writeCount: 0,
+        targetDrawIds: [],
+
+        tookMs: ms0,
+
+        totalDrawsFromApi: Array.isArray(payload?.data) ? payload.data.length : 0,
+        totalDrawsMatchedClose: 0,
+        totalDrawsValid: 0,
+        totalDrawsSaved: 0,
+        totalDrawsUpserted: 0,
+        totalPrizesSaved: 0,
+        totalPrizesUpserted: 0,
+        skippedEmpty: 0,
+        skippedInvalid: 0,
+        skippedCloseHour: 0,
+        skippedAlreadyComplete: 0,
+        proof: {
+          filterClose: normalizedClose,
+          apiHasPrizes: false,
+          apiReturnedTargetDraws: 0,
+          targetDrawIds: [],
+          inferredDate: null,
+          expectedTargets: 0,
+          slotDocsFound: 0,
+          alreadyCompleteCount: 0,
+          alreadyCompleteAny: false,
+          alreadyCompleteAll: false,
+          targetWriteCount: 0,
+          targetSavedCount: 0,
+        },
+      };
+    }
+
+    // ✅ se existe no dia, mantém fallback HTML só como diagnóstico quando JSON não retorna
+    // (na prática, hasTarget true => não entra)
+  }
+
+  // ✅ fallback HTML (apenas PT_RIO 18:00) quando o JSON não retorna o slot
+  if (normalizedClose) {
+    try {
+      const closes = summarizeCloseHours(
+        Array.isArray(payload?.data) ? payload.data : [],
+        lk
+      );
+      const hasTarget = closes.includes(normalizedClose);
+
+      if (!hasTarget) {
+        const fb = await tryHtmlDetailsFallback({
+          date,
+          lotteryKey: lk,
+          closeHour: normalizedClose,
+        });
+
+        if (fb.ok) {
+          console.warn(
+            `[FALLBACK:DETAILS] lk=${lk} date=${date} slot=${fb.slot} kind=${fb.kind} hasSlot=${fb.hasSlot} hasAnyPrize=${fb.hasAnyPrize} url=${fb.url}`
+          );
+        }
+      }
+    } catch (e) {
+      console.warn(
+        `[FALLBACK:DETAILS] erro: ${String(e?.message || e || "unknown")}`
+      );
+    }
+  }
 
   const result = await importFromPayload({
     payload,
@@ -1205,9 +1442,7 @@ async function main() {
     process.exit(2);
   }
 
-  const normalizedClose = closeHour
-    ? normalizeCloseHourForLottery(closeHour, lk).slot
-    : null;
+  const normalizedClose = closeHour ? normalizeCloseHourForLottery(closeHour, lk).slot : null;
   if (normalizedClose && !isHHMM(normalizedClose)) {
     throw new Error(
       "Uso: node archive_backend/backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO] [HH:MM]"
@@ -1219,6 +1454,68 @@ async function main() {
   );
 
   const payload = await fetchKingResults({ date, lotteryKey: lk });
+
+  // ✅ NOVO (CLI também): se pediram closeHour e ele não existe no dia, avisa e sai 0
+  if (normalizedClose) {
+    const closes = summarizeCloseHours(
+      Array.isArray(payload?.data) ? payload.data : [],
+      lk
+    );
+    const hasTarget = closes.includes(normalizedClose);
+
+    if (!hasTarget) {
+      console.warn(
+        `[NO_DRAW_FOR_SLOT] ${lk} ${date} slot=${normalizedClose} close_hours=[${closes.join(
+          ", "
+        )}]`
+      );
+
+      // tenta fallback apenas pra logar
+      try {
+        const fb = await tryHtmlDetailsFallback({
+          date,
+          lotteryKey: lk,
+          closeHour: normalizedClose,
+        });
+        if (fb.ok) {
+          console.warn(
+            `[FALLBACK:DETAILS] lk=${lk} date=${date} slot=${fb.slot} kind=${fb.kind} hasSlot=${fb.hasSlot} hasAnyPrize=${fb.hasAnyPrize} url=${fb.url}`
+          );
+        }
+      } catch {}
+
+      process.exit(0);
+    }
+  }
+
+  // ✅ fallback HTML (apenas PT_RIO 18:00) quando o JSON não retorna o slot
+  if (normalizedClose) {
+    try {
+      const closes = summarizeCloseHours(
+        Array.isArray(payload?.data) ? payload.data : [],
+        lk
+      );
+      const hasTarget = closes.includes(normalizedClose);
+
+      if (!hasTarget) {
+        const fb = await tryHtmlDetailsFallback({
+          date,
+          lotteryKey: lk,
+          closeHour: normalizedClose,
+        });
+
+        if (fb.ok) {
+          console.warn(
+            `[FALLBACK:DETAILS] lk=${lk} date=${date} slot=${fb.slot} kind=${fb.kind} hasSlot=${fb.hasSlot} hasAnyPrize=${fb.hasAnyPrize} url=${fb.url}`
+          );
+        }
+      }
+    } catch (e) {
+      console.warn(
+        `[FALLBACK:DETAILS] erro: ${String(e?.message || e || "unknown")}`
+      );
+    }
+  }
 
   console.log(
     `[2/3] Processando ${

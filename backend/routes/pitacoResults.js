@@ -66,6 +66,33 @@ function parsePosInt(v, def, min, max) {
 }
 
 /**
+ * ✅ Hoje no fuso do Brasil (America/Sao_Paulo), em YYYY-MM-DD
+ * - Sem libs externas
+ * - Comparação lexicográfica funciona em ISO (YYYY-MM-DD)
+ */
+function todayYMDInSaoPaulo() {
+  try {
+    // en-CA formata como YYYY-MM-DD
+    const fmt = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Sao_Paulo',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    return fmt.format(new Date());
+  } catch {
+    // fallback: UTC (último recurso)
+    return new Date().toISOString().slice(0, 10);
+  }
+}
+
+function isFutureISODate(ymd) {
+  if (!isISODate(ymd)) return false;
+  const todayBR = todayYMDInSaoPaulo();
+  return String(ymd) > String(todayBR);
+}
+
+/**
  * Day Status (cache em memória)
  * - Arquivo gerado: backend/data/day_status/<LOTTERY>.json
  * - Ex.: PT_RIO.json com { "YYYY-MM-DD": "normal|normal_partial|partial_hard|holiday_no_draw|incomplete" }
@@ -162,6 +189,25 @@ router.get('/results', async (req, res) => {
     }
     if (!lottery) {
       return res.status(400).json({ ok: false, error: 'lottery obrigatório' });
+    }
+
+    // ✅ HARD GUARD: bloqueia datas futuras (fuso Brasil)
+    if (isFutureISODate(date)) {
+      const todayBR = todayYMDInSaoPaulo();
+      return res.json({
+        ok: true,
+        date,
+        lottery,
+        strict,
+        includePrizes,
+        limitDocs,
+        dayStatus: '',
+        blocked: true,
+        blockedReason: 'future_date',
+        todayBR,
+        count: 0,
+        draws: [],
+      });
     }
 
     // ✅ lê day_status (hint) — MAS vamos confirmar no Firestore antes de bloquear
