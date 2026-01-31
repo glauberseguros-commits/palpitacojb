@@ -26,7 +26,8 @@ jobs:
     env:
       TZ: America/Sao_Paulo
       FIREBASE_ADMIN_SA_JSON: ${{ secrets.FIREBASE_ADMIN_SA_JSON }}
-    steps:
+      DAYS_DEFAULT: "60"
+      LIMIT_DAYS_DEFAULT: "14"    steps:
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -42,6 +43,7 @@ jobs:
         run: npm ci
 
       - name: Run autoMaintainBackfill (PT_RIO)
-        run: node backend/scripts/autoMaintainBackfill.js --lottery=PT_RIO --days=${{ inputs.days || '60' }} --limitDays=${{ inputs.limitDays || '14' }} --baseMins=0,9 --tolMin=2
+        run: node backend/scripts/autoMaintainBackfill.js --lottery=PT_RIO --days=${{ github.event_name == 'workflow_dispatch' && inputs.days || env.DAYS_DEFAULT }} --limitDays=${{ github.event_name == 'workflow_dispatch' && inputs.limitDays || env.LIMIT_DAYS_DEFAULT }} --baseMins=0,9 --tolMin=2
+
 
 
