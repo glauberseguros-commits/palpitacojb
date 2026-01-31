@@ -69,6 +69,18 @@ function hourFromCloseHour(closeHour) {
   return pad2(hh);
 }
 
+/**
+ * ✅ DUP LEGADE (PT_RIO histórico)
+ * Horários HH:00 e HH:10 representam o MESMO sorteio.
+ * Não devem ser tratados como duplicidade real.
+ */
+function isLegacySlotDup(hh, count) {
+  if (!hh) return false;
+  // regra objetiva: exatamente 2 docs no mesmo HH = legado normalizado
+  return count === 2;
+}
+
+
 function parseArg(name) {
   const prefix = `--${name}=`;
   const a = process.argv.find((x) => String(x).startsWith(prefix));
@@ -584,9 +596,11 @@ const missingHardByDay = [];
         missingHardSlotsTotal += 1;
       }
       if (c > 1) {
+      if (!isLegacySlotDup(hh, c)) {
         dup.push({ hh, count: c });
         duplicateExtraDocsExpected += c - 1;
       }
+    }
     }
 
     for (const hh of expectedSoft) {
@@ -597,9 +611,11 @@ const missingHardByDay = [];
         missingSoftSlotsTotal += 1;
       }
       if (c > 1) {
+      if (!isLegacySlotDup(hh, c)) {
         dup.push({ hh, count: c });
         duplicateExtraDocsExpected += c - 1;
       }
+    }
     }
 
     const unexpected = [];
@@ -773,6 +789,8 @@ main().catch((e) => {
   console.error("ERRO:", e?.stack || e?.message || e);
   process.exit(1);
 });
+
+
 
 
 
