@@ -1,4 +1,4 @@
-﻿// backend/scripts/importKingApostas.js
+// backend/scripts/importKingApostas.js
 "use strict";
 
 const fs = require("fs");
@@ -170,6 +170,12 @@ const FETCH_PER_LOTTERY =
 const KING_FETCH_DEBUG = String(process.env.KING_FETCH_DEBUG || "").trim() === "1";
 
 /**
+ * ✅ Blindagem contra datas futuras (não busca API, não escreve no FS)
+ * - ALLOW_FUTURE_DATE=1 => libera (use com MUITO cuidado / apenas para testes)
+ */
+const ALLOW_FUTURE_DATE = String(process.env.ALLOW_FUTURE_DATE || "").trim() === "1";
+
+/**
  * =========================
  * ✅ Regras de negócio: UF x lottery_key
  * =========================
@@ -194,6 +200,37 @@ function resolveUfFromLotteryKey(lotteryKey) {
 
   // fallback: não inventa UF
   return null;
+}
+
+/**
+ * =========================
+ * Date helpers (BRT via TZ)
+ * =========================
+ */
+
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
+
+function todayYMDLocal() {
+  try {
+    const fmt = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Sao_Paulo",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+    return fmt.format(new Date()); // YYYY-MM-DD
+  } catch {
+    const d = new Date();
+    return ${d.getFullYear()}--;
+  }
+}
+
+function isFutureISODate(ymd) {
+  // Compare lexicográfico funciona para YYYY-MM-DD
+  const t = todayYMDLocal();
+  return String(ymd || "").trim() > t;
 }
 
 /**
@@ -418,7 +455,10 @@ function shouldRetryAxiosError(err) {
   }
 
   // 429 / 5xx
-  if (Number.isFinite(status) && (status === 429 || (status >= 500 && status <= 599))) {
+  if (
+    Number.isFinite(status) &&
+    (status === 429 || (status >= 500 && status <= 599))
+  ) {
     return true;
   }
 
@@ -475,10 +515,15 @@ function mergeAndDedupDraws(arrays, lotteryKey) {
     const list = Array.isArray(a) ? a : [];
     for (const d of list) {
       const date = String(d?.date || "").trim();
-      const { slot } = normalizeCloseHourForLottery(d?.close_hour || "", lotteryKey);
+      const { slot } = normalizeCloseHourForLottery(
+        d?.close_hour || "",
+        lotteryKey
+      );
 
       const lid =
-        pickLotteryId(d) || String(d?.lottery_name || d?.name || "").trim() || "NA";
+        pickLotteryId(d) ||
+        String(d?.lottery_name || d?.name || "").trim() ||
+        "NA";
       const key = `${date}__${slot}__${lid}`;
 
       if (!map.has(key)) {
@@ -558,7 +603,9 @@ async function fetchKingResults({ date, lotteryKey }) {
       if (KING_FETCH_DEBUG) {
         const closesPart = summarizeCloseHoursPart(list);
         console.log(
-          `[FETCH:PART] ${lk} ${date} lotteryId=${lotteryId} draws=${list.length} close_hours=[${closesPart.join(", ")}]`
+          `[FETCH:PART] ${lk} ${date} lotteryId=${lotteryId} draws=${list.length} close_hours=[${closesPart.join(
+            ", "
+          )}]`
         );
       }
     } catch (e) {
@@ -585,9 +632,9 @@ async function fetchKingResults({ date, lotteryKey }) {
       : "";
 
   console.log(
-    `[FETCH] ${lk} ${date} per-lottery=${lotteries.length} -> merged_draws=${merged.length} close_hours=[${closes.join(
-      ", "
-    )}]${errInfo}`
+    `[FETCH] ${lk} ${date} per-lottery=${lotteries.length} -> merged_draws=${
+      merged.length
+    } close_hours=[${closes.join(", ")}]${errInfo}`
   );
   return { success: true, data: merged };
 }
@@ -623,7 +670,9 @@ function buildDrawRef({ draw, lotteryKey }) {
   const lotteryIdPart = safeIdPart(lotteryIdFromDraw || lotteryName);
 
   // ✅ ID por SLOT (evita __09-09__)
-  const drawId = `${safeIdPart(lotteryKey)}__${date}__${safeIdPart(closeSlot)}__${lotteryIdPart}`;
+  const drawId = `${safeIdPart(lotteryKey)}__${date}__${safeIdPart(
+    closeSlot
+  )}__${lotteryIdPart}`;
   const drawRef = db.collection("draws").doc(drawId);
 
   return {
@@ -994,8 +1043,65 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
     throw new Error(`Parâmetro "lotteryKey" inválido: ${lk}`);
   }
 
+  // ✅ BLINDAGEM: nunca importar data futura (evita “sujar” FS por engano)
+  const todayBR = todayYMDLocal();
+  if (!ALLOW_FUTURE_DATE && isFutureISODate(date)) {
+    return {
+      ok: true,
+      lotteryKey: lk,
+      date,
+      closeHour: closeHour ? normalizeCloseHourForLottery(closeHour, lk).slot : null,
+
+      blocked: true,
+      blockedReason: "future_date",
+      todayBR,
+
+      captured: false,
+      apiHasPrizes: null,
+      alreadyCompleteAny: null,
+      alreadyCompleteAll: null,
+      expectedTargets: null,
+      alreadyCompleteCount: null,
+      slotDocsFound: null,
+      apiReturnedTargetDraws: null,
+      savedCount: null,
+      writeCount: null,
+      targetDrawIds: null,
+      tookMs: 0,
+
+      // mantém shape compatível
+      totalDrawsFromApi: 0,
+      totalDrawsMatchedClose: 0,
+      totalDrawsValid: 0,
+      totalDrawsSaved: 0,
+      totalDrawsUpserted: 0,
+      totalPrizesSaved: 0,
+      totalPrizesUpserted: 0,
+      skippedEmpty: 0,
+      skippedInvalid: 0,
+      skippedCloseHour: 0,
+      skippedAlreadyComplete: 0,
+      proof: {
+        filterClose: closeHour ? normalizeCloseHourForLottery(closeHour, lk).slot : null,
+        apiHasPrizes: false,
+        apiReturnedTargetDraws: 0,
+        targetDrawIds: [],
+        inferredDate: null,
+        expectedTargets: 0,
+        slotDocsFound: 0,
+        alreadyCompleteCount: 0,
+        alreadyCompleteAny: false,
+        alreadyCompleteAll: false,
+        targetWriteCount: 0,
+        targetSavedCount: 0,
+      },
+    };
+  }
+
   // ✅ closeHour do scheduler é slot; normaliza para slot também
-  const normalizedClose = closeHour ? normalizeCloseHourForLottery(closeHour, lk).slot : null;
+  const normalizedClose = closeHour
+    ? normalizeCloseHourForLottery(closeHour, lk).slot
+    : null;
   if (normalizedClose && !isHHMM(normalizedClose)) {
     throw new Error('Parâmetro "closeHour" inválido. Use HH:MM.');
   }
@@ -1016,20 +1122,16 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
   const proof = result.proof || {};
   const apiHasPrizes = Boolean(proof.apiHasPrizes);
 
+  const alreadyCompleteAnyReal = Boolean(proof.alreadyCompleteAny);
   const alreadyCompleteAll = Boolean(proof.alreadyCompleteAll);
 
-  /**
-   * ✅ BLINDAGEM CRÍTICA:
-   * autoImportToday fecha slot com (savedCount > 0 || alreadyCompleteAny).
-   * Logo, no modo scheduler, "alreadyCompleteAny" precisa significar "ALL".
-   */
-  const alreadyCompleteAny = normalizedClose ? alreadyCompleteAll : null;
+  const alreadyCompleteAny = normalizedClose ? alreadyCompleteAnyReal : null;
 
   // ✅ Captured “verdadeiro” (modo closeHour):
   // - API liberou prizes para o horário, OU
   // - slot já está completo no Firestore
   const captured = normalizedClose
-    ? apiHasPrizes || alreadyCompleteAll
+    ? apiHasPrizes || alreadyCompleteAnyReal
     : (result.totalDrawsValid || 0) > 0;
 
   const writeCount = Number.isFinite(Number(proof.targetWriteCount))
@@ -1046,15 +1148,23 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
     date,
     closeHour: normalizedClose || null,
 
+    blocked: false,
+    blockedReason: null,
+    todayBR,
+
     captured,
     apiHasPrizes: normalizedClose ? apiHasPrizes : null,
     alreadyCompleteAny: normalizedClose ? alreadyCompleteAny : null,
     alreadyCompleteAll: normalizedClose ? alreadyCompleteAll : null,
 
     expectedTargets: normalizedClose ? Number(proof.expectedTargets || 0) : null,
-    alreadyCompleteCount: normalizedClose ? Number(proof.alreadyCompleteCount || 0) : null,
+    alreadyCompleteCount: normalizedClose
+      ? Number(proof.alreadyCompleteCount || 0)
+      : null,
     slotDocsFound: normalizedClose ? Number(proof.slotDocsFound || 0) : null,
-    apiReturnedTargetDraws: normalizedClose ? Number(proof.apiReturnedTargetDraws || 0) : null,
+    apiReturnedTargetDraws: normalizedClose
+      ? Number(proof.apiReturnedTargetDraws || 0)
+      : null,
 
     savedCount: normalizedClose ? savedCount : null,
     writeCount: normalizedClose ? writeCount : null,
@@ -1086,7 +1196,18 @@ async function main() {
     );
   }
 
-  const normalizedClose = closeHour ? normalizeCloseHourForLottery(closeHour, lk).slot : null;
+  // ✅ no CLI também bloqueia data futura (por segurança)
+  const todayBR = todayYMDLocal();
+  if (!ALLOW_FUTURE_DATE && isFutureISODate(date)) {
+    console.error(
+      `[BLOCK] future_date: date=${date} todayBR=${todayBR} (defina ALLOW_FUTURE_DATE=1 para liberar)`
+    );
+    process.exit(2);
+  }
+
+  const normalizedClose = closeHour
+    ? normalizeCloseHourForLottery(closeHour, lk).slot
+    : null;
   if (normalizedClose && !isHHMM(normalizedClose)) {
     throw new Error(
       "Uso: node archive_backend/backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO] [HH:MM]"
