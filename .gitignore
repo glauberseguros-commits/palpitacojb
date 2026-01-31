@@ -77,3 +77,16 @@ src/pages/Top3/Top3View.jsx
 
 .vercel
 .env*.local
+
+# --- allow versioned rules for CI (PalPitaco JB) ---
+# Mantém ignore geral de JSON no backend, mas libera estes diretórios
+
+!backend/data/slot_schedule/
+!backend/data/slot_schedule/*.json
+
+!backend/data/source_gaps/
+!backend/data/source_gaps/*.json
+
+!backend/data/no_draw_days/
+!backend/data/no_draw_days/*.json
+
