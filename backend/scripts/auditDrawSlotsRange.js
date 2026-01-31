@@ -517,7 +517,15 @@ const missingHardByDay = [];
     // IMPORTANT: let, porque vamos aplicar gaps
     let expectedHard = expected.expectedHard || [];
     let expectedSoft = expected.expectedSoft || [];
-
+
+    // ✅ Alinha schedule com flag --soft18WedSat:
+    // - Se flag NÃO estiver setado, não devemos "esperar" o soft 18 em qua/sáb,
+    //   evitando ruído de missingSoft em dias onde esse extra não é garantido.
+    if (!soft18WedSat && (dow === 3 || dow === 6)) {
+      expectedSoft = Array.isArray(expectedSoft)
+        ? expectedSoft.filter((hh) => hh !== "18")
+        : [];
+    }
     // ✅ aplica gaps da fonte (API_NO_SLOT): remove horas "esperadas" daquele dia
     const gset = gapsOn ? gapSetForDate(gaps, ymd) : null;
     if (gset) {
