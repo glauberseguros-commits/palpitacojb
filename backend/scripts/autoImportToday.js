@@ -55,39 +55,24 @@ const WED_SAT_18H_ONE_SHOT_TOLERANCE = 10; // minutos após 18:35
    Schedules (por loteria)
 ========================= */
 
-/**
- * Cada slot tem:
- * - hour: closeHour base (para closeCandidates)
- * - windowStart: início janela HH:MM
- * - releaseAt: só tenta a partir daqui HH:MM
- * - windowEnd: fim janela HH:MM
- *
- * Observação:
- * - Em PT_RIO você estava usando hour "09:09" etc. Mantive.
- * - Em FEDERAL, como o closeHour real pode variar na API,
- *   escolhi hour base "20:00" (e o closeCandidates tenta +/-2 min).
- */
 const SCHEDULES = {
   PT_RIO: [
-    { hour: "09:09", windowStart: "09:05", releaseAt: "09:29", windowEnd: "09:31" },
-    { hour: "11:09", windowStart: "11:05", releaseAt: "11:29", windowEnd: "11:31" },
-    { hour: "14:09", windowStart: "14:05", releaseAt: "14:29", windowEnd: "14:31" },
-    { hour: "16:09", windowStart: "16:05", releaseAt: "16:29", windowEnd: "16:31" },
+    { hour: "09:00", windowStart: "09:05", releaseAt: "09:29", windowEnd: "09:31" },
+    { hour: "11:00", windowStart: "11:05", releaseAt: "11:29", windowEnd: "11:31" },
+    { hour: "14:00", windowStart: "14:05", releaseAt: "14:29", windowEnd: "14:31" },
+    { hour: "16:00", windowStart: "16:05", releaseAt: "16:29", windowEnd: "16:31" },
     // 18h (normal seg/ter/qui/sex; qua/sáb pode ser one-shot; domingo costuma ser RARA)
-    { hour: "18:09", windowStart: "18:05", releaseAt: "18:29", windowEnd: "18:31" },
+    { hour: "18:00", windowStart: "18:05", releaseAt: "18:29", windowEnd: "18:31" },
     // 21h: janela longa minuto a minuto (mas pode ser RARA em alguns dias)
-    { hour: "21:09", windowStart: "21:05", releaseAt: "21:05", windowEnd: "21:45" },
+    { hour: "21:00", windowStart: "21:05", releaseAt: "21:05", windowEnd: "21:45" },
   ],
 
   // FEDERAL — quarta e sábado
-  // Janela real do teu workflow: 19:49–20:10
-  // releaseAt recomendado 20:00 pra reduzir tentativas cedo.
   FEDERAL: [
     { hour: "20:00", windowStart: "19:49", releaseAt: "20:00", windowEnd: "20:10" },
   ],
 };
 
-// Seleciona schedule conforme LOTTERY
 const SCHEDULE = Array.isArray(SCHEDULES[LOTTERY])
   ? SCHEDULES[LOTTERY]
   : SCHEDULES.PT_RIO;
@@ -151,13 +136,12 @@ function parseHHMM(hhmm) {
 }
 
 function parseHH(hhmm) {
-  // aceita "09:09" etc
   const h = Number(String(hhmm).slice(0, 2));
   const m = Number(String(hhmm).slice(3, 5));
   return { h, m };
 }
 
-// Converte schedule.hour "09:09" -> slot "09:00" (para comparar com CORE/OPCIONAL/RARA)
+// Converte schedule.hour "09:09" -> slot "09:00"
 function scheduleHourToSlot(hourHHMM) {
   const { h } = parseHH(hourHHMM);
   return `${pad2(h)}:00`;
@@ -240,18 +224,24 @@ function saveState(date, state) {
 }
 
 /**
- * Gera closes candidatos (tolerância de minutos):
- * Ex.: "11:09" => ["11:09","11:10","11:08","11:11","11:07"]
+ * Gera closes candidatos (tolerância de minutos)
+ * Ex.: "11:00" => ["11:00","11:01","10:59","11:02","10:58","11:09","11:10","11:08","11:11","11:07"]
  */
 function closeCandidates(hhmm) {
   const { h, m } = parseHH(hhmm);
+
+  const bases = [m];
+  if (m === 0) bases.push(9);
+
   const deltas = [0, +1, -1, +2, -2];
 
   const out = [];
-  for (const d of deltas) {
-    const mm = m + d;
-    if (mm < 0 || mm > 59) continue;
-    out.push(`${pad2(h)}:${pad2(mm)}`);
+  for (const baseM of bases) {
+    for (const d of deltas) {
+      const mm = baseM + d;
+      if (mm < 0 || mm > 59) continue;
+      out.push(`${pad2(h)}:${pad2(mm)}`);
+    }
   }
   return Array.from(new Set(out));
 }
@@ -268,13 +258,6 @@ function isWedOrSat(dow) {
   return dow === 3 || dow === 6;
 }
 
-/**
- * Retorna status do slot para HOJE:
- * - CORE / OPCIONAL / RARA / OFF
- *
- * PT_RIO: baseado em ptRioCalendarRules (ano+dow).
- * FEDERAL: somente quarta/sábado (senão OFF).
- */
 function buildTodaySlotStatusMap(dateYMD, dow) {
   const map = new Map(); // schedule.hour -> status
 
@@ -285,7 +268,7 @@ function buildTodaySlotStatusMap(dateYMD, dow) {
     const rare = new Set(cal.rara || []);
 
     for (const sched of SCHEDULE) {
-      const slot = scheduleHourToSlot(sched.hour); // "09:00" etc
+      const slot = scheduleHourToSlot(sched.hour);
       let status = "OFF";
       if (core.has(slot)) status = "CORE";
       else if (opt.has(slot)) status = "OPCIONAL";
@@ -293,7 +276,6 @@ function buildTodaySlotStatusMap(dateYMD, dow) {
       map.set(sched.hour, status);
     }
 
-    // log diagnóstico (uma linha)
     logLine(
       `[CAL] date=${dateYMD} dow=${dow} source=${cal.source} CORE=${(cal.core||[]).join(",")||"—"} OPC=${(cal.opcional||[]).join(",")||"—"} RARA=${(cal.rara||[]).join(",")||"—"}`,
       "INFO"
@@ -310,21 +292,16 @@ function buildTodaySlotStatusMap(dateYMD, dow) {
     return map;
   }
 
-  // fallback: tudo CORE
   for (const sched of SCHEDULE) map.set(sched.hour, "CORE");
   return map;
 }
 
-/**
- * Janela do slot usando HH:MM reais (suporta FEDERAL 19:49–20:10)
- */
 function slotWindow(schedule) {
   const ws = parseHHMM(schedule.windowStart);
   const ra = parseHHMM(schedule.releaseAt);
   const we = parseHHMM(schedule.windowEnd);
 
   if (!ws || !ra || !we) {
-    // fallback muito defensivo (não quebra)
     const { h } = parseHH(schedule.hour);
     return {
       start: toMin(h, 5),
@@ -348,9 +325,6 @@ function slotWindow(schedule) {
   };
 }
 
-/**
- * Quarta/Sábado: 18h só tenta uma vez às 18:35 (ou até +tolerance)
- */
 function isInWedSat18OneShotWindow(nowMin) {
   const start = toMin(18, WED_SAT_18H_ONE_SHOT_MINUTE);
   const end = start + Math.max(0, Number(WED_SAT_18H_ONE_SHOT_TOLERANCE || 0));
@@ -406,6 +380,9 @@ async function main() {
   const nowMin = toMin(now.h, now.m);
   const dow = dowLocal();
 
+  // ✅ Flags por execução (NÃO persistir em JSON)
+  const catchupTried = new Set(); // key = `${date}::${sched.hour}`
+
   const lock = acquireLock();
   if (!lock.ok) {
     logLine(`[AUTO] abortado: ${lock.reason}`, "INFO");
@@ -416,7 +393,6 @@ async function main() {
     const state = loadState(date);
     const isoNow = new Date().toISOString();
 
-    // ✅ status do dia (CORE/OPCIONAL/RARA/OFF) por schedule.hour
     const statusMap = buildTodaySlotStatusMap(date, dow);
 
     // 1) Marca N/A slots que não se aplicam hoje (RARA/OFF)
@@ -466,8 +442,8 @@ async function main() {
       const applies = st === "CORE" || st === "OPCIONAL";
       if (!applies) continue;
 
-      // Regra especial PT_RIO: quarta/sábado 18h one-shot 18:35 (somente se 18:00 estiver habilitado hoje)
-      if (LOTTERY === "PT_RIO" && sched.hour === "18:09" && isWedOrSat(dow)) {
+      // Regra especial PT_RIO: quarta/sábado 18h one-shot 18:35
+      if (LOTTERY === "PT_RIO" && sched.hour === "18:00" && isWedOrSat(dow)) {
         if (!isInWedSat18OneShotWindow(nowMin)) continue;
 
         slot.tries = (slot.tries || 0) + 1;
@@ -478,7 +454,7 @@ async function main() {
         saveState(date, state);
 
         logLine(
-          `[AUTO] (ONE-SHOT QUA/SAB) tentando ${date} slot=18:09 agora=18:${pad2(
+          `[AUTO] (ONE-SHOT QUA/SAB) tentando ${date} slot=18:00 agora=18:${pad2(
             now.m
           )} closes=${candidates.join(",")}`,
           "INFO"
@@ -530,8 +506,8 @@ async function main() {
             doneReason = alreadyCompleteAny ? "FS_ALREADY_HAS" : "CAPTURED";
             logLine(
               alreadyCompleteAny
-                ? `[AUTO] FS já tem slot=18:09 (close=${closeHour}) -> DONE`
-                : `[AUTO] CAPTURADO slot=18:09 (close=${closeHour}) saved=${savedCount} writes=${writeCount} -> DONE`,
+                ? `[AUTO] FS já tem slot=18:00 (close=${closeHour}) -> DONE`
+                : `[AUTO] CAPTURADO slot=18:00 (close=${closeHour}) saved=${savedCount} writes=${writeCount} -> DONE`,
               "INFO"
             );
             break;
@@ -548,7 +524,7 @@ async function main() {
         saveState(date, state);
 
         logLine(
-          `[AUTO] (ONE-SHOT QUA/SAB) DONE slot=18:09 (${slot.lastResult.oneShotFinalReason})`,
+          `[AUTO] (ONE-SHOT QUA/SAB) DONE slot=18:00 (${slot.lastResult.oneShotFinalReason})`,
           lastErr ? "ERROR" : "INFO"
         );
 
@@ -559,13 +535,32 @@ async function main() {
       // Regra normal: janela definida em schedule (HH:MM)
       const w = slotWindow(sched);
 
-      // fora da janela
-      if (nowMin < w.start || nowMin > w.end) continue;
+      // ✅ CATCH-UP: se passou do releaseAt e o slot ainda não foi capturado,
+      // tenta UMA vez por execução mesmo fora da janela (evita furo por atraso do cron)
+      const inWindow = !(nowMin < w.start || nowMin > w.end);
+      const afterRelease = nowMin >= w.release;
 
-      // dentro da janela, mas antes do releaseAt
-      if (nowMin < w.release) continue;
+      if (!inWindow) {
+        if (!afterRelease) continue;
 
-      // a partir daqui: tenta capturar
+        const key = `${date}::${sched.hour}`;
+        if (catchupTried.has(key)) continue;
+        catchupTried.add(key);
+
+        logLine(
+          `[AUTO] CATCH-UP pós-release ${date} slot=${sched.hour} (${st}) release=${w.startLabel}~${w.endLabel} (fora da janela)`,
+          "INFO"
+        );
+      }
+
+      // gate correto
+      if (inWindow) {
+        if (!afterRelease) continue;
+      } else {
+        if (!afterRelease) continue;
+      }
+
+      // tenta capturar
       slot.tries = (slot.tries || 0) + 1;
       slot.lastTryISO = isoNow;
 

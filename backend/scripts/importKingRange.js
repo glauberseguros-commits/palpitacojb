@@ -61,6 +61,34 @@ const MAX_RANGE_DAYS = Number.isFinite(Number(process.env.MAX_RANGE_DAYS))
 
 /**
  * =========================
+ * Exec controls (robustez)
+ * =========================
+ */
+const IMPORT_TIMEOUT_MS = Number.isFinite(Number(process.env.IMPORT_TIMEOUT_MS))
+  ? Number(process.env.IMPORT_TIMEOUT_MS)
+  : 120_000; // 2 min
+
+const IMPORT_RETRIES = Number.isFinite(Number(process.env.IMPORT_RETRIES))
+  ? Number(process.env.IMPORT_RETRIES)
+  : 2; // total tentativas = 1 + retries
+
+const IMPORT_RETRY_DELAY_MS = Number.isFinite(
+  Number(process.env.IMPORT_RETRY_DELAY_MS)
+)
+  ? Number(process.env.IMPORT_RETRY_DELAY_MS)
+  : 1500;
+
+function sleepMs(ms) {
+  const n = Number(ms);
+  if (!Number.isFinite(n) || n <= 0) return;
+  const end = Date.now() + n;
+  while (Date.now() < end) {
+    // busy sleep (script CLI). Evita async aqui.
+  }
+}
+
+/**
+ * =========================
  * Date helpers
  * =========================
  */
@@ -141,6 +169,69 @@ function normLotteryKey(v) {
 
 /**
  * =========================
+ * Runner por dia (com retry/timeout)
+ * =========================
+ */
+function runImportDay(importApostasPath, date, lotteryKey) {
+  const maxAttempts = 1 + Math.max(0, IMPORT_RETRIES);
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const head =
+      attempt === 1
+        ? `[RUN] ${date} (${lotteryKey})`
+        : `[RETRY ${attempt}/${maxAttempts}] ${date} (${lotteryKey})`;
+
+    console.log(head);
+
+    const r = spawnSync(process.execPath, [importApostasPath, date, lotteryKey], {
+      stdio: "inherit",
+      timeout: IMPORT_TIMEOUT_MS,
+      env: process.env,
+    });
+
+    // spawnSync: se timeout, r.error pode ser ETIMEDOUT e status null
+    const ok = r && r.status === 0;
+    if (ok) return { ok: true, attempt, status: r.status };
+
+    const timedOut =
+      (r && r.error && (r.error.code === "ETIMEDOUT" || r.error.code === "ETIMEDOUT")) ||
+      (r && r.signal === "SIGTERM" && r.status === null);
+
+    if (timedOut) {
+      console.error(
+        `[FALHA] timeout após ${IMPORT_TIMEOUT_MS}ms em ${date} (${lotteryKey}).`
+      );
+    } else {
+      const code = r?.status;
+      console.error(
+        `[FALHA] status=${code} em ${date} (${lotteryKey}).`
+      );
+    }
+
+    if (attempt < maxAttempts) {
+      if (IMPORT_RETRY_DELAY_MS > 0) {
+        console.log(
+          `[AGUARDA] ${IMPORT_RETRY_DELAY_MS}ms antes de tentar novamente...`
+        );
+        sleepMs(IMPORT_RETRY_DELAY_MS);
+      }
+      continue;
+    }
+
+    return {
+      ok: false,
+      attempt,
+      status: r?.status ?? null,
+      signal: r?.signal ?? null,
+      errorCode: r?.error?.code ?? null,
+    };
+  }
+
+  return { ok: false, attempt: 0 };
+}
+
+/**
+ * =========================
  * Main
  * =========================
  */
@@ -172,7 +263,14 @@ async function main() {
       "Uso:\n" +
         "  node backend/scripts/importKingRange.js YYYY-MM-DD YYYY-MM-DD [PT_RIO]\n" +
         "ou:\n" +
-        "  node backend/scripts/importKingRange.js YYYY [PT_RIO]"
+        "  node backend/scripts/importKingRange.js YYYY [PT_RIO]\n\n" +
+        "ENV opcionais:\n" +
+        "  GLOBAL_MAX_DATE=YYYY-MM-DD\n" +
+        "  MAX_FUTURE_DAYS=7\n" +
+        "  MAX_RANGE_DAYS=400\n" +
+        "  IMPORT_TIMEOUT_MS=120000\n" +
+        "  IMPORT_RETRIES=2\n" +
+        "  IMPORT_RETRY_DELAY_MS=1500"
     );
     process.exit(1);
   }
@@ -187,7 +285,9 @@ async function main() {
 
   if (d2 < gMin || d1 > gMax) {
     console.error(
-      `[ABORTADO] Intervalo fora do range global (${GLOBAL_MIN_DATE} → ${fmt(gMax)}).`
+      `[ABORTADO] Intervalo fora do range global (${GLOBAL_MIN_DATE} → ${fmt(
+        gMax
+      )}).`
     );
     process.exit(0);
   }
@@ -218,7 +318,8 @@ async function main() {
       ` | globalMin=${GLOBAL_MIN_DATE}` +
       ` | globalMax=${fmt(gMax)}${
         ENV_GLOBAL_MAX_DATE ? " (fixado por ENV)" : " (dinâmico)"
-      }`
+      }` +
+      ` | timeout=${IMPORT_TIMEOUT_MS}ms retries=${IMPORT_RETRIES} delay=${IMPORT_RETRY_DELAY_MS}ms`
   );
 
   const importApostasPath = path.join(__dirname, "importKingApostas.js");
@@ -230,6 +331,7 @@ async function main() {
   let ok = 0;
   let fail = 0;
   let days = 0;
+  const failedDates = [];
 
   for (let dt = d1; dt.getTime() <= d2.getTime(); dt = addDays(dt, 1)) {
     const date = fmt(dt);
@@ -237,16 +339,26 @@ async function main() {
 
     console.log(`\n[DAY ${days}/${totalDays}] ${date} (${lotteryKey})`);
 
-    const r = spawnSync(process.execPath, [importApostasPath, date, lotteryKey], {
-      stdio: "inherit",
-    });
-
-    if (r && r.status === 0) ok++;
-    else fail++;
+    const out = runImportDay(importApostasPath, date, lotteryKey);
+    if (out.ok) {
+      ok++;
+    } else {
+      fail++;
+      failedDates.push(date);
+      console.error(
+        `[DIA FALHOU] ${date} (${lotteryKey}) | status=${out.status} signal=${out.signal} error=${out.errorCode}`
+      );
+    }
   }
 
   console.log("\n==================================");
   console.log(`[RESUMO] dias=${days} ok=${ok} falhas=${fail}`);
+  if (failedDates.length) {
+    console.log(`[FALHAS] ${failedDates.join(", ")}`);
+    console.log(
+      `Dica: rode um range menor só nessas datas (ou aumente IMPORT_TIMEOUT_MS / IMPORT_RETRIES).`
+    );
+  }
   console.log("==================================");
 
   process.exit(fail ? 1 : 0);

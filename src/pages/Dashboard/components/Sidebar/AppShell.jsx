@@ -74,8 +74,6 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
   const vw = useViewport();
   const isMobile = vw < 980;
 
-  const isDashboard = active === ROUTES.DASHBOARD;
-
   // ✅ Mobile: sidebar vira off-canvas (fechada por padrão)
   // ✅ Desktop: sidebar aberta por padrão (evita flicker)
   const [sidebarOpen, setSidebarOpen] = useState(() => {
@@ -83,7 +81,7 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
     return window.innerWidth >= 980;
   });
 
-  // ✅ Se virar desktop, mantém aberto; se voltar pro mobile, fecha
+  // Se virar desktop, mantém aberto; se voltar pro mobile, fecha
   useEffect(() => {
     if (!isMobile) setSidebarOpen(true);
     else setSidebarOpen(false);
@@ -124,29 +122,47 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
   const isGuest = session?.type === "guest";
 
   /* ======================
-     Mobile UX: trava scroll + ESC fecha
+     Travar scroll do DOCUMENTO
+     - Dashboard: trava html/body (zera scroll “fantasma” da página principal)
+     - Mobile menu aberto: também trava (overlay)
+     - Outras páginas: libera
+  ====================== */
+  useEffect(() => {
+    const isDashboard = active === ROUTES.DASHBOARD;
+
+    const prevHtmlOverflow = document?.documentElement?.style?.overflow;
+    const prevBodyOverflow = document?.body?.style?.overflow;
+
+    const mustLock = isDashboard || (isMobile && sidebarOpen);
+
+    if (mustLock) {
+      document.documentElement.style.overflow = "hidden";
+      document.body.style.overflow = "hidden";
+    } else {
+      document.documentElement.style.overflow = prevHtmlOverflow || "";
+      document.body.style.overflow = prevBodyOverflow || "";
+    }
+
+    return () => {
+      // cleanup sempre restaura o que estava antes
+      document.documentElement.style.overflow = prevHtmlOverflow || "";
+      document.body.style.overflow = prevBodyOverflow || "";
+    };
+  }, [active, isMobile, sidebarOpen]);
+
+  /* ======================
+     Mobile UX: ESC fecha menu
   ====================== */
   useEffect(() => {
     if (!isMobile) return;
-
-    const prevOverflow = document?.body?.style?.overflow;
-
-    if (sidebarOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = prevOverflow || "";
-    }
 
     const onKeyDown = (e) => {
       if (e.key === "Escape") setSidebarOpen(false);
     };
 
     window.addEventListener("keydown", onKeyDown);
-    return () => {
-      window.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = prevOverflow || "";
-    };
-  }, [isMobile, sidebarOpen]);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isMobile]);
 
   /* ======================
      Navegação
@@ -183,6 +199,7 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
     const BG = "#050505";
 
     const sidebarW = isMobile ? 84 : 92;
+    const isDashboard = active === ROUTES.DASHBOARD;
 
     const shell = {
       minHeight: "100vh",
@@ -290,9 +307,9 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
       boxShadow: isActive ? "0 14px 36px rgba(0,0,0,0.55)" : "none",
     });
 
-    // ✅ REGRA:
-    // - Dashboard: SEM scroll no container principal (evita “página rolando”)
-    // - Demais páginas: COM scroll no container principal
+    // ✅ Regra:
+    // - Dashboard: main não rola
+    // - Demais páginas: main pode rolar
     const main = {
       flex: 1,
       minWidth: 0,
@@ -323,8 +340,6 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
         }
       : { display: "none" };
 
-    // ✅ Dashboard: garante “tela cheia” sem depender de scroll do main
-    // ✅ Outras páginas: deixa fluir normalmente
     const mainInner = isDashboard
       ? { minWidth: 0, height: "100%", overflow: "hidden" }
       : { minWidth: 0 };
@@ -341,7 +356,7 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
       mobileMenuBtn,
       mainInner,
     };
-  }, [isMobile, sidebarOpen, active]); // ✅ inclui active (e isDashboard deriva dele)
+  }, [isMobile, sidebarOpen, active]);
 
   // ✅ MENU
   const menu = [

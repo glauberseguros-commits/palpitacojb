@@ -165,6 +165,10 @@ const HTTP_RETRY_BASE_MS = Number.isFinite(Number(process.env.HTTP_RETRY_BASE_MS
 const FETCH_PER_LOTTERY =
   String(process.env.KING_FETCH_PER_LOTTERY || "").trim() === "0" ? false : true;
 
+// ✅ Debug do fetch (log por lotteryId)
+// Ative com: set KING_FETCH_DEBUG=1
+const KING_FETCH_DEBUG = String(process.env.KING_FETCH_DEBUG || "").trim() === "1";
+
 /**
  * =========================
  * ✅ Regras de negócio: UF x lottery_key
@@ -291,7 +295,7 @@ function normalizeHHMM(value) {
  * Correção crítica (seu caso):
  * - A API do PT_RIO costuma devolver HH:09 como "marcação" e NÃO um minuto real.
  * - Portanto, para PT_RIO, se raw terminar em ":09", tratamos como "sem minuto real"
- *   e NÃO persistimos close_hour_raw (vira "").
+ *   e NÃO persistimos close_hour_raw (vira ""). 
  *
  * Retorna:
  * - raw: HH:MM (normalizado) OU "" quando for "sintético" (PT_RIO HH:09)
@@ -528,21 +532,63 @@ async function fetchKingResults({ date, lotteryKey }) {
 
   // ✅ 1 request por lottery (sequencial: mais estável e respeita rate-limit)
   const parts = [];
+  const errors = [];
+
+  // helper local: extrai e normaliza closes vindos nesse UUID
+  const closeFromDraw = (d) =>
+    normalizeHHMM(d?.close_hour ?? d?.closeHour ?? d?.horario ?? d?.close ?? "");
+
+  const summarizeCloseHoursPart = (list) => {
+    const set = new Set();
+    for (const d of (Array.isArray(list) ? list : [])) {
+      const c = closeFromDraw(d);
+      if (c) set.add(c);
+    }
+    return Array.from(set).sort();
+  };
+
   for (const lotteryId of lotteries) {
     const url = buildResultsUrl({ date, lotteryKey: lk, lotteryId });
-    const data = await axiosGetJson(url);
-    parts.push(data?.data || []);
+
+    try {
+      const data = await axiosGetJson(url);
+      const list = Array.isArray(data?.data) ? data.data : [];
+      parts.push(list);
+
+      if (KING_FETCH_DEBUG) {
+        const closesPart = summarizeCloseHoursPart(list);
+        console.log(
+          `[FETCH:PART] ${lk} ${date} lotteryId=${lotteryId} draws=${list.length} close_hours=[${closesPart.join(", ")}]`
+        );
+      }
+    } catch (e) {
+      const msg = e?.response?.status
+        ? `HTTP_${e.response.status}`
+        : (e?.code || e?.message || "ERR");
+
+      errors.push({ lotteryId, msg });
+
+      console.warn(
+        `[FETCH:PART] ${lk} ${date} lotteryId=${lotteryId} ERROR=${msg} (seguindo...)`
+      );
+
+      // segue para não travar o dia inteiro por 1 UUID
+      continue;
+    }
   }
 
   const merged = mergeAndDedupDraws(parts, lk);
   const closes = summarizeCloseHours(merged, lk);
+  const errInfo =
+    KING_FETCH_DEBUG && errors.length
+      ? ` errors=${errors.length} ids=[${errors.map((x) => x.lotteryId).join(",")}]`
+      : "";
 
   console.log(
     `[FETCH] ${lk} ${date} per-lottery=${lotteries.length} -> merged_draws=${merged.length} close_hours=[${closes.join(
       ", "
-    )}]`
+    )}]${errInfo}`
   );
-
   return { success: true, data: merged };
 }
 
@@ -615,27 +661,35 @@ async function checkAlreadyComplete(drawRef) {
 /**
  * ✅ Prova forte por SLOT (anti-índice composto)
  * - Query filtra SOMENTE por date
- * - close_hour + lottery_key filtrados em memória
- * - Conta quantos estão completos (prizes)
+ * - close_hour + lottery_key/lotteryKey filtrados em memória
+ *
+ * ✅ FIX CRÍTICO:
+ * - Normaliza o close_hour armazenado (pode existir legado "09:09")
+ *   e compara por SLOT (HH:00), para não “perder” doc existente.
  */
 async function checkSlotCompletion({ date, closeHour, lotteryKey }) {
   try {
-    const snap = await db
-      .collection("draws")
-      .where("date", "==", date)
-      .limit(500)
-      .get();
+    const lk = String(lotteryKey || "").trim().toUpperCase();
+    const targetSlot = normalizeCloseHourForLottery(closeHour || "", lk).slot;
+    if (!targetSlot || !isHHMM(targetSlot)) return { docs: 0, complete: 0 };
 
-    if (snap.empty) {
-      return { docs: 0, complete: 0 };
-    }
+    // query mínima
+    const snap = await db.collection("draws").where("date", "==", date).get();
+    if (snap.empty) return { docs: 0, complete: 0 };
 
-    // filtra em memória
     const refs = [];
     snap.forEach((doc) => {
       const d = doc.data() || {};
-      if (String(d.lottery_key || "").trim() !== String(lotteryKey || "").trim()) return;
-      if (String(d.close_hour || "").trim() !== String(closeHour || "").trim()) return;
+
+      const lkSnake = String(d.lottery_key || "").trim().toUpperCase();
+      const lkCamel = String(d.lotteryKey || "").trim().toUpperCase();
+
+      if (lkSnake !== lk && lkCamel !== lk) return;
+
+      // ✅ compara por SLOT normalizado (pega legado "09:09" como "09:00")
+      const storedSlot = normalizeCloseHourForLottery(d.close_hour || "", lk).slot;
+      if (storedSlot !== targetSlot) return;
+
       refs.push(doc.ref);
     });
 

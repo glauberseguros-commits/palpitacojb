@@ -1,6 +1,8 @@
 'use strict';
 
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
 const { getDb } = require('../service/firebaseAdmin');
 
 const router = express.Router();
@@ -49,6 +51,64 @@ function upTrim(v) {
   return String(v ?? '').trim().toUpperCase();
 }
 
+function parseBool01(v) {
+  const s = String(v ?? '').trim().toLowerCase();
+  return s === '1' || s === 'true' || s === 'yes' || s === 'y';
+}
+
+function parsePosInt(v, def, min, max) {
+  const n = Number(String(v ?? '').trim());
+  if (!Number.isFinite(n)) return def;
+  const i = Math.trunc(n);
+  if (Number.isFinite(min) && i < min) return min;
+  if (Number.isFinite(max) && i > max) return max;
+  return i;
+}
+
+/**
+ * Day Status (cache em memória)
+ * - Arquivo gerado: backend/data/day_status/<LOTTERY>.json
+ * - Ex.: PT_RIO.json com { "YYYY-MM-DD": "normal|normal_partial|partial_hard|holiday_no_draw|incomplete" }
+ */
+const _dayStatusCache = new Map(); // lottery -> { loadedAt, map }
+const DAY_STATUS_TTL_MS = 60_000; // 1 min (dev-friendly)
+
+function readDayStatusMap(lottery, opts) {
+  const key = upTrim(lottery || 'PT_RIO') || 'PT_RIO';
+  const reload = !!(opts && opts.reload);
+
+  const cached = _dayStatusCache.get(key);
+  if (!reload && cached && Date.now() - cached.loadedAt < DAY_STATUS_TTL_MS) {
+    return cached.map;
+  }
+
+  const p = path.join(__dirname, '..', 'data', 'day_status', `${key}.json`);
+  let map = {};
+  try {
+    if (fs.existsSync(p)) {
+      const raw = fs.readFileSync(p, 'utf8');
+      const j = raw ? JSON.parse(raw) : {};
+      if (j && typeof j === 'object') map = j;
+    }
+  } catch {
+    map = {};
+  }
+
+  _dayStatusCache.set(key, { loadedAt: Date.now(), map });
+  return map;
+}
+
+function shouldBlockDayStatus(dayStatus, strict) {
+  // sempre bloqueia
+  if (dayStatus === 'holiday_no_draw') return true;
+  if (dayStatus === 'incomplete') return true;
+
+  // modo estrito: só dias "completos" (normal / normal_partial)
+  if (strict && dayStatus === 'partial_hard') return true;
+
+  return false;
+}
+
 /**
  * Concorrência limitada (evita flood e acelera)
  */
@@ -59,7 +119,6 @@ async function mapWithConcurrency(items, limitN, mapper) {
   let idx = 0;
 
   async function worker() {
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       const current = idx;
       idx += 1;
@@ -74,42 +133,114 @@ async function mapWithConcurrency(items, limitN, mapper) {
   return results;
 }
 
-// GET /api/pitaco/results?date=2025-12-29&lottery=PT_RIO
+// GET /api/pitaco/results?date=YYYY-MM-DD&lottery=PT_RIO
+// Opcional:
+// - &strict=1              (exclui também partial_hard)
+// - &reloadDayStatus=1     (recarrega arquivo day_status na hora)
+// - &includePrizes=0|1     (default 1; 0 = não busca subcoleção prizes)
+// - &limitDocs=120         (guard rail por dia; default 120; min 20 max 500)
 router.get('/results', async (req, res) => {
   try {
     const date = String(req.query.date || '').trim();
     const lottery = upTrim(req.query.lottery || 'PT_RIO');
+    const strict = parseBool01(req.query.strict);
+    const reloadDayStatus = parseBool01(req.query.reloadDayStatus);
+
+    const includePrizes = req.query.includePrizes == null
+      ? true
+      : parseBool01(req.query.includePrizes);
+
+    const limitDocs = parsePosInt(req.query.limitDocs, 120, 20, 500);
 
     if (!date) {
       return res.status(400).json({ ok: false, error: 'date obrigatório' });
     }
-
     if (!isISODate(date)) {
       return res
         .status(400)
         .json({ ok: false, error: 'date inválido (use YYYY-MM-DD)' });
     }
-
     if (!lottery) {
       return res.status(400).json({ ok: false, error: 'lottery obrigatório' });
     }
 
+    // ✅ lê day_status (hint) — MAS vamos confirmar no Firestore antes de bloquear
+    const dayStatusMap = readDayStatusMap(lottery, { reload: reloadDayStatus });
+    const dayStatus = String(dayStatusMap?.[date] || '').trim();
+
     const db = getDb();
 
     /**
-     * Anti-índice composto:
-     * - Firestore filtra SOMENTE por date
-     * - lottery_key filtrado em memória
+     * Query mínima: SOMENTE date (evita índice composto)
+     * (vamos usar tanto pro “confirmar bloqueio” quanto pro fluxo normal)
      */
     const snap = await db.collection('draws').where('date', '==', date).get();
 
-    // 1) filtra docs por lottery em memória, sem bater prizes ainda
-    const docs = snap.docs.filter((doc) => {
+    // filtra lottery em memória, sem bater prizes ainda
+    const docsAll = snap.docs.filter((doc) => {
       const d = doc.data() || {};
       return upTrim(d.lottery_key) === lottery;
     });
 
-    // 2) busca prizes com concorrência limitada
+    // Se day_status mandar bloquear, confirma:
+    // - se NÃO tem docs => bloqueia
+    // - se TEM docs => NÃO bloqueia (prioriza dado real)
+    if (dayStatus && shouldBlockDayStatus(dayStatus, strict)) {
+      if (!docsAll.length) {
+        return res.json({
+          ok: true,
+          date,
+          lottery,
+          strict,
+          includePrizes,
+          limitDocs,
+          dayStatus,
+          blocked: true,
+          blockedReason: 'day_status_confirmed_no_docs',
+          count: 0,
+          draws: [],
+        });
+      }
+      // existe dado real -> segue o fluxo normal
+    }
+
+    // Guard rail: evita “flood” de subcoleções se algo vier muito sujo
+    const docsFound = docsAll.length;
+    const docs = docsAll.slice(0, limitDocs);
+    const docsCapped = docs.length !== docsFound;
+
+    // Se não incluir prizes, devolve só os docs (com close_hour normalizado)
+    if (!includePrizes) {
+      const drawsNoPrizes = docs.map((doc) => {
+        const d = doc.data() || {};
+        return {
+          id: doc.id,
+          ...d,
+          close_hour: normalizeHHMM(d.close_hour),
+          // se existir campo agregado, mantemos para debug/UX
+          prizesCount: typeof d.prizesCount !== 'undefined' ? d.prizesCount : undefined,
+        };
+      });
+
+      drawsNoPrizes.sort((a, b) => cmpHHMM(a.close_hour, b.close_hour));
+
+      return res.json({
+        ok: true,
+        date,
+        lottery,
+        strict,
+        includePrizes,
+        limitDocs,
+        docsFound,
+        docsCapped,
+        dayStatus,
+        blocked: false,
+        count: drawsNoPrizes.length,
+        draws: drawsNoPrizes,
+      });
+    }
+
+    // carrega prizes com concorrência limitada
     const draws = await mapWithConcurrency(docs, 6, async (doc) => {
       const d = doc.data() || {};
 
@@ -121,16 +252,28 @@ router.get('/results', async (req, res) => {
       return {
         id: doc.id,
         ...d,
-        // normaliza close_hour para ordenação estável
         close_hour: normalizeHHMM(d.close_hour),
         prizes: prizesSnap.docs.map((p) => p.data()),
       };
     });
 
-    // Ordenar por horário (HH:MM) já normalizado (vazio vai primeiro; se preferir, eu mando vazio pro fim)
+    // ordena por close_hour normalizado
     draws.sort((a, b) => cmpHHMM(a.close_hour, b.close_hour));
 
-    return res.json({ ok: true, date, lottery, draws });
+    return res.json({
+      ok: true,
+      date,
+      lottery,
+      strict,
+      includePrizes,
+      limitDocs,
+      docsFound,
+      docsCapped,
+      dayStatus,
+      blocked: false,
+      count: draws.length,
+      draws,
+    });
   } catch (e) {
     return res.status(500).json({ ok: false, error: e?.message || 'erro' });
   }
