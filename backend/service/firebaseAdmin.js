@@ -140,6 +140,21 @@ function readServiceAccountFromEnv() {
   return null;
 }
 
+/**
+ * Garante que o runner tenha Project ID visível para as libs @google-cloud/*
+ * (evita: "Unable to detect a Project Id in the current environment")
+ */
+function ensureProjectEnv(projectId) {
+  const pid = String(projectId || "").trim();
+  if (!pid) return;
+
+  if (!process.env.GOOGLE_CLOUD_PROJECT) process.env.GOOGLE_CLOUD_PROJECT = pid;
+  if (!process.env.GCLOUD_PROJECT) process.env.GCLOUD_PROJECT = pid;
+
+  // opcional: alguns setups leem isso
+  if (!process.env.FIREBASE_PROJECT_ID) process.env.FIREBASE_PROJECT_ID = pid;
+}
+
 /* =========================
    Init
 ========================= */
@@ -154,9 +169,13 @@ function initAdmin() {
 
   const saFromEnv = readServiceAccountFromEnv();
   if (saFromEnv) {
+    ensureProjectEnv(saFromEnv.project_id);
+
     admin.initializeApp({
       credential: admin.credential.cert(saFromEnv),
+      projectId: saFromEnv.project_id, // ✅ força project id no CI
     });
+
     _initialized = true;
     return admin;
   }
@@ -170,9 +189,13 @@ function initAdmin() {
       fail(`Service account inválido no arquivo:\n${p}`);
     }
 
+    ensureProjectEnv(json.project_id);
+
     admin.initializeApp({
       credential: admin.credential.cert(json),
+      projectId: json.project_id, // ✅ força project id no CI
     });
+
     _initialized = true;
     return admin;
   }
