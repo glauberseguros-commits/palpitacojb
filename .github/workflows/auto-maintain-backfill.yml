@@ -1,7 +1,16 @@
 name: Auto Maintain Backfill (PT_RIO)
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "Janela de auditoria (dias)"
+        required: true
+        default: "60"
+      limitDays:
+        description: "Limite de dias por execução de backfill"
+        required: true
+        default: "14"
   schedule:
     # Domingo 06:15 (BRT = UTC-3) => 09:15 UTC
     - cron: "15 9 * * 0"
@@ -17,7 +26,7 @@ jobs:
     env:
       TZ: America/Sao_Paulo
 
-    steps:
+      FIREBASE_ADMIN_SA_JSON: ${{ secrets.FIREBASE_ADMIN_SA_JSON }}    steps:
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -33,4 +42,5 @@ jobs:
         run: npm ci
 
       - name: Run autoMaintainBackfill (PT_RIO)
-        run: node backend/scripts/autoMaintainBackfill.js --lottery=PT_RIO --days=60 --limitDays=14 --baseMins=0,9 --tolMin=2
+        run: node backend/scripts/autoMaintainBackfill.js --lottery=PT_RIO --days=${{ inputs.days || '60' }} --limitDays=${{ inputs.limitDays || '14' }} --baseMins=0,9 --tolMin=2
+
