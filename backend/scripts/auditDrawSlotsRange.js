@@ -306,17 +306,36 @@ function loadGapsOrNull(lotteryKey, gapsFileArg) {
 
 function gapSetForDate(gaps, ymd) {
   if (!gaps || !gaps.gapsByDay) return null;
-  const arr = gaps.gapsByDay?.[ymd];
-  if (!Array.isArray(arr) || !arr.length) return null;
+  const v = gaps.gapsByDay?.[ymd];
+  if (!v) return null;
 
   const set = new Set();
-  for (const h of arr) {
+
+  const pushHour = (h) => {
     const m = String(h ?? "").match(/\d{1,2}/);
-    if (!m) continue;
-    const hh = pad2(Number(m[0]));
+    if (!m) return;
+    const n = Number(m[0]);
+    if (!Number.isFinite(n) || n < 0 || n > 23) return;
+    const hh = pad2(n);
     if (/^\d{2}$/.test(hh)) set.add(hh);
+  };
+
+  // ✅ formato antigo: gapsByDay[ymd] = ["18","21"]
+  if (Array.isArray(v)) {
+    for (const h of v) pushHour(h);
+    return set.size ? set : null;
   }
-  return set.size ? set : null;
+
+  // ✅ formato novo: gapsByDay[ymd] = { removedHard:[18], removedSoft:[..] }
+  if (v && typeof v === "object") {
+    const rh = Array.isArray(v.removedHard) ? v.removedHard : [];
+    const rs = Array.isArray(v.removedSoft) ? v.removedSoft : [];
+    for (const h of rh) pushHour(h);
+    for (const h of rs) pushHour(h);
+    return set.size ? set : null;
+  }
+
+  return null;
 }
 
 function removeGaps(expectedHard, expectedSoft, gapSet) {
@@ -517,15 +536,6 @@ const missingHardByDay = [];
     // IMPORTANT: let, porque vamos aplicar gaps
     let expectedHard = expected.expectedHard || [];
     let expectedSoft = expected.expectedSoft || [];
-
-    // ✅ Alinha schedule com flag --soft18WedSat:
-    // - Se flag NÃO estiver setado, não devemos "esperar" o soft 18 em qua/sáb,
-    //   evitando ruído de missingSoft em dias onde esse extra não é garantido.
-    if (!soft18WedSat && (dow === 3 || dow === 6)) {
-      expectedSoft = Array.isArray(expectedSoft)
-        ? expectedSoft.filter((hh) => hh !== "18")
-        : [];
-    }
     // ✅ aplica gaps da fonte (API_NO_SLOT): remove horas "esperadas" daquele dia
     const gset = gapsOn ? gapSetForDate(gaps, ymd) : null;
     if (gset) {
@@ -610,23 +620,26 @@ const missingHardByDay = [];
       }
     }
     }
-
-    for (const hh of expectedSoft) {
+    for (const hh of expectedSoft) {
       const c = dayMap.get(hh) || 0;
       if (c > 0) foundSoftSlotsTotal += 1;
-      if (c <= 0) {
+    
+      // ✅ Regra: 18h em qua/sáb é "soft variável" por padrão.
+      // Só conta como missingSoft se o usuário ligar --soft18WedSat.
+      const ignoreSoftMissing = (!soft18WedSat && (dow === 3 || dow === 6) && hh === "18");
+    
+      if (c <= 0 && !ignoreSoftMissing) {
         missingSoft.push(hh);
         missingSoftSlotsTotal += 1;
       }
+    
       if (c > 1) {
-      if (!isLegacySlotDup(hh, c)) {
-        dup.push({ hh, count: c });
-        duplicateExtraDocsExpected += c - 1;
+        if (!isLegacySlotDup(hh, c)) {
+          dup.push({ hh, count: c });
+          duplicateExtraDocsExpected += c - 1;
+        }
       }
-    }
-    }
-
-    const unexpected = [];
+    }const unexpected = [];
     for (const [hh, c] of dayMap.entries()) {
       if (!expectedAllSet.has(hh)) {
         unexpected.push({ hh, count: c });
@@ -797,6 +810,9 @@ main().catch((e) => {
   console.error("ERRO:", e?.stack || e?.message || e);
   process.exit(1);
 });
+
+
+
 
 
 
