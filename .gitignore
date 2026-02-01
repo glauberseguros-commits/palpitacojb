@@ -4,3 +4,17 @@ backend/logs/
 
 # scripts locais de teste
 backend/test-api.ps1
+# ambiente
+backend/.env.local
+secrets/
+
+# dependências
+backend/node_modules/
+
+# dados gerados localmente
+backend/data/day_status/
+
+# backups
+*.bak_*
+*.bak
+
