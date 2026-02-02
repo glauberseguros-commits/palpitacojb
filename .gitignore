@@ -1,20 +1,12 @@
-# logs locais
-logs/
+# secrets locais
+_secrets/
+backend/_secrets/
+
+# arquivos locais
+backend/scripts/runAutoImport.ps1
+backend/.gitignore
+backend/.tmp_serviceAccount.json
+
+# logs
 backend/logs/
-
-# scripts locais de teste
-backend/test-api.ps1
-# ambiente
-backend/.env.local
-secrets/
-
-# dependências
-backend/node_modules/
-
-# dados gerados localmente
-backend/data/day_status/
-
-# backups
-*.bak_*
-*.bak
-
+logs/
