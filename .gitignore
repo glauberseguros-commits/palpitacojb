@@ -1,12 +1,21 @@
-# secrets locais
+# deps
+node_modules/
+backend/node_modules/
+
+# build
+build/
+
+# secrets
+secrets/
 _secrets/
 backend/_secrets/
-
-# arquivos locais
-backend/scripts/runAutoImport.ps1
-backend/.gitignore
 backend/.tmp_serviceAccount.json
 
 # logs
-backend/logs/
 logs/
+backend/logs/
+
+# backups
+*.bak_*
+*.bak
+.tmp_*
