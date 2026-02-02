@@ -1,50 +1,25 @@
-﻿// backend/scripts/autoImportToday.js
 "use strict";
 
 const fs = require("fs");
 const path = require("path");
 
-const { runImport } = require("./importKingApostas");
-// ✅ PT_RIO calendário CORE/OPCIONAL/RARA (gerado do Firestore)
-const { getPtRioSlotsByDate } = require("./ptRioCalendar");
+/* =========================
+   DOW seguro para YYYY-MM-DD (independe de timezone)
+   - calcula como UTC do próprio dia
+========================= */
+function dowFromYMD(dateYMD) {
+  const m = String(dateYMD || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return new Date(dateYMD).getDay(); // fallback
+  const y = Number(m[1]),
+    mo = Number(m[2]) - 1,
+    d = Number(m[3]);
+  return new Date(Date.UTC(y, mo, d)).getUTCDay();
+}
 
-/**
- * AUTO IMPORT — (parametrizável por LOTTERY)
- *
- * ✅ Estratégia (custo baixo / sem martelar):
- * - Script é chamado pelo Agendador a cada N minutos (workflow cron).
- * - Ele só chama API/Firestore se:
- *   - estiver dentro da janela do slot,
- *   - e já passou do releaseAt,
- *   - e o slot ainda não estiver done.
- * - Assim que capturar (ou detectar que já está completo no Firestore), marca done.
- *
- * ✅ Regras especiais (PT_RIO):
- * - Slots a tentar no dia = CORE + OPCIONAL (via ptRioCalendarRules).
- * - Slots RARA viram N/A automaticamente no state do dia (não tenta).
- * - Quarta e sábado: se 18:00 estiver habilitado (CORE/OPCIONAL), faz UMA tentativa única às 18:35 (+tolerance).
- *
- * ✅ FEDERAL:
- * - Somente quarta e sábado.
- * - Janela 19:49–20:10 (BRT), com release recomendado às 20:00 (pra evitar martelar cedo).
- *
- * ✅ Log claro em arquivo:
- * - backend/logs/autoImportToday-<LOTTERY>.log
- *
- * ✅ NOVO (2026-01):
- * - Hard-guard de data futura (America/Sao_Paulo) => NÃO importa / NÃO contamina.
- * - Auditoria de furo crítico (warning/critical) + relatório JSON em backend/logs/
- * - FAIL_ON_CRITICAL=1 => exit(2) quando houver CRÍTICO (bom pro CI ficar vermelho)
- *
- * ✅ FIX (2026-01-31):
- * - Se o backend indicar dayStatus=holiday_no_draw (blocked=true),
- *   fecha o dia marcando slots aplicáveis como N/A (HOLIDAY_NO_DRAW),
- *   evitando CRITICAL falso na auditoria.
- */
+const { runImport } = require("./importKingApostas");
 
 // ✅ LOTTERY parametrizável por env (default PT_RIO)
-const LOTTERY =
-  String(process.env.LOTTERY || "PT_RIO").trim().toUpperCase() || "PT_RIO";
+const LOTTERY = String(process.env.LOTTERY || "PT_RIO").trim().toUpperCase() || "PT_RIO";
 
 const LOG_DIR = path.join(__dirname, "..", "logs");
 
@@ -57,16 +32,10 @@ const LOCK_FILE = path.join(LOG_DIR, `autoImport-${LOTTERY}.lock`);
 // TTL do lock (ambientes locais). Em GitHub Actions, o workspace é isolado por execução.
 const LOCK_TTL_MS = 90 * 1000; // 1m30s
 
-// Regra especial (quarta e sábado): 18h só uma tentativa às 18:35
-const WED_SAT_18H_ONE_SHOT_MINUTE = 35;
-// Tolerância (se o agendador disparar 18:36 etc.)
-const WED_SAT_18H_ONE_SHOT_TOLERANCE = 10; // minutos após 18:35
-
 // Auditoria: thresholds (minutos)
 const WARN_AFTER_MIN = Number(process.env.AUDIT_WARN_MIN || 20);
 const CRIT_AFTER_MIN = Number(process.env.AUDIT_CRIT_MIN || 60);
-const FAIL_ON_CRITICAL =
-  String(process.env.FAIL_ON_CRITICAL || "0").trim() === "1";
+const FAIL_ON_CRITICAL = String(process.env.FAIL_ON_CRITICAL || "0").trim() === "1";
 
 /**
  * ✅ Base URL do backend (pra ler dayStatus sem duplicar regra)
@@ -84,11 +53,8 @@ const SCHEDULES = {
     { hour: "11:00", windowStart: "11:05", releaseAt: "11:29", windowEnd: "11:31" },
     { hour: "14:00", windowStart: "14:05", releaseAt: "14:29", windowEnd: "14:31" },
     { hour: "16:00", windowStart: "16:05", releaseAt: "16:29", windowEnd: "16:31" },
-
-    // 18h (normal seg/ter/qui/sex; qua/sáb pode ser one-shot; domingo costuma ser RARA)
     { hour: "18:00", windowStart: "18:05", releaseAt: "18:29", windowEnd: "18:31" },
-
-    // 21h: janela longa minuto a minuto (mas pode ser RARA em alguns dias)
+    // 21h: janela longa
     { hour: "21:00", windowStart: "21:05", releaseAt: "21:05", windowEnd: "21:45" },
   ],
 
@@ -185,21 +151,6 @@ function nowHMInSaoPaulo() {
   }
 }
 
-function dowInSaoPaulo() {
-  // 0=Dom..6=Sáb
-  try {
-    // trick: pega weekday em en-US e mapeia
-    const wd = new Intl.DateTimeFormat("en-US", {
-      timeZone: "America/Sao_Paulo",
-      weekday: "short",
-    }).format(new Date());
-    const map = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
-    return typeof map[wd] === "number" ? map[wd] : new Date().getDay();
-  } catch {
-    return new Date().getDay();
-  }
-}
-
 function isFutureISODate(ymd) {
   if (!isISODate(ymd)) return false;
   const todayBR = todayYMDInSaoPaulo();
@@ -222,14 +173,6 @@ function parseHH(hhmm) {
   const h = Number(String(hhmm).slice(0, 2));
   const m = Number(String(hhmm).slice(3, 5));
   return { h, m };
-}
-
-// Converte schedule.hour "09:09" -> slot "09:00"
-function scheduleHourToSlot(hourHHMM) {
-  const parsed = parseHH(hourHHMM);
-  if (!parsed) return String(hourHHMM || "").trim();
-  const { h } = parsed;
-  return `${pad2(h)}:00`;
 }
 
 function stateFile(date) {
@@ -337,7 +280,8 @@ function closeCandidates(hhmm) {
 }
 
 /* =========================
-   Regras do calendário
+   Regras de aplicabilidade
+   ✅ PT_RIO: domingo (dow=0) só 11/14/16 (evita CRITICAL falso em 18/21)
 ========================= */
 function isWedOrSat(dow) {
   return dow === 3 || dow === 6;
@@ -346,28 +290,24 @@ function isWedOrSat(dow) {
 function buildTodaySlotStatusMap(dateYMD, dow) {
   const map = new Map();
 
-  // schedule.hour -> status
   if (LOTTERY === "PT_RIO") {
-    const cal = getPtRioSlotsByDate(dateYMD);
-    const core = new Set(cal.core || []);
-    const opt = new Set(cal.opcional || []);
-    const rare = new Set(cal.rara || []);
+  const isSunday = dow === 0;
 
-    for (const sched of SCHEDULE) {
-      const slot = scheduleHourToSlot(sched.hour);
-      let status = "OFF";
-      if (core.has(slot)) status = "CORE";
-      else if (opt.has(slot)) status = "OPCIONAL";
-      else if (rare.has(slot)) status = "RARA";
-      map.set(sched.hour, status);
+  for (const sched of SCHEDULE) {
+    if (isSunday && (sched.hour === "18:00" || sched.hour === "21:00")) {
+      map.set(sched.hour, "OFF");
+    } else {
+      map.set(sched.hour, "CORE");
     }
-
-    logLine(
-      `[CAL] date=${dateYMD} dow=${dow} source=${cal.source} CORE=${(cal.core || []).join(",") || "—"} OPC=${(cal.opcional || []).join(",") || "—"} RARA=${(cal.rara || []).join(",") || "—"}`,
-      "INFO"
-    );
-    return map;
   }
+
+  if (isSunday) {
+    logLine(`[CAL] PT_RIO domingo: date=${dateYMD} dow=${dow} => CORE=[09,11,14,16] OFF=[18,21]`, "INFO");
+  } else {
+    logLine(`[CAL] PT_RIO (sem calendário): date=${dateYMD} dow=${dow} => TODOS CORE`, "INFO");
+  }
+  return map;
+}
 
   if (LOTTERY === "FEDERAL") {
     const ok = isWedOrSat(dow);
@@ -412,13 +352,6 @@ function slotWindow(schedule) {
   };
 }
 
-function isInWedSat18OneShotWindow(nowMin) {
-  const start = toMin(18, WED_SAT_18H_ONE_SHOT_MINUTE);
-  const end =
-    start + Math.max(0, Number(WED_SAT_18H_ONE_SHOT_TOLERANCE || 0));
-  return nowMin >= start && nowMin <= end;
-}
-
 /* =========================
    Lock (anti-concorrência)
 ========================= */
@@ -439,11 +372,7 @@ function acquireLock() {
   try {
     fs.writeFileSync(
       LOCK_FILE,
-      JSON.stringify(
-        { pid: process.pid, at: new Date().toISOString(), lottery: LOTTERY },
-        null,
-        2
-      )
+      JSON.stringify({ pid: process.pid, at: new Date().toISOString(), lottery: LOTTERY }, null, 2)
     );
     return { ok: true };
   } catch {
@@ -468,7 +397,6 @@ async function fetchDayStatusFromBackend({ date, lottery }) {
       String(date || "").trim()
     )}&lottery=${encodeURIComponent(String(lottery || "").trim())}`;
 
-    // Node 18+ tem fetch global; se não tiver, simplesmente falha no catch
     const res = await fetch(u, { method: "GET" });
     if (!res.ok) return null;
 
@@ -488,7 +416,6 @@ async function fetchDayStatusFromBackend({ date, lottery }) {
 }
 
 function applyHolidayNoDrawToState({ state, statusMap, isoNow }) {
-  // marca apenas slots aplicáveis (CORE/OPCIONAL) como N/A + DONE
   let touched = 0;
 
   for (const sched of SCHEDULE) {
@@ -496,7 +423,7 @@ function applyHolidayNoDrawToState({ state, statusMap, isoNow }) {
     if (!slot) continue;
 
     const st = statusMap.get(sched.hour) || "OFF";
-    const applies = st === "CORE" || st === "OPCIONAL";
+    const applies = st === "CORE";
     if (!applies) continue;
 
     if (slot.done && slot.na && slot.naReason === "HOLIDAY_NO_DRAW") continue;
@@ -510,6 +437,155 @@ function applyHolidayNoDrawToState({ state, statusMap, isoNow }) {
   }
 
   return touched;
+}
+
+/* =========================
+   Verificação de persistência (BIRTH-GUARD)
+   ✅ Agora só deve rodar em captura real (gravou algo)
+========================= */
+const VERIFY_PERSISTED = String(process.env.VERIFY_PERSISTED || "1").trim() === "1";
+
+function missingSlotsMonthFile(dateYMD) {
+  const ym = String(dateYMD || "").slice(0, 7); // YYYY-MM
+  return path.join(LOG_DIR, `missingSlots-${LOTTERY}-${ym}.json`);
+}
+
+function readJsonSafe(p) {
+  try {
+    if (!fs.existsSync(p)) return null;
+    return JSON.parse(fs.readFileSync(p, "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+function upsertMissingSlot({ date, slotHour, calendar, closeHourTried, reason, meta }) {
+  ensureLogDir();
+  const file = missingSlotsMonthFile(date);
+  const j =
+    readJsonSafe(file) || {
+      ok: true,
+      lottery: LOTTERY,
+      month: String(date).slice(0, 7),
+      items: {},
+    };
+
+  const key = `${date}::${slotHour}`;
+  if (!j.items || typeof j.items !== "object") j.items = {};
+
+  const prev = j.items[key] && typeof j.items[key] === "object" ? j.items[key] : null;
+  const now = new Date().toISOString();
+
+  j.items[key] = {
+    date,
+    slotHour,
+    calendar: calendar || null,
+    closeHourTried: closeHourTried || null,
+    firstSeenISO: prev?.firstSeenISO || now,
+    lastSeenISO: now,
+    hits: (prev?.hits || 0) + 1,
+    reason: reason || "NOT_PERSISTED",
+    meta: meta || null,
+  };
+
+  safeWriteJson(file, j);
+  return file;
+}
+
+function hhFromSlotHHMM(slotHHMM) {
+  const s = String(slotHHMM || "").trim();
+  if (/^\d{2}:\d{2}$/.test(s)) return s.slice(0, 2);
+  if (/^\d{2}$/.test(s)) return s;
+  return "";
+}
+
+function drawLooksLikeSlot(draw, slotHH) {
+  const hh = hhFromSlotHHMM(slotHH);
+  if (!hh) return false;
+
+  const v =
+    (draw &&
+      (draw.close_hour ||
+        draw.closeHour ||
+        draw.close ||
+        draw.hour ||
+        draw.slot ||
+        draw.time ||
+        draw.close_hour_raw)) ??
+    "";
+  const s = String(v).trim();
+
+  if (s.startsWith(hh)) return true;
+  if (s.startsWith(`${hh}:`)) return true;
+  if (s === hh) return true;
+  if (s === `${hh}h`) return true;
+
+  return false;
+}
+
+async function verifySlotPersistedViaBackend({ date, slotHHMM }) {
+  try {
+    const base = PITACO_API_BASE.replace(/\/+$/, "");
+    const u = `${base}/api/pitaco/results?date=${encodeURIComponent(date)}&lottery=${encodeURIComponent(LOTTERY)}`;
+
+    const res = await fetch(u, { method: "GET" });
+    if (!res.ok) return { ok: false, reason: `HTTP_${res.status}` };
+
+    const j = await res.json().catch(() => null);
+    if (!j || typeof j !== "object") return { ok: false, reason: "BAD_JSON" };
+
+    const draws = Array.isArray(j.draws) ? j.draws : [];
+    const foundInDraws = draws.some((d) => drawLooksLikeSlot(d, slotHHMM));
+    if (foundInDraws) return { ok: true, where: "draws", drawsCount: draws.length };
+
+    const slots = Array.isArray(j.slots) ? j.slots : [];
+    const hh = hhFromSlotHHMM(slotHHMM);
+
+    const foundInSlots = slots.some((s) => {
+      const v = (s && (s.hour || s.close_hour || s.closeHour || s.close || s.slot || s.time || s.close_hour_raw)) ?? "";
+      const t = String(v).trim();
+      return t.startsWith(hh);
+    });
+
+    if (foundInSlots) return { ok: true, where: "slots", slotsCount: slots.length };
+
+    return { ok: false, reason: "NOT_FOUND", drawsCount: draws.length, slotsCount: slots.length };
+  } catch (e) {
+    return { ok: false, reason: `EX:${e?.message || e}` };
+  }
+}
+
+async function guardPersistedOrCritical({ date, slotHHMM, calendar, closeHourTried, meta }) {
+  if (!VERIFY_PERSISTED) return { ok: true, skipped: true };
+
+  // ✅ Se meta disser que não foi captura real, não guarda crítico
+  // (ex.: já estava completo no FS, ou foi no_draw)
+  if (meta && (meta.mode === "ALREADY_COMPLETE" || meta.mode === "NO_DRAW")) {
+    return { ok: true, skipped: true, reason: `SKIP_${meta.mode}` };
+  }
+
+  const v = await verifySlotPersistedViaBackend({ date, slotHHMM });
+  if (v.ok) return { ok: true, verified: true, where: v.where };
+
+  const file = upsertMissingSlot({
+    date,
+    slotHour: slotHHMM,
+    calendar,
+    closeHourTried,
+    reason: v.reason || "NOT_PERSISTED",
+    meta: { verify: v, ...(meta || {}) },
+  });
+
+  logLine(
+    `[BIRTH-GUARD] CRITICAL slot=${slotHHMM} date=${date} calendar=${calendar || "—"} closeTried=${
+      closeHourTried || "—"
+    } reason=${v.reason || "NOT_PERSISTED"} file=${path.basename(file)}`,
+    "ERROR"
+  );
+
+  if (FAIL_ON_CRITICAL) process.exitCode = 2;
+
+  return { ok: false, verified: false, reason: v.reason || "NOT_PERSISTED", file };
 }
 
 /* =========================
@@ -529,45 +605,24 @@ function buildAuditReport({ date, nowMin, isoNow, dow, statusMap, state }) {
     if (!slotState) continue;
 
     const st = statusMap.get(sched.hour) || "OFF";
-    const applies = st === "CORE" || st === "OPCIONAL";
+    const applies = st === "CORE";
     if (!applies) continue;
 
     if (slotState.na) continue;
     if (slotState.done) continue;
 
-    // calcula referência de "release" por regra
-    let releaseMin = null;
-    let releaseLabel = null;
-    let windowEndLabel = null;
-    let rule = "window";
+    const w = slotWindow(sched);
 
-    if (LOTTERY === "PT_RIO" && sched.hour === "18:00" && isWedOrSat(dow)) {
-      // one-shot: referência é 18:35 (quando tentamos)
-      releaseMin = toMin(18, WED_SAT_18H_ONE_SHOT_MINUTE);
-      releaseLabel = `18:${pad2(WED_SAT_18H_ONE_SHOT_MINUTE)}`;
-      windowEndLabel = `18:${pad2(
-        WED_SAT_18H_ONE_SHOT_MINUTE + WED_SAT_18H_ONE_SHOT_TOLERANCE
-      )}`;
-      rule = "wed_sat_one_shot";
-    } else {
-      const w = slotWindow(sched);
-      releaseMin = w.release;
-      releaseLabel = w.releaseLabel;
-      windowEndLabel = w.endLabel;
-      rule = "window";
-    }
+    if (nowMin < w.release) continue;
 
-    // se ainda não passou do release, não é furo (ainda)
-    if (nowMin < releaseMin) continue;
-
-    const since = nowMin - releaseMin;
+    const since = nowMin - w.release;
 
     const item = {
       slot: sched.hour,
       calendar: st,
-      rule,
-      releaseAt: releaseLabel,
-      windowEnd: windowEndLabel,
+      rule: "window",
+      releaseAt: w.releaseLabel,
+      windowEnd: w.endLabel,
       sinceMinutes: since,
       tries: Number(slotState.tries || 0),
       lastTryISO: slotState.lastTryISO || null,
@@ -602,27 +657,21 @@ function buildAuditReport({ date, nowMin, isoNow, dow, statusMap, state }) {
    Main
 ========================= */
 async function main() {
-  // ✅ data base: pode sobrescrever por env (útil em backfill manual/CI)
   const envDate = String(process.env.DATE || "").trim();
   const date = envDate && isISODate(envDate) ? envDate : todayYMDInSaoPaulo();
 
-  // ✅ HARD GUARD: bloqueia data futura (Brasil)
   if (isFutureISODate(date)) {
     const todayBR = todayYMDInSaoPaulo();
-    logLine(
-      `[GUARD] FUTURE_DATE_BLOCKED date=${date} todayBR=${todayBR} (não vamos importar)`,
-      "ERROR"
-    );
+    logLine(`[GUARD] FUTURE_DATE_BLOCKED date=${date} todayBR=${todayBR} (não vamos importar)`, "ERROR");
     process.exit(2);
     return;
   }
 
   const now = nowHMInSaoPaulo();
   const nowMin = toMin(now.h, now.m);
-  const dow = dowInSaoPaulo();
+  const dow = dowFromYMD(date);
 
-  // ✅ Flags por execução (NÃO persistir em JSON)
-  const catchupTried = new Set(); // key = `${date}::${sched.hour}`
+  const catchupTried = new Set();
 
   const lock = acquireLock();
   if (!lock.ok) {
@@ -635,26 +684,21 @@ async function main() {
     const isoNow = new Date().toISOString();
     const statusMap = buildTodaySlotStatusMap(date, dow);
 
-    // 1) Marca N/A slots que não se aplicam hoje (RARA/OFF)
+    // 1) Marca N/A slots que não se aplicam hoje
     let stateTouched = false;
     for (const sched of SCHEDULE) {
       const slot = state[sched.hour];
       if (!slot) continue;
 
       const st = statusMap.get(sched.hour) || "OFF";
-      const applies = st === "CORE" || st === "OPCIONAL";
+      const applies = st === "CORE";
 
       if (!applies && !slot.done) {
         slot.done = true;
         slot.na = true;
 
-        if (LOTTERY === "PT_RIO") {
-          slot.naReason = st === "RARA" ? "CALENDARIO_RARA" : "CALENDARIO_OFF";
-        } else if (LOTTERY === "FEDERAL") {
-          slot.naReason = "FEDERAL_SO_QUA_SAB";
-        } else {
-          slot.naReason = "NAO_APLICA";
-        }
+        if (LOTTERY === "FEDERAL") slot.naReason = "FEDERAL_SO_QUA_SAB";
+        else slot.naReason = "NAO_APLICA";
 
         slot.lastTryISO = isoNow;
         slot.lastResult = { ok: true, skipped: true, reason: slot.naReason };
@@ -665,32 +709,19 @@ async function main() {
     }
     if (stateTouched) saveState(date, state);
 
-    /**
-     * ✅ 1.5) DayStatus guard: feriado sem sorteio
-     * Só faz sentido se o backend estiver acessível (local/CI).
-     * Se detectado holiday_no_draw + blocked, fecha o dia marcando slots aplicáveis como N/A.
-     */
+    // 1.5) DayStatus guard: feriado sem sorteio
     const ds = await fetchDayStatusFromBackend({ date, lottery: LOTTERY });
     if (ds && ds.blocked && String(ds.dayStatus || "") === "holiday_no_draw") {
       const touched = applyHolidayNoDrawToState({ state, statusMap, isoNow });
       if (touched > 0) saveState(date, state);
 
-      // gera audit OK (sem furos) porque tudo aplicável virou N/A
       try {
-        const report = buildAuditReport({
-          date,
-          nowMin,
-          isoNow: new Date().toISOString(),
-          dow,
-          statusMap,
-          state,
-        });
+        const report = buildAuditReport({ date, nowMin, isoNow: new Date().toISOString(), dow, statusMap, state });
         safeWriteJson(auditOutFile(date), report);
       } catch {}
 
       logLine(
-        `[DAY_STATUS] holiday_no_draw confirmado pelo backend (blockedReason=${ds.blockedReason || "—"}). ` +
-          `Slots aplicáveis marcados como N/A (HOLIDAY_NO_DRAW). Encerrando.`,
+        `[DAY_STATUS] holiday_no_draw confirmado (blockedReason=${ds.blockedReason || "—"}). Slots CORE -> N/A. Encerrando.`,
         "INFO"
       );
       return;
@@ -698,110 +729,18 @@ async function main() {
 
     let didSomething = false;
 
-    // 2) Processa slots aplicáveis (CORE/OPCIONAL)
+    // 2) Processa slots aplicáveis (CORE)
     for (const sched of SCHEDULE) {
       const slot = state[sched.hour];
       if (!slot) continue;
       if (slot.done) continue;
 
       const st = statusMap.get(sched.hour) || "OFF";
-      const applies = st === "CORE" || st === "OPCIONAL";
+      const applies = st === "CORE";
       if (!applies) continue;
 
-      // Regra especial PT_RIO: quarta/sábado 18h one-shot 18:35
-      if (LOTTERY === "PT_RIO" && sched.hour === "18:00" && isWedOrSat(dow)) {
-        if (!isInWedSat18OneShotWindow(nowMin)) continue;
-
-        slot.tries = (slot.tries || 0) + 1;
-        slot.lastTryISO = isoNow;
-
-        const candidates = closeCandidates(sched.hour);
-        slot.lastTriedCloses = candidates;
-        saveState(date, state);
-
-        logLine(
-          `[AUTO] (ONE-SHOT QUA/SAB) tentando ${date} slot=18:00 agora=18:${pad2(
-            now.m
-          )} closes=${candidates.join(",")}`,
-          "INFO"
-        );
-
-        let doneReason = "CHECKED_NO_DRAW";
-        let lastErr = null;
-
-        for (const closeHour of candidates) {
-          let r = null;
-          try {
-            r = await runImport({ date, lotteryKey: LOTTERY, closeHour });
-          } catch (e) {
-            lastErr = e?.message || String(e);
-            slot.lastResult = { ok: false, error: lastErr, closeHourTried: closeHour };
-            saveState(date, state);
-            logLine(`[AUTO] erro no import close=${closeHour}: ${lastErr}`, "ERROR");
-            continue;
-          }
-
-          const savedCount = Number.isFinite(Number(r?.savedCount)) ? Number(r.savedCount) : 0;
-          const writeCount = Number.isFinite(Number(r?.writeCount)) ? Number(r.writeCount) : 0;
-
-          const alreadyCompleteAny = Boolean(r?.alreadyCompleteAny);
-          const alreadyCompleteAll = Boolean(r?.alreadyCompleteAll);
-
-          const captured = Boolean(r?.captured);
-          const apiHasPrizes = r?.apiHasPrizes ?? null;
-
-          const doneNow = captured && (savedCount > 0 || alreadyCompleteAll);
-
-          slot.lastResult = {
-            ok: true,
-            mode: "WED_SAT_18H_ONE_SHOT",
-            closeHourTried: closeHour,
-            captured,
-            alreadyCompleteAny,
-            alreadyCompleteAll,
-            savedCount,
-            writeCount,
-            apiHasPrizes,
-            targetDrawIds: r?.targetDrawIds ?? null,
-            tookMs: r?.tookMs ?? null,
-          };
-          saveState(date, state);
-
-          if (doneNow) {
-            doneReason = alreadyCompleteAll ? "FS_ALREADY_HAS_ALL" : "CAPTURED";
-            logLine(
-              alreadyCompleteAll
-                ? `[AUTO] FS já tem slot=18:00 COMPLETO (close=${closeHour}) -> DONE`
-                : `[AUTO] CAPTURADO slot=18:00 (close=${closeHour}) saved=${savedCount} writes=${writeCount} -> DONE`,
-              "INFO"
-            );
-            break;
-          }
-        }
-
-        // marca done SEMPRE (one-shot)
-        slot.done = true;
-        slot.lastResult = {
-          ...(slot.lastResult || {}),
-          oneShotFinal: true,
-          oneShotFinalReason: lastErr ? `ERROR:${lastErr}` : doneReason,
-        };
-        saveState(date, state);
-
-        logLine(
-          `[AUTO] (ONE-SHOT QUA/SAB) DONE slot=18:00 (${slot.lastResult.oneShotFinalReason})`,
-          lastErr ? "ERROR" : "INFO"
-        );
-
-        didSomething = true;
-        continue;
-      }
-
-      // Regra normal: janela definida em schedule (HH:MM)
       const w = slotWindow(sched);
 
-      // ✅ CATCH-UP: se passou do releaseAt e o slot ainda não foi capturado,
-      // tenta UMA vez por execução mesmo fora da janela (evita furo por atraso do cron)
       const inWindow = !(nowMin < w.start || nowMin > w.end);
       const afterRelease = nowMin >= w.release;
 
@@ -819,7 +758,6 @@ async function main() {
 
       if (!afterRelease) continue;
 
-      // tenta capturar
       slot.tries = (slot.tries || 0) + 1;
       slot.lastTryISO = isoNow;
 
@@ -847,46 +785,105 @@ async function main() {
           continue;
         }
 
+        const isSunday = dow === 0;
+
+
+        const isSundayBlockedSlot = isSunday && (sched.hour === "18:00" || sched.hour === "21:00");
+
+
+        
+// ✅ Se o import disse "no_draw_for_slot", isso NÃO é furo.
+        if (r && r.blocked === true && String(r.blockedReason || "").trim() === "no_draw_for_slot") {
+          if (isSundayBlockedSlot) {
+            slot.done = true;
+            slot.na = true;
+            slot.naReason = "NO_DRAW_FOR_SLOT";
+            slot.lastResult = {
+              ok: true,
+              skipped: true,
+              reason: "NO_DRAW_FOR_SLOT",
+              closeHourTried: closeHour,
+              blocked: true,
+              blockedReason: "no_draw_for_slot",
+            };
+            saveState(date, state);
+
+            logLine(`[AUTO] N/A slot=${sched.hour} (NO_DRAW_FOR_SLOT) -> DONE`, "INFO");
+          } else {
+            // Dia útil: NÃO mata o slot — deixa pendente pra retry no próximo cron
+            slot.lastResult = {
+              ...(slot.lastResult || {}),
+              ok: true,
+              closeHourTried: closeHour,
+              blocked: true,
+              blockedReason: "no_draw_for_slot",
+              note: "no_draw_for_slot (will retry)",
+            };
+            saveState(date, state);
+
+            logLine(`[AUTO] no_draw_for_slot slot=${sched.hour} (dia útil) -> mantendo PENDENTE p/ retry`, "INFO");
+          }
+
+
+          didSomething = true;
+          break;
+        }
+
         const savedCount = Number.isFinite(Number(r?.savedCount)) ? Number(r.savedCount) : 0;
         const writeCount = Number.isFinite(Number(r?.writeCount)) ? Number(r.writeCount) : 0;
 
-        const alreadyCompleteAny = Boolean(r?.alreadyCompleteAny);
         const alreadyCompleteAll = Boolean(r?.alreadyCompleteAll);
-
-        const skippedAlreadyComplete = Number.isFinite(Number(r?.skippedAlreadyComplete))
-          ? Number(r.skippedAlreadyComplete)
-          : null;
-
         const captured = Boolean(r?.captured);
-        const apiHasPrizes = r?.apiHasPrizes ?? null;
-
-        const doneNow = captured && (savedCount > 0 || alreadyCompleteAll);
 
         slot.lastResult = {
           ok: true,
           closeHourTried: closeHour,
           captured,
-          alreadyCompleteAny,
           alreadyCompleteAll,
-          skippedAlreadyComplete,
           savedCount,
           writeCount,
-          apiHasPrizes,
+          apiHasPrizes: r?.apiHasPrizes ?? null,
           targetDrawIds: r?.targetDrawIds ?? null,
           tookMs: r?.tookMs ?? null,
         };
         saveState(date, state);
 
-        if (doneNow) {
+        // ✅ DONE em dois casos:
+        // - Já estava completo no Firestore
+        // - Captura real com gravação
+        const doneByAlreadyComplete = alreadyCompleteAll === true;
+        const doneByCaptureWrite = captured === true && (savedCount > 0 || writeCount > 0);
+
+        if (doneByAlreadyComplete || doneByCaptureWrite) {
           slot.done = true;
           saveState(date, state);
 
-          logLine(
-            alreadyCompleteAll
-              ? `[AUTO] FS já tem slot=${sched.hour} COMPLETO (close=${closeHour}) -> DONE`
-              : `[AUTO] CAPTURADO slot=${sched.hour} (close=${closeHour}) saved=${savedCount} writes=${writeCount} -> DONE`,
-            "INFO"
-          );
+          if (doneByAlreadyComplete) {
+            logLine(`[AUTO] FS já tem slot=${sched.hour} COMPLETO (close=${closeHour}) -> DONE`, "INFO");
+
+            // ✅ NÃO roda birth-guard se já estava completo
+            await guardPersistedOrCritical({
+              date,
+              slotHHMM: sched.hour,
+              calendar: st,
+              closeHourTried: closeHour,
+              meta: { mode: "ALREADY_COMPLETE", alreadyCompleteAll: true },
+            });
+          } else {
+            logLine(
+              `[AUTO] CAPTURADO slot=${sched.hour} (close=${closeHour}) saved=${savedCount} writes=${writeCount} -> DONE`,
+              "INFO"
+            );
+
+            // ✅ birth-guard só aqui (captura real)
+            await guardPersistedOrCritical({
+              date,
+              slotHHMM: sched.hour,
+              calendar: st,
+              closeHourTried: closeHour,
+              meta: { mode: "CAPTURE_WRITE", savedCount, writeCount, captured: true },
+            });
+          }
 
           didSomething = true;
           break;
@@ -898,25 +895,14 @@ async function main() {
           logLine(`[AUTO] falhou slot=${sched.hour} (erros em closes candidatos)`, "ERROR");
           didSomething = true;
         } else {
-          logLine(
-            `[AUTO] ainda indisponível slot=${sched.hour} (nenhum close candidato capturou)`,
-            "INFO"
-          );
+          logLine(`[AUTO] ainda indisponível slot=${sched.hour} (nenhum close candidato capturou)`, "INFO");
         }
       }
     }
 
-    // 3) Auditoria pós-execução: warning/critical (gera relatório)
+    // 3) Auditoria pós-execução
     try {
-      const report = buildAuditReport({
-        date,
-        nowMin,
-        isoNow: new Date().toISOString(),
-        dow,
-        statusMap,
-        state,
-      });
-
+      const report = buildAuditReport({ date, nowMin, isoNow: new Date().toISOString(), dow, statusMap, state });
       safeWriteJson(auditOutFile(date), report);
 
       if (report.status === "critical") {
@@ -931,12 +917,7 @@ async function main() {
           process.exitCode = 2;
         }
       } else if (report.status === "warning") {
-        logLine(
-          `[AUDIT] WARNING missing=${report.warningCount} (relatório salvo em ${path.basename(
-            auditOutFile(date)
-          )})`,
-          "INFO"
-        );
+        logLine(`[AUDIT] WARNING missing=${report.warningCount} (relatório salvo em ${path.basename(auditOutFile(date))})`, "INFO");
       } else {
         logLine(`[AUDIT] OK (sem furos acima de ${WARN_AFTER_MIN} min)`, "INFO");
       }
@@ -944,11 +925,8 @@ async function main() {
       logLine(`[AUDIT] erro ao gerar relatório: ${e?.message || e}`, "ERROR");
     }
 
-    if (isAllDone(state)) {
-      logLine(`[AUTO] DIA COMPLETO (${date}) — slots concluídos`, "INFO");
-    } else if (!didSomething) {
-      logLine(`[AUTO] nada para fazer agora (${date})`, "INFO");
-    }
+    if (isAllDone(state)) logLine(`[AUTO] DIA COMPLETO (${date}) — slots concluídos`, "INFO");
+    else if (!didSomething) logLine(`[AUTO] nada para fazer agora (${date})`, "INFO");
   } finally {
     releaseLock();
   }
@@ -959,3 +937,6 @@ main().catch((e) => {
   releaseLock();
   process.exit(1);
 });
+
+
+
