@@ -1,82 +1,102 @@
 import React from "react";
+import { useTop3Controller } from "./top3.hooks";
 
-export default function Top3View(props) {
+export default function Top3View() {
   const {
-    title = "Top 3",
-    isLoading,
+    loading,
     error,
-    items,
     top3,
-    rows,
-    data,
-  } = props || {};
-
-  const list =
-    (Array.isArray(top3) && top3) ||
-    (Array.isArray(items) && items) ||
-    (Array.isArray(rows) && rows) ||
-    [];
+    layerMetaText,
+    lastLabel,
+    prevLabel,
+  } = useTop3Controller();
 
   return (
     <div style={{ padding: 16, color: "#fff" }}>
-      <h2 style={{ margin: "0 0 12px" }}>{title}</h2>
+      <h2 style={{ margin: "0 0 12px" }}>Top 3</h2>
 
-      {isLoading ? <div>Carregando…</div> : null}
+      {loading && <div>Carregando…</div>}
 
-      {error ? (
+      {!loading && error && (
         <div style={{ marginTop: 12, color: "#ff6b6b" }}>
-          <b>Erro:</b> {String(error?.message || error)}
+          <b>Erro:</b> {String(error)}
         </div>
-      ) : null}
+      )}
 
-      {!isLoading && !error && list.length === 0 ? (
+      {!loading && !error && (!top3 || top3.length === 0) && (
         <div style={{ opacity: 0.8 }}>
-          Sem dados para exibir (Top3View criado como ponte).
+          Nenhum Top 3 disponível para os critérios atuais.
         </div>
-      ) : null}
+      )}
 
-      {!isLoading && !error && list.length > 0 ? (
-        <div style={{ marginTop: 12 }}>
-          <div style={{ opacity: 0.8, marginBottom: 8 }}>
-            Itens: {list.length}
+      {!loading && !error && Array.isArray(top3) && top3.length > 0 && (
+        <>
+          {/* Meta */}
+          <div style={{ marginBottom: 12, opacity: 0.85 }}>
+            <div><b>Último:</b> {lastLabel || "—"}</div>
+            <div><b>Anterior:</b> {prevLabel || "—"}</div>
+            <div style={{ marginTop: 4, fontSize: 13 }}>
+              {layerMetaText}
+            </div>
           </div>
 
-          <div style={{ display: "grid", gap: 8 }}>
-            {list.slice(0, 10).map((it, idx) => (
+          {/* Cards Top 3 */}
+          <div style={{ display: "grid", gap: 12 }}>
+            {top3.map((item, idx) => (
               <div
-                key={it?.id || it?.key || idx}
+                key={`${item.grupo}-${idx}`}
                 style={{
-                  padding: 10,
-                  borderRadius: 10,
-                  background: "rgba(255,255,255,0.06)",
-                  border: "1px solid rgba(255,255,255,0.10)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  padding: 14,
+                  borderRadius: 14,
+                  background: "rgba(255,215,0,0.08)",
+                  border: "1px solid rgba(255,215,0,0.25)",
                 }}
               >
-                <div style={{ fontWeight: 700, marginBottom: 4 }}>
+                {/* Rank */}
+                <div
+                  style={{
+                    fontSize: 22,
+                    fontWeight: 800,
+                    color: "#FFD700",
+                    width: 32,
+                    textAlign: "center",
+                  }}
+                >
                   #{idx + 1}
                 </div>
-                <pre style={{ margin: 0, whiteSpace: "pre-wrap" }}>
-                  {JSON.stringify(it, null, 2)}
-                </pre>
+
+                {/* Ícone */}
+                {item?.imgIcon?.[0] && (
+                  <img
+                    src={item.imgIcon[0]}
+                    alt={item.animal}
+                    style={{
+                      width: 56,
+                      height: 56,
+                      borderRadius: 12,
+                      objectFit: "cover",
+                      border: "1px solid rgba(255,215,0,0.35)",
+                    }}
+                  />
+                )}
+
+                {/* Texto */}
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 700, fontSize: 16 }}>
+                    G{String(item.grupo).padStart(2, "0")} • {item.animal}
+                  </div>
+                  <div style={{ fontSize: 13, opacity: 0.85 }}>
+                    Probabilidade: {Number(item.score || 0).toFixed(2)}%
+                  </div>
+                </div>
               </div>
             ))}
           </div>
-        </div>
-      ) : null}
-
-      <details style={{ marginTop: 16, opacity: 0.9 }}>
-        <summary>Debug props</summary>
-        <pre style={{ whiteSpace: "pre-wrap" }}>
-          {JSON.stringify(
-            {
-              keys: Object.keys(props || {}),
-              hasData: !!data,
-            },
-            null,
-            2
-          )}
-        </pre>
-      </details>
+        </>
+      )}
     </div>
   );
 }
