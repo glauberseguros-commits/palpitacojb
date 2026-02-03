@@ -1,5 +1,44 @@
 "use strict";
 
+/**
+ * ENV loader (.env.local) — sem dotenv
+ */
+const fs = require("fs");
+const path = require("path");
+
+(function loadEnvLocal() {
+  try {
+    const envPath = path.join(__dirname, ".env.local");
+    if (!fs.existsSync(envPath)) return;
+
+    let raw = fs.readFileSync(envPath, "utf8");
+    raw = raw.replace(/^\uFEFF/, "");
+
+    raw.split(/\r?\n/).forEach((line) => {
+      let s = String(line || "").trim();
+      if (!s || s.startsWith("#")) return;
+
+      if (/^export\s+/i.test(s)) {
+        s = s.replace(/^export\s+/i, "").trim();
+      }
+
+      const i = s.indexOf("=");
+      if (i <= 0) return;
+
+      const key = s.slice(0, i).trim();
+      const val = s.slice(i + 1).trim();
+
+      if (!process.env[key]) {
+        process.env[key] = val;
+      }
+    });
+
+    console.log("[ENV] .env.local carregado");
+  } catch (e) {
+    console.warn("[ENV] Falha ao carregar .env.local:", e.message);
+  }
+})();
+
 const express = require("express");
 
 const app = express();
@@ -89,7 +128,11 @@ function isHHMM(s) {
  * Healthcheck
  */
 app.get("/health", (req, res) => {
-  res.json({ ok: true, service: "palpitaco-backend", ts: new Date().toISOString() });
+  res.json({
+    ok: true,
+    service: "palpitaco-backend",
+    ts: new Date().toISOString(),
+  });
 });
 
 /**
@@ -97,9 +140,11 @@ app.get("/health", (req, res) => {
  */
 const pitacoResults = require("./routes/pitacoResults");
 const kingDraws = require("./routes/kingDraws");
+const receiveResults = require("./routes/receiveResults");
 
 app.use("/api/pitaco", pitacoResults);
 app.use("/api/king", kingDraws);
+app.use("/api", receiveResults);
 
 /**
  * IMPORT (Opção A)
@@ -259,3 +304,4 @@ process.on("uncaughtException", (err) => {
 app.listen(PORT, () => {
   console.log(`[START] palpitaco-backend on http://localhost:${PORT}`);
 });
+
