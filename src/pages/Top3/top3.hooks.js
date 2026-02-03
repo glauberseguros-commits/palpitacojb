@@ -29,13 +29,15 @@ import {
   pickPrize1GrupoFromDraw,
   getPreviousDrawRobust,
   build16MilharesForGrupo,
-
-  // ✅ novo
   getNextSlotForLottery,
   computeConditionalNextTop3,
 } from "./top3.engine";
 
-import { lotteryLabel, makeImgVariantsFromGrupo, normalizeImgSrc } from "./top3.selectors";
+import {
+  lotteryLabel,
+  makeImgVariantsFromGrupo,
+  normalizeImgSrc,
+} from "./top3.selectors";
 
 import {
   getKingResultsByDate,
@@ -78,12 +80,6 @@ export function useTop3Controller() {
     source: "none",
   });
 
-  const [metaNext, setMetaNext] = useState({
-    triggerText: "",
-    targetText: "",
-    samples: 0,
-  });
-
   const lotteryKeySafe = useMemo(
     () => safeStr(lotteryKey).toUpperCase() || DEFAULT_LOTTERY,
     [lotteryKey]
@@ -110,7 +106,6 @@ export function useTop3Controller() {
     return lotteryKeySafe === "FEDERAL" && !schedule.length;
   }, [lotteryKeySafe, schedule.length]);
 
-  // ✅ agora "alvo" é o próximo sorteio real (ymd+hora)
   const analysisHourBucket = useMemo(() => {
     return safeStr(targetHourBucket) || "";
   }, [targetHourBucket]);
@@ -174,7 +169,7 @@ export function useTop3Controller() {
       setLastInfo({ lastYmd: "", lastHour: "", lastGrupo: null, lastAnimal: "" });
       setPrevInfo({ prevYmd: "", prevHour: "", prevGrupo: null, prevAnimal: "", source: "none" });
       setRangeInfo({ from: "", to: "" });
-      setMetaNext({ triggerText: "", targetText: "", samples: 0 });
+
       setLoading(false);
       setError(
         `Loteria Federal só tem resultado às 20h nas quartas e sábados. (${dateBR} não é dia de concurso)`
@@ -200,7 +195,7 @@ export function useTop3Controller() {
         // ok
       }
 
-      // ✅ hoje: precisamos do dia com todos os prizes (pra achar 1º do último draw)
+      // hoje: precisamos de prizes para achar o 1º do último draw
       const outToday = await getKingResultsByDate({
         uf: lKey,
         date: ymdSafe,
@@ -213,7 +208,6 @@ export function useTop3Controller() {
       const lastBucket = last ? toHourBucket(pickDrawHour(last)) : "";
       setLastHourBucket(lastBucket);
 
-      // ✅ último draw: trigger
       const lastY = last ? (pickDrawYMD(last) || ymdSafe) : "";
       const lastGrupo = last ? pickPrize1GrupoFromDraw(last) : null;
       const lastAnimal = lastGrupo ? safeStr(getAnimalLabel?.(lastGrupo) || "") : "";
@@ -225,7 +219,6 @@ export function useTop3Controller() {
         lastAnimal,
       });
 
-      // ✅ próximo sorteio REAL (slot válido)
       const nextSlot =
         last && lastY && lastBucket
           ? getNextSlotForLottery({
@@ -254,7 +247,7 @@ export function useTop3Controller() {
 
       setRangeInfo({ from: rangeFrom, to: rangeTo });
 
-      // ✅ IMPORTANTE: positions:null para contar aparições no "próximo sorteio"
+      // IMPORTANTE: positions:null para contar aparições
       const outRange = await getKingResultsByRange({
         uf: lKey,
         dateFrom: rangeFrom,
@@ -304,7 +297,6 @@ export function useTop3Controller() {
       setLastInfo({ lastYmd: "", lastHour: "", lastGrupo: null, lastAnimal: "" });
       setPrevInfo({ prevYmd: "", prevHour: "", prevGrupo: null, prevAnimal: "", source: "none" });
       setRangeInfo({ from: "", to: "" });
-      setMetaNext({ triggerText: "", targetText: "", samples: 0 });
       setError(String(e?.message || e || "Falha ao carregar dados do TOP3."));
     } finally {
       setLoading(false);
@@ -323,7 +315,7 @@ export function useTop3Controller() {
     load();
   }, [load]);
 
-  // ✅ TOP3 NOVO (condicionado)
+  // TOP3 (condicionado)
   const analytics = useMemo(() => {
     const list = Array.isArray(rangeDraws) ? rangeDraws : [];
     const lastG = lastInfo?.lastGrupo;
@@ -332,16 +324,12 @@ export function useTop3Controller() {
 
     if (!list.length || !lastG || !isYMD(lastY) || !safeStr(lastH)) return { top: [], meta: null };
 
-    // monta um drawLast mínimo usando os dados já carregados do "today"
-    // (no range pode não conter o draw do dia se lookback for curto; mas normalmente contém)
-    // -> melhor: usar lastInfo + buscar no range pelo par ymd|hour
     const drawLast = list.find((d) => {
       const y = pickDrawYMD(d);
       const h = toHourBucket(pickDrawHour(d));
       return y === lastY && h === toHourBucket(lastH);
     });
 
-    // fallback: se não achou no range (janela curta), não calcula
     if (!drawLast) return { top: [], meta: null };
 
     return computeConditionalNextTop3({
@@ -355,26 +343,34 @@ export function useTop3Controller() {
     });
   }, [rangeDraws, lotteryKeySafe, lastInfo?.lastGrupo, lastInfo?.lastYmd, lastInfo?.lastHour]);
 
+  // meta (DERIVADO, sem setState)
+  const metaNext = useMemo(() => {
+    const m = analytics?.meta;
+    if (!(m?.trigger?.grupo && m?.next?.ymd && m?.next?.hour)) {
+      return { triggerText: "", targetText: "", samples: 0 };
+    }
+
+    const g = Number(m.trigger.grupo);
+    const animal = safeStr(getAnimalLabel?.(g) || "");
+    const dow = getDowKey(m.trigger.ymd);
+    const dowLabel =
+      dow === 0 ? "DOM" :
+      dow === 1 ? "SEG" :
+      dow === 2 ? "TER" :
+      dow === 3 ? "QUA" :
+      dow === 4 ? "QUI" :
+      dow === 5 ? "SEX" :
+      dow === 6 ? "SÁB" : "—";
+
+    return {
+      triggerText: `G${String(g).padStart(2, "0")}${animal ? " • " + animal.toUpperCase() : ""} • ${dowLabel} ${m.trigger.hour}`,
+      targetText: `${ymdToBR(m.next.ymd)} ${m.next.hour}`,
+      samples: Number(m.samples || 0),
+    };
+  }, [analytics, getDowKey]);
+
   const top3 = useMemo(() => {
     const arr = Array.isArray(analytics?.top) ? analytics.top : [];
-
-    // Atualiza meta resumida (para header/subtitle)
-    const m = analytics?.meta;
-    if (m?.trigger?.grupo && m?.next?.ymd && m?.next?.hour) {
-      const g = Number(m.trigger.grupo);
-      const animal = safeStr(getAnimalLabel?.(g) || "");
-      const dow = getDowKey(m.trigger.ymd);
-      const dowLabel =
-        dow === 0 ? "DOM" : dow === 1 ? "SEG" : dow === 2 ? "TER" : dow === 3 ? "QUA" : dow === 4 ? "QUI" : dow === 5 ? "SEX" : dow === 6 ? "SÁB" : "—";
-
-      setMetaNext({
-        triggerText: `G${String(g).padStart(2, "0")}${animal ? " • " + animal.toUpperCase() : ""} • ${dowLabel} ${m.trigger.hour}`,
-        targetText: `${ymdToBR(m.next.ymd)} ${m.next.hour}`,
-        samples: Number(m.samples || 0),
-      });
-    } else {
-      setMetaNext({ triggerText: "", targetText: "", samples: 0 });
-    }
 
     return arr.map((x) => {
       const g = Number(x.grupo);
@@ -402,10 +398,9 @@ export function useTop3Controller() {
 
       return { ...x, animal, imgBg: bgVariants, imgIcon: iconVariants };
     });
-  }, [analytics, getDowKey]);
+  }, [analytics]);
 
   const layerMetaText = useMemo(() => {
-    // agora é a meta do motor novo
     const t = safeStr(metaNext?.triggerText);
     const a = safeStr(metaNext?.targetText);
     const s = Number(metaNext?.samples || 0);
@@ -449,12 +444,10 @@ export function useTop3Controller() {
   );
 
   return {
-    // constants for view
     LOOKBACK_ALL,
     LOOKBACK_OPTIONS,
     LOTTERY_OPTIONS,
 
-    // state for view
     lotteryKeySafe,
     ymdSafe,
     lookback,
@@ -474,13 +467,11 @@ export function useTop3Controller() {
     layerMetaText,
     top3,
 
-    // actions for view
     setLotteryKey,
     setYmd,
     setLookback,
     load,
 
-    // helpers for view
     safeStr,
     lotteryLabel,
     buildWhyFromReasons,

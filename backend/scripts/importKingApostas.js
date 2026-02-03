@@ -1,4 +1,4 @@
-﻿// backend/scripts/importKingApostas.js
+// backend/scripts/importKingApostas.js
 "use strict";
 
 const fs = require("fs");
@@ -46,6 +46,12 @@ const axios = require("axios");
 
       if (k && v && !process.env[k]) process.env[k] = v;
     });
+    // debug leve
+    try {
+      const nFed = Array.isArray(LOTTERIES_BY_KEY.FEDERAL) ? LOTTERIES_BY_KEY.FEDERAL.length : 0;
+      if (nFed) console.log(`[OVERRIDE] FEDERAL lotteries=${nFed}`);
+    } catch {}
+
   } catch {
     // silencioso por design
   }
@@ -70,7 +76,13 @@ const axios = require("axios");
     if (current) {
       try {
         delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
-      } catch {
+    // debug leve
+    try {
+      const nFed = Array.isArray(LOTTERIES_BY_KEY.FEDERAL) ? LOTTERIES_BY_KEY.FEDERAL.length : 0;
+      if (nFed) console.log(`[OVERRIDE] FEDERAL lotteries=${nFed}`);
+    } catch {}
+
+  } catch {
         process.env.GOOGLE_APPLICATION_CREDENTIALS = "";
       }
     }
@@ -84,7 +96,13 @@ const axios = require("axios");
         .filter((p) => {
           try {
             return fs.existsSync(p) && fs.lstatSync(p).isFile();
-          } catch {
+    // debug leve
+    try {
+      const nFed = Array.isArray(LOTTERIES_BY_KEY.FEDERAL) ? LOTTERIES_BY_KEY.FEDERAL.length : 0;
+      if (nFed) console.log(`[OVERRIDE] FEDERAL lotteries=${nFed}`);
+    } catch {}
+
+  } catch {
             return false;
           }
         });
@@ -94,7 +112,13 @@ const axios = require("axios");
       hits.sort((a, b) => {
         try {
           return fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs;
-        } catch {
+    // debug leve
+    try {
+      const nFed = Array.isArray(LOTTERIES_BY_KEY.FEDERAL) ? LOTTERIES_BY_KEY.FEDERAL.length : 0;
+      if (nFed) console.log(`[OVERRIDE] FEDERAL lotteries=${nFed}`);
+    } catch {}
+
+  } catch {
           return 0;
         }
       });
@@ -118,6 +142,12 @@ const axios = require("axios");
       process.env.GOOGLE_APPLICATION_CREDENTIALS = pick1;
       return;
     }
+    // debug leve
+    try {
+      const nFed = Array.isArray(LOTTERIES_BY_KEY.FEDERAL) ? LOTTERIES_BY_KEY.FEDERAL.length : 0;
+      if (nFed) console.log(`[OVERRIDE] FEDERAL lotteries=${nFed}`);
+    } catch {}
+
   } catch {
     // silencioso por design
   }
@@ -189,12 +219,13 @@ const ALLOW_FUTURE_DATE = String(process.env.ALLOW_FUTURE_DATE || "").trim() ===
 const RJ_STATE_CODE = "RJ";
 const RJ_LOTTERY_KEY = "PT_RIO";
 
+const FEDERAL_STATE_CODE = "BR";
+const FEDERAL_LOTTERY_KEY = "FEDERAL";
 function resolveUfFromLotteryKey(lotteryKey) {
   const lk = String(lotteryKey || "").trim().toUpperCase();
   if (!lk) return null;
-
   if (lk === RJ_LOTTERY_KEY) return RJ_STATE_CODE;
-
+  if (lk === FEDERAL_LOTTERY_KEY) return FEDERAL_STATE_CODE;
   // se for uma UF padrão de 2 letras (SP, MG, DF etc.), preserva
   if (/^[A-Z]{2}$/.test(lk)) return lk;
 
@@ -221,6 +252,12 @@ function todayYMDLocal() {
       day: "2-digit",
     });
     return fmt.format(new Date()); // YYYY-MM-DD
+    // debug leve
+    try {
+      const nFed = Array.isArray(LOTTERIES_BY_KEY.FEDERAL) ? LOTTERIES_BY_KEY.FEDERAL.length : 0;
+      if (nFed) console.log(`[OVERRIDE] FEDERAL lotteries=${nFed}`);
+    } catch {}
+
   } catch {
     const d = new Date();
     return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
@@ -398,9 +435,13 @@ const LOTTERIES_BY_KEY = {
     "cbac7c11-e733-400b-ba4d-2dfe0cba4272",
     "98352455-8fd3-447d-ab3d-701dc3f7865f",
     "76c127b7-8157-46b6-a64a-ec7ed1574c9f",
-    "8290329b-aac4-4a6a-9649-5feb6182cf4f",
+    "8290329b-aac0-4a6a-9649-5feb6182cf4f",
     "d5123f7e-629d-43e9-a8fb-1385ff1cba45",
   ],
+  // ✅ LOTERIA FEDERAL (preencher via ENV)
+  // Ex.: set KING_LOTTERIES_FEDERAL="uuid1,uuid2,..."
+  FEDERAL: [],
+
 };
 
 (function applyLotteryOverridesFromEnv() {
@@ -413,6 +454,23 @@ const LOTTERIES_BY_KEY = {
         .filter(Boolean);
       if (arr.length) LOTTERIES_BY_KEY.PT_RIO = arr;
     }
+    
+
+    // ✅ FEDERAL via ENV (independente do PT_RIO)
+    // Ex.: set KING_LOTTERIES_FEDERAL="uuid1,uuid2,..."
+    const rawFed = String(process.env.KING_LOTTERIES_FEDERAL || "").trim();
+    if (rawFed) {
+      const arrF = rawFed
+        .split(",")
+        .map((x) => String(x || "").trim())
+        .filter(Boolean);
+      if (arrF.length) LOTTERIES_BY_KEY.FEDERAL = arrF;
+    }// debug leve
+    try {
+      const nFed = Array.isArray(LOTTERIES_BY_KEY.FEDERAL) ? LOTTERIES_BY_KEY.FEDERAL.length : 0;
+      if (nFed) console.log(`[OVERRIDE] FEDERAL lotteries=${nFed}`);
+    } catch {}
+
   } catch {
     // silencioso
   }
@@ -816,6 +874,12 @@ async function checkAlreadyComplete(drawRef) {
     // fallback: olha 1 doc de prizes
     const pSnap = await drawRef.collection("prizes").limit(1).get();
     return !pSnap.empty;
+    // debug leve
+    try {
+      const nFed = Array.isArray(LOTTERIES_BY_KEY.FEDERAL) ? LOTTERIES_BY_KEY.FEDERAL.length : 0;
+      if (nFed) console.log(`[OVERRIDE] FEDERAL lotteries=${nFed}`);
+    } catch {}
+
   } catch {
     return false;
   }
@@ -865,6 +929,12 @@ async function checkSlotCompletion({ date, closeHour, lotteryKey }) {
     }
 
     return { docs: refs.length, complete };
+    // debug leve
+    try {
+      const nFed = Array.isArray(LOTTERIES_BY_KEY.FEDERAL) ? LOTTERIES_BY_KEY.FEDERAL.length : 0;
+      if (nFed) console.log(`[OVERRIDE] FEDERAL lotteries=${nFed}`);
+    } catch {}
+
   } catch {
     return { docs: 0, complete: 0 };
   }
@@ -999,7 +1069,13 @@ async function importFromPayload({
       try {
         const snap = await drawRef.get();
         isNewDraw = !snap.exists;
-      } catch {
+    // debug leve
+    try {
+      const nFed = Array.isArray(LOTTERIES_BY_KEY.FEDERAL) ? LOTTERIES_BY_KEY.FEDERAL.length : 0;
+      if (nFed) console.log(`[OVERRIDE] FEDERAL lotteries=${nFed}`);
+    } catch {}
+
+  } catch {
         isNewDraw = false;
       }
     }
@@ -1049,7 +1125,13 @@ async function importFromPayload({
         try {
           const psnap = await prizeRef.get();
           isNewPrize = !psnap.exists;
-        } catch {
+    // debug leve
+    try {
+      const nFed = Array.isArray(LOTTERIES_BY_KEY.FEDERAL) ? LOTTERIES_BY_KEY.FEDERAL.length : 0;
+      if (nFed) console.log(`[OVERRIDE] FEDERAL lotteries=${nFed}`);
+    } catch {}
+
+  } catch {
           isNewPrize = false;
         }
       }
@@ -1548,3 +1630,7 @@ module.exports = {
   importFromPayload,
   buildResultsUrl,
 };
+
+
+
+

@@ -37,6 +37,10 @@ const WARN_AFTER_MIN = Number(process.env.AUDIT_WARN_MIN || 20);
 const CRIT_AFTER_MIN = Number(process.env.AUDIT_CRIT_MIN || 60);
 const FAIL_ON_CRITICAL = String(process.env.FAIL_ON_CRITICAL || "0").trim() === "1";
 
+
+// ✅ Limite de catch-up pós-janela (minutos após windowEnd)
+// Default 90 (reduz spam em cron fora da janela)
+const CATCHUP_MAX_AFTER_END_MIN = Number(process.env.CATCHUP_MAX_AFTER_END_MIN || 90);
 /**
  * ✅ Base URL do backend (pra ler dayStatus sem duplicar regra)
  * - Local default: http://127.0.0.1:3333
@@ -135,6 +139,18 @@ function todayYMDInSaoPaulo() {
 }
 
 function nowHMInSaoPaulo() {
+  // ✅ Override para testes (sem mexer no relógio do sistema)
+  // Ex.: NOW_HM="20:05"
+  const ov = String(process.env.NOW_HM || "").trim();
+  const mOv = ov.match(/^(\d{2}):(\d{2})$/);
+  if (mOv) {
+    const h = Number(mOv[1]);
+    const m = Number(mOv[2]);
+    if (Number.isFinite(h) && Number.isFinite(m) && h >= 0 && h <= 23 && m >= 0 && m <= 59) {
+      return { h, m };
+    }
+  }
+
   try {
     const parts = new Intl.DateTimeFormat("en-GB", {
       timeZone: "America/Sao_Paulo",
@@ -190,6 +206,9 @@ function defaultState() {
       lastTriedCloses: null,
       na: false,
       naReason: null,
+      // ✅ anti-spam de alertas por slot/dia
+      alertMissedWindow: false,
+      alertCritical: false,
     };
   }
   return init;
@@ -239,6 +258,8 @@ function loadState(date) {
         lastTriedCloses: Array.isArray(v.lastTriedCloses) ? v.lastTriedCloses : null,
         na: Boolean(v.na),
         naReason: typeof v.naReason === "string" ? v.naReason : null,
+        alertMissedWindow: Boolean(v.alertMissedWindow),
+        alertCritical: Boolean(v.alertCritical),
       };
     }
   }
@@ -261,27 +282,32 @@ function isAllDone(state) {
 function closeCandidates(hhmm) {
   const parsed = parseHH(hhmm);
   if (!parsed) return [];
-  const { h, m } = parsed;
+  const { h } = parsed;
 
-  const bases = [m];
-  if (m === 0) bases.push(9);
+  // Enxuto e determinístico:
+  // - base HH:00 com tolerância +0/+1/+2
+  // - base HH:09 com tolerância +0/+1/+2
+  const out = new Set();
 
-  const deltas = [0, +1, -1, +2, -2];
+  const bases = [0, 9];
+  const deltas = [0, 1, 2];
 
-  const out = [];
-  for (const baseM of bases) {
+  for (const base of bases) {
     for (const d of deltas) {
-      const mm = baseM + d;
-      if (mm < 0 || mm > 59) continue;
-      out.push(`${pad2(h)}:${pad2(mm)}`);
+      const mm = base + d;
+      if (mm >= 0 && mm <= 59) out.add(`${pad2(h)}:${pad2(mm)}`);
     }
   }
-  return Array.from(new Set(out));
+
+  return Array.from(out);
 }
 
 /* =========================
-   Regras de aplicabilidade
-   ✅ PT_RIO: domingo (dow=0) só 11/14/16 (evita CRITICAL falso em 18/21)
+   Regras de aplicabilidade / whitelist por DOW
+   Status por slot:
+     - "HARD": esperado (audita warning/critical)
+     - "SOFT": opcional (não gera critical)
+     - "OFF" : não roda / N/A
 ========================= */
 function isWedOrSat(dow) {
   return dow === 3 || dow === 6;
@@ -291,33 +317,53 @@ function buildTodaySlotStatusMap(dateYMD, dow) {
   const map = new Map();
 
   if (LOTTERY === "PT_RIO") {
-  const isSunday = dow === 0;
+    const isSunday = dow === 0;
+    const isWed = dow === 3;
+    const isSat = dow === 6;
 
-  for (const sched of SCHEDULE) {
-    if (isSunday && (sched.hour === "18:00" || sched.hour === "21:00")) {
-      map.set(sched.hour, "OFF");
-    } else {
-      map.set(sched.hour, "CORE");
+    for (const sched of SCHEDULE) {
+      const hh = sched.hour;
+
+      // Domingo: OFF 18/21. HARD 09/11/14/16.
+      if (isSunday) {
+        if (hh === "18:00" || hh === "21:00") map.set(hh, "OFF");
+        else map.set(hh, "HARD");
+        continue;
+      }
+
+      // Quarta e Sábado: 18 é SOFT, o resto HARD.
+      if (isWed || isSat) {
+        if (hh === "18:00") map.set(hh, "SOFT");
+        else map.set(hh, "HARD");
+        continue;
+      }
+
+      // Seg/Ter/Qui/Sex: tudo HARD
+      map.set(hh, "HARD");
     }
-  }
 
-  if (isSunday) {
-    logLine(`[CAL] PT_RIO domingo: date=${dateYMD} dow=${dow} => CORE=[09,11,14,16] OFF=[18,21]`, "INFO");
-  } else {
-    logLine(`[CAL] PT_RIO (sem calendário): date=${dateYMD} dow=${dow} => TODOS CORE`, "INFO");
+    // log do calendário aplicado
+    if (isSunday) {
+      logLine(`[CAL] PT_RIO domingo: date=${dateYMD} dow=${dow} => HARD=[09,11,14,16] OFF=[18,21]`, "INFO");
+    } else if (isWed || isSat) {
+      logLine(`[CAL] PT_RIO qua/sab: date=${dateYMD} dow=${dow} => HARD=[09,11,14,16,21] SOFT=[18]`, "INFO");
+    } else {
+      logLine(`[CAL] PT_RIO seg-sex: date=${dateYMD} dow=${dow} => HARD=[09,11,14,16,18,21]`, "INFO");
+    }
+
+    return map;
   }
-  return map;
-}
 
   if (LOTTERY === "FEDERAL") {
     const ok = isWedOrSat(dow);
     for (const sched of SCHEDULE) {
-      map.set(sched.hour, ok ? "CORE" : "OFF");
+      map.set(sched.hour, ok ? "HARD" : "OFF");
     }
     return map;
   }
 
-  for (const sched of SCHEDULE) map.set(sched.hour, "CORE");
+  // default: tudo HARD
+  for (const sched of SCHEDULE) map.set(sched.hour, "HARD");
   return map;
 }
 
@@ -422,8 +468,8 @@ function applyHolidayNoDrawToState({ state, statusMap, isoNow }) {
     const slot = state?.[sched.hour];
     if (!slot) continue;
 
-    const st = statusMap.get(sched.hour) || "OFF";
-    const applies = st === "CORE";
+    const st = statusMap.get(sched.hour) || "OFF_confirm";
+    const applies = st === "HARD" || st === "SOFT";
     if (!applies) continue;
 
     if (slot.done && slot.na && slot.naReason === "HOLIDAY_NO_DRAW") continue;
@@ -559,7 +605,6 @@ async function guardPersistedOrCritical({ date, slotHHMM, calendar, closeHourTri
   if (!VERIFY_PERSISTED) return { ok: true, skipped: true };
 
   // ✅ Se meta disser que não foi captura real, não guarda crítico
-  // (ex.: já estava completo no FS, ou foi no_draw)
   if (meta && (meta.mode === "ALREADY_COMPLETE" || meta.mode === "NO_DRAW")) {
     return { ok: true, skipped: true, reason: `SKIP_${meta.mode}` };
   }
@@ -577,9 +622,9 @@ async function guardPersistedOrCritical({ date, slotHHMM, calendar, closeHourTri
   });
 
   logLine(
-    `[BIRTH-GUARD] CRITICAL slot=${slotHHMM} date=${date} calendar=${calendar || "—"} closeTried=${
-      closeHourTried || "—"
-    } reason=${v.reason || "NOT_PERSISTED"} file=${path.basename(file)}`,
+    `[BIRTH-GUARD] CRITICAL slot=${slotHHMM} date=${date} calendar=${calendar || "—"} closeTried=${closeHourTried || "—"} reason=${
+      v.reason || "NOT_PERSISTED"
+    } file=${path.basename(file)}`,
     "ERROR"
   );
 
@@ -590,6 +635,8 @@ async function guardPersistedOrCritical({ date, slotHHMM, calendar, closeHourTri
 
 /* =========================
    Auditoria de Furos (warning/critical)
+   - Só HARD entra em warning/critical.
+   - SOFT é listado como "softLate" (informativo).
 ========================= */
 function auditOutFile(dateYMD) {
   return path.join(LOG_DIR, `auditCritical-${LOTTERY}-${dateYMD}.json`);
@@ -597,15 +644,18 @@ function auditOutFile(dateYMD) {
 
 function buildAuditReport({ date, nowMin, isoNow, dow, statusMap, state }) {
   const todayBR = todayYMDInSaoPaulo();
-  const missing = [];
-  const warnings = [];
+  const critical = [];
+  const warning = [];
+  const softLate = [];
 
   for (const sched of SCHEDULE) {
     const slotState = state?.[sched.hour];
     if (!slotState) continue;
 
     const st = statusMap.get(sched.hour) || "OFF";
-    const applies = st === "CORE";
+    const isHard = st === "HARD";
+    const isSoft = st === "SOFT";
+    const applies = isHard || isSoft;
     if (!applies) continue;
 
     if (slotState.na) continue;
@@ -629,13 +679,20 @@ function buildAuditReport({ date, nowMin, isoNow, dow, statusMap, state }) {
       lastResult: slotState.lastResult || null,
     };
 
-    if (since >= CRIT_AFTER_MIN) missing.push(item);
-    else if (since >= WARN_AFTER_MIN) warnings.push(item);
+    if (isSoft) {
+      // informativo apenas
+      if (since >= WARN_AFTER_MIN) softLate.push(item);
+      continue;
+    }
+
+    // HARD: vale warning/critical
+    if (since >= CRIT_AFTER_MIN) critical.push(item);
+    else if (since >= WARN_AFTER_MIN) warning.push(item);
   }
 
   let status = "ok";
-  if (missing.length) status = "critical";
-  else if (warnings.length) status = "warning";
+  if (critical.length) status = "critical";
+  else if (warning.length) status = "warning";
 
   return {
     ok: true,
@@ -646,11 +703,60 @@ function buildAuditReport({ date, nowMin, isoNow, dow, statusMap, state }) {
     dow,
     thresholds: { warnAfterMin: WARN_AFTER_MIN, critAfterMin: CRIT_AFTER_MIN },
     status,
-    criticalCount: missing.length,
-    warningCount: warnings.length,
-    critical: missing,
-    warning: warnings,
+    criticalCount: critical.length,
+    warningCount: warning.length,
+    softLateCount: softLate.length,
+    critical,
+    warning,
+    softLate,
   };
+}
+
+/* =========================
+   ALERTAS (HARD) anti-spam
+   - missed window: passou do windowEnd e ainda não concluiu
+   - critical: since >= CRIT_AFTER_MIN
+========================= */
+function emitHardAlertsIfNeeded({ date, nowMin, state, statusMap }) {
+  let touched = false;
+
+  for (const sched of SCHEDULE) {
+    const slot = state?.[sched.hour];
+    if (!slot) continue;
+    if (slot.done || slot.na) continue;
+
+    const st = statusMap.get(sched.hour) || "OFF";
+    if (st !== "HARD") continue;
+
+    const w = slotWindow(sched);
+
+    // Só faz sentido depois do release
+    if (nowMin < w.release) continue;
+
+    const since = nowMin - w.release;
+
+    // 1) ALERTA: perdeu janela (passou do fim)
+    if (nowMin > w.end && !slot.alertMissedWindow) {
+      slot.alertMissedWindow = true;
+      touched = true;
+      logLine(
+        `[ALERT] HARD slot perdeu janela: date=${date} slot=${sched.hour} releaseAt=${w.releaseLabel} windowEnd=${w.endLabel} tries=${slot.tries || 0}`,
+        "ERROR"
+      );
+    }
+
+    // 2) ALERTA: entrou em CRITICAL
+    if (since >= CRIT_AFTER_MIN && !slot.alertCritical) {
+      slot.alertCritical = true;
+      touched = true;
+      logLine(
+        `[ALERT] HARD slot CRITICAL: date=${date} slot=${sched.hour} since=${since}min (>=${CRIT_AFTER_MIN}) tries=${slot.tries || 0}`,
+        "ERROR"
+      );
+    }
+  }
+
+  return touched;
 }
 
 /* =========================
@@ -669,6 +775,10 @@ async function main() {
 
   const now = nowHMInSaoPaulo();
   const nowMin = toMin(now.h, now.m);
+
+  if (String(process.env.NOW_HM || "").trim()) {
+    logLine(`[TIME] NOW_HM override ativo => ${pad2(now.h)}:${pad2(now.m)} (America/Sao_Paulo)`, "INFO");
+  }
   const dow = dowFromYMD(date);
 
   const catchupTried = new Set();
@@ -684,14 +794,14 @@ async function main() {
     const isoNow = new Date().toISOString();
     const statusMap = buildTodaySlotStatusMap(date, dow);
 
-    // 1) Marca N/A slots que não se aplicam hoje
+    // 1) Marca N/A slots que não se aplicam hoje (OFF)
     let stateTouched = false;
     for (const sched of SCHEDULE) {
       const slot = state[sched.hour];
       if (!slot) continue;
 
       const st = statusMap.get(sched.hour) || "OFF";
-      const applies = st === "CORE";
+      const applies = st === "HARD" || st === "SOFT";
 
       if (!applies && !slot.done) {
         slot.done = true;
@@ -721,7 +831,7 @@ async function main() {
       } catch {}
 
       logLine(
-        `[DAY_STATUS] holiday_no_draw confirmado (blockedReason=${ds.blockedReason || "—"}). Slots CORE -> N/A. Encerrando.`,
+        `[DAY_STATUS] holiday_no_draw confirmado (blockedReason=${ds.blockedReason || "—"}). Slots aplicáveis -> N/A. Encerrando.`,
         "INFO"
       );
       return;
@@ -729,14 +839,14 @@ async function main() {
 
     let didSomething = false;
 
-    // 2) Processa slots aplicáveis (CORE)
+    // 2) Processa slots aplicáveis (HARD/SOFT)
     for (const sched of SCHEDULE) {
       const slot = state[sched.hour];
       if (!slot) continue;
       if (slot.done) continue;
 
       const st = statusMap.get(sched.hour) || "OFF";
-      const applies = st === "CORE";
+      const applies = st === "HARD" || st === "SOFT";
       if (!applies) continue;
 
       const w = slotWindow(sched);
@@ -745,16 +855,24 @@ async function main() {
       const afterRelease = nowMin >= w.release;
 
       if (!inWindow) {
-        if (!afterRelease) continue;
-        const key = `${date}::${sched.hour}`;
-        if (catchupTried.has(key)) continue;
-        catchupTried.add(key);
+  if (!afterRelease) continue;
 
-        logLine(
-          `[AUTO] CATCH-UP pós-release ${date} slot=${sched.hour} (${st}) releaseAt=${w.releaseLabel} window=${w.startLabel}~${w.endLabel} (fora da janela)`,
-          "INFO"
-        );
-      }
+  // ✅ Não faz catch-up infinito: limita a X minutos após o fim da janela
+  const catchupLimit = w.end + CATCHUP_MAX_AFTER_END_MIN;
+  if (nowMin > catchupLimit) {
+    // Não tenta mais importar fora da janela (auditoria/alertas já cobrem)
+    continue;
+  }
+
+  const key = `${date}::${sched.hour}`;
+  if (catchupTried.has(key)) continue;
+  catchupTried.add(key);
+
+  logLine(
+    `[AUTO] CATCH-UP pós-release ${date} slot=${sched.hour} (${st}) releaseAt=${w.releaseLabel} window=${w.startLabel}~${w.endLabel} (fora da janela)`,
+    "INFO"
+  );
+}
 
       if (!afterRelease) continue;
 
@@ -785,46 +903,20 @@ async function main() {
           continue;
         }
 
-        const isSunday = dow === 0;
-
-
-        const isSundayBlockedSlot = isSunday && (sched.hour === "18:00" || sched.hour === "21:00");
-
-
-        
-// ✅ Se o import disse "no_draw_for_slot", isso NÃO é furo.
+        // ✅ Se o import disse "no_draw_for_slot", isso NÃO é furo.
         if (r && r.blocked === true && String(r.blockedReason || "").trim() === "no_draw_for_slot") {
-          if (isSundayBlockedSlot) {
-            slot.done = true;
-            slot.na = true;
-            slot.naReason = "NO_DRAW_FOR_SLOT";
-            slot.lastResult = {
-              ok: true,
-              skipped: true,
-              reason: "NO_DRAW_FOR_SLOT",
-              closeHourTried: closeHour,
-              blocked: true,
-              blockedReason: "no_draw_for_slot",
-            };
-            saveState(date, state);
+          // Em qualquer dia: não marca "DONE", mantém pendente p/ retry (exceto se calendário for OFF, que já virou N/A acima)
+          slot.lastResult = {
+            ...(slot.lastResult || {}),
+            ok: true,
+            closeHourTried: closeHour,
+            blocked: true,
+            blockedReason: "no_draw_for_slot",
+            note: "no_draw_for_slot (will retry)",
+          };
+          saveState(date, state);
 
-            logLine(`[AUTO] N/A slot=${sched.hour} (NO_DRAW_FOR_SLOT) -> DONE`, "INFO");
-          } else {
-            // Dia útil: NÃO mata o slot — deixa pendente pra retry no próximo cron
-            slot.lastResult = {
-              ...(slot.lastResult || {}),
-              ok: true,
-              closeHourTried: closeHour,
-              blocked: true,
-              blockedReason: "no_draw_for_slot",
-              note: "no_draw_for_slot (will retry)",
-            };
-            saveState(date, state);
-
-            logLine(`[AUTO] no_draw_for_slot slot=${sched.hour} (dia útil) -> mantendo PENDENTE p/ retry`, "INFO");
-          }
-
-
+          logLine(`[AUTO] no_draw_for_slot slot=${sched.hour} (${st}) -> mantendo PENDENTE p/ retry`, "INFO");
           didSomething = true;
           break;
         }
@@ -900,6 +992,12 @@ async function main() {
       }
     }
 
+    // 2.5) ALERTAS HARD (anti-spam)
+    try {
+      const touchedAlerts = emitHardAlertsIfNeeded({ date, nowMin, state, statusMap });
+      if (touchedAlerts) saveState(date, state);
+    } catch {}
+
     // 3) Auditoria pós-execução
     try {
       const report = buildAuditReport({ date, nowMin, isoNow: new Date().toISOString(), dow, statusMap, state });
@@ -907,7 +1005,7 @@ async function main() {
 
       if (report.status === "critical") {
         logLine(
-          `[AUDIT] CRITICAL missing=${report.criticalCount} warning=${report.warningCount} (relatório salvo em ${path.basename(
+          `[AUDIT] CRITICAL missing=${report.criticalCount} warning=${report.warningCount} softLate=${report.softLateCount} (relatório salvo em ${path.basename(
             auditOutFile(date)
           )})`,
           "ERROR"
@@ -917,9 +1015,14 @@ async function main() {
           process.exitCode = 2;
         }
       } else if (report.status === "warning") {
-        logLine(`[AUDIT] WARNING missing=${report.warningCount} (relatório salvo em ${path.basename(auditOutFile(date))})`, "INFO");
+        logLine(
+          `[AUDIT] WARNING missing=${report.warningCount} softLate=${report.softLateCount} (relatório salvo em ${path.basename(
+            auditOutFile(date)
+          )})`,
+          "INFO"
+        );
       } else {
-        logLine(`[AUDIT] OK (sem furos acima de ${WARN_AFTER_MIN} min)`, "INFO");
+        logLine(`[AUDIT] OK (sem furos HARD acima de ${WARN_AFTER_MIN} min) softLate=${report.softLateCount}`, "INFO");
       }
     } catch (e) {
       logLine(`[AUDIT] erro ao gerar relatório: ${e?.message || e}`, "ERROR");
@@ -937,6 +1040,5 @@ main().catch((e) => {
   releaseLock();
   process.exit(1);
 });
-
 
 
