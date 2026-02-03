@@ -19,3 +19,6 @@ backend/logs/
 *.bak_*
 *.bak
 .tmp_*
+
+backend/.env.local
+
