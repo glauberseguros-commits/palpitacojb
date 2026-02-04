@@ -6,6 +6,24 @@
 const fs = require("fs");
 const path = require("path");
 
+function parseEnvValue(val) {
+  let v = String(val ?? "").trim();
+
+  // remove aspas se vier "3333" ou '3333'
+  if (
+    (v.startsWith('"') && v.endsWith('"')) ||
+    (v.startsWith("'") && v.endsWith("'"))
+  ) {
+    v = v.slice(1, -1);
+  }
+
+  // remove comentários inline: KEY=val # comment
+  // (apenas se houver espaço antes do #)
+  v = v.replace(/\s+#.*$/, "").trim();
+
+  return v;
+}
+
 (function loadEnvLocal() {
   try {
     const envPath = path.join(__dirname, ".env.local");
@@ -26,7 +44,7 @@ const path = require("path");
       if (i <= 0) return;
 
       const key = s.slice(0, i).trim();
-      const val = s.slice(i + 1).trim();
+      const val = parseEnvValue(s.slice(i + 1));
 
       if (!process.env[key]) {
         process.env[key] = val;
@@ -40,13 +58,29 @@ const path = require("path");
 })();
 
 const express = require("express");
-
 const app = express();
 
 /**
  * Config
  */
-const PORT = Number(process.env.PORT || 3333);
+function parsePort(raw, fallback) {
+  const s = String(raw ?? "").trim();
+  if (!s) return fallback;
+
+  // aceita "3333" e 3333
+  const n = Number(s);
+  if (!Number.isFinite(n) || !Number.isInteger(n)) return fallback;
+
+  // portas válidas 1..65535 (0 é "random port", não queremos aqui)
+  if (n < 1 || n > 65535) return fallback;
+
+  return n;
+}
+
+const PORT = parsePort(process.env.PORT, 3333);
+
+// opcional: bind explícito (recomendado p/ evitar IPv6/localhost estranho)
+const HOST = (process.env.HOST || "127.0.0.1").trim();
 
 /**
  * JSON + URLENCODED
@@ -132,6 +166,9 @@ app.get("/health", (req, res) => {
     ok: true,
     service: "palpitaco-backend",
     ts: new Date().toISOString(),
+    host: HOST,
+    port: PORT,
+    pid: process.pid,
   });
 });
 
@@ -188,14 +225,6 @@ app.get("/api/import/manual", async (req, res) => {
 
 /**
  * GET /api/import/window?date=YYYY-MM-DD&lottery=PT_RIO&hours=09:09,11:09,14:09,16:09&stop=1
- *
- * hours:
- * - opcional: CSV HH:MM
- * - se não vier, usa uma lista padrão (você pode ajustar depois)
- *
- * stop:
- * - default: 1 (para quando capturar)
- * - stop=0 => roda todos os horários e retorna relatório completo
  */
 app.get("/api/import/window", async (req, res) => {
   try {
@@ -217,7 +246,6 @@ app.get("/api/import/window", async (req, res) => {
       .map((s) => String(s || "").trim())
       .filter(Boolean);
 
-    // validação de horas
     for (const h of hours) {
       if (!isHHMM(h)) {
         return res
@@ -299,9 +327,33 @@ process.on("uncaughtException", (err) => {
 });
 
 /**
- * Start
+ * Start (robusto)
  */
-app.listen(PORT, () => {
-  console.log(`[START] palpitaco-backend on http://localhost:${PORT}`);
+const server = app.listen(PORT, HOST);
+
+server.on("listening", () => {
+  const addr = server.address();
+  console.log("[START] palpitaco-backend listening:", addr);
+  console.log(`[START] health: http://${HOST}:${PORT}/health`);
 });
 
+// se algum módulo fizer unref() no server, isso força manter o loop vivo
+if (typeof server.ref === "function") {
+  server.ref();
+}
+
+server.on("error", (e) => {
+  console.error("[ERR] server error:", e);
+});
+
+server.on("close", () => {
+  console.warn("[WARN] server close fired");
+});
+
+// opcional: loga se algo está encerrando o processo
+process.on("beforeExit", (code) => {
+  console.warn("[WARN] beforeExit code=", code);
+});
+process.on("exit", (code) => {
+  console.warn("[WARN] exit code=", code);
+});
