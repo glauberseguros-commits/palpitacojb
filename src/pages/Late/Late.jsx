@@ -72,7 +72,7 @@ function isValidGrupo(n) {
 }
 
 function sortPTBR(a, b) {
-  return String(a).localeCompare(String(b), "pt-BR", { sensitivity: "base" });
+  return String(a || "").localeCompare(String(b || ""), "pt-BR", { sensitivity: "base" });
 }
 
 /**
@@ -185,7 +185,8 @@ function mergeLateLists(lists, baseYmd) {
       const candidate = {
         grupo: g,
         lastYmd: r?.lastYmd || null,
-        lastCloseHour: r?.lastCloseHour || null,
+        // ✅ normaliza aqui (evita “09h/09HS/9”)
+        lastCloseHour: r?.lastCloseHour ? normalizeHourLike(r.lastCloseHour) : "",
       };
 
       if (!byGrupo.has(g)) {
@@ -291,7 +292,6 @@ export default function Late() {
   const selectedCloseHourBucket = useMemo(() => {
     const raw = selectedLottery?.closeHour;
     if (!raw) return null;
-    // se já veio "09h", ótimo; se vier "09:00" converte
     return String(raw).includes("h") ? String(raw).trim() : toHourBucket(raw);
   }, [selectedLottery]);
 
@@ -355,7 +355,7 @@ export default function Late() {
       date: maxYmd,
       closeHour: null,
       closeHourBucket: null,
-      positions: [1], // leve, só pra “forçar” consistência se o service exigir positions
+      positions: [1],
     });
 
     const latest = pickLatestCloseHour(dayResult);
@@ -415,7 +415,6 @@ export default function Late() {
         baseDate: safeTarget,
         prizePosition: pos,
 
-        // ✅ aqui é o pulo do gato: filtra por bucket "09h" etc
         closeHour: null,
         closeHourBucket: selectedCloseHourBucket || null,
 
@@ -425,7 +424,7 @@ export default function Late() {
       const mapped = (Array.isArray(list) ? list : []).map((r) => ({
         grupo: Number(r?.grupo),
         lastYmd: r?.lastYmd || null,
-        lastCloseHour: r?.lastHour || r?.lastCloseHour || null,
+        lastCloseHour: r?.lastHour || r?.lastCloseHour || "",
       }));
 
       lists.push(mapped);
@@ -439,7 +438,14 @@ export default function Late() {
       const g = Number(r?.grupo);
       const animalLabel = safeGetAnimalLabel(g) || "";
       const img = safeGetImg(g) || "";
-      return { ...r, grupo: g, grupo2: toGrupo2(g), animal: animalLabel, img };
+      return {
+        ...r,
+        grupo: g,
+        grupo2: toGrupo2(g),
+        animal: animalLabel,
+        img,
+        lastCloseHour: r?.lastCloseHour ? normalizeHourLike(r.lastCloseHour) : "",
+      };
     });
 
     // 4) desempate com animal (estável e bonito)
@@ -474,9 +480,11 @@ export default function Late() {
       }
 
       try {
+        // ✅ trava e retorna (não roda consulta com kind inválido)
         if (kind !== "grupo") {
           setError("Por enquanto, o modo ativo é apenas: Grupo (os demais entram na próxima etapa).");
           setKind("grupo");
+          return;
         }
 
         const effBounds = await refreshBoundsAndLastDraw();
@@ -813,6 +821,9 @@ export default function Late() {
             <tbody>
               {(rows || []).map((r, idx) => {
                 const lastBR = r.lastYmd ? ymdToBR(r.lastYmd) : "—";
+                const hh = r.lastCloseHour ? normalizeHourLike(r.lastCloseHour) : "";
+                const lastLabel = lastBR === "—" ? "—" : (hh ? `${lastBR} ${hh}` : lastBR);
+
                 const days = r.daysLate == null ? "—" : String(r.daysLate);
 
                 return (
@@ -833,7 +844,7 @@ export default function Late() {
                       {r.animal || "—"}
                     </td>
 
-                    <td className="ppLast">{lastBR}</td>
+                    <td className="ppLast" title={lastLabel}>{lastLabel}</td>
 
                     <td className="ppDays">
                       {r.daysLate == null ? (

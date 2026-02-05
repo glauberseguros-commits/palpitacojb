@@ -65,6 +65,9 @@ function safeJsonParse(v) {
 }
 
 function normalizePrivateKey(sa) {
+  if (sa && typeof sa.private_toggle === "string") {
+    // (não existe, só por segurança caso alguém colou algo errado)
+  }
   if (sa && typeof sa.private_key === "string") {
     sa.private_key = sa.private_key.replace(/\\n/g, "\n");
   }
@@ -84,18 +87,102 @@ function isValidServiceAccount(sa) {
   );
 }
 
+/**
+ * Procura candidatos comuns quando GOOGLE_APPLICATION_CREDENTIALS está errado.
+ * - backend/*.json com "firebase-adminsdk" no nome
+ * - backend/serviceAccount*.json
+ * - <repo>/_secrets/palpitaco/firebase-admin.json (se existir)
+ */
+function findCredentialCandidates() {
+  const candidates = new Set();
+
+  const backendDir = path.resolve(__dirname, ".."); // .../backend
+  const repoDir = path.resolve(backendDir, "..");   // .../palpitaco
+
+  // 1) backend/
+  try {
+    const files = fs.readdirSync(backendDir, { withFileTypes: true });
+    for (const f of files) {
+      if (!f.isFile()) continue;
+      const name = String(f.name || "");
+      const lower = name.toLowerCase();
+
+      if (!lower.endsWith(".json")) continue;
+
+      // padrões comuns
+      if (lower.includes("firebase-adminsdk") || lower.startsWith("serviceaccount")) {
+        candidates.add(path.join(backendDir, name));
+      }
+      if (lower === "serviceaccount.json") {
+        candidates.add(path.join(backendDir, name));
+      }
+    }
+  } catch {
+    // ignora
+  }
+
+  // 2) _secrets/palpitaco/firebase-admin.json
+  try {
+    const p = path.join(repoDir, "_secrets", "palpitaco", "firebase-admin.json");
+    if (fs.existsSync(p)) candidates.add(p);
+  } catch {
+    // ignora
+  }
+
+  return Array.from(candidates);
+}
+
 function resolveCredentialsPath() {
   const raw = String(process.env.GOOGLE_APPLICATION_CREDENTIALS || "").trim();
   if (!raw) return null;
 
   let p = raw.replace(/^['"]|['"]$/g, "");
 
+  // Se veio relativo, resolve a partir do repo (palpitaco),
+  // mas também aceitamos relativo ao backend.
   if (!path.isAbsolute(p)) {
-    p = path.resolve(path.join(__dirname, "..", ".."), p);
+    const backendDir = path.resolve(__dirname, "..");
+    const repoDir = path.resolve(backendDir, "..");
+
+    const asBackend = path.resolve(backendDir, p);
+    const asRepo = path.resolve(repoDir, p);
+
+    if (fs.existsSync(asBackend)) {
+      p = asBackend;
+    } else {
+      p = asRepo;
+    }
   }
 
   if (!fs.existsSync(p)) {
-    fail(`GOOGLE_APPLICATION_CREDENTIALS aponta para caminho inexistente:\n${p}`);
+    const found = findCredentialCandidates();
+
+    // Se achou exatamente 1, usa automaticamente (evita ficar travando dev)
+    if (found.length === 1) {
+      const auto = found[0];
+      process.env.GOOGLE_APPLICATION_CREDENTIALS = auto;
+      console.warn(
+        "[WARN] GOOGLE_APPLICATION_CREDENTIALS inválido. Usando automaticamente:",
+        auto
+      );
+      return auto;
+    }
+
+    // Se achou 0 ou muitos, falha com diagnóstico bom
+    const hint =
+      found.length === 0
+        ? "Nenhum JSON candidato encontrado em backend/ ou _secrets."
+        : "Encontrei mais de um candidato. Defina explicitamente no .env.local.";
+
+    const list =
+      found.length > 0 ? "\nCandidatos:\n- " + found.join("\n- ") : "";
+
+    fail(
+      `GOOGLE_APPLICATION_CREDENTIALS aponta para caminho inexistente:\n${p}\n\n` +
+        `${hint}${list}\n\n` +
+        `✅ Ajuste no .env.local, exemplo:\n` +
+        `GOOGLE_APPLICATION_CREDENTIALS=C:\\Users\\glaub\\palpitaco\\backend\\SEU_ARQUIVO.json`
+    );
   }
 
   return p;
@@ -173,7 +260,7 @@ function initAdmin() {
 
     admin.initializeApp({
       credential: admin.credential.cert(saFromEnv),
-      projectId: saFromEnv.project_id, // ✅ força project id no CI
+      projectId: saFromEnv.project_id,
     });
 
     _initialized = true;
@@ -193,7 +280,7 @@ function initAdmin() {
 
     admin.initializeApp({
       credential: admin.credential.cert(json),
-      projectId: json.project_id, // ✅ força project id no CI
+      projectId: json.project_id,
     });
 
     _initialized = true;
