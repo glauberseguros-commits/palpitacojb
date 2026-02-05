@@ -265,10 +265,18 @@ function safeGetAnimalLabel(grupo, animalFallback) {
 }
 
 /* =========================
-   Imagens (PUBLIC_URL + fallback)
+   Imagens (BASE_URL/Vite + PUBLIC_URL/CRA)
 ========================= */
 
 function publicBase() {
+  // ✅ Vite: BASE_URL (ex.: "/" ou "/palpitaco/")
+  try {
+    const viteBase = typeof import.meta !== "undefined" ? import.meta.env?.BASE_URL : "";
+    const vb = String(viteBase || "").trim();
+    if (vb) return vb.endsWith("/") ? vb.slice(0, -1) : vb;
+  } catch {}
+
+  // ✅ CRA: PUBLIC_URL
   const b = String(process.env.PUBLIC_URL || "").trim();
   return b && b !== "/" ? b : "";
 }
@@ -378,17 +386,21 @@ function resolveAnimalUI(prize) {
 }
 
 /* =========================
-   Dedup de draws
+   Dedup de draws (✅ inclui lottery_code)
 ========================= */
 
 function drawKeyForDedup(d, scopeKey, ymd) {
   const id = safeStr(d?.drawId || d?.id || "");
-  if (id) return `ID:${scopeKey}|${ymd}|${id}`;
-
+  const lotCode = safeStr(d?.lottery_code || d?.lotteryCode || d?.lot_code || d?.code || "");
   const hour = normalizeHourLike(
     d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
   );
-  return `DH:${scopeKey}|${ymd}|${hour || "??"}`;
+
+  // ✅ se tiver id, ainda assim inclui lotCode para não colapsar docs distintos em migrações
+  if (id) return `ID:${scopeKey}|${ymd}|${id}|${lotCode || "-"}`;
+
+  // ✅ chave lógica: ymd + hour + lottery_code (quando existir)
+  return `DH:${scopeKey}|${ymd}|${hour || "??"}|${lotCode || "-"}`;
 }
 
 function countPrizes(d) {
@@ -548,6 +560,11 @@ export default function Results() {
       const ha = hourToNum(a?.close_hour || a?.closeHour || a?.hour || a?.hora);
       const hb = hourToNum(b?.close_hour || b?.closeHour || b?.hour || b?.hora);
       if (ha !== hb) return hb - ha;
+
+      // ✅ estabilidade: lottery_code (quando existir)
+      const la = safeStr(a?.lottery_code || a?.lotteryCode || "");
+      const lb = safeStr(b?.lottery_code || b?.lotteryCode || "");
+      if (la !== lb) return lb.localeCompare(la);
 
       const ia = safeStr(a?.drawId || a?.id || "");
       const ib = safeStr(b?.drawId || b?.id || "");
