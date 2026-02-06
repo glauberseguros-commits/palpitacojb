@@ -31,9 +31,6 @@ function getApiBase() {
   if (typeof window !== "undefined" && /localhost|127\.0\.0\.1/i.test(window.location.host)) {
     return "http://127.0.0.1:3333";
   }
-
-const API_BASE = getApiBase();
-
   // produção (mesma origem; exige que backend esteja no mesmo domínio OU via proxy)
   if (typeof window !== "undefined") return window.location.origin;
 
@@ -223,6 +220,7 @@ export async function getLateFromApi(args = {}) {
 export async function getLateSmart(args = {}) {
   return getLateFromApi(args);
 }
+
 
 
 
