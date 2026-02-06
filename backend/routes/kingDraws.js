@@ -109,7 +109,7 @@ function parseIncludePrizes(v, defBool) {
 
 function getLotteryFromQuery(req) {
   // compat: uf=PT_RIO (frontend) ou lottery=PT_RIO (técnico)
-  return normalizeLotteryKey(req.query.lottery || req.query.uf || req.query.lotteryKey);
+  return normalizeLotteryKey(req.query.lottery || req.query.uf || req.query.lottery);
 }
 
 function getWindowFromQuery(req) {
@@ -276,7 +276,6 @@ async function handleDay(req, res) {
 
     const date = String(req.query.date || "").trim();
     const lottery = getLotteryFromQuery(req);
-
     if (!isISODate(date)) {
       return res.status(400).json({
         ok: false,
@@ -335,7 +334,6 @@ async function handleRange(req, res) {
     const dateFrom = String(req.query.dateFrom || "").trim();
     const dateTo = String(req.query.dateTo || "").trim();
     const lottery = getLotteryFromQuery(req);
-
     if (!isISODate(dateFrom) || !isISODate(dateTo)) {
       return res.status(400).json({
         ok: false,
@@ -412,6 +410,9 @@ router.get("/draws/day", handleDay);
 router.get("/draws/range", handleRange);
 
 module.exports = router;
+
+
+
 
 
 
