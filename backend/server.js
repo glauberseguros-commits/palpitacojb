@@ -1,5 +1,15 @@
 "use strict";
 
+
+
+// 🔒 Normalização única de lottery_key
+function normalizeLotteryKey(v) {
+  const s = String(v || "").trim().toUpperCase();
+  if (s === "RJ") return "PT_RIO";
+  if (s === "RIO") return "PT_RIO";
+  if (s === "PT-RIO") return "PT_RIO";
+  return s || "PT_RIO";
+}
 /**
  * ENV loader (.env.local) — sem dotenv
  */
@@ -332,6 +342,9 @@ function pickPrizePositionFromAny(prizeLike) {
  * Healthcheck
  */
 app.get("/health", (req, res) => {
+  // aceita ?lottery= ou ?uf=
+  const lotteryKey = normalizeLotteryKey(req.query.lottery || req.query.uf);
+
   res.json({
     ok: true,
     service: "palpitaco-backend",
@@ -368,6 +381,9 @@ app.use("/api", bounds);
 ========================================================= */
 
 app.get("/api/lates", async (req, res) => {
+  // aceita ?lottery= ou ?uf=
+  const lotteryKey = normalizeLotteryKey(req.query.lottery || req.query.uf);
+
   try {
     const admin = require("firebase-admin");
     const db = admin.firestore();
@@ -656,6 +672,9 @@ const { runImport } = require("./scripts/importKingApostas");
  * - close é opcional
  */
 app.get("/api/import/manual", async (req, res) => {
+  // aceita ?lottery= ou ?uf=
+  const lotteryKey = normalizeLotteryKey(req.query.lottery || req.query.uf);
+
   try {
     const date = String(req.query.date || "").trim();
     const lotteryKey = String(req.query.lottery || "PT_RIO").trim();
@@ -688,6 +707,9 @@ app.get("/api/import/manual", async (req, res) => {
  * GET /api/import/window?date=YYYY-MM-DD&lottery=PT_RIO&hours=09:09,11:09,14:09,16:09&stop=1
  */
 app.get("/api/import/window", async (req, res) => {
+  // aceita ?lottery= ou ?uf=
+  const lotteryKey = normalizeLotteryKey(req.query.lottery || req.query.uf);
+
   try {
     const date = String(req.query.date || "").trim();
     const lotteryKey = String(req.query.lottery || "PT_RIO").trim();
@@ -761,6 +783,9 @@ app.get("/api/import/window", async (req, res) => {
  * 404
  */
 app.use((req, res) => {
+  // aceita ?lottery= ou ?uf=
+  const lotteryKey = normalizeLotteryKey(req.query.lottery || req.query.uf);
+
   res.status(404).json({ ok: false, error: "not_found", path: req.path });
 });
 
@@ -818,6 +843,7 @@ process.on("beforeExit", (code) => {
 process.on("exit", (code) => {
   console.warn("[WARN] exit code=", code);
 });
+
 
 
 

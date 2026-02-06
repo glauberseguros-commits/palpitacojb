@@ -1,9 +1,22 @@
 "use strict";
 
+
+
+// 🔒 Normalização única de lottery_key
+function normalizeLotteryKey(v) {
+  const s = String(v || "").trim().toUpperCase();
+  if (s === "RJ") return "PT_RIO";
+  if (s === "RIO") return "PT_RIO";
+  if (s === "PT-RIO") return "PT_RIO";
+  return s || "PT_RIO";
+}
 const express = require("express");
 const { getDb } = require("../service/firebaseAdmin");
 
 const router = express.Router();
+
+// ✅ prova definitiva do arquivo carregado (ajuda demais em debug de "sumiu/voltou")
+console.log("[KING] routes loaded from:", __filename);
 
 /**
  * Helpers
@@ -133,7 +146,21 @@ async function loadPrizesForDraws(db, drawsWindow, includePrizes) {
 }
 
 /**
- * KING DRAWS (endpoint técnico)
+ * ✅ Redirect 308 preservando querystring
+ * - req.baseUrl aqui é "/api/king"
+ */
+function redirect308(destPath) {
+  return (req, res) => {
+  // aceita ?lottery= ou ?uf=
+  const lotteryKey = normalizeLotteryKey(req.query.lottery || req.query.uf);
+
+    const q = req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : "";
+    return res.redirect(308, `${req.baseUrl}${destPath}${q}`);
+  };
+}
+
+/**
+ * KING DRAWS (endpoint técnico legado)
  *
  * GET /api/king/draws?date=2026-01-02&lottery=PT_RIO&from=09:00&to=16:40&includePrizes=1
  *
@@ -142,6 +169,9 @@ async function loadPrizesForDraws(db, drawsWindow, includePrizes) {
  * - lottery_key e janela de horário são filtrados em memória
  */
 router.get("/draws", async (req, res) => {
+  // aceita ?lottery= ou ?uf=
+  const lotteryKey = normalizeLotteryKey(req.query.lottery || req.query.uf);
+
   try {
     const db = getDb();
 
@@ -154,11 +184,7 @@ router.get("/draws", async (req, res) => {
     const from = fromRaw ? normalizeHHMM(fromRaw) : "";
     const to = toRaw ? normalizeHHMM(toRaw) : "";
 
-    const includePrizesRaw = String(req.query.includePrizes ?? "1").trim();
-    const includePrizes =
-      includePrizesRaw === "1" ||
-      includePrizesRaw.toLowerCase() === "true" ||
-      includePrizesRaw.toLowerCase() === "yes";
+    const includePrizes = parseIncludePrizes(req.query.includePrizes, true);
 
     if (!isISODate(date)) {
       return res.status(400).json({
@@ -212,32 +238,7 @@ router.get("/draws", async (req, res) => {
       return inRangeHHMM(d.close_hour, from || "", to || "");
     });
 
-    if (!includePrizes) {
-      return res.json({
-        ok: true,
-        date,
-        lottery,
-        from: from || null,
-        to: to || null,
-        count: drawsWindow.length,
-        draws: drawsWindow,
-      });
-    }
-
-    // Carrega prizes por draw (concorrência limitada)
-    const draws = await mapWithConcurrency(drawsWindow, 6, async (d) => {
-      const prizesSnap = await db
-        .collection("draws")
-        .doc(d.id)
-        .collection("prizes")
-        .orderBy("position", "asc")
-        .get();
-
-      return {
-        ...d,
-        prizes: prizesSnap.docs.map((p) => p.data()),
-      };
-    });
+    const draws = await loadPrizesForDraws(db, drawsWindow, includePrizes);
 
     return res.json({
       ok: true,
@@ -245,6 +246,7 @@ router.get("/draws", async (req, res) => {
       lottery,
       from: from || null,
       to: to || null,
+      includePrizes,
       count: draws.length,
       draws,
     });
@@ -257,14 +259,20 @@ router.get("/draws", async (req, res) => {
 });
 
 /* =========================================================
-   ✅ Aliases compat (frontend)
-   - /api/king/results/day
-   - /api/king/results/range
+   ✅ Rotas CANÔNICAS
    - /api/king/draws/day
    - /api/king/draws/range
+
+   ✅ Rotas COMPAT (nunca mais “some”)
+   - /api/king/results/day   -> 308 -> /api/king/draws/day
+   - /api/king/results/range -> 308 -> /api/king/draws/range
 ========================================================= */
 
-// handler compartilhado: DAY
+// ✅ compat SEM duplicar handler (tira a chance de “sumir/voltar” por divergência)
+router.get("/results/day", redirect308("/draws/day"));
+router.get("/results/range", redirect308("/draws/range"));
+
+// handler compartilhado: DAY (CANÔNICO)
 async function handleDay(req, res) {
   try {
     const db = getDb();
@@ -322,7 +330,7 @@ async function handleDay(req, res) {
   }
 }
 
-// handler compartilhado: RANGE
+// handler compartilhado: RANGE (CANÔNICO)
 async function handleRange(req, res) {
   try {
     const db = getDb();
@@ -402,11 +410,9 @@ async function handleRange(req, res) {
   }
 }
 
-// ✅ aliases (4 rotas)
-router.get("/results/day", handleDay);
+// ✅ canônicos
 router.get("/draws/day", handleDay);
-
-router.get("/results/range", handleRange);
 router.get("/draws/range", handleRange);
 
 module.exports = router;
+

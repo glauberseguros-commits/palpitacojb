@@ -1,3 +1,11 @@
+// 🔒 Normalização única de lottery_key
+function normalizeLotteryKey(v) {
+  const s = String(v || "").trim().toUpperCase();
+  if (s === "RJ") return "PT_RIO";
+  if (s === "RIO") return "PT_RIO";
+  if (s === "PT-RIO") return "PT_RIO";
+  return s || "PT_RIO";
+}
 'use strict';
 
 const express = require('express');
@@ -460,6 +468,9 @@ async function mapWithConcurrency(items, limitN, mapper) {
 //
 // ✅ slots: universo normalizado do dia, com status (valid/gap/missing/soft_missing)
 router.get('/results', async (req, res) => {
+  // aceita ?lottery= ou ?uf=
+  const lotteryKey = normalizeLotteryKey(req.query.lottery || req.query.uf);
+
   try {
     const date = String(req.query.date || '').trim();
     const lottery = upTrim(req.query.lottery || 'PT_RIO');
@@ -806,6 +817,7 @@ router.get('/results', async (req, res) => {
 });
 
 module.exports = router;
+
 
 
 

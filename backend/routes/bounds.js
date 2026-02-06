@@ -1,5 +1,15 @@
 "use strict";
 
+
+
+// 🔒 Normalização única de lottery_key
+function normalizeLotteryKey(v) {
+  const s = String(v || "").trim().toUpperCase();
+  if (s === "RJ") return "PT_RIO";
+  if (s === "RIO") return "PT_RIO";
+  if (s === "PT-RIO") return "PT_RIO";
+  return s || "PT_RIO";
+}
 const express = require("express");
 const { admin, getDb } = require("../service/firebaseAdmin");
 
@@ -65,6 +75,9 @@ async function scanMaxYmd(db, lotteryKey, scanLimit = 80) {
  * GET /api/bounds?lottery=FEDERAL
  */
 router.get("/bounds", async (req, res) => {
+  // aceita ?lottery= ou ?uf=
+  const lotteryKey = normalizeLotteryKey(req.query.lottery || req.query.uf);
+
   try {
     const db = getDb();
     const lottery = String(req.query.lottery || "PT_RIO").trim().toUpperCase();
@@ -96,3 +109,4 @@ router.get("/bounds", async (req, res) => {
 });
 
 module.exports = router;
+
