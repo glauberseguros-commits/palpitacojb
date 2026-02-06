@@ -1,4 +1,4 @@
-// backend/scripts/importKingApostas.js
+﻿// backend/scripts/importKingApostas.js
 "use strict";
 
 const fs = require("fs");
@@ -380,6 +380,11 @@ function normalizeCloseHourForLottery(value, lotteryKey) {
   const raw0 = normalizeHHMM(value);
   if (!raw0 || !isHHMM(raw0)) return { raw: "", slot: "" };
 
+  // ✅ FEDERAL: padroniza o SLOT de negócio (estável) e preserva o raw
+  // A API às vezes retorna 19:53 (horário real do fechamento), mas o sorteio é "20HS".
+  if (lk === "FEDERAL") {
+    return { raw: raw0, slot: "20:00" };
+  }
   if (lk === "PT_RIO") {
     const hh = raw0.slice(0, 2);
     const mm = raw0.slice(3, 5);
@@ -1082,6 +1087,7 @@ async function importFromPayload({
 
     const ymd = date;
 
+
     batch.set(
       drawRef,
       {
@@ -1100,6 +1106,9 @@ async function importFromPayload({
         // ✅ campo de negócio (SLOT)
         close_hour: closeSlot,
 
+        // ✅ compat: campos usados no front (evita undefined)
+        hour: closeSlot ? String(closeSlot).slice(0, 2) : null,
+        close: closeSlot || null,
         // ✅ guarda o que veio da API SOMENTE quando fizer sentido
         // (PT_RIO HH:09 vira "", então cai em null)
         close_hour_raw: closeRaw || null,
@@ -1630,7 +1639,3 @@ module.exports = {
   importFromPayload,
   buildResultsUrl,
 };
-
-
-
-
