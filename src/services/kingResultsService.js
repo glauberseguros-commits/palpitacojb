@@ -74,23 +74,48 @@ async function apiGet(path, params = {}) {
 ========================================================= */
 
 // 1) Bounds (min/max)
-export async function getKingBoundsByUf(ufOrObj) {
-  const uf =
-    typeof ufOrObj === "string"
-      ? ufOrObj
-      : (ufOrObj && typeof ufOrObj.uf === "string" ? ufOrObj.uf : String(ufOrObj || ""));
+export async function getKingBoundsByUf({ uf } = {}) {
+  const key = String(uf || "").trim().toUpperCase();
 
-  if (!uf) throw new Error("Parâmetro obrigatório: uf");
+  // mapeia UF/alias -> lottery do backend
+  // RJ -> PT_RIO
+  // FEDERAL/BR -> FEDERAL
+  // se já vier PT_RIO/PT_SP/etc, usa como lottery
+  let lottery = key;
+  if (lottery === "RJ") lottery = "PT_RIO";
+  if (lottery === "BR" || lottery === "FEDERAL") lottery = "FEDERAL";
 
-  // backend precisa ter /api/king/bounds?uf=RJ (vamos ajustar depois se necessário)
-  // Se ainda não existir, fazemos fallback via /api/king/results range pequeno.
   try {
-    const j = await apiGet("/api/king/bounds", { uf });
-    return j;
-  } catch (_e) {
-    // fallback: usa último dia e um lookback pequeno só pra não quebrar UI
-    // (se você não tiver /api/king/bounds ainda, o app ao menos sobe)
-    return { ok: false, uf, minYmd: null, maxYmd: null, source: "front_fallback_no_bounds" };
+    // backend real
+    const j = await apiGet("/api/bounds", { lottery });
+
+    return {
+      ok: !!j?.ok,
+      uf: key || null,
+      minYmd: j?.minYmd || null,
+      maxYmd: j?.maxYmd || null,
+      source: j?.source || "api_bounds",
+    };
+  } catch (e) {
+    // fallback antigo (não quebra caso você reative depois)
+    try {
+      const j2 = await apiGet("/api/king/bounds", { uf: key });
+      return {
+        ok: !!j2?.ok,
+        uf: key || null,
+        minYmd: j2?.minYmd || null,
+        maxYmd: j2?.maxYmd || null,
+        source: j2?.source || "legacy_api_king_bounds",
+      };
+    } catch {
+      return {
+        ok: false,
+        uf: key || null,
+        minYmd: null,
+        maxYmd: null,
+        source: "front_fallback_no_bounds",
+      };
+    }
   }
 }
 
@@ -196,3 +221,4 @@ export async function getLateFromApi(args = {}) {
 export async function getLateSmart(args = {}) {
   return getLateFromApi(args);
 }
+

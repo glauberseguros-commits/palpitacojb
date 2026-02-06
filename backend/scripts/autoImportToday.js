@@ -53,11 +53,11 @@ const PITACO_API_BASE = String(process.env.PITACO_API_BASE || "http://127.0.0.1:
 ========================= */
 const SCHEDULES = {
   PT_RIO: [
-    { hour: "09:00", windowStart: "09:05", releaseAt: "09:29", windowEnd: "09:31" },
-    { hour: "11:00", windowStart: "11:05", releaseAt: "11:29", windowEnd: "11:31" },
-    { hour: "14:00", windowStart: "14:05", releaseAt: "14:29", windowEnd: "14:31" },
-    { hour: "16:00", windowStart: "16:05", releaseAt: "16:29", windowEnd: "16:31" },
-    { hour: "18:00", windowStart: "18:05", releaseAt: "18:29", windowEnd: "18:31" },
+    { hour: "09:00", windowStart: "09:05", releaseAt: "09:29", windowEnd: "09:35" },
+    { hour: "11:00", windowStart: "11:05", releaseAt: "11:29", windowEnd: "11:35" },
+    { hour: "14:00", windowStart: "14:05", releaseAt: "14:29", windowEnd: "14:35" },
+    { hour: "16:00", windowStart: "16:05", releaseAt: "16:29", windowEnd: "16:35" },
+    { hour: "18:00", windowStart: "18:05", releaseAt: "18:29", windowEnd: "18:35" },
     // 21h: janela longa
     { hour: "21:00", windowStart: "21:05", releaseAt: "21:05", windowEnd: "21:45" },
   ],
@@ -1040,5 +1040,6 @@ main().catch((e) => {
   releaseLock();
   process.exit(1);
 });
+
 
 

@@ -1,4 +1,4 @@
-﻿"use strict";
+"use strict";
 
 /**
  * ENV loader (.env.local) — sem dotenv
@@ -319,10 +319,14 @@ const pitacoResults = require("./routes/pitacoResults");
 const kingDraws = require("./routes/kingDraws");
 const receiveResults = require("./routes/receiveResults");
 
+
+const bounds = require("./routes/bounds");
 app.use("/api/pitaco", pitacoResults);
 app.use("/api/king", kingDraws);
 app.use("/api", receiveResults);
 
+
+app.use("/api", bounds);
 /* =========================================================
    ✅ /api/lates — ATRASADOS (server-side, Admin SDK)
    - Compatível com teu curl:
@@ -784,3 +788,4 @@ process.on("beforeExit", (code) => {
 process.on("exit", (code) => {
   console.warn("[WARN] exit code=", code);
 });
+
