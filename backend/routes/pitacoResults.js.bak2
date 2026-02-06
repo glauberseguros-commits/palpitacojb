@@ -531,7 +531,7 @@ router.get('/results', async (req, res) => {
     // filtra lottery em memória, sem bater prizes ainda
     const docsAll = snap.docs.filter((doc) => {
       const d = doc.data() || {};
-      return upTrim(d.lottery_key) === lotteryKey;
+      return upTrim(d.lottery_key) === lottery;
     });
 
     // Se day_status mandar bloquear, confirma:
@@ -817,7 +817,6 @@ router.get('/results', async (req, res) => {
 });
 
 module.exports = router;
-
 
 
 
