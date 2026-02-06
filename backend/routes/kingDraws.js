@@ -224,7 +224,7 @@ router.get("/draws", async (req, res) => {
     });
 
     // Filtra lottery em memória (normalizado)
-    const byLottery = rawDraws.filter((d) => upTrim(d.lottery_key) === lotteryKey);
+    const byLottery = rawDraws.filter((d) => upTrim(d.lottery_key) === lottery);
 
     // Ordena por close_hour
     byLottery.sort((a, b) => cmpHHMM(a.close_hour, b.close_hour));
@@ -301,7 +301,7 @@ async function handleDay(req, res) {
       };
     });
 
-    const byLottery = rawDraws.filter((d) => upTrim(d.lottery_key) === lotteryKey);
+    const byLottery = rawDraws.filter((d) => upTrim(d.lottery_key) === lottery);
     byLottery.sort((a, b) => cmpHHMM(a.close_hour, b.close_hour));
 
     const drawsWindow = byLottery.filter((d) => {
@@ -373,7 +373,7 @@ async function handleRange(req, res) {
       };
     });
 
-    const byLottery = rawDraws.filter((d) => upTrim(d.lottery_key) === lotteryKey);
+    const byLottery = rawDraws.filter((d) => upTrim(d.lottery_key) === lottery);
 
     // Ordena por (ymd, close_hour)
     byLottery.sort((a, b) => {
@@ -412,6 +412,7 @@ router.get("/draws/day", handleDay);
 router.get("/draws/range", handleRange);
 
 module.exports = router;
+
 
 
 
