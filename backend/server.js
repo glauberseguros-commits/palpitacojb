@@ -133,7 +133,19 @@ app.use((req, res, next) => {
 const { initAdmin } = require("./service/firebaseAdmin");
 
 (function bootAdmin() {
-  const credPath = process.env.GOOGLE_APPLICATION_CREDENTIALS || "";
+  // ✅ PRODUÇÃO: se vier JSON, grava cred temporária e seta GOOGLE_APPLICATION_CREDENTIALS
+  try {
+    const json = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
+    if (json && !process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+      const tmp = path.join(__dirname, ".gcp_sa.json");
+      fs.writeFileSync(tmp, json, "utf8");
+      process.env.GOOGLE_APPLICATION_CREDENTIALS = tmp;
+      console.log("[INFO] Service Account JSON gravado em:", tmp);
+    }
+  } catch (e) {
+    console.warn("[WARN] Falha ao preparar cred JSON:", e?.message || e);
+  }
+const credPath = process.env.GOOGLE_APPLICATION_CREDENTIALS || "";
   if (!credPath) {
     console.warn(
       "[WARN] GOOGLE_APPLICATION_CREDENTIALS não definido. Admin SDK pode falhar."
@@ -788,4 +800,5 @@ process.on("beforeExit", (code) => {
 process.on("exit", (code) => {
   console.warn("[WARN] exit code=", code);
 });
+
 
