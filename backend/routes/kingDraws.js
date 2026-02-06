@@ -85,6 +85,54 @@ async function mapWithConcurrency(items, limitN, mapper) {
 }
 
 /**
+ * Helpers (aliases)
+ */
+function parseIncludePrizes(v, defBool) {
+  const raw = String(v ?? (defBool ? "1" : "0"))
+    .trim()
+    .toLowerCase();
+  return raw === "1" || raw === "true" || raw === "yes";
+}
+
+function getLotteryFromQuery(req) {
+  // compat: uf=PT_RIO (frontend) ou lottery=PT_RIO (técnico)
+  return upTrim(req.query.uf || req.query.lottery || req.query.lotteryKey || "PT_RIO");
+}
+
+function getWindowFromQuery(req) {
+  const fromRaw = req.query.from != null ? String(req.query.from).trim() : "";
+  const toRaw = req.query.to != null ? String(req.query.to).trim() : "";
+
+  const from = fromRaw ? normalizeHHMM(fromRaw) : "";
+  const to = toRaw ? normalizeHHMM(toRaw) : "";
+
+  if (fromRaw && !from) return { error: "Parâmetro inválido: from (use HH:MM, 10h ou 10)" };
+  if (toRaw && !to) return { error: "Parâmetro inválido: to (use HH:MM, 10h ou 10)" };
+
+  return { from, to };
+}
+
+async function loadPrizesForDraws(db, drawsWindow, includePrizes) {
+  if (!includePrizes) return drawsWindow;
+
+  const draws = await mapWithConcurrency(drawsWindow, 6, async (d) => {
+    const prizesSnap = await db
+      .collection("draws")
+      .doc(d.id)
+      .collection("prizes")
+      .orderBy("position", "asc")
+      .get();
+
+    return {
+      ...d,
+      prizes: prizesSnap.docs.map((p) => p.data()),
+    };
+  });
+
+  return draws;
+}
+
+/**
  * KING DRAWS (endpoint técnico)
  *
  * GET /api/king/draws?date=2026-01-02&lottery=PT_RIO&from=09:00&to=16:40&includePrizes=1
@@ -207,5 +255,158 @@ router.get("/draws", async (req, res) => {
     });
   }
 });
+
+/* =========================================================
+   ✅ Aliases compat (frontend)
+   - /api/king/results/day
+   - /api/king/results/range
+   - /api/king/draws/day
+   - /api/king/draws/range
+========================================================= */
+
+// handler compartilhado: DAY
+async function handleDay(req, res) {
+  try {
+    const db = getDb();
+
+    const date = String(req.query.date || "").trim();
+    const lottery = getLotteryFromQuery(req);
+
+    if (!isISODate(date)) {
+      return res.status(400).json({
+        ok: false,
+        error: "Parâmetro inválido: date (use YYYY-MM-DD)",
+      });
+    }
+
+    const win = getWindowFromQuery(req);
+    if (win.error) return res.status(400).json({ ok: false, error: win.error });
+
+    const includePrizes = parseIncludePrizes(req.query.includePrizes, true);
+
+    // Query mínima: SOMENTE date (evita índice composto)
+    const snap = await db.collection("draws").where("date", "==", date).get();
+
+    const rawDraws = snap.docs.map((doc) => {
+      const data = doc.data() || {};
+      return {
+        id: doc.id,
+        ...data,
+        close_hour: normalizeHHMM(data.close_hour),
+      };
+    });
+
+    const byLottery = rawDraws.filter((d) => upTrim(d.lottery_key) === lottery);
+    byLottery.sort((a, b) => cmpHHMM(a.close_hour, b.close_hour));
+
+    const drawsWindow = byLottery.filter((d) => {
+      if (!win.from && !win.to) return true;
+      return inRangeHHMM(d.close_hour, win.from || "", win.to || "");
+    });
+
+    const draws = await loadPrizesForDraws(db, drawsWindow, includePrizes);
+
+    return res.json({
+      ok: true,
+      mode: "day",
+      date,
+      lottery,
+      from: win.from || null,
+      to: win.to || null,
+      includePrizes,
+      count: draws.length,
+      draws,
+    });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e?.message || "erro" });
+  }
+}
+
+// handler compartilhado: RANGE
+async function handleRange(req, res) {
+  try {
+    const db = getDb();
+
+    const dateFrom = String(req.query.dateFrom || "").trim();
+    const dateTo = String(req.query.dateTo || "").trim();
+    const lottery = getLotteryFromQuery(req);
+
+    if (!isISODate(dateFrom) || !isISODate(dateTo)) {
+      return res.status(400).json({
+        ok: false,
+        error: "Parâmetro inválido: dateFrom/dateTo (use YYYY-MM-DD)",
+      });
+    }
+
+    if (dateFrom > dateTo) {
+      return res.status(400).json({
+        ok: false,
+        error: "Parâmetro inválido: dateFrom não pode ser maior que dateTo",
+      });
+    }
+
+    const win = getWindowFromQuery(req);
+    if (win.error) return res.status(400).json({ ok: false, error: win.error });
+
+    // RANGE: por padrão NÃO inclui prizes (evita payload gigante)
+    const includePrizes = parseIncludePrizes(req.query.includePrizes, false);
+
+    // Query por ymd => estável e sem índice composto
+    const snap = await db
+      .collection("draws")
+      .where("ymd", ">=", dateFrom)
+      .where("ymd", "<=", dateTo)
+      .orderBy("ymd", "asc")
+      .get();
+
+    const rawDraws = snap.docs.map((doc) => {
+      const data = doc.data() || {};
+      return {
+        id: doc.id,
+        ...data,
+        close_hour: normalizeHHMM(data.close_hour),
+      };
+    });
+
+    const byLottery = rawDraws.filter((d) => upTrim(d.lottery_key) === lottery);
+
+    // Ordena por (ymd, close_hour)
+    byLottery.sort((a, b) => {
+      const da = String(a.ymd || a.date || "");
+      const dbb = String(b.ymd || b.date || "");
+      if (da !== dbb) return da.localeCompare(dbb);
+      return cmpHHMM(a.close_hour, b.close_hour);
+    });
+
+    const drawsWindow = byLottery.filter((d) => {
+      if (!win.from && !win.to) return true;
+      return inRangeHHMM(d.close_hour, win.from || "", win.to || "");
+    });
+
+    const draws = await loadPrizesForDraws(db, drawsWindow, includePrizes);
+
+    return res.json({
+      ok: true,
+      mode: "range",
+      dateFrom,
+      dateTo,
+      lottery,
+      from: win.from || null,
+      to: win.to || null,
+      includePrizes,
+      count: draws.length,
+      draws,
+    });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e?.message || "erro" });
+  }
+}
+
+// ✅ aliases (4 rotas)
+router.get("/results/day", handleDay);
+router.get("/draws/day", handleDay);
+
+router.get("/results/range", handleRange);
+router.get("/draws/range", handleRange);
 
 module.exports = router;
