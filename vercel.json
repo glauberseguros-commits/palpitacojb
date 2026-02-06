@@ -3,13 +3,20 @@
     {
       "source": "/(.*)",
       "has": [
-        {
-          "type": "host",
-          "value": "www.palpitacojb.com.br"
-        }
+        { "type": "host", "value": "www.palpitacojb.com.br" }
       ],
       "destination": "https://palpitacojb.com.br/$1",
       "permanent": true
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://api.palpitacojb.com.br/api/$1"
+    },
+    {
+      "source": "/health",
+      "destination": "https://api.palpitacojb.com.br/health"
     }
   ],
   "headers": [
