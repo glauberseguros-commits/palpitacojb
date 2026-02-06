@@ -89,7 +89,7 @@ export async function getKingBoundsByUf({ uf } = {}) {
 
   try {
     // backend real
-    const j = await apiGet(`${API_BASE}/api/bounds", { lottery });
+    const j = await apiGet(`/api/bounds", { lottery });
 
     return {
       ok: !!j?.ok,
@@ -101,7 +101,7 @@ export async function getKingBoundsByUf({ uf } = {}) {
   } catch (e) {
     // fallback antigo (não quebra caso você reative depois)
     try {
-      const j2 = await apiGet(`${API_BASE}/api/king/bounds", { uf: key });
+      const j2 = await apiGet(`/api/king/bounds", { uf: key });
       return {
         ok: !!j2?.ok,
         uf: key || null,
@@ -125,7 +125,7 @@ export async function getKingBoundsByUf({ uf } = {}) {
 export async function getKingResultsByDate({ uf, date, closeHour = null, closeHourBucket = null, positions = null }) {
   if (!uf || !date) throw new Error("Parâmetros obrigatórios: uf e date");
 
-  const j = await apiGet(`${API_BASE}/api/king/results/day", {
+  const j = await apiGet(`/api/king/results/day", {
     uf,
     date,
     closeHour,
@@ -150,7 +150,7 @@ export async function getKingResultsByRange({
 }) {
   if (!uf || !dateFrom || !dateTo) throw new Error("Parâmetros obrigatórios: uf, dateFrom, dateTo");
 
-  const j = await apiGet(`${API_BASE}/api/king/results/range", {
+  const j = await apiGet(`/api/king/results/range", {
     uf,
     dateFrom,
     dateTo,
@@ -184,7 +184,7 @@ export async function getKingLateByRange({
   const lottery = (uf || "PT_RIO");
   const prize = String(prizePosition ?? 1);
 
-  const j = await apiGet(`${API_BASE}/api/lates", {
+  const j = await apiGet(`/api/lates", {
     lottery,
     modality: "PT",
     prize,
@@ -223,6 +223,7 @@ export async function getLateFromApi(args = {}) {
 export async function getLateSmart(args = {}) {
   return getLateFromApi(args);
 }
+
 
 
 
