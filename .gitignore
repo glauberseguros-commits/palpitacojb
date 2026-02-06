@@ -22,3 +22,8 @@ backend/logs/
 
 backend/.env.local
 
+
+# backups
+*.bak
+*.bak2
+
