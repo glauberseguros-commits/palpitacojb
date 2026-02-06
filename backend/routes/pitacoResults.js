@@ -473,7 +473,7 @@ router.get('/results', async (req, res) => {
 
   try {
     const date = String(req.query.date || '').trim();
-    const lottery = upTrim(req.query.lottery || 'PT_RIO');
+    const lottery = lotteryKey;
     const strict = parseBool01(req.query.strict);
     const reloadDayStatus = parseBool01(req.query.reloadDayStatus);
     const reloadGaps = parseBool01(req.query.reloadGaps);
@@ -817,6 +817,7 @@ router.get('/results', async (req, res) => {
 });
 
 module.exports = router;
+
 
 
 

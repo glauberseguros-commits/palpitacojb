@@ -152,8 +152,7 @@ async function loadPrizesForDraws(db, drawsWindow, includePrizes) {
 function redirect308(destPath) {
   return (req, res) => {
   // aceita ?lottery= ou ?uf=
-  const lotteryKey = normalizeLotteryKey(req.query.lottery || req.query.uf);
-
+  const lottery = getLotteryFromQuery(req);
     const q = req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : "";
     return res.redirect(308, `${req.baseUrl}${destPath}${q}`);
   };
@@ -170,14 +169,12 @@ function redirect308(destPath) {
  */
 router.get("/draws", async (req, res) => {
   // aceita ?lottery= ou ?uf=
-  const lotteryKey = normalizeLotteryKey(req.query.lottery || req.query.uf);
-
+  const lottery = getLotteryFromQuery(req);
   try {
     const db = getDb();
 
     const date = String(req.query.date || "").trim();
-    const lottery = upTrim(req.query.lottery || "PT_RIO");
-
+    const lottery = getLotteryFromQuery(req);
     const fromRaw = req.query.from != null ? String(req.query.from).trim() : "";
     const toRaw = req.query.to != null ? String(req.query.to).trim() : "";
 
@@ -415,6 +412,7 @@ router.get("/draws/day", handleDay);
 router.get("/draws/range", handleRange);
 
 module.exports = router;
+
 
 
 
