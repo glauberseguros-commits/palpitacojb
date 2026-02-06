@@ -123,7 +123,7 @@ export async function getKingResultsByDate({ uf, date, closeHour = null, closeHo
   if (!uf || !date) throw new Error("Parâmetros obrigatórios: uf e date");
 
   const j = await apiGet("/api/king/results/day", {
-    uf,
+  uf: normalizeLotteryKey(uf),
     date,
     closeHour,
     closeHourBucket,
@@ -137,7 +137,7 @@ export async function getKingResultsByDate({ uf, date, closeHour = null, closeHo
 
 // 3) Resultados por range (detailed/aggregated/auto)
 export async function getKingResultsByRange({
-  uf,
+  uf: normalizeLotteryKey(uf),
   dateFrom,
   dateTo,
   closeHour = null,
@@ -148,7 +148,7 @@ export async function getKingResultsByRange({
   if (!uf || !dateFrom || !dateTo) throw new Error("Parâmetros obrigatórios: uf, dateFrom, dateTo");
 
   const j = await apiGet("/api/king/results/range", {
-    uf,
+  uf: normalizeLotteryKey(uf),
     dateFrom,
     dateTo,
     closeHour,
@@ -168,7 +168,6 @@ export async function hydrateKingDrawsWithPrizes({ draws }) {
 
 // 5) Late (atrasados) — usa teu endpoint /api/lates (já existe e funciona)
 export async function getKingLateByRange({
-  uf,            // no seu backend atual usa ?lottery=
   dateFrom,
   dateTo,
   baseDate = null,
@@ -220,6 +219,7 @@ export async function getLateFromApi(args = {}) {
 export async function getLateSmart(args = {}) {
   return getLateFromApi(args);
 }
+
 
 
 
