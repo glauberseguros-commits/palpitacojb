@@ -170,6 +170,11 @@ function normalizeLoteriaInput(v) {
   return "RJ";
 }
 
+
+function loteriaToLotteryKey(loteria){
+  const l = String(loteria || '').toUpperCase().trim();
+  return l === 'FEDERAL' ? 'FEDERAL' : 'PT_RIO';
+}
 function getDefaultDashboardFilters() {
   return {
     // ✅ NOVO: loteria persistente
@@ -481,7 +486,7 @@ export default function App() {
       case ROUTES.DOWNLOADS:
         return <Downloads />;
       default:
-        return <Dashboard filters={dashboardFilters} setFilters={setDashboardFilters} />;
+        return <Dashboard filters={{ ...dashboardFilters, lotteryKey: loteriaToLotteryKey(dashboardFilters?.loteria) }} setFilters={setDashboardFilters} />;
     }
   };
 
@@ -563,7 +568,7 @@ export default function App() {
     <ErrorBoundary>
       <AppShell active={screen} onNavigate={setScreen} onLogout={logout}>
         {screen === ROUTES.DASHBOARD ? (
-          <Dashboard filters={dashboardFilters} setFilters={setDashboardFilters} />
+          <Dashboard filters={{ ...dashboardFilters, lotteryKey: loteriaToLotteryKey(dashboardFilters?.loteria) }} setFilters={setDashboardFilters} />
         ) : (
           <PageRouter screen={screen} />
         )}
@@ -571,3 +576,4 @@ export default function App() {
     </ErrorBoundary>
   );
 }
+

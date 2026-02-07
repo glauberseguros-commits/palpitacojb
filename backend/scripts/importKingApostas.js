@@ -1,6 +1,9 @@
-﻿// backend/scripts/importKingApostas.js
 "use strict";
 
+/**
+ * importKingApostas.js
+ * (topo limpo automaticamente — removido bloco corrompido com \n e \)
+ */
 const fs = require("fs");
 const path = require("path");
 const axios = require("axios");
@@ -46,12 +49,6 @@ const axios = require("axios");
 
       if (k && v && !process.env[k]) process.env[k] = v;
     });
-    // debug leve
-    try {
-      const nFed = Array.isArray(LOTTERIES_BY_KEY.FEDERAL) ? LOTTERIES_BY_KEY.FEDERAL.length : 0;
-      if (nFed) console.log(`[OVERRIDE] FEDERAL lotteries=${nFed}`);
-    } catch {}
-
   } catch {
     // silencioso por design
   }
@@ -68,62 +65,54 @@ const axios = require("axios");
   try {
     const current = String(process.env.GOOGLE_APPLICATION_CREDENTIALS || "").trim();
 
-    if (current && fs.existsSync(current) && fs.lstatSync(current).isFile()) {
-      return; // ok
+    // se já está OK, não mexe
+    if (current) {
+      try {
+        if (fs.existsSync(current) && fs.lstatSync(current).isFile()) return;
+      } catch {
+        // segue para fallback
+      }
     }
 
-    // Se existir mas estiver inválida, remove para permitir fallback (ADC)
+    // se existe mas está inválida, remove para permitir fallback (ADC)
     if (current) {
       try {
         delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
-    // debug leve
-    try {
-      const nFed = Array.isArray(LOTTERIES_BY_KEY.FEDERAL) ? LOTTERIES_BY_KEY.FEDERAL.length : 0;
-      if (nFed) console.log(`[OVERRIDE] FEDERAL lotteries=${nFed}`);
-    } catch {}
-
-  } catch {
+      } catch {
         process.env.GOOGLE_APPLICATION_CREDENTIALS = "";
       }
     }
 
     const tryPickFromDir = (dir) => {
-      if (!dir || !fs.existsSync(dir)) return null;
-      const entries = fs.readdirSync(dir);
-      const hits = entries
-        .filter((f) => /^palpitacojb-app-firebase-adminsdk-.*\.json$/i.test(f))
-        .map((f) => path.join(dir, f))
-        .filter((p) => {
-          try {
-            return fs.existsSync(p) && fs.lstatSync(p).isFile();
-    // debug leve
-    try {
-      const nFed = Array.isArray(LOTTERIES_BY_KEY.FEDERAL) ? LOTTERIES_BY_KEY.FEDERAL.length : 0;
-      if (nFed) console.log(`[OVERRIDE] FEDERAL lotteries=${nFed}`);
-    } catch {}
+      try {
+        if (!dir || !fs.existsSync(dir)) return null;
 
-  } catch {
-            return false;
+        const entries = fs.readdirSync(dir);
+        const hits = entries
+          .filter((f) => /^palpitacojb-app-firebase-adminsdk-.*\.json$/i.test(f))
+          .map((f) => path.join(dir, f))
+          .filter((p) => {
+            try {
+              return fs.existsSync(p) && fs.lstatSync(p).isFile();
+            } catch {
+              return false;
+            }
+          });
+
+        if (!hits.length) return null;
+
+        hits.sort((a, b) => {
+          try {
+            return fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs;
+          } catch {
+            return 0;
           }
         });
 
-      if (!hits.length) return null;
-
-      hits.sort((a, b) => {
-        try {
-          return fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs;
-    // debug leve
-    try {
-      const nFed = Array.isArray(LOTTERIES_BY_KEY.FEDERAL) ? LOTTERIES_BY_KEY.FEDERAL.length : 0;
-      if (nFed) console.log(`[OVERRIDE] FEDERAL lotteries=${nFed}`);
-    } catch {}
-
-  } catch {
-          return 0;
-        }
-      });
-
-      return hits[0];
+        return hits[0] || null;
+      } catch {
+        return null;
+      }
     };
 
     // 1) tenta no CWD
@@ -142,12 +131,6 @@ const axios = require("axios");
       process.env.GOOGLE_APPLICATION_CREDENTIALS = pick1;
       return;
     }
-    // debug leve
-    try {
-      const nFed = Array.isArray(LOTTERIES_BY_KEY.FEDERAL) ? LOTTERIES_BY_KEY.FEDERAL.length : 0;
-      if (nFed) console.log(`[OVERRIDE] FEDERAL lotteries=${nFed}`);
-    } catch {}
-
   } catch {
     // silencioso por design
   }
@@ -199,6 +182,10 @@ const FETCH_PER_LOTTERY =
 // Ative com: set KING_FETCH_DEBUG=1
 const KING_FETCH_DEBUG = String(process.env.KING_FETCH_DEBUG || "").trim() === "1";
 
+// ✅ Debug leve do override FEDERAL
+// Ative com: set KING_OVERRIDE_DEBUG=1
+const KING_OVERRIDE_DEBUG = String(process.env.KING_OVERRIDE_DEBUG || "").trim() === "1";
+
 /**
  * ✅ Blindagem contra datas futuras (não busca API, não escreve no FS)
  * - ALLOW_FUTURE_DATE=1 => libera (use com MUITO cuidado / apenas para testes)
@@ -221,6 +208,7 @@ const RJ_LOTTERY_KEY = "PT_RIO";
 
 const FEDERAL_STATE_CODE = "BR";
 const FEDERAL_LOTTERY_KEY = "FEDERAL";
+
 function resolveUfFromLotteryKey(lotteryKey) {
   const lk = String(lotteryKey || "").trim().toUpperCase();
   if (!lk) return null;
@@ -252,12 +240,6 @@ function todayYMDLocal() {
       day: "2-digit",
     });
     return fmt.format(new Date()); // YYYY-MM-DD
-    // debug leve
-    try {
-      const nFed = Array.isArray(LOTTERIES_BY_KEY.FEDERAL) ? LOTTERIES_BY_KEY.FEDERAL.length : 0;
-      if (nFed) console.log(`[OVERRIDE] FEDERAL lotteries=${nFed}`);
-    } catch {}
-
   } catch {
     const d = new Date();
     return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
@@ -366,7 +348,7 @@ function normalizeHHMM(value) {
  * - Para PT_RIO: força minutos = 00 (09:09 -> 09:00)
  * - Para outros: preserva raw
  *
- * Correção crítica (seu caso):
+ * Correção crítica:
  * - A API do PT_RIO costuma devolver HH:09 como "marcação" e NÃO um minuto real.
  * - Portanto, para PT_RIO, se raw terminar em ":09", tratamos como "sem minuto real"
  *   e NÃO persistimos close_hour_raw (vira "").
@@ -385,13 +367,13 @@ function normalizeCloseHourForLottery(value, lotteryKey) {
   if (lk === "FEDERAL") {
     return { raw: raw0, slot: "20:00" };
   }
+
   if (lk === "PT_RIO") {
     const hh = raw0.slice(0, 2);
     const mm = raw0.slice(3, 5);
 
     // ✅ se vier HH:09, é marcação (não minuto real) -> não grava close_hour_raw
     const raw = mm === "09" ? "" : raw0;
-
     return { raw, slot: `${hh}:00` };
   }
 
@@ -433,6 +415,7 @@ function pickLotteryId(draw) {
  *
  * ✅ Agora aceita override via ENV:
  * - KING_LOTTERIES_PT_RIO="uuid1,uuid2,..."
+ * - KING_LOTTERIES_FEDERAL="uuid1,uuid2,..."
  */
 const LOTTERIES_BY_KEY = {
   PT_RIO: [
@@ -443,10 +426,7 @@ const LOTTERIES_BY_KEY = {
     "8290329b-aac0-4a6a-9649-5feb6182cf4f",
     "d5123f7e-629d-43e9-a8fb-1385ff1cba45",
   ],
-  // ✅ LOTERIA FEDERAL (preencher via ENV)
-  // Ex.: set KING_LOTTERIES_FEDERAL="uuid1,uuid2,..."
   FEDERAL: [],
-
 };
 
 (function applyLotteryOverridesFromEnv() {
@@ -459,10 +439,7 @@ const LOTTERIES_BY_KEY = {
         .filter(Boolean);
       if (arr.length) LOTTERIES_BY_KEY.PT_RIO = arr;
     }
-    
 
-    // ✅ FEDERAL via ENV (independente do PT_RIO)
-    // Ex.: set KING_LOTTERIES_FEDERAL="uuid1,uuid2,..."
     const rawFed = String(process.env.KING_LOTTERIES_FEDERAL || "").trim();
     if (rawFed) {
       const arrF = rawFed
@@ -470,12 +447,18 @@ const LOTTERIES_BY_KEY = {
         .map((x) => String(x || "").trim())
         .filter(Boolean);
       if (arrF.length) LOTTERIES_BY_KEY.FEDERAL = arrF;
-    }// debug leve
-    try {
-      const nFed = Array.isArray(LOTTERIES_BY_KEY.FEDERAL) ? LOTTERIES_BY_KEY.FEDERAL.length : 0;
-      if (nFed) console.log(`[OVERRIDE] FEDERAL lotteries=${nFed}`);
-    } catch {}
+    }
 
+    // debug leve (único, no lugar certo)
+    if (KING_OVERRIDE_DEBUG) {
+      const nFed = Array.isArray(LOTTERIES_BY_KEY.FEDERAL)
+        ? LOTTERIES_BY_KEY.FEDERAL.length
+        : 0;
+      const nRio = Array.isArray(LOTTERIES_BY_KEY.PT_RIO)
+        ? LOTTERIES_BY_KEY.PT_RIO.length
+        : 0;
+      console.log(`[OVERRIDE] PT_RIO lotteries=${nRio} | FEDERAL lotteries=${nFed}`);
+    }
   } catch {
     // silencioso
   }
@@ -609,7 +592,7 @@ async function axiosGetText(url) {
           e?.response?.status || e?.code || "err"
         }). retry em ${backoff}ms...`
       );
-      await new Promise((r) => setTimeout(r, backoff));
+      await sleep(backoff);
     }
   }
 
@@ -623,13 +606,14 @@ function detectDetailsHtmlKind(html) {
   const h = String(html || "");
   const low = h.toLowerCase();
 
-  // sinais que você já viu na prática:
+  // sinais comuns:
   if (low.includes("/login/sign-in") || low.includes("formlogin")) return "login";
   if (low.includes("bailout_to_client_side_rendering")) return "csr_bailout";
   if (low.includes("app/login") || low.includes("sign-in")) return "login_like";
 
   // fallback: parece uma página de results
-  if (low.includes("results/details") || low.includes("kingapostas")) return "results_like";
+  if (low.includes("results/details") || low.includes("kingapostas"))
+    return "results_like";
 
   return "unknown";
 }
@@ -654,7 +638,7 @@ function parseDetailsHtmlForSlot(html, slotHHMM) {
 
   if (h.toLowerCase().includes(slot.toLowerCase())) out.hasSlot = true;
 
-  // mantém sua heurística, mas só vale quando não for login
+  // mantém heurística, mas só vale quando não for login
   if (/(prize[_\s-]?\d+)|(\b\d{4}\b)/i.test(h)) out.hasAnyPrize = true;
 
   return out;
@@ -846,7 +830,7 @@ function buildDrawRef({ draw, lotteryKey }) {
   const lotteryIdFromDraw = pickLotteryId(draw);
   const lotteryIdPart = safeIdPart(lotteryIdFromDraw || lotteryName);
 
-  // ✅ ID por SLOT (evita __09-09__)
+  // ✅ ID por SLOT
   const drawId = `${safeIdPart(lotteryKey)}__${date}__${safeIdPart(
     closeSlot
   )}__${lotteryIdPart}`;
@@ -879,12 +863,6 @@ async function checkAlreadyComplete(drawRef) {
     // fallback: olha 1 doc de prizes
     const pSnap = await drawRef.collection("prizes").limit(1).get();
     return !pSnap.empty;
-    // debug leve
-    try {
-      const nFed = Array.isArray(LOTTERIES_BY_KEY.FEDERAL) ? LOTTERIES_BY_KEY.FEDERAL.length : 0;
-      if (nFed) console.log(`[OVERRIDE] FEDERAL lotteries=${nFed}`);
-    } catch {}
-
   } catch {
     return false;
   }
@@ -934,12 +912,6 @@ async function checkSlotCompletion({ date, closeHour, lotteryKey }) {
     }
 
     return { docs: refs.length, complete };
-    // debug leve
-    try {
-      const nFed = Array.isArray(LOTTERIES_BY_KEY.FEDERAL) ? LOTTERIES_BY_KEY.FEDERAL.length : 0;
-      if (nFed) console.log(`[OVERRIDE] FEDERAL lotteries=${nFed}`);
-    } catch {}
-
   } catch {
     return { docs: 0, complete: 0 };
   }
@@ -1074,19 +1046,12 @@ async function importFromPayload({
       try {
         const snap = await drawRef.get();
         isNewDraw = !snap.exists;
-    // debug leve
-    try {
-      const nFed = Array.isArray(LOTTERIES_BY_KEY.FEDERAL) ? LOTTERIES_BY_KEY.FEDERAL.length : 0;
-      if (nFed) console.log(`[OVERRIDE] FEDERAL lotteries=${nFed}`);
-    } catch {}
-
-  } catch {
+      } catch {
         isNewDraw = false;
       }
     }
 
     const ymd = date;
-
 
     batch.set(
       drawRef,
@@ -1109,6 +1074,7 @@ async function importFromPayload({
         // ✅ compat: campos usados no front (evita undefined)
         hour: closeSlot ? String(closeSlot).slice(0, 2) : null,
         close: closeSlot || null,
+
         // ✅ guarda o que veio da API SOMENTE quando fizer sentido
         // (PT_RIO HH:09 vira "", então cai em null)
         close_hour_raw: closeRaw || null,
@@ -1134,13 +1100,7 @@ async function importFromPayload({
         try {
           const psnap = await prizeRef.get();
           isNewPrize = !psnap.exists;
-    // debug leve
-    try {
-      const nFed = Array.isArray(LOTTERIES_BY_KEY.FEDERAL) ? LOTTERIES_BY_KEY.FEDERAL.length : 0;
-      if (nFed) console.log(`[OVERRIDE] FEDERAL lotteries=${nFed}`);
-    } catch {}
-
-  } catch {
+        } catch {
           isNewPrize = false;
         }
       }
@@ -1172,7 +1132,6 @@ async function importFromPayload({
   // ✅ flags finais de complete (por SLOT via query anti-índice)
   if (proof.filterClose) {
     const slotDate = proof.inferredDate; // se API trouxe o slot, teremos date
-
     proof.expectedTargets = Math.max(1, Number(proof.apiReturnedTargetDraws || 0));
 
     if (slotDate) {
@@ -1404,12 +1363,9 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
         },
       };
     }
-
-    // ✅ se existe no dia, mantém fallback HTML só como diagnóstico quando JSON não retorna
-    // (na prática, hasTarget true => não entra)
   }
 
-  // ✅ fallback HTML (apenas PT_RIO 18:00) quando o JSON não retorna o slot
+  // ✅ fallback HTML (apenas PT_RIO 18:00) quando o JSON não retorna o slot (diagnóstico)
   if (normalizedClose) {
     try {
       const closes = summarizeCloseHours(
@@ -1513,14 +1469,14 @@ async function main() {
 
   if (!date || !isISODate(date)) {
     throw new Error(
-      "Uso: node archive_backend/backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO] [HH:MM]"
+      "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL] [HH:MM]"
     );
   }
 
   const lk = String(lotteryKey || "").trim().toUpperCase();
   if (!lk || !LOTTERIES_BY_KEY[lk]) {
     throw new Error(
-      "Uso: node archive_backend/backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO] [HH:MM]"
+      "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL] [HH:MM]"
     );
   }
 
@@ -1536,7 +1492,7 @@ async function main() {
   const normalizedClose = closeHour ? normalizeCloseHourForLottery(closeHour, lk).slot : null;
   if (normalizedClose && !isHHMM(normalizedClose)) {
     throw new Error(
-      "Uso: node archive_backend/backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO] [HH:MM]"
+      "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL] [HH:MM]"
     );
   }
 
@@ -1579,35 +1535,6 @@ async function main() {
     }
   }
 
-  // ✅ fallback HTML (apenas PT_RIO 18:00) quando o JSON não retorna o slot
-  if (normalizedClose) {
-    try {
-      const closes = summarizeCloseHours(
-        Array.isArray(payload?.data) ? payload.data : [],
-        lk
-      );
-      const hasTarget = closes.includes(normalizedClose);
-
-      if (!hasTarget) {
-        const fb = await tryHtmlDetailsFallback({
-          date,
-          lotteryKey: lk,
-          closeHour: normalizedClose,
-        });
-
-        if (fb.ok) {
-          console.warn(
-            `[FALLBACK:DETAILS] lk=${lk} date=${date} slot=${fb.slot} kind=${fb.kind} hasSlot=${fb.hasSlot} hasAnyPrize=${fb.hasAnyPrize} url=${fb.url}`
-          );
-        }
-      }
-    } catch (e) {
-      console.warn(
-        `[FALLBACK:DETAILS] erro: ${String(e?.message || e || "unknown")}`
-      );
-    }
-  }
-
   console.log(
     `[2/3] Processando ${
       Array.isArray(payload?.data) ? payload.data.length : 0
@@ -1639,3 +1566,4 @@ module.exports = {
   importFromPayload,
   buildResultsUrl,
 };
+

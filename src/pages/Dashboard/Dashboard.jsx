@@ -75,11 +75,16 @@ function loadSessionObj() {
 function isGuestSession(sess) {
   const s = sess || loadSessionObj();
   if (!s || s.ok !== true) return false;
+
+  // formato NOVO (App.js): { type: "guest" }
+  const t2 = String(s.type || "").toLowerCase();
+  if (t2 === "guest") return true;
+
+  // formato antigo (compat)
   const t = String(s.loginType || "").toLowerCase();
   const id = String(s.loginId || "").toLowerCase();
   return t === "guest" || id === "guest" || s.skipped === true || String(s.mode || "") === "skip";
 }
-
 /* =========================
    Banner
 ========================= */
@@ -328,6 +333,24 @@ function safeAnimalLabel({ grupo, animal }) {
   return String(animal || "").trim();
 }
 
+function mapMetaRankingToRows(meta) {
+  const m = meta && typeof meta === "object" ? meta : null;
+  if (!m) return [];
+
+  const arr =
+    (Array.isArray(m.byGrupo) && m.byGrupo) ||
+    (Array.isArray(m.ranking) && m.ranking) ||
+    (Array.isArray(m.rows) && m.rows) ||
+    [];
+
+  return arr
+    .map((r) => ({
+      grupo: String(r?.grupo ?? r?.group ?? "").replace(/^0/, ""),
+      animal: r?.animal ?? r?.label ?? "",
+      total: Number(r?.apar ?? r?.total ?? r?.count ?? 0),
+    }))
+    .filter((x) => x.grupo && Number.isFinite(Number(x.total)));
+}
 function mapRankingJsonToApp(json) {
   const safe = json && typeof json === "object" ? json : null;
   if (!safe) return null;
@@ -828,6 +851,12 @@ export default function Dashboard(props) {
   const rankingError = DATA_MODE === "json" ? jsonState.error : fsError;
 
   const rankingMeta = DATA_MODE === "json" ? jsonState.rankingMeta : fsRankingMeta;
+const rankingRowsFromMeta = useMemo(() => {
+  // fallback: quando drawsRaw vierem agregados/sem prizes,
+  // usamos o ranking pronto que o hook já calculou.
+  return mapMetaRankingToRows(rankingMeta);
+}, [rankingMeta]);
+
 
   const loadingEffective = !!rankingLoading || !!isHydrating;
 
@@ -997,49 +1026,64 @@ export default function Dashboard(props) {
   const hasAnyDrawsView = drawsForView.length > 0;
 
   const rankingDataGlobalForLabels = useMemo(() => {
-    if (!Array.isArray(drawsForUi) || !drawsForUi.length) return [];
-    try {
-      const built = buildRanking(drawsForUi);
-      const arr = Array.isArray(built?.byGrupo)
-        ? built.byGrupo
-        : Array.isArray(built?.ranking)
-        ? built.ranking
-        : [];
+  if (!Array.isArray(drawsForUi) || !drawsForUi.length) return rankingRowsFromMeta;
+  try {
+    const built = buildRanking(drawsForUi);
+    const arr = Array.isArray(built?.byGrupo)
+      ? built.byGrupo
+      : Array.isArray(built?.ranking)
+      ? built.ranking
+      : [];
 
-      return arr.map((r) => ({
-        grupo: String(r?.grupo ?? r?.group ?? "").replace(/^0/, ""),
-        animal: r?.animal ?? r?.label ?? "",
-        total: Number(r?.apar ?? r?.total ?? r?.count ?? 0),
-      }));
-    } catch {
-      return [];
-    }
-  }, [drawsForUi]);
+    const rows = arr.map((r) => ({
+      grupo: String(r?.grupo ?? r?.group ?? "").replace(/^0/, ""),
+      animal: r?.animal ?? r?.label ?? "",
+      total: Number(r?.apar ?? r?.total ?? r?.count ?? 0),
+    }));
+
+    return rows.length ? rows : rankingRowsFromMeta;
+  } catch {
+    return rankingRowsFromMeta;
+  }
+}, [drawsForUi, rankingRowsFromMeta]);
 
   const rankingDataForLeftTable = useMemo(() => {
-    if (!Array.isArray(drawsForView) || !drawsForView.length) return [];
-    try {
-      const built = buildRanking(drawsForView);
-      const arr = Array.isArray(built?.byGrupo)
-        ? built.byGrupo
-        : Array.isArray(built?.ranking)
-        ? built.ranking
-        : [];
+  if (!Array.isArray(drawsForView) || !drawsForView.length) return rankingRowsFromMeta;
+  try {
+    const built = buildRanking(drawsForView);
+    const arr = Array.isArray(built?.byGrupo)
+      ? built.byGrupo
+      : Array.isArray(built?.ranking)
+      ? built.ranking
+      : [];
 
-      return arr.map((r) => ({
-        grupo: String(r?.grupo ?? r?.group ?? "").replace(/^0/, ""),
-        animal: r?.animal ?? r?.label ?? "",
-        total: Number(r?.apar ?? r?.total ?? r?.count ?? 0),
-      }));
-    } catch {
-      return [];
-    }
-  }, [drawsForView]);
+    const rows = arr.map((r) => ({
+      grupo: String(r?.grupo ?? r?.group ?? "").replace(/^0/, ""),
+      animal: r?.animal ?? r?.label ?? "",
+      total: Number(r?.apar ?? r?.total ?? r?.count ?? 0),
+    }));
+
+    return rows.length ? rows : rankingRowsFromMeta;
+  } catch {
+    return rankingRowsFromMeta;
+  }
+}, [drawsForView, rankingRowsFromMeta]);
 
   const rankingDataForCharts = useMemo(() => {
+  try {
     const built = buildRanking(drawsForView);
-    return Array.isArray(built?.ranking) ? built.ranking : [];
-  }, [drawsForView]);
+    const arr = Array.isArray(built?.ranking) ? built.ranking : [];
+    if (arr.length) return arr;
+  } catch {}
+
+  // fallback: usa meta, mas no formato que ChartsGrid tolera (ranking[])
+  return (rankingRowsFromMeta || []).map((r) => ({
+    grupo: r.grupo,
+    animal: r.animal,
+    apar: r.total,
+    total: r.total,
+  }));
+}, [drawsForView, rankingRowsFromMeta]);
 
   const palpitesByGrupo = useMemo(() => {
     if (!dataReady || !hasAnyDrawsView) return {};
@@ -1520,4 +1564,5 @@ export default function Dashboard(props) {
     </div>
   );
 }
+
 

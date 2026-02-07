@@ -125,25 +125,74 @@ function getWindowFromQuery(req) {
   return { from, to };
 }
 
-async function loadPrizesForDraws(db, drawsWindow, includePrizes) {
+
+function parsePositionsParam(v) {
+  const raw = String(v ?? "").trim().toLowerCase();
+  if (!raw) return { positions: null, maxPos: null };
+
+  // aceita "1-5" ou "1..5"
+  const m = raw.match(/^(\d+)\s*(?:\-|\.\.)\s*(\d+)$/);
+  if (m) {
+    const a = Math.max(1, Number(m[1]));
+    const b = Math.max(1, Number(m[2]));
+    const lo = Math.min(a, b);
+    const hi = Math.max(a, b);
+    const positions = [];
+    for (let i = lo; i <= hi; i++) positions.push(i);
+    return { positions, maxPos: hi };
+  }
+
+  // aceita "1,2,3,4,5"
+  const parts = raw
+    .split(",")
+    .map((s) => Number(String(s).trim()))
+    .filter((n) => Number.isFinite(n) && n >= 1);
+
+  if (!parts.length) return { positions: null, maxPos: null };
+
+  const uniq = Array.from(new Set(parts)).sort((a, b) => a - b);
+  const maxPos = uniq[uniq.length - 1];
+  return { positions: uniq, maxPos };
+}
+
+async function loadPrizesForDraws(db, drawsWindow, includePrizes, positionsInfo) {
   if (!includePrizes) return drawsWindow;
 
+  const posArr = positionsInfo && Array.isArray(positionsInfo.positions) ? positionsInfo.positions : null;
+  const posSet = posArr && posArr.length ? new Set(posArr.map((n) => Number(n))) : null;
+
   const draws = await mapWithConcurrency(drawsWindow, 6, async (d) => {
-    const prizesSnap = await db
+    let q = db
       .collection("draws")
       .doc(d.id)
       .collection("prizes")
-      .orderBy("position", "asc")
-      .get();
+      .orderBy("position", "asc");
 
-    return {
-      ...d,
-      prizes: prizesSnap.docs.map((p) => p.data()),
-    };
+    // se positions é contíguo desde 1 até maxPos, limita no Firestore
+    if (positionsInfo && positionsInfo.maxPos && posArr) {
+      const maxPos = Number(positionsInfo.maxPos) || null;
+      const contiguousFrom1 =
+        maxPos &&
+        posArr.length === maxPos &&
+        Number(posArr[0]) === 1 &&
+        Number(posArr[posArr.length - 1]) === maxPos;
+
+      if (contiguousFrom1) q = q.limit(maxPos);
+    }
+
+    const prizesSnap = await q.get();
+    const rows = prizesSnap.docs.map((p) => p.data());
+
+    const prizes = posSet
+      ? rows.filter((r) => posSet.has(Number(r.position)))
+      : rows;
+
+    return { ...d, prizes };
   });
 
   return draws;
 }
+
 
 /**
  * ✅ Redirect 308 preservando querystring
@@ -182,8 +231,8 @@ router.get("/draws", async (req, res) => {
     const to = toRaw ? normalizeHHMM(toRaw) : "";
 
     const includePrizes = parseIncludePrizes(req.query.includePrizes, true);
-
-    if (!isISODate(date)) {
+    const positionsInfo = parsePositionsParam(req.query.positions);
+if (!isISODate(date)) {
       return res.status(400).json({
         ok: false,
         error: "Parâmetro inválido: date (use YYYY-MM-DD)",
@@ -235,7 +284,7 @@ router.get("/draws", async (req, res) => {
       return inRangeHHMM(d.close_hour, from || "", to || "");
     });
 
-    const draws = await loadPrizesForDraws(db, drawsWindow, includePrizes);
+    const draws = await loadPrizesForDraws(db, drawsWindow, includePrizes, positionsInfo);
 
     return res.json({
       ok: true,
@@ -287,8 +336,8 @@ async function handleDay(req, res) {
     if (win.error) return res.status(400).json({ ok: false, error: win.error });
 
     const includePrizes = parseIncludePrizes(req.query.includePrizes, true);
-
-    // Query mínima: SOMENTE date (evita índice composto)
+    const positionsInfo = parsePositionsParam(req.query.positions);
+// Query mínima: SOMENTE date (evita índice composto)
     const snap = await db.collection("draws").where("date", "==", date).get();
 
     const rawDraws = snap.docs.map((doc) => {
@@ -308,7 +357,7 @@ async function handleDay(req, res) {
       return inRangeHHMM(d.close_hour, win.from || "", win.to || "");
     });
 
-    const draws = await loadPrizesForDraws(db, drawsWindow, includePrizes);
+    const draws = await loadPrizesForDraws(db, drawsWindow, includePrizes, positionsInfo);
 
     return res.json({
       ok: true,
@@ -353,8 +402,8 @@ async function handleRange(req, res) {
 
     // RANGE: por padrão NÃO inclui prizes (evita payload gigante)
     const includePrizes = parseIncludePrizes(req.query.includePrizes, false);
-
-    // Query por ymd => estável e sem índice composto
+    const positionsInfo = parsePositionsParam(req.query.positions);
+// Query por ymd => estável e sem índice composto
     const snap = await db
       .collection("draws")
       .where("ymd", ">=", dateFrom)
@@ -386,7 +435,7 @@ async function handleRange(req, res) {
       return inRangeHHMM(d.close_hour, win.from || "", win.to || "");
     });
 
-    const draws = await loadPrizesForDraws(db, drawsWindow, includePrizes);
+    const draws = await loadPrizesForDraws(db, drawsWindow, includePrizes, positionsInfo);
 
     return res.json({
       ok: true,
@@ -410,6 +459,16 @@ router.get("/draws/day", handleDay);
 router.get("/draws/range", handleRange);
 
 module.exports = router;
+
+
+
+
+
+
+
+
+
+
 
 
 

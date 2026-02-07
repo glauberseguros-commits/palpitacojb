@@ -125,8 +125,7 @@ export async function getKingBoundsByUf({ uf } = {}) {
 export async function getKingResultsByDate({ uf, date, closeHour = null, closeHourBucket = null, positions = null }) {
   if (!uf || !date) throw new Error("Parâmetros obrigatórios: uf e date");
 
-  const j = await apiGet("/api/king/draws/day", {
-  uf,
+  const j = await apiGet("/api/king/draws/day", { lottery: (uf === "RJ" ? "PT_RIO" : (uf === "BR" -or uf === "FEDERAL" ? "FEDERAL" : uf)),
     date,
     closeHour,
     closeHourBucket,
@@ -174,8 +173,7 @@ export async function getKingResultsByRange({
 
   if (!uf || !dateFrom || !dateTo) throw new Error("Parâmetros obrigatórios: uf, dateFrom, dateTo");
 
-  const j = await apiGet("/api/king/draws/range", {
-  uf,
+  const j = await apiGet("/api/king/draws/range", { lottery: (uf === "RJ" ? "PT_RIO" : (uf === "BR" -or uf === "FEDERAL" ? "FEDERAL" : uf)),
     dateFrom,
     dateTo,
     closeHour,
@@ -247,6 +245,7 @@ export async function getLateFromApi(args = {}) {
 export async function getLateSmart(args = {}) {
   return getLateFromApi(args);
 }
+
 
 
 

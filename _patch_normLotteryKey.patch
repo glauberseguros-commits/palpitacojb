@@ -1,0 +1,30 @@
+diff --git a/backend/scripts/importKingRange.js b/backend/scripts/importKingRange.js
+index 0000000..0000000 100644
+--- a/backend/scripts/importKingRange.js
++++ b/backend/scripts/importKingRange.js
+@@ -140,9 +140,31 @@ function resolveGlobalMaxDate() {
+   return todayLocalDate();
+ }
+ 
+ function normLotteryKey(v) {
+-  return String(v || "PT_RIO").trim().toUpperCase() || "PT_RIO";
++  const s = String(v || "PT_RIO").trim().toUpperCase();
++  if (!s) return "PT_RIO";
++
++  // ✅ Canonização para evitar “chaves múltiplas” no Firestore/imports
++  // - UI/usuário pode passar "RJ", mas a chave canônica do projeto é PT_RIO
++  // - Federal permanece FEDERAL
++  if (s === "RJ") return "PT_RIO";
++  if (s === "RIO") return "PT_RIO";
++  if (s === "PT") return "PT_RIO";
++
++  // Aliases comuns do Federal
++  if (s === "FED") return "FEDERAL";
++  if (s === "LOTERIA_FEDERAL") return "FEDERAL";
++  if (s === "LOTERIA FEDERAL") return "FEDERAL";
++  if (s === "LOT FEDERAL") return "FEDERAL";
++  if (s === "LT_FEDERAL") return "FEDERAL";
++  if (s === "FED_BR") return "FEDERAL";
++
++  return s;
+ }
