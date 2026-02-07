@@ -29,13 +29,8 @@ export const PT_RIO_SCHEDULE_NORMAL = [
 ];
 
 // (mantendo como você tinha)
-export const PT_RIO_SCHEDULE_WED_SAT = [
-  "09:00",
-  "11:00",
-  "14:00",
-  "16:00",
-  "21:00",
-];
+export const PT_RIO_SCHEDULE_WED_SAT = PT_RIO_SCHEDULE_NORMAL;
 
 // Federal: qua/sáb 20h
 export const FEDERAL_SCHEDULE = ["20:00"];
+
