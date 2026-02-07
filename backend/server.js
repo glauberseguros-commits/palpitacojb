@@ -10,6 +10,11 @@ function normalizeLotteryKey(v) {
   if (s === "PT-RIO") return "PT_RIO";
   return s || "PT_RIO";
 }
+
+
+function getLotteryFromReq(req, fallback = "PT_RIO") {
+  return normalizeLotteryKey(req?.query?.lottery || req?.query?.uf || fallback);
+}
 /**
  * ENV loader (.env.local) — sem dotenv
  */
@@ -293,6 +298,17 @@ function utcTodayYmd() {
   return `${y}-${m}-${dd}`;
 }
 
+function brTodayYmd() {
+  // BR = UTC-03 (sem DST)
+  const now = new Date();
+  const br = new Date(now.getTime() - 3 * 60 * 60 * 1000);
+  const y = br.getUTCFullYear();
+  const m = pad2(br.getUTCMonth() + 1);
+  const d = pad2(br.getUTCDate());
+  return `${y}-${m}-${d}`;
+}
+
+
 function isValidGrupo(n) {
   const v = Number(n);
   return Number.isFinite(v) && v >= 1 && v <= 25;
@@ -342,9 +358,7 @@ function pickPrizePositionFromAny(prizeLike) {
  * Healthcheck
  */
 app.get("/health", (req, res) => {
-  // aceita ?lottery= ou ?uf=
-  const lotteryKey = normalizeLotteryKey(req.query.lottery || req.query.uf);
-
+    const lk = getLotteryFromReq(req);
   res.json({
     ok: true,
     service: "palpitaco-backend",
@@ -352,7 +366,9 @@ app.get("/health", (req, res) => {
     host: HOST,
     port: PORT,
     pid: process.pid,
+      lotteryKey: lk,
   });
+
 });
 
 /**
@@ -382,15 +398,19 @@ app.use("/api", bounds);
 
 app.get("/api/lates", async (req, res) => {
   // aceita ?lottery= ou ?uf=
-  const lotteryKey = normalizeLotteryKey(req.query.lottery || req.query.uf);
-
   try {
     const admin = require("firebase-admin");
     const db = admin.firestore();
 
     // params
-    const lottery = safeStr(req.query.lottery || "PT_RIO").toUpperCase();
-    const modality = safeStr(req.query.modality || "PT").toUpperCase(); // reservado (não quebra compat)
+    const lottery = getLotteryFromReq(req); // usa ?lottery= ou ?uf=
+
+    // regra RJ/PT_RIO (lock) — precisa existir ANTES de qualquer return/guard (evita TDZ)
+    const RJ_LOCK_LOTTERY_KEY = "PT_RIO";
+    const RJ_LOCK_UF = "RJ";
+    const targetLotteryKey = lottery === "RJ" ? RJ_LOCK_LOTTERY_KEY : lottery;
+
+const modality = safeStr(req.query.modality || "PT").toUpperCase(); // reservado (não quebra compat)
     const prizeRaw = safeStr(req.query.prize || "1");
     const page = Math.max(1, Number(req.query.page || 1) || 1);
     const pageSize = Math.max(1, Math.min(100, Number(req.query.pageSize || 25) || 25));
@@ -405,12 +425,18 @@ app.get("/api/lates", async (req, res) => {
     const baseDateParam = safeStr(req.query.baseDate || req.query.date || "");
     const baseYmd = isISODate(baseDateParam) ? baseDateParam : "";
 
+    const PROBE_LOOKBACK_DAYS = 60;
+    const baseDateSource = baseYmd ? "param" : "brToday";
+    const baseDateYmd = baseYmd || brTodayYmd();
+    const scanStartYmd = baseYmd || (await probeRecentMaxYmd(PROBE_LOOKBACK_DAYS));
+
+
     // regra RJ/PT_RIO (lock)
     // - No teu Firestore, RJ é uf="RJ" + lottery_key="PT_RIO"
     // - Pra evitar vazamento, preferimos filtrar por lottery_key PT_RIO.
-    const RJ_LOCK_LOTTERY_KEY = "PT_RIO";
-    const RJ_LOCK_UF = "RJ";
-    const targetLotteryKey = lottery === "RJ" ? RJ_LOCK_LOTTERY_KEY : lottery;
+// [DUP_REMOVIDO]     const RJ_LOCK_LOTTERY_KEY = "PT_RIO";
+// [DUP_REMOVIDO]     const RJ_LOCK_UF = "RJ";
+// [DUP_REMOVIDO]     const targetLotteryKey = lottery === "RJ" ? RJ_LOCK_LOTTERY_KEY : lottery;
 
     // positions: 1..5 (ou "1-5" se quiser)
     let positions = [];
@@ -514,8 +540,10 @@ app.get("/api/lates", async (req, res) => {
     // Descobre baseYmd se não veio:
     // - varre últimos 60 dias procurando o dia mais recente que tenha draw RJ/PT_RIO
     // -----------------------------------------------------
+
+
     async function probeRecentMaxYmd(lookbackDays = 60) {
-      const base = utcTodayYmd();
+      const base = brTodayYmd();
       const n = Math.max(3, Math.min(180, Number(lookbackDays) || 60));
 
       for (let i = 0; i <= n; i += 1) {
@@ -526,11 +554,13 @@ app.get("/api/lates", async (req, res) => {
       return "";
     }
 
-    const effectiveBaseYmd = baseYmd || (await probeRecentMaxYmd(60));
-    if (!effectiveBaseYmd) {
+// [DUP_REMOVIDO]     const PROBE_LOOKBACK_DAYS = 60;
+// [DUP_REMOVIDO]     const baseDateSource = baseYmd ? "param" : "brToday";
+// [DUP_REMOVIDO]     const scanStartYmd = baseYmd || (await probeRecentMaxYmd(PROBE_LOOKBACK_DAYS));
+    if (!baseDateYmd) {
       return res.json({
         ok: true,
-        lottery: targetLotteryKey,
+        lottery: lottery,
         modality,
         prize: prizeRaw,
         baseDate: "",
@@ -556,7 +586,7 @@ app.get("/api/lates", async (req, res) => {
     // -----------------------------------------------------
     const lastSeen = new Map(); // grupo -> { ymd, closeHour, drawId, lottery_code }
     const MAX_LOOKBACK_DAYS = 370; // segurança (1 ano)
-    let cursor = effectiveBaseYmd;
+    let cursor = scanStartYmd;
 
     // guard para evitar loop infinito
     for (let iter = 0; iter < MAX_LOOKBACK_DAYS && lastSeen.size < 25; iter += 1) {
@@ -601,7 +631,7 @@ app.get("/api/lates", async (req, res) => {
       const seen = lastSeen.get(g) || null;
       const lastYmd = seen?.ymd || null;
       const lastCloseHour = seen?.closeHour ? normalizeHourLike(seen.closeHour) : null;
-      const diff = lastYmd ? daysDiffUTC(lastYmd, effectiveBaseYmd) : NaN;
+      const diff = lastYmd ? daysDiffUTC(lastYmd, baseDateYmd) : NaN;
       const daysLate = lastYmd && Number.isFinite(diff) ? Math.max(0, diff) : null;
 
       rowsAll.push({
@@ -640,12 +670,15 @@ app.get("/api/lates", async (req, res) => {
       lottery: targetLotteryKey,
       modality,
       prize: prizeRaw,
-      baseDate: effectiveBaseYmd,
+      baseDate: baseDateYmd,
       hourBucket: hourBucket || null,
       page,
       pageSize,
       total,
       rows: paged,
+      baseDateSource,
+      scanStartYmd,
+      probeLookbackDays: PROBE_LOOKBACK_DAYS,
       meta: {
         foundGroups: lastSeen.size,
         maxLookbackDays: MAX_LOOKBACK_DAYS,
@@ -673,12 +706,10 @@ const { runImport } = require("./scripts/importKingApostas");
  */
 app.get("/api/import/manual", async (req, res) => {
   // aceita ?lottery= ou ?uf=
-  const lotteryKey = normalizeLotteryKey(req.query.lottery || req.query.uf);
-
   try {
     const date = String(req.query.date || "").trim();
-    const lotteryKey = String(req.query.lottery || "PT_RIO").trim();
-    const closeHour = req.query.close ? String(req.query.close).trim() : null;
+    const lk = getLotteryFromReq(req);
+const closeHour = req.query.close ? String(req.query.close).trim() : null;
 
     if (!isISODate(date)) {
       return res
@@ -693,7 +724,7 @@ app.get("/api/import/manual", async (req, res) => {
 
     const result = await runImport({
       date,
-      lotteryKey,
+      lotteryKey: lk,
       closeHour: closeHour || null,
     });
 
@@ -708,13 +739,10 @@ app.get("/api/import/manual", async (req, res) => {
  */
 app.get("/api/import/window", async (req, res) => {
   // aceita ?lottery= ou ?uf=
-  const lotteryKey = normalizeLotteryKey(req.query.lottery || req.query.uf);
-
   try {
     const date = String(req.query.date || "").trim();
-    const lotteryKey = String(req.query.lottery || "PT_RIO").trim();
-
-    if (!isISODate(date)) {
+    const lk = getLotteryFromReq(req);
+if (!isISODate(date)) {
       return res
         .status(400)
         .json({ ok: false, error: "date inválido (use YYYY-MM-DD)" });
@@ -742,7 +770,7 @@ app.get("/api/import/window", async (req, res) => {
     let capturedAt = null;
 
     for (const h of hours) {
-      const r = await runImport({ date, lotteryKey, closeHour: h });
+      const r = await runImport({ date, lotteryKey: lk, closeHour: h });
 
       results.push({
         hour: h,
@@ -766,7 +794,7 @@ app.get("/api/import/window", async (req, res) => {
     return res.json({
       ok: true,
       mode: "window",
-      lotteryKey,
+      lotteryKey: lk,
       date,
       stopOnCapture: stop,
       hours,
@@ -784,8 +812,6 @@ app.get("/api/import/window", async (req, res) => {
  */
 app.use((req, res) => {
   // aceita ?lottery= ou ?uf=
-  const lotteryKey = normalizeLotteryKey(req.query.lottery || req.query.uf);
-
   res.status(404).json({ ok: false, error: "not_found", path: req.path });
 });
 
@@ -843,6 +869,12 @@ process.on("beforeExit", (code) => {
 process.on("exit", (code) => {
   console.warn("[WARN] exit code=", code);
 });
+
+
+
+
+
+
 
 
 
