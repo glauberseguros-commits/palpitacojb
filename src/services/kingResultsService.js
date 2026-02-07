@@ -9,9 +9,12 @@
 export const AGGREGATED_AUTO_DAYS = 60;
 
 // Federal (UI)
-export const FEDERAL_DRAW_HOUR = "20:00";
-export const FEDERAL_DRAW_BUCKET = "20h";
-export const FEDERAL_DRAW_DOW = ["WEDNESDAY", "SATURDAY"];
+/**
+ * ✅ REGRA REAL DO FEDERAL (base Palpitaco)
+ * - Slots válidos na base: 19:00 e 20:00
+ * - NÃO aplicar filtro automático; só filtrar se o usuário escolher.
+ */
+export const FEDERAL_VALID_CLOSE_HOURS = ["19:00", "20:00"];
 
 /* =========================
    API BASE
@@ -122,22 +125,44 @@ export async function getKingBoundsByUf({ uf } = {}) {
 export async function getKingResultsByDate({ uf, date, closeHour = null, closeHourBucket = null, positions = null }) {
   if (!uf || !date) throw new Error("Parâmetros obrigatórios: uf e date");
 
-  const j = await apiGet("/api/king/results/day", {
-  uf: normalizeLotteryKey(uf),
+  const j = await apiGet("/api/king/draws/day", {
+  uf,
     date,
     closeHour,
     closeHourBucket,
-    positions: positions ? positions.join(",") : "",
+    positions: positions ? (Array.isArray(positions) ? positions.join(",") : String(positions)) : "",
   });
 
   // backend deve devolver { ok, draws: [...] } ou direto array
   if (Array.isArray(j)) return j;
   return j?.draws || j?.data || [];
 }
+function normalizeLotteryKey(input) {
+  const s = String(input ?? "").trim().toUpperCase();
+  if (!s) return "";
+
+  // RJ / PT Rio
+  if (s === "RJ" || s === "RIO" || s === "PT_RIO" || s === "PT-RIO") return "PT_RIO";
+
+  // Federal (aliases comuns)
+  const fedAliases = new Set([
+    "FEDERAL","FED","LOTERIA FEDERAL","LOTERIA_FEDERAL",
+    "LOT FEDERAL","LT_FEDERAL","FED_BR","BR_FEDERAL"
+  ]);
+
+  if (fedAliases.has(s)) return "FEDERAL";
+  const compact = s.replace(/[\s_]+/g, " ").trim();
+  if (fedAliases.has(compact)) return "FEDERAL";
+  const unders = s.replace(/[\s_]+/g, "_");
+  if (fedAliases.has(unders)) return "FEDERAL";
+
+  return s;
+}
+
 
 // 3) Resultados por range (detailed/aggregated/auto)
 export async function getKingResultsByRange({
-  uf: normalizeLotteryKey(uf),
+  uf,
   dateFrom,
   dateTo,
   closeHour = null,
@@ -145,15 +170,17 @@ export async function getKingResultsByRange({
   positions = null,
   mode = "detailed",
 }) {
+  uf = normalizeLotteryKey(uf);
+
   if (!uf || !dateFrom || !dateTo) throw new Error("Parâmetros obrigatórios: uf, dateFrom, dateTo");
 
-  const j = await apiGet("/api/king/results/range", {
-  uf: normalizeLotteryKey(uf),
+  const j = await apiGet("/api/king/draws/range", {
+  uf,
     dateFrom,
     dateTo,
     closeHour,
     closeHourBucket,
-    positions: positions ? positions.join(",") : "",
+    positions: positions ? (Array.isArray(positions) ? positions.join(",") : String(positions)) : "",
     mode,
   });
 
@@ -168,6 +195,7 @@ export async function hydrateKingDrawsWithPrizes({ draws }) {
 
 // 5) Late (atrasados) — usa teu endpoint /api/lates (já existe e funciona)
 export async function getKingLateByRange({
+  uf = "PT_RIO",
   dateFrom,
   dateTo,
   baseDate = null,
@@ -177,7 +205,7 @@ export async function getKingLateByRange({
   closeHourBucket = null,
   chunkDays = 15,
 }) {
-  const lottery = (uf || "PT_RIO");
+  const lottery = normalizeLotteryKey(uf || "PT_RIO");
   const prize = String(prizePosition ?? 1);
 
   const j = await apiGet("/api/lates", {
@@ -210,7 +238,7 @@ export async function getLateFromApi(args = {}) {
     lotteries: args.lotteries || null,
     prizePosition: args.prizePosition || args.prize || 1,
     closeHour: args.closeHour || null,
-    closeHourBucket: args.closeHourBucket || args.hour || null,
+    closeHourBucket: (normalizeLotteryKey(args.uf || args.lottery || "") === "FEDERAL") ? (args.closeHourBucket || null) : (args.closeHourBucket || args.hour || null),
     chunkDays: args.chunkDays || 15,
   });
   return rows;
@@ -219,6 +247,15 @@ export async function getLateFromApi(args = {}) {
 export async function getLateSmart(args = {}) {
   return getLateFromApi(args);
 }
+
+
+
+
+
+
+
+
+
 
 
 
