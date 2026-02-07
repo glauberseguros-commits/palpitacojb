@@ -530,7 +530,7 @@ export default function Results() {
         date: d,
         closeHour: isFederal ? FEDERAL_CLOSE_HOUR : null,
         closeHourBucket: isFederal ? FEDERAL_CLOSE_HOUR_BUCKET : null,
-        positions: null,
+        positions: "1-7",
       });
 
       // ✅ robusto: aceita array OU objeto com arrays
@@ -1203,3 +1203,4 @@ export default function Results() {
     </div>
   );
 }
+
