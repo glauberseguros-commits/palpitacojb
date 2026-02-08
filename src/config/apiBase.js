@@ -1,12 +1,20 @@
 export function getApiBase() {
-  // produção: usa API do Render direto
-  if (typeof window !== "undefined" && window.location?.hostname) {
-    const host = String(window.location.hostname).toLowerCase();
-    if (host === "palpitacojb.com.br" || host === "www.palpitacojb.com.br") {
-      return "https://api.palpitacojb.com.br";
-    }
+  // 1) CRA env
+  const env = typeof process !== "undefined" ? process.env?.REACT_APP_API_BASE : undefined;
+  const v = String(env || "").trim();
+  if (v) return v.replace(/\/+$/, "");
+
+  // 2) browser runtime
+  if (typeof window !== "undefined") {
+    const host = String(window.location.host || "");
+    // dev local
+    if (/localhost|127\.0\.0\.1/i.test(host)) return "http://127.0.0.1:3333";
+    // produção: mesma origem (Vercel rewrites -> api.palpitacojb.com.br)
+    return window.location.origin;
   }
 
-  // dev/local: usa backend local se existir, senão fallback no Render
-  return process.env.REACT_APP_API_BASE || "http://127.0.0.1:3333";
+  // 3) fallback (build/server)
+  return "https://api.palpitacojb.com.br";
 }
+
+export default getApiBase;
