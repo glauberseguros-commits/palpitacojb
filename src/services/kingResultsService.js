@@ -129,12 +129,56 @@ export async function getKingResultsByDate({ uf, date, closeHour = null, closeHo
     date,
     closeHour,
     closeHourBucket,
-    positions: positions ? (Array.isArray(positions) ? positions.join(",") : String(positions)) : "",
+    positions: normalizePositionsParam(positions),
   });
 
   // backend deve devolver { ok, draws: [...] } ou direto array
   if (Array.isArray(j)) return j;
   return j?.draws || j?.data || [];
+}
+function normalizePositionsParam(positions) {
+  // Array -> "1,2,3"
+  if (Array.isArray(positions) && positions.length) {
+    const arr = positions
+      .map((x) => Number(x))
+      .filter((n) => Number.isFinite(n) && n > 0);
+    return arr.length ? Array.from(new Set(arr)).sort((a,b)=>a-b).join(",") : "";
+  }
+
+  // Número único
+  if (Number.isFinite(Number(positions))) {
+    const n = Number(positions);
+    return n > 0 ? String(n) : "";
+  }
+
+  // String: "1-5" / "1,2,3" / "1 2 3" / "1;2;3"
+  if (typeof positions === "string") {
+    const s = positions.trim();
+    if (!s) return "";
+
+    const mRange = s.match(/^(\d{1,2})\s*-\s*(\d{1,2})$/);
+    if (mRange) {
+      const a = Number(mRange[1]);
+      const b = Number(mRange[2]);
+      if (Number.isFinite(a) && Number.isFinite(b) && a > 0 && b > 0) {
+        const from = Math.min(a, b);
+        const to = Math.max(a, b);
+        const out = [];
+        for (let i = from; i <= to; i += 1) out.push(i);
+        return out.join(",");
+      }
+      return "";
+    }
+
+    const parts = s.split(/[,\s;]+/g).filter(Boolean);
+    const arr = parts
+      .map((x) => Number(x))
+      .filter((n) => Number.isFinite(n) && n > 0);
+
+    return arr.length ? Array.from(new Set(arr)).sort((a,b)=>a-b).join(",") : "";
+  }
+
+  return "";
 }
 function normalizeLotteryKey(input) {
   const s = String(input ?? "").trim().toUpperCase();
@@ -178,7 +222,7 @@ export async function getKingResultsByRange({
     dateTo,
     closeHour,
     closeHourBucket,
-    positions: positions ? (Array.isArray(positions) ? positions.join(",") : String(positions)) : "",
+    positions: normalizePositionsParam(positions),
     mode,
   });
 
@@ -245,22 +289,4 @@ export async function getLateFromApi(args = {}) {
 export async function getLateSmart(args = {}) {
   return getLateFromApi(args);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
