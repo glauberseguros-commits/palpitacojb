@@ -1,31 +1,22 @@
 // src/pages/Centenas/Centenas.jsx
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getKingBoundsByUf, getKingResultsByRange } from "../../services/kingResultsService";
-import {
-  getAnimalLabel as getAnimalLabelFn,
-  getImgFromGrupo as getImgFromGrupoFn,
-} from "../../constants/bichoMap";
+import { getAnimalLabel as getAnimalLabelFn, getImgFromGrupo as getImgFromGrupoFn } from "../../constants/bichoMap";
 
 import {
   pad2,
-  isYMD,
   ymdToBR,
   todayYMDLocal,
   sortPTBR,
   isTodos,
   normalizeHourLike,
   toHourBucketHH00,
-  extractHourFromText,
   pickDrawYmd,
   pickDrawHour,
   getWeekdayPTBRFromYMD,
   monthNamePTBR,
-  dezenasDoGrupo,
   centenas40DoGrupo,
-  digitsOnly,
-  pickMilhar4,
   pickCentena3,
-  pickDezenaFinal,
   inferGrupoFromPrize,
   pickPrizePositionNumber,
   splitRangeIntoChunks,
@@ -33,7 +24,6 @@ import {
   normalizePrizesArray,
   pickPrizeYmd,
   pickPrizeHour,
-  digitFromKey,
   dailyDigitForRow,
   mapWithConcurrency,
   upgradeImg,
@@ -66,6 +56,9 @@ import {
  * ✅ FIX CRÍTICO (rebuild indevido):
  * - openGrupo não pode entrar nas deps do build.
  * - abrir/fechar card NÃO deve disparar rebuild do histórico.
+ *
+ * ✅ SAFE STATE:
+ * - evita setState após unmount (warnings e race conditions)
  */
 
 const LOTTERY_KEY = "PT_RIO";
@@ -121,9 +114,26 @@ export default function Centenas() {
   // progresso
   const [progress, setProgress] = useState({ done: 0, total: 0, label: "" });
 
+  
   const abortedRef = useRef(false);
   const buildSeqRef = useRef(0);
   const autoTimerRef = useRef(null);
+
+  // ✅ safe state (evita setState após unmount)
+  const mountedRef = useRef(false);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
+  const setSafeLoading = useCallback((v) => { if (mountedRef.current) setLoading(v); }, []);
+  const setSafeError = useCallback((v) => { if (mountedRef.current) setError(v); }, []);
+  const setSafeProgress = useCallback((v) => { if (mountedRef.current) setProgress(v); }, []);
+  const setSafeGroups = useCallback((v) => { if (mountedRef.current) setGroups(v); }, []);
+  const setSafeOpenGrupo = useCallback((v) => { if (mountedRef.current) setOpenGrupo(v); }, []);
+  const setSafeLoadingBounds = useCallback((v) => { if (mountedRef.current) setLoadingBounds(v); }, []);
+  const setSafeBounds = useCallback((v) => { if (mountedRef.current) setBounds(v); }, []);
+
 
   const getAnimalLabel = useMemo(() => getAnimalLabelFn, []);
   const getImgFromGrupo = useMemo(() => getImgFromGrupoFn, []);
@@ -158,10 +168,11 @@ export default function Centenas() {
           if (saved.fAnimal) setFAnimal(String(saved.fAnimal));
           if (saved.fPosicao) setFPosicao(String(saved.fPosicao));
           if (typeof saved.showOnlyHits === "boolean") setShowOnlyHits(saved.showOnlyHits);
-          if (Number.isFinite(Number(saved.openGrupo))) setOpenGrupo(Number(saved.openGrupo));
+          if (Number.isFinite(Number(saved.openGrupo))) setSafeOpenGrupo(Number(saved.openGrupo));
         }
       }
     } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -202,9 +213,15 @@ export default function Centenas() {
 
   const diaSemanaOptions = useMemo(() => {
     const out = [{ v: "Todos", label: "Todos" }];
-    ["Domingo", "Segunda-Feira", "Terça-Feira", "Quarta-Feira", "Quinta-Feira", "Sexta-Feira", "Sábado"].forEach((x) =>
-      out.push({ v: x, label: x })
-    );
+    [
+      "Domingo",
+      "Segunda-Feira",
+      "Terça-Feira",
+      "Quarta-Feira",
+      "Quinta-Feira",
+      "Sexta-Feira",
+      "Sábado",
+    ].forEach((x) => out.push({ v: x, label: x }));
     return out;
   }, []);
 
@@ -234,26 +251,27 @@ export default function Centenas() {
   useEffect(() => {
     let alive = true;
     (async () => {
-      setLoadingBounds(true);
-      setError("");
+      setSafeLoadingBounds(true);
+      setSafeError("");
       try {
         const b = await getKingBoundsByUf({ uf: LOTTERY_KEY });
         if (!alive) return;
-        setBounds({
+        setSafeBounds({
           minYmd: b?.minYmd || null,
           maxYmd: b?.maxYmd || null,
           source: b?.source || "",
         });
       } catch (e) {
         if (!alive) return;
-        setError(String(e?.message || e));
+        setSafeError(String(e?.message || e));
       } finally {
-        if (alive) setLoadingBounds(false);
+        if (alive) setSafeLoadingBounds(false);
       }
     })();
     return () => {
       alive = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ========= filtros (draw-level) =========
@@ -324,13 +342,13 @@ export default function Centenas() {
     const mySeq = ++buildSeqRef.current;
     abortedRef.current = false;
 
-    setLoading(true);
-    setError("");
-    setProgress({ done: 0, total: 0, label: "" });
+    setSafeLoading(true);
+    setSafeError("");
+    setSafeProgress({ done: 0, total: 0, label: "" });
 
     try {
       if (!boundsReady) {
-        setError("Bounds ainda não carregaram.");
+        setSafeError("Bounds ainda não carregaram.");
         return;
       }
 
@@ -339,7 +357,7 @@ export default function Centenas() {
 
       if (!entriesBase) {
         const chunks = splitRangeIntoChunks(bounds.minYmd, bounds.maxYmd, CHUNK_DAYS);
-        setProgress({ done: 0, total: chunks.length, label: "Carregando histórico..." });
+        setSafeProgress({ done: 0, total: chunks.length, label: "Carregando histórico..." });
 
         const results = await mapWithConcurrency(chunks, CHUNKS_CONCURRENCY, async (ch, idx) => {
           if (abortedRef.current) return { ok: false, entries: [] };
@@ -406,7 +424,7 @@ export default function Centenas() {
             }
           }
 
-          setProgress((p) => ({
+          setSafeProgress((p) => ({
             done: Math.min((p?.done || 0) + 1, chunks.length),
             total: chunks.length,
             label: `Carregando histórico... (${idx + 1}/${chunks.length})`,
@@ -476,21 +494,21 @@ export default function Centenas() {
         return a.grupo - b.grupo;
       });
 
-      setGroups(out);
+      setSafeGroups(out);
 
       // ✅ NÃO usa openGrupo (state) como dep: usa ref
       const openWanted = !isTodos(fAnimal) ? Number(fAnimal) : Number(openGrupoRef.current);
 
       if (Number.isFinite(openWanted) && out.find((x) => x.grupo === openWanted)) {
-        setOpenGrupo(openWanted);
+        setSafeOpenGrupo(openWanted);
       } else if (out[0]?.grupo) {
-        setOpenGrupo(out[0].grupo);
+        setSafeOpenGrupo(out[0].grupo);
       }
     } catch (e) {
-      setError(String(e?.message || e));
+      setSafeError(String(e?.message || e));
     } finally {
-      if (!abortedRef.current) setLoading(false);
-      setProgress((p) => ({ ...p, label: "" }));
+      if (!abortedRef.current) setSafeLoading(false);
+      setSafeProgress((p) => ({ ...p, label: "" }));
     }
   }, [
     boundsReady,
@@ -504,6 +522,11 @@ export default function Centenas() {
     getAnimalLabel,
     getImgFromGrupo,
     fAnimal,
+    setSafeLoading,
+    setSafeError,
+    setSafeProgress,
+    setSafeGroups,
+    setSafeOpenGrupo
   ]);
 
   useEffect(() => {
@@ -515,7 +538,10 @@ export default function Centenas() {
   useEffect(() => {
     if (!boundsReady) return;
     if (autoTimerRef.current) clearTimeout(autoTimerRef.current);
-    autoTimerRef.current = setTimeout(() => build(), 220);
+    autoTimerRef.current = setTimeout(() => {
+      if (!mountedRef.current) return;
+      build();
+    }, 220);
     return () => {
       if (autoTimerRef.current) clearTimeout(autoTimerRef.current);
     };
@@ -915,11 +941,7 @@ export default function Centenas() {
         <div className="cx0_fItem">
           <div className="cx0_fLab">Dia da Semana</div>
           <div className="cx0_selWrap">
-            <select
-              className="cx0_sel"
-              value={fDiaSemana}
-              onChange={(e) => setFDiaSemana(String(e.target.value || "Todos"))}
-            >
+            <select className="cx0_sel" value={fDiaSemana} onChange={(e) => setFDiaSemana(String(e.target.value || "Todos"))}>
               {diaSemanaOptions.map((o) => (
                 <option key={o.v} value={o.v}>
                   {o.label}
@@ -1123,3 +1145,7 @@ export default function Centenas() {
     </div>
   );
 }
+
+
+
+
