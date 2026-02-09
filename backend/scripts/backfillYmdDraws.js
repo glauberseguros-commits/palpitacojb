@@ -48,13 +48,11 @@ function dateToYMD_TZ(d, timeZone = TZ) {
 }
 
 function normalizeToYMD(input) {
-  if (!input) return null;
+  if (input == null) return null;
 
   // Firestore Timestamp (Admin SDK) ou objeto com toDate()
   if (typeof input === "object" && typeof input.toDate === "function") {
-    const d = input.toDate();
-    const ymd = dateToYMD_TZ(d);
-    return ymd;
+    return dateToYMD_TZ(input.toDate());
   }
 
   // Timestamp-like { seconds } / { _seconds }
@@ -66,8 +64,7 @@ function normalizeToYMD(input) {
     const sec = Number.isFinite(Number(input.seconds))
       ? Number(input.seconds)
       : Number(input._seconds);
-    const d = new Date(sec * 1000);
-    return dateToYMD_TZ(d);
+    return dateToYMD_TZ(new Date(sec * 1000));
   }
 
   // Date
@@ -75,28 +72,49 @@ function normalizeToYMD(input) {
     return dateToYMD_TZ(input);
   }
 
+  // Number-like (ms ou seconds)
+  if (typeof input === "number" && Number.isFinite(input)) {
+    const ms = input > 1e12 ? input : input * 1000; // heurística
+    return dateToYMD_TZ(new Date(ms));
+  }
+
   const s = String(input).trim();
   if (!s) return null;
+
+  // Numeric string (ms ou seconds)
+  if (/^\d{10,13}$/.test(s)) {
+    const n = Number(s);
+    const ms = s.length >= 13 ? n : n * 1000;
+    return dateToYMD_TZ(new Date(ms));
+  }
 
   // ISO: YYYY-MM-DD...
   const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
 
-  // BR: DD/MM/YYYY
-  const br = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  // ISO com barra: YYYY/MM/DD
+  const isoSlash = s.match(/^(\d{4})\/(\d{2})\/(\d{2})/);
+  if (isoSlash) return `${isoSlash[1]}-${isoSlash[2]}-${isoSlash[3]}`;
+
+  // BR: DD/MM/YYYY (com ou sem hora)
+  const br = s.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\D.*)?$/);
   if (br) return `${br[3]}-${br[2]}-${br[1]}`;
+
+  // BR com hífen: DD-MM-YYYY (com ou sem hora)
+  const brDash = s.match(/^(\d{2})-(\d{2})-(\d{4})(?:\D.*)?$/);
+  if (brDash) return `${brDash[3]}-${brDash[2]}-${brDash[1]}`;
 
   return null;
 }
 
 function pickDateCandidate(d) {
   return (
-    d.ymd ??
     d.date ??
     d.data ??
     d.dt ??
     d.draw_date ??
     d.close_date ??
+    d.ymd ??
     null
   );
 }
@@ -251,3 +269,4 @@ main().catch((e) => {
   console.error("[FATAL]", e?.stack || e?.message || e);
   process.exit(1);
 });
+
