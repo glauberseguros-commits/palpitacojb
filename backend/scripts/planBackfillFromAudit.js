@@ -76,7 +76,8 @@ async function fetchJson(url) {
   const maxAttempts = 1 + Math.max(0, RETRIES);
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    const ctrl = typeof AbortController !== "undefined" ? new AbortController() : null;
+    const ctrl =
+      typeof AbortController !== "undefined" ? new AbortController() : null;
     const t = ctrl ? setTimeout(() => ctrl.abort(), TIMEOUT_MS) : null;
 
     try {
@@ -99,15 +100,18 @@ async function fetchJson(url) {
       return j;
     } catch (e) {
       const isLast = attempt === maxAttempts;
-      const msg = e?.name === "AbortError"
-        ? `timeout após ${TIMEOUT_MS}ms`
-        : (e?.message || String(e));
+      const msg =
+        e?.name === "AbortError"
+          ? `timeout após ${TIMEOUT_MS}ms`
+          : e?.message || String(e);
 
-      if (isLast) throw new Error(msg);
+      if (isLast) throw new Error(`${msg} (url=${url})`);
 
       // retry
       // eslint-disable-next-line no-console
-      console.warn(`[WARN] fetch falhou (${attempt}/${maxAttempts}) => ${msg}`);
+      console.warn(
+        `[WARN] fetch falhou (${attempt}/${maxAttempts}) url=${url} => ${msg}`
+      );
       if (DELAY_MS > 0) await new Promise((r) => setTimeout(r, DELAY_MS));
     } finally {
       if (t) clearTimeout(t);
@@ -119,7 +123,7 @@ async function fetchJson(url) {
 
 async function main() {
   const auditPathArg = process.argv[2];
-  const baseUrl = String(process.argv[3] || "http://localhost:3333")
+  const baseUrl = String(process.argv[3] || "http://127.0.0.1:3333")
     .trim()
     .replace(/\/+$/, "");
   const lottery = String(process.argv[4] || "PT_RIO").trim().toUpperCase();
@@ -222,10 +226,10 @@ async function main() {
       })),
   };
 
+  // ✅ SEMPRE salva em backend/logs (evita backend/backend/logs)
+  const logsDir = path.join(__dirname, "..", "logs");
   const out = path.join(
-    process.cwd(),
-    "backend",
-    "logs",
+    logsDir,
     `backfillPlan-${lottery}-${String(audit?.startYmd || "start")}_to_${String(
       audit?.endYmd || "end"
     )}.json`
