@@ -30,6 +30,18 @@ function isYMD(s) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
 }
 
+function isValidYMD(ymd) {
+  const s = String(ymd || "").trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const [Y, M, D] = s.split("-").map((x) => Number(x));
+  if (!Number.isFinite(Y) || !Number.isFinite(M) || !Number.isFinite(D)) return false;
+  if (M < 1 || M > 12 || D < 1 || D > 31) return false;
+
+  // valida "data real" (ex.: 2022-02-30 deve falhar)
+  const dt = new Date(Date.UTC(Y, M - 1, D));
+  return dt.getUTCFullYear() === Y && (dt.getUTCMonth() + 1) === M && dt.getUTCDate() === D;
+}
+
 /**
  * Converte Date -> YYYY-MM-DD considerando timezone fixo (SP).
  * Evita “virar o dia” quando roda em UTC (GitHub Actions).
@@ -40,7 +52,7 @@ function dateToYMD_TZ(d, timeZone = TZ) {
   // en-CA => yyyy-mm-dd
   try {
     const ymd = d.toLocaleDateString("en-CA", { timeZone });
-    return isYMD(ymd) ? ymd : null;
+    return isValidYMD(ymd) ? ymd : null;
   } catch {
     // fallback manual (pior caso)
     return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
@@ -114,7 +126,6 @@ function pickDateCandidate(d) {
     d.dt ??
     d.draw_date ??
     d.close_date ??
-    d.ymd ??
     null
   );
 }
@@ -192,7 +203,7 @@ async function main() {
       const d = doc.data() || {};
       const currentYmd = String(d.ymd || "").trim();
 
-      if (isYMD(currentYmd)) {
+      if (isValidYMD(currentYmd)) {
         skipped += 1;
         lastDoc = doc;
         continue;
@@ -201,7 +212,7 @@ async function main() {
       const cand = pickDateCandidate(d);
       const ymd = normalizeToYMD(cand);
 
-      if (!ymd || !isYMD(ymd)) {
+      if (!ymd || !isValidYMD(ymd)) {
         invalidNoCandidate += 1;
         if (args.sampleInvalid && invalidSamples.length < args.sampleInvalid) {
           invalidSamples.push({
