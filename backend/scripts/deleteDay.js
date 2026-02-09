@@ -19,7 +19,13 @@ const { admin, getDb } = require("../service/firebaseAdmin");
 const DATE = String(process.argv[2] || "").trim();
 const LOTTERY_KEY = String(process.argv[3] || "").trim().toUpperCase();
 const DRY_RUN = process.argv.includes("--dry");
+const FORCE = process.argv.includes("--force");
 
+// Proteção: para deletar de verdade, exija --force (rode primeiro com --dry)
+if (!DRY_RUN && !FORCE) {
+  console.error("Proteção: para deletar de verdade use --force (ou rode primeiro com --dry).");
+  process.exit(1);
+}
 function isISODate(s) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
 }
@@ -69,40 +75,51 @@ async function listDayDrawDocs(db, dateYmd, lotteryKey) {
 async function deleteDayDocs(db, docs, { dryRun }) {
   if (!docs.length) return { removedDraws: 0, removedPrizes: 0 };
 
-  // BulkWriter é o jeito certo pra deletes em volume
   const bulk = db.bulkWriter();
 
   let removedDraws = 0;
   let removedPrizes = 0;
 
-  // Não deixa uma falha abortar tudo
   bulk.onWriteError((err) => {
-    // tenta novamente algumas vezes
     if (err.failedAttempts < 3) return true;
     console.error("[BULK] erro definitivo:", err?.message || err);
     return false;
   });
 
-  for (const doc of docs) {
-    // lista prizes desse draw
-    const prizesSnap = await doc.ref.collection("prizes").get();
+  // concorrência controlada para listar prizes + agendar deletes
+  const CONCURRENCY = 8;
+  let idx = 0;
 
-    if (dryRun) {
-      removedPrizes += prizesSnap.size;
+  async function worker() {
+    while (true) {
+      const i = idx++;
+      if (i >= docs.length) return;
+
+      const doc = docs[i];
+
+      // lista prizes desse draw
+      const prizesSnap = await doc.ref.collection("prizes").get();
+
+      if (dryRun) {
+        removedPrizes += prizesSnap.size;
+        removedDraws += 1;
+        continue;
+      }
+
+      // agenda deletes de prizes
+      for (const p of prizesSnap.docs) {
+        bulk.delete(p.ref);
+        removedPrizes += 1;
+      }
+
+      // agenda delete do draw
+      bulk.delete(doc.ref);
       removedDraws += 1;
-      continue;
     }
-
-    // deleta prizes
-    for (const p of prizesSnap.docs) {
-      bulk.delete(p.ref);
-      removedPrizes += 1;
-    }
-
-    // deleta draw
-    bulk.delete(doc.ref);
-    removedDraws += 1;
   }
+
+  const workers = Array.from({ length: Math.min(CONCURRENCY, docs.length) }, () => worker());
+  await Promise.all(workers);
 
   if (!dryRun) {
     await bulk.close(); // flush
@@ -144,3 +161,4 @@ async function deleteDayDocs(db, docs, { dryRun }) {
   console.error("[ERRO]", e?.stack || e?.message || e);
   process.exit(1);
 });
+
