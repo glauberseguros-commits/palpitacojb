@@ -61,9 +61,10 @@ export function todayYMDLocal() {
 export function addDaysYMD(ymd, deltaDays) {
   if (!isYMD(ymd)) return ymd;
   const [Y, M, D] = ymd.split("-").map((x) => Number(x));
-  const dt = new Date(Y, M - 1, D);
-  dt.setDate(dt.getDate() + Number(deltaDays || 0));
-  return `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}`;
+  const base = Date.UTC(Y, M - 1, D);
+  const dt = new Date(base);
+  dt.setUTCDate(dt.getUTCDate() + Number(deltaDays || 0));
+  return `${dt.getUTCFullYear()}-${pad2(dt.getUTCMonth() + 1)}-${pad2(dt.getUTCDate())}`;
 }
 
 /**
@@ -141,8 +142,8 @@ export function hourToInt(hhmm) {
 export function getDowKey(ymd) {
   if (!isYMD(ymd)) return null;
   const [Y, M, D] = ymd.split("-").map((x) => Number(x));
-  const dt = new Date(Y, M - 1, D);
-  return dt.getDay(); // 0 dom ... 6 sáb
+  const dt = new Date(Date.UTC(Y, M - 1, D));
+  return dt.getUTCDay(); // 0 dom ... 6 sáb
 }
 
 /* =========================
