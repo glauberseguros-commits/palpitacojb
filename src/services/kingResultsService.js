@@ -22,7 +22,7 @@ export const FEDERAL_VALID_CLOSE_HOURS = ["19:00", "20:00"];
 // prioridade:
 // 1) Vite: import.meta.env.VITE_API_BASE
 // 2) CRA: process.env.REACT_APP_API_BASE
-// 3) fallback: mesma origem (produção) OU localhost:3333 (dev)
+  // 3) fallback: mesma origem (produção) ou proxy do dev server
 function getApiBase() {
   const vite = typeof import.meta !== "undefined" ? import.meta.env?.VITE_API_BASE : undefined;
   const cra = typeof process !== "undefined" ? process.env?.REACT_APP_API_BASE : undefined;
@@ -48,12 +48,12 @@ function getApiBase() {
        hostname.startsWith("10.") ||
        /^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname));
 
-    if (isLocalhost || isLanIp) return "http://127.0.0.1:3333";
+    if (isLocalhost || isLanIp) return "";
 
     return window.location.origin;
   }
 
-  return "http://127.0.0.1:3333";
+  return "";
 }
 
 async function apiGet(path, params = {}) {
@@ -314,6 +314,7 @@ export async function getLateFromApi(args = {}) {
 export async function getLateSmart(args = {}) {
   return getLateFromApi(args);
 }
+
 
 
 
