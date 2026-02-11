@@ -1,5 +1,5 @@
 // src/pages/Dashboard/components/SearchResultsTable.jsx
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useMemo, useState, useCallback, useEffect } from "react";
 import {
   getImgFromGrupo as getImgFromGrupoFn,
   getAnimalLabel as getAnimalLabelFn,
@@ -155,12 +155,18 @@ function makeImgVariants(src) {
 function RowImg({ variants, alt, fallbackText }) {
   const [failed, setFailed] = useState(false);
 
+  // ✅ quando variants muda (nova linha/grupo), reseta o fallback
+  useEffect(() => {
+    setFailed(false);
+  }, [variants?.[0]]); // muda o "principal" => reseta
+
   if (!variants.length || failed) {
     return <div className="imgFallback">{fallbackText || "—"}</div>;
   }
 
   return (
     <img
+      key={variants[0]} // ✅ força reset do <img> ao trocar a imagem base
       src={variants[0]}
       alt={alt}
       loading="lazy"
@@ -180,7 +186,6 @@ function RowImg({ variants, alt, fallbackText }) {
     />
   );
 }
-
 /* =========================
    Normalização de row (compat)
 ========================= */
@@ -567,3 +572,5 @@ export default function SearchResultsTable({
     </div>
   );
 }
+
+

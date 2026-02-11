@@ -46,8 +46,8 @@ export default function SearchSummary({ queryInfo, totalMatches, meta, filters }
 
   const kpiMatches = useMemo(() => fmtIntPT(totalMatches), [totalMatches]);
 
-  const draws = useMemo(() => fmtIntPT(meta?.draws), [meta]);
-  const prizes = useMemo(() => fmtIntPT(meta?.prizes), [meta]);
+  const draws = useMemo(() => fmtIntPT(meta?.draws), [meta?.draws]);
+  const prizes = useMemo(() => fmtIntPT(meta?.prizes), [meta?.prizes]);
 
   return (
     <div className="ppSearchSummary">
@@ -175,3 +175,4 @@ export default function SearchSummary({ queryInfo, totalMatches, meta, filters }
     </div>
   );
 }
+
