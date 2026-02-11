@@ -1,5 +1,6 @@
 // src/App.js
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import DashboardMod from "./pages/Dashboard/Dashboard";
 import AccountMod from "./pages/Account/Account";
@@ -158,27 +159,26 @@ function hasActiveSession() {
 
 function normalizeLoteriaInput(v) {
   const raw = String(v ?? "").trim();
-  if (!raw) return "RJ";
+  if (!raw) return "PT_RIO";
   const key = raw
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/\s+/g, " ")
     .trim();
-  if (key === "federal" || key === "fed" || key === "br" || key === "brasil")
-    return "FEDERAL";
-  return "RJ";
+  if (key === "federal" || key === "fed" || key === "br" || key === "brasil") return "FEDERAL";
+  if (key === "rj" || key === "rio" || key === "pt_rio" || key === "pt-rio") return "PT_RIO";
+  return "PT_RIO";
 }
 
-
-function loteriaToLotteryKey(loteria){
-  const l = String(loteria || '').toUpperCase().trim();
-  return l === 'FEDERAL' ? 'FEDERAL' : 'PT_RIO';
+function loteriaToLotteryKey(loteria) {
+  const l = String(loteria || "").toUpperCase().trim();
+  return l === "FEDERAL" ? "FEDERAL" : "PT_RIO";
 }
 function getDefaultDashboardFilters() {
   return {
     // ✅ NOVO: loteria persistente
-    loteria: "RJ",
+    loteria: "PT_RIO",
 
     mes: "Todos",
     diaMes: "Todos",
@@ -213,7 +213,8 @@ function loadDashboardFilters() {
 
     mes: typeof obj.mes === "string" ? obj.mes : base.mes,
     diaMes: typeof obj.diaMes === "string" ? obj.diaMes : base.diaMes,
-    diaSemana: typeof obj.diaSemana === "string" ? obj.diaSemana : base.diaSemana,
+    diaSemana:
+      typeof obj.diaSemana === "string" ? obj.diaSemana : base.diaSemana,
     horario,
     animal: typeof obj.animal === "string" ? obj.animal : base.animal,
     posicao: typeof obj.posicao === "string" ? obj.posicao : base.posicao,
@@ -269,7 +270,8 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       const msg =
-        this.state.err?.message || String(this.state.err || "Erro desconhecido");
+        this.state.err?.message ||
+        String(this.state.err || "Erro desconhecido");
       return (
         <div
           style={{
@@ -284,12 +286,18 @@ class ErrorBoundary extends React.Component {
           <div style={{ fontWeight: 900, marginBottom: 8 }}>
             Falha ao renderizar a aplicação
           </div>
-          <div style={{ opacity: 0.85, whiteSpace: "pre-wrap", lineHeight: 1.35 }}>
+          <div
+            style={{
+              opacity: 0.85,
+              whiteSpace: "pre-wrap",
+              lineHeight: 1.35,
+            }}
+          >
             {msg}
           </div>
           <div style={{ marginTop: 12, opacity: 0.7, fontSize: 12 }}>
-            Dica: abra o Console (F12). Se aparecer “[IMPORT INVALID] …”, o import
-            desse componente está errado (default vs named).
+            Dica: abra o Console (F12). Se aparecer “[IMPORT INVALID] …”, o
+            import desse componente está errado (default vs named).
           </div>
         </div>
       );
@@ -299,21 +307,94 @@ class ErrorBoundary extends React.Component {
   }
 }
 
+/* =========================
+   URL <-> Screen sync
+========================= */
+
+function cleanPathname(p) {
+  const s = String(p || "").trim();
+  if (!s) return "/";
+  return s.startsWith("/") ? s : `/${s}`;
+}
+
+function screenToPath(screen) {
+  switch (screen) {
+    case ROUTES.LOGIN:
+      return "/login";
+    case ROUTES.DASHBOARD:
+      return "/";
+    case ROUTES.ACCOUNT:
+      return "/account";
+    case ROUTES.RESULTS:
+      return "/results";
+    case ROUTES.TOP3:
+      return "/top3";
+    case ROUTES.LATE:
+      return "/late";
+    case ROUTES.SEARCH:
+      return "/search";
+    case ROUTES.PAYMENTS:
+      return "/payments";
+    case ROUTES.DOWNLOADS:
+      return "/downloads";
+    case ROUTES.CENTENAS:
+      return "/centenas";
+    default:
+      return "/";
+  }
+}
+
+function pathToScreen(pathname) {
+  const p = cleanPathname(pathname).toLowerCase();
+
+  if (p === "/" || p === "/dashboard") return ROUTES.DASHBOARD;
+  if (p === "/login") return ROUTES.LOGIN;
+
+  if (p === "/account") return ROUTES.ACCOUNT;
+  if (p === "/results") return ROUTES.RESULTS;
+  if (p === "/top3") return ROUTES.TOP3;
+  if (p === "/late") return ROUTES.LATE;
+  if (p === "/search") return ROUTES.SEARCH;
+  if (p === "/payments") return ROUTES.PAYMENTS;
+  if (p === "/downloads") return ROUTES.DOWNLOADS;
+  if (p === "/centenas") return ROUTES.CENTENAS;
+
+  return null;
+}
+
 export default function App() {
-  const Dashboard = useMemo(() => resolveComponent(DashboardMod, "Dashboard"), []);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // ✅ trava de boot para evitar "screen -> URL" atropelar deep-link (/centenas etc.)
+  const bootRef = useRef(false);
+  const [routerBooted, setRouterBooted] = useState(false);
+  const Dashboard = useMemo(
+    () => resolveComponent(DashboardMod, "Dashboard"),
+    []
+  );
   const Account = useMemo(() => resolveComponent(AccountMod, "Account"), []);
   const Results = useMemo(() => resolveComponent(ResultsMod, "Results"), []);
   const Top3 = useMemo(() => resolveComponent(Top3Mod, "Top3"), []);
   const Late = useMemo(() => resolveComponent(LateMod, "Late"), []);
   const Search = useMemo(() => resolveComponent(SearchMod, "Search"), []);
   const Payments = useMemo(() => resolveComponent(PaymentsMod, "Payments"), []);
-  const Downloads = useMemo(() => resolveComponent(DownloadsMod, "Downloads"), []);
-  const Centenas = useMemo(() => resolveComponent(CentenasMod, "Centenas"), []);
+  const Downloads = useMemo(
+    () => resolveComponent(DownloadsMod, "Downloads"),
+    []
+  );
+  const Centenas = useMemo(
+    () => resolveComponent(CentenasMod, "Centenas"),
+    []
+  );
 
   const AppShell = useMemo(() => resolveComponent(AppShellMod, "AppShell"), []);
 
   const Admin = useMemo(() => resolveComponent(AdminMod, "Admin"), []);
-  const AdminLogin = useMemo(() => resolveComponent(AdminLoginMod, "AdminLogin"), []);
+  const AdminLogin = useMemo(
+    () => resolveComponent(AdminLoginMod, "AdminLogin"),
+    []
+  );
 
   // ✅ hash gate isolado
   const [adminMode, setAdminMode] = useState(() => isAdminHashNow());
@@ -387,16 +468,22 @@ export default function App() {
     safeWriteLS(STORAGE_KEY, screen);
   }, [screen]);
 
-  const [dashboardFilters, setDashboardFilters] = useState(() => loadDashboardFilters());
+  const [dashboardFilters, setDashboardFilters] = useState(() =>
+    loadDashboardFilters()
+  );
 
   // ✅ garante coerência: FEDERAL => horário 20h (mesmo se algum código setar errado)
   useEffect(() => {
     const lot = normalizeLoteriaInput(dashboardFilters?.loteria);
     if (lot === "FEDERAL" && dashboardFilters?.horario !== "20h") {
-      setDashboardFilters((prev) => ({ ...prev, loteria: "FEDERAL", horario: "20h" }));
+      setDashboardFilters((prev) => ({
+        ...prev,
+        loteria: "FEDERAL",
+        horario: "20h",
+      }));
     }
-    if (lot === "RJ" && dashboardFilters?.loteria !== "RJ") {
-      setDashboardFilters((prev) => ({ ...prev, loteria: "RJ" }));
+    if (lot === "PT_RIO" && dashboardFilters?.loteria !== "PT_RIO") {
+      setDashboardFilters((prev) => ({ ...prev, loteria: "PT_RIO" }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dashboardFilters?.loteria]);
@@ -467,6 +554,58 @@ export default function App() {
     };
   }, [screen, adminMode]);
 
+  /* =========================
+     ✅ URL -> screen (somente app normal)
+  ========================= */
+  useEffect(() => {
+    if (adminMode) return;
+
+    // ✅ marca boot na primeira passagem desse effect
+    if (!bootRef.current) {
+      bootRef.current = true;
+      setRouterBooted(true);
+    }
+    const wanted = pathToScreen(location?.pathname);
+    if (!wanted) return;
+
+    // se não tem sessão, força login
+    if (!hasActiveSession()) {
+      if (screen !== ROUTES.LOGIN) setScreen(ROUTES.LOGIN);
+      return;
+    }
+
+    // se tem sessão e a rota é /login, manda dashboard
+    if (wanted === ROUTES.LOGIN) {
+      if (screen !== ROUTES.DASHBOARD) setScreen(ROUTES.DASHBOARD);
+      return;
+    }
+
+    if (wanted !== screen) setScreen(wanted);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location?.pathname, adminMode]);
+
+  /* =========================
+     ✅ screen -> URL (somente app normal)
+  ========================= */
+  useEffect(() => {
+    if (adminMode) return;
+
+    // ✅ evita navegar antes do URL->screen “assumir” a rota inicial (deep-link)
+    if (!routerBooted) return;
+    // ✅ se o pathname atual já aponta pra uma tela válida diferente,
+    // deixa o URL->screen ajustar o estado antes de tentar navegar
+    const wanted = pathToScreen(location?.pathname);
+    if (wanted && wanted !== screen) return;
+    const path = screenToPath(screen);
+    const cur = cleanPathname(location?.pathname);
+
+    if (cur !== path) {
+      // replace para não poluir histórico quando App salva screen
+      navigate(path, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen, adminMode]);
+
   const PageRouter = ({ screen: s }) => {
     switch (s) {
       case ROUTES.ACCOUNT:
@@ -486,7 +625,15 @@ export default function App() {
       case ROUTES.DOWNLOADS:
         return <Downloads />;
       default:
-        return <Dashboard filters={{ ...dashboardFilters, lotteryKey: loteriaToLotteryKey(dashboardFilters?.loteria) }} setFilters={setDashboardFilters} />;
+        return (
+          <Dashboard
+            filters={{
+              ...dashboardFilters,
+              lotteryKey: loteriaToLotteryKey(dashboardFilters?.loteria),
+            }}
+            setFilters={setDashboardFilters}
+          />
+        );
     }
   };
 
@@ -568,7 +715,13 @@ export default function App() {
     <ErrorBoundary>
       <AppShell active={screen} onNavigate={setScreen} onLogout={logout}>
         {screen === ROUTES.DASHBOARD ? (
-          <Dashboard filters={{ ...dashboardFilters, lotteryKey: loteriaToLotteryKey(dashboardFilters?.loteria) }} setFilters={setDashboardFilters} />
+          <Dashboard
+            filters={{
+              ...dashboardFilters,
+              lotteryKey: loteriaToLotteryKey(dashboardFilters?.loteria),
+            }}
+            setFilters={setDashboardFilters}
+          />
         ) : (
           <PageRouter screen={screen} />
         )}
@@ -576,4 +729,8 @@ export default function App() {
     </ErrorBoundary>
   );
 }
+
+
+
+
 

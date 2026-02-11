@@ -208,7 +208,7 @@ export default function Admin({ onExit, onLogout }) {
   // editor base
   const [uidEdit, setUidEdit] = useState("");
   const [nameEdit, setNameEdit] = useState("");
-  const [photoUrlEdit, setPhotoUrlEdit] = useState("");
+  const [photoURLEdit, setPhotoURLEdit] = useState("");
   const [emailEdit, setEmailEdit] = useState("");
   const [phoneEdit, setPhoneEdit] = useState("");
 
@@ -269,7 +269,7 @@ export default function Admin({ onExit, onLogout }) {
   const clearEditor = () => {
     setUidEdit("");
     setNameEdit("");
-    setPhotoUrlEdit("");
+    setPhotoURLEdit("");
     setEmailEdit("");
     setPhoneEdit("");
 
@@ -292,7 +292,7 @@ export default function Admin({ onExit, onLogout }) {
     setUidEdit(uid);
 
     setNameEdit(String(r?.name || ""));
-    setPhotoUrlEdit(String(r?.photoUrl || ""));
+        setPhotoURLEdit(String(r?.photoURL || r?.photoUrl || ""));
 
     setEmailEdit(String(r?.email || ""));
     setPhoneEdit(String(r?.phone || r?.phoneE164 || ""));
@@ -446,7 +446,7 @@ export default function Admin({ onExit, onLogout }) {
         // prepara novo
         setSelectedId(uid);
         setNameEdit("");
-        setPhotoUrlEdit("");
+        setPhotoURLEdit("");
         setEmailEdit("");
         setPhoneEdit("");
 
@@ -526,16 +526,14 @@ export default function Admin({ onExit, onLogout }) {
 
     setBusy(true);
     try {
-      const photoUrl = safeStr(photoUrlEdit) || null;
+            const photoURL = safeStr(photoURLEdit) || null;
 
       const payload = {
         uid,
 
         // perfil
-        name,
-        photoUrl,
-
-        // contatos
+        name,        photoURL,
+        photoUrl: photoURL,// contatos
         email: emailLower || null,
         emailLower: emailLower || null,
         phone: phoneE164 || null,
@@ -1028,8 +1026,8 @@ export default function Admin({ onExit, onLogout }) {
             <label style={{ display: "grid", gap: 6 }}>
               <div style={{ color: WHITE_70, fontSize: 12 }}>Foto (URL) — opcional</div>
               <input
-                value={photoUrlEdit}
-                onChange={(e) => setPhotoUrlEdit(e.target.value)}
+                value={photoURLEdit}
+                onChange={(e) => setPhotoURLEdit(e.target.value)}
                 placeholder="https://..."
                 style={{
                   height: 40,
@@ -1314,3 +1312,4 @@ export default function Admin({ onExit, onLogout }) {
     </div>
   );
 }
+

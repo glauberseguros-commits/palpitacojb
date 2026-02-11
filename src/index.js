@@ -1,6 +1,7 @@
 // src/index.js
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
 import "./index.css";
 import App from "./App";
 
@@ -15,12 +16,16 @@ const STRICTMODE_DEV = true;
 
 const isProd = process.env.NODE_ENV === "production";
 
+const AppTree = (
+  <BrowserRouter>
+    <App />
+  </BrowserRouter>
+);
+
 root.render(
   !isProd && STRICTMODE_DEV ? (
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>
+    <React.StrictMode>{AppTree}</React.StrictMode>
   ) : (
-    <App />
+    AppTree
   )
 );

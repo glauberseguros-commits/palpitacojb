@@ -481,7 +481,7 @@ function clampRangeToBounds(next, minDate, maxDate) {
 
 function normalizeLoteriaKey(v) {
   const raw = String(v ?? "").trim();
-  if (!raw) return "RJ";
+  if (!raw) return "PT_RIO";
   const key = raw
     .toLowerCase()
     .normalize("NFD")
@@ -489,7 +489,7 @@ function normalizeLoteriaKey(v) {
     .replace(/\s+/g, " ")
     .trim();
   if (key === "federal" || key === "fed" || key === "br" || key === "brasil") return "FEDERAL";
-  return "RJ";
+  return "PT_RIO";
 }
 
 /**
@@ -503,7 +503,7 @@ export default function Dashboard(props) {
 
   const fallbackFilters = useMemo(
     () => ({
-      loteria: "RJ",
+      loteria: "PT_RIO",
       mes: "Todos",
       diaMes: "Todos",
       diaSemana: "Todos",
@@ -551,7 +551,7 @@ export default function Dashboard(props) {
     return externalFilters && typeof externalFilters === "object" ? externalFilters : fallbackFilters;
   }, [externalFilters, fallbackFilters]);
 
-  // ✅ no guest, força "Todos" (vitrine) — mantém loteria em RJ (não vale FEDERAL no demo)
+  // ✅ no guest, força "Todos" (vitrine) — mantém loteria em PT_RIO (não vale FEDERAL no demo)
   const filters = useMemo(() => {
     if (!isGuest) return { ...fallbackFilters, ...rawFilters };
     return fallbackFilters;
@@ -1473,12 +1473,14 @@ const rankingRowsFromMeta = useMemo(() => {
                   hydratingBox
                 ) : (
                   <KpiCards
-                    items={kpiItems}
-                    drawsRaw={dataReady ? drawsForView : []}
-                    selectedGrupo={selectedGrupo}
-                    selectedAnimalLabel={filters.animal}
-                    selectedPosition={selectedPosition}
-                  />
+  items={kpiItems}
+  drawsRaw={dataReady ? drawsForView : []}
+  drawsRawGlobal={dataReady ? drawsForUi : []}
+  showGlobalAparicoes={true}
+  selectedGrupo={selectedGrupo}
+  selectedAnimalLabel={filters.animal}
+  selectedPosition={selectedPosition}
+/>
                 )}
               </>
             )}
@@ -1564,5 +1566,7 @@ const rankingRowsFromMeta = useMemo(() => {
     </div>
   );
 }
+
+
 
 

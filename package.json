@@ -10,6 +10,7 @@
     "jspdf-autotable": "^5.0.7",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-router-dom": "^7.13.0",
     "react-scripts": "5.0.1",
     "react-tsparticles": "^2.12.2",
     "recharts": "^3.0.2",
@@ -23,7 +24,8 @@
     "eject": "react-scripts eject",
     "auto:pt_rio": "node backend/scripts/autoImportToday.js",
     "auto:federal": "powershell -NoProfile -Command \"$env:LOTTERY='FEDERAL'; node backend/scripts/autoImportToday.js\"",
-    "backend:server": "node backend/server.js"
+    "backend:server": "node backend/server.js",
+    "dev": "react-scripts start"
   },
   "eslintConfig": {
     "extends": [

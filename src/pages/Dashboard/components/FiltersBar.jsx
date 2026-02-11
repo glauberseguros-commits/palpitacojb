@@ -5,7 +5,7 @@ import React, { useMemo, useCallback } from "react";
  * FiltersBar (Premium)
  *
  * ✅ NOVO: Loteria (RJ / FEDERAL)
- * - filters.loteria: "RJ" | "FEDERAL" (default: "RJ")
+ * - filters.loteria: "PT_RIO" | "FEDERAL" (default: "RJ")
  * - Quando FEDERAL:
  *   - força horário = "20h"
  *   - desabilita select de Horário (para não gerar estatística inválida)
@@ -39,7 +39,7 @@ function sortPTBR(a, b) {
 
 function normalizeLoteriaInput(v) {
   const raw = String(v ?? "").trim();
-  if (!raw) return "RJ";
+  if (!raw) return "PT_RIO";
 
   const key = raw
     .toLowerCase()
@@ -49,7 +49,8 @@ function normalizeLoteriaInput(v) {
     .trim();
 
   if (key === "federal" || key === "fed" || key === "br" || key === "brasil") return "FEDERAL";
-  return "RJ";
+  if (key === "rj" || key === "rio" || key === "pt_rio" || key === "pt-rio") return "PT_RIO";
+  return "PT_RIO";
 }
 
 /** Normaliza posição para "1º..7º" ou "Todos" */
@@ -181,7 +182,7 @@ const PP = {
 
 export default function FiltersBar({
   filters = {
-    loteria: "RJ",
+    loteria: "PT_RIO",
     mes: "Todos",
     diaMes: "Todos",
     diaSemana: "Todos",
@@ -202,7 +203,7 @@ export default function FiltersBar({
 
   const defaultOptions = useMemo(() => {
     const loteriasDefault = [
-      { label: "RJ", value: "RJ" },
+      { label: "RJ", value: "PT_RIO" },
       { label: "FEDERAL", value: "FEDERAL" },
     ];
 
@@ -584,7 +585,7 @@ export default function FiltersBar({
       value,
       list,
       forceValue,
-      fallback: name === "loteria" ? "RJ" : "Todos",
+      fallback: name === "loteria" ? "PT_RIO" : "Todos",
       normalizeFn,
     });
 
@@ -724,3 +725,4 @@ export default function FiltersBar({
     </div>
   );
 }
+

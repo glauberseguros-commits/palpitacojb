@@ -7,7 +7,8 @@
  */
 
 export function buildAccountUI({ vw = 1200 } = {}) {
-  const gridIsMobile = Number(vw || 0) < 980;
+  const w = Number(vw);
+  const gridIsMobile = Number.isFinite(w) ? w < 980 : false;
 
   const GOLD = "rgba(201,168,62,0.95)";
   const BORDER = "rgba(255,255,255,0.14)";
@@ -187,3 +188,4 @@ export function buildAccountUI({ vw = 1200 } = {}) {
     v: { fontSize: 12.5, fontWeight: 800, wordBreak: "break-word" },
   };
 }
+

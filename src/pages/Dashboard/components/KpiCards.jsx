@@ -169,15 +169,14 @@ export default function KpiCards({
     return { dias: days.size, sorteios: totalSorteios };
   }, [drawsRaw]);
 
+  // ✅ Ajuste: só considera "Geral" quando GLOBAL existir de fato (evita "Geral" com fallback do VIEW)
   const computedGlobal = useMemo(() => {
-    const globalArr = Array.isArray(drawsRawGlobal) ? drawsRawGlobal : null;
-    const fallback = Array.isArray(drawsRaw) ? drawsRaw : [];
-    const base = globalArr ?? fallback;
-
+    const hasGlobal = Array.isArray(drawsRawGlobal);
     return {
-      aparicoesGeral: countAparicoesGlobal(base),
+      hasGlobal,
+      aparicoesGeral: hasGlobal ? countAparicoesGlobal(drawsRawGlobal) : null,
     };
-  }, [drawsRawGlobal, drawsRaw]);
+  }, [drawsRawGlobal]);
 
   const computedAnimal = useMemo(() => {
     const g = safeNum(selectedGrupo);
@@ -266,7 +265,8 @@ export default function KpiCards({
   const data = useMemo(() => {
     let out = baseData;
 
-    if (showGlobalAparicoes) {
+    // ✅ Ajuste: só adiciona KPI Geral se GLOBAL existir
+    if (showGlobalAparicoes && computedGlobal.hasGlobal && computedGlobal.aparicoesGeral !== null) {
       out = [
         ...out,
         {
@@ -337,6 +337,7 @@ export default function KpiCards({
     selectedGrupo,
     selectedPosition,
     showGlobalAparicoes,
+    computedGlobal.hasGlobal,
     computedGlobal.aparicoesGeral,
   ]);
 

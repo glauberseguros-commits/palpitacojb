@@ -17,9 +17,14 @@ export function useViewportWidth() {
   const [vw, setVw] = useState(typeof window !== "undefined" ? window.innerWidth : 1200);
 
   useEffect(() => {
-    const onResize = () => setVw(window.innerWidth);
+    if (typeof window === "undefined") return;
+
+    const onResize = () => setVw(window.innerWidth || 1200);
     window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
+
+    return () => {
+      window.removeEventListener("resize", onResize);
+    };
   }, []);
 
   return vw;
@@ -153,4 +158,6 @@ export function useAccountDerived({
     email: String(email || ""),
   };
 }
+
+
 

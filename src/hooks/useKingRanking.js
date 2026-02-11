@@ -627,7 +627,8 @@ export function useKingRanking({
             dateTo: ymdTo,
             closeHour: null,
             positions: positionsArrStable,
-            mode: serviceMode,
+            mode: serviceMode,  readPolicy: "server",
+
           });
         } else if (mode === "day") {
           serviceMode = "detailed";
@@ -635,7 +636,8 @@ export function useKingRanking({
             uf,
             date: ymdDate,
             closeHour: null,
-            positions: positionsArrStable,
+            positions: positionsArrStable,  readPolicy: "server",
+
           });
         } else {
           draws = [];
@@ -903,3 +905,7 @@ export function useKingRanking({
 
   return { loading, error, data, meta, drawsRaw };
 }
+
+
+
+

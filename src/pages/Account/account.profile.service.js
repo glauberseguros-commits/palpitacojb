@@ -39,14 +39,17 @@ export async function ensureUserDoc(db, uid, user) {
 
     // Se não existe, cria doc inicial com trial
     if (!snap.exists()) {
-      const trialStartAt = createdAtIso;
+    const trialStartAt = createdAtIso;
       const trialEndAt = isoPlusDays(trialStartAt, TRIAL_DAYS);
 
       await setDoc(
         r,
         {
           createdAt: createdAtIso,
+          
+          createdAtMs: Date.parse(createdAtIso) || Date.now(),
           updatedAt: new Date().toISOString(),
+          updatedAtMs: Date.now(),
           email: String(user?.email || "").trim().toLowerCase(),
 
           name: String(user?.displayName || "").trim(),
@@ -65,7 +68,6 @@ export async function ensureUserDoc(db, uid, user) {
 
     // Existe: normaliza/patcheia campos ausentes
     const data = snap.data() || {};
-
     const trialStartAt = String(data.trialStartAt || "").trim() || createdAtIso;
     const trialEndAt =
       String(data.trialEndAt || "").trim() || isoPlusDays(trialStartAt, TRIAL_DAYS);
@@ -106,6 +108,7 @@ export async function ensureUserDoc(db, uid, user) {
 
     if (needPatch) {
       patch.updatedAt = new Date().toISOString();
+      patch.updatedAtMs = Date.now();
       await setDoc(r, patch, { merge: true });
     }
 
@@ -139,15 +142,24 @@ export async function loadUserProfile(db, uid) {
     const photoURL =
       String(data.photoURL || "").trim() ||
       String(data.photoUrl || "").trim(); // compat
+    const trialStartAt = String(data.trialStartAt || "").trim();
+    const trialEndAt = String(data.trialEndAt || "").trim();
+
+    // garante consistência: se passou do prazo, trialActive não pode ficar true
+    const nowIso = new Date().toISOString();
+    const computedActive = safeISO(trialEndAt) ? safeISO(nowIso) < safeISO(trialEndAt) : false;
+
+    const storedActive = data.trialActive === true;
+    const trialActive = safeISO(trialEndAt) ? computedActive : storedActive;
 
     return {
       name,
       phone,
       photoURL,
 
-      trialStartAt: String(data.trialStartAt || "").trim(),
-      trialEndAt: String(data.trialEndAt || "").trim(),
-      trialActive: data.trialActive === true,
+      trialStartAt,
+      trialEndAt,
+      trialActive,
     };
   } catch {
     return null;
@@ -172,6 +184,7 @@ export async function saveUserProfile(db, uid, payload) {
         phone: String(payload?.phone || "").trim(),
         photoURL: String(payload?.photoURL || "").trim(),
         updatedAt: new Date().toISOString(),
+        updatedAtMs: Date.now(),
       },
       { merge: true }
     );
@@ -180,3 +193,13 @@ export async function saveUserProfile(db, uid, payload) {
     return false;
   }
 }
+
+
+
+
+
+
+
+
+
+

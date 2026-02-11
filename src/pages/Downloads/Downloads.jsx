@@ -541,7 +541,7 @@ const POS_OPTIONS = [
 ];
 
 export default function Downloads() {
-  const [ufUi, setUfUi] = useState("RJ");
+  const [ufUi, setUfUi] = useState("PT_RIO");
   const ufQueryKey = useMemo(() => normalizeUfToQueryKey(ufUi), [ufUi]);
   const label = useMemo(() => lotteryLabelFromKey(ufQueryKey || ufUi), [ufQueryKey, ufUi]);
 
@@ -1102,7 +1102,7 @@ export default function Downloads() {
             <div className="pp-field">
               <div className="pp-fieldLabel">UF</div>
               <select className="pp-select" value={ufUi} onChange={(e) => setUfUi(e.target.value)}>
-                <option value="RJ">RJ</option>
+                <option value="PT_RIO">RJ</option>
               </select>
             </div>
 
@@ -1249,3 +1249,4 @@ export default function Downloads() {
     </div>
   );
 }
+

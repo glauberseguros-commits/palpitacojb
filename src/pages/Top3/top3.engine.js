@@ -212,12 +212,11 @@ export async function getPreviousDrawRobust({
 
     if (safeStr(lotteryKey).toUpperCase() === "FEDERAL" && !daySchedule.length) continue;
 
-    const out = await getKingResultsByDate({
-      uf: lotteryKey,
+    const out = await getKingResultsByDate({ uf: lotteryKey,
       date: day,
       closeHour: null,
       positions: null,
-    });
+    readPolicy: "server" });
 
     const last = findLastDrawInList(out, daySchedule);
     if (last) {
@@ -664,3 +663,5 @@ export function build16MilharesForGrupo({
   while (slots.length < 16) slots.push({ dezena: "", milhar: "" });
   return { dezenas: topDezenas, slots: slots.slice(0, 16) };
 }
+
+

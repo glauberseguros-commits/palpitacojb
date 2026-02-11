@@ -1,5 +1,6 @@
 // src/pages/Account/AccountView.jsx
 import React from "react";
+import { normalizePhoneDigits, formatPhoneBR } from "./account.formatters";
 
 /**
  * AccountView
@@ -17,7 +18,7 @@ export default function AccountView({
   photoSrc,
 
   name,
-  phoneDisplay,
+  phoneDigits,
 
   email,
   uid,
@@ -37,7 +38,47 @@ export default function AccountView({
   onRemovePhoto,
   onDeleteAccount,
 }) {
-  return (
+  
+  // =========================
+  // Telefone (máscara) — cursor fix
+  // =========================
+  function countDigitsBeforePos(str, pos) {
+    const left = String(str || "").slice(0, Math.max(0, Number(pos || 0)));
+    return (left.match(/\d/g) || []).length;
+  }
+
+  function mapDigitsToMaskedPos(masked, digitIndex) {
+    // digitIndex: quantos dígitos devem ficar à esquerda do cursor
+    if (digitIndex <= 0) return 0;
+    let seen = 0;
+    for (let i = 0; i < masked.length; i++) {
+      if (/\d/.test(masked[i])) seen++;
+      if (seen >= digitIndex) return i + 1;
+    }
+    return masked.length;
+  }
+
+  const onPhoneInputChange = (e) => {
+    const raw = String(e?.target?.value || "");
+    const caret = Number(e?.target?.selectionStart || 0);
+
+    const digitsBefore = countDigitsBeforePos(raw, caret);
+    const digits = normalizePhoneDigits(raw);
+
+    // atualiza estado (fonte de verdade = dígitos)
+    onPhoneChange(digits);
+
+    // recoloca cursor no próximo frame (após render com máscara)
+    try {
+      const el = e.target;
+      requestAnimationFrame(() => {
+        const masked = formatPhoneBR(digits);
+        const nextPos = mapDigitsToMaskedPos(masked, digitsBefore);
+        try { el.setSelectionRange(nextPos, nextPos); } catch {}
+      });
+    } catch {}
+  };
+return (
     <div style={ui.page}>
       <div style={ui.header}>
         <div style={ui.title}>Minha Conta</div>
@@ -92,8 +133,11 @@ export default function AccountView({
 
             <input
               style={ui.input}
-              value={phoneDisplay}
-              onChange={(e) => onPhoneChange(e.target.value)}
+              type="tel"
+              inputMode="numeric"
+              autoComplete="tel"
+              value={formatPhoneBR(phoneDigits)}
+              onChange={onPhoneInputChange}
               placeholder={isGuest ? "(xx) x xxxx-xxxx (opcional)" : "(xx) x xxxx-xxxx"}
               disabled={busy}
             />
@@ -173,3 +217,4 @@ function InfoRow({ ui, label, value }) {
     </div>
   );
 }
+

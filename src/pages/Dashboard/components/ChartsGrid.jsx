@@ -576,14 +576,8 @@ function buildGlobalAparicoes25(drawsAll) {
 
     items.push({ grupo: g, label, value: map.get(g) || 0 });
   }
-
-  // ✅ Ordena por aparições (desc), e em empate por grupo (asc) => estável
-  items.sort((a, b) => {
-    const dv = safeNumber(b.value) - safeNumber(a.value);
-    if (dv !== 0) return dv;
-    return safeNumber(a.grupo) - safeNumber(b.grupo);
-  });
-
+  // ✅ Ordem fixa 01..25 (não muda leitura com empates/variações)
+  items.sort((a, b) => safeNumber(a.grupo) - safeNumber(b.grupo));
   return items;
 }
 
@@ -1914,3 +1908,4 @@ const ui = {
   }
   `,
 };
+

@@ -169,7 +169,7 @@ export default function Account({ onClose = null }) {
     isLogged,
     needsProfile,
     initials,
-    phoneDisplay,
+    phoneDigits,
     createdAtLabel,
     trialStartLabel,
     trialEndLabel,
@@ -340,6 +340,11 @@ export default function Account({ onClose = null }) {
     setMsg("");
     if (busy) return;
 
+    if (typeof window === "undefined") {
+      setErr("Ação indisponível neste ambiente.");
+      return;
+    }
+
     const ok1 = window.confirm("ATENÇÃO: Isso vai excluir sua conta e seus dados. Deseja continuar?");
     if (!ok1) return;
     const ok2 = window.confirm("Última confirmação: EXCLUIR CONTA definitivamente?");
@@ -445,7 +450,7 @@ export default function Account({ onClose = null }) {
       initials={initials}
       photoSrc={photoSrc}
       name={nameDraft}
-      phoneDisplay={phoneDisplay}
+      phoneDigits={phoneDigits}
       email={email}
       uid={uid}
       createdAtLabel={createdAtLabel}
@@ -464,4 +469,6 @@ export default function Account({ onClose = null }) {
     />
   );
 }
+
+
 

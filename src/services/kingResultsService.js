@@ -30,12 +30,28 @@ function getApiBase() {
   const v = String(vite || cra || "").trim();
   if (v) return v.replace(/\/+$/, "");
 
-  // dev
-  if (typeof window !== "undefined" && /localhost|127\.0\.0\.1/i.test(window.location.host)) {
-    return "http://127.0.0.1:3333";
+  if (typeof window !== "undefined") {
+    const hostname = String(window.location.hostname || "").toLowerCase();
+
+    // ✅ produção do seu front -> usa API pública
+    if (hostname === "palpitacojb.com.br" || hostname.endsWith(".palpitacojb.com.br")) {
+      return "https://api.palpitacojb.com.br";
+    }
+
+    // ✅ dev local/LAN -> backend local
+    const isLocalhost =
+      hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+
+    const isLanIp =
+      /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname) &&
+      (hostname.startsWith("192.168.") ||
+       hostname.startsWith("10.") ||
+       /^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname));
+
+    if (isLocalhost || isLanIp) return "http://127.0.0.1:3333";
+
+    return window.location.origin;
   }
-  // produção (mesma origem; exige que backend esteja no mesmo domínio OU via proxy)
-  if (typeof window !== "undefined") return window.location.origin;
 
   return "http://127.0.0.1:3333";
 }
@@ -43,6 +59,13 @@ function getApiBase() {
 async function apiGet(path, params = {}) {
   const base = getApiBase();
   const url = new URL(path, base);
+
+  // DEBUG (dev): expõe no window a última URL chamada
+  if (typeof window !== "undefined") {
+    window.__PALPITACO_API_BASE = base;
+    window.__PALPITACO_LAST_URL = url.toString();
+  }
+
 
   Object.entries(params || {}).forEach(([k, v]) => {
     if (v === undefined || v === null || v === "") return;
@@ -61,7 +84,7 @@ async function apiGet(path, params = {}) {
 
   const text = await r.text();
   let json = null;
-  try { json = text ? JSON.parse(text) : null; } catch { json = null; }
+  try { json = text ? JSON.parse(text) : null; } catch (e) { json = null; }
 
   if (!r.ok) {
     const msg = (json && (json.message || json.error)) ? (json.message || json.error) : `HTTP ${r.status}`;
@@ -80,59 +103,42 @@ export async function getKingBoundsByUf({ uf } = {}) {
   const key = String(uf || "").trim().toUpperCase();
 
   // mapeia UF/alias -> lottery do backend
-  // RJ -> PT_RIO
-  // FEDERAL/BR -> FEDERAL
-  // se já vier PT_RIO/PT_SP/etc, usa como lottery
-  let lottery = key;
-  if (lottery === "RJ") lottery = "PT_RIO";
-  if (lottery === "BR" || lottery === "FEDERAL") lottery = "FEDERAL";
+  let ufKey = key;
+  if (ufKey === "RJ") ufKey = "PT_RIO";
+  if (ufKey === "BR" || ufKey === "FEDERAL") ufKey = "FEDERAL";
 
   try {
-    // backend real
-    const j = await apiGet("/api/bounds", { lottery });
-
-    return {
-      ok: !!j?.ok,
-      uf: key || null,
-      minYmd: j?.minYmd || null,
-      maxYmd: j?.maxYmd || null,
-      source: j?.source || "api_bounds",
-    };
+    // ✅ bounds: endpoint único (backend expõe /api/bounds)
+    // mantém uf + lottery por compat, mas o backend usa lottery como canônico
+    const j = await apiGet("/api/bounds", { lottery: ufKey, uf: ufKey });
+    return j;
   } catch (e) {
-    // fallback antigo (não quebra caso você reative depois)
-    try {
-      const j2 = await apiGet("/api/king/bounds", { uf: key });
-      return {
-        ok: !!j2?.ok,
-        uf: key || null,
-        minYmd: j2?.minYmd || null,
-        maxYmd: j2?.maxYmd || null,
-        source: j2?.source || "legacy_api_king_bounds",
-      };
-    } catch {
-      return {
-        ok: false,
-        uf: key || null,
-        minYmd: null,
-        maxYmd: null,
-        source: "front_fallback_no_bounds",
-      };
-    }
+    return {
+      ok: false,
+      uf: key || null,
+      minYmd: null,
+      maxYmd: null,
+      source: "front_fallback_no_bounds",
+      error: String(e?.message || e || ""),
+    };
   }
 }
-
 // 2) Resultados por data (detalhado)
-export async function getKingResultsByDate({ uf, date, closeHour = null, closeHourBucket = null, positions = null }) {
+export async function getKingResultsByDate({ uf, date, closeHour = null, closeHourBucket = null, positions = null, readPolicy = null }) {
   if (!uf || !date) throw new Error("Parâmetros obrigatórios: uf e date");
 
-  const j = await apiGet("/api/king/draws/day", { lottery: (uf === "RJ" ? "PT_RIO" : (uf === "BR" || uf === "FEDERAL" ? "FEDERAL" : uf)),
-    date,
+  const ufKey = normalizeLotteryKey(uf);
+
+  const j = await apiGet("/api/king/draws/day", {
+    uf: ufKey,
+    lottery: ufKey,
+    date: toYMD(date),
     closeHour,
     closeHourBucket,
-    positions: normalizePositionsParam(positions),
+    positions: normalizePositionsParam(positions),    includePrizes: (readPolicy === "server") ? 1 : 0,
+
   });
 
-  // backend deve devolver { ok, draws: [...] } ou direto array
   if (Array.isArray(j)) return j;
   return j?.draws || j?.data || [];
 }
@@ -203,6 +209,20 @@ function normalizeLotteryKey(input) {
 }
 
 
+
+function toYMD(input) {
+  const s = String(input || "").trim();
+  if (!s) return s;
+
+  // já está em YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+
+  // BR: DD/MM/YYYY
+  const m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+
+  return s;
+}
 // 3) Resultados por range (detailed/aggregated/auto)
 export async function getKingResultsByRange({
   uf,
@@ -212,18 +232,23 @@ export async function getKingResultsByRange({
   closeHourBucket = null,
   positions = null,
   mode = "detailed",
-}) {
-  uf = normalizeLotteryKey(uf);
+readPolicy = null,
+  }) {
+  const ufKey = normalizeLotteryKey(uf);
 
-  if (!uf || !dateFrom || !dateTo) throw new Error("Parâmetros obrigatórios: uf, dateFrom, dateTo");
+  if (!ufKey || !dateFrom || !dateTo)
+    throw new Error("Parâmetros obrigatórios: uf, dateFrom, dateTo");
 
-  const j = await apiGet("/api/king/draws/range", { lottery: (uf === "RJ" ? "PT_RIO" : (uf === "BR" || uf === "FEDERAL" ? "FEDERAL" : uf)),
-    dateFrom,
-    dateTo,
+  const j = await apiGet("/api/king/draws/range", {
+    uf: ufKey,
+    lottery: ufKey,
+    dateFrom: toYMD(dateFrom),
+    dateTo: toYMD(dateTo),
     closeHour,
     closeHourBucket,
     positions: normalizePositionsParam(positions),
-    mode,
+    mode,    includePrizes: ((mode === "detailed") || (readPolicy === "server")) ? 1 : 0,
+
   });
 
   if (Array.isArray(j)) return j;
@@ -289,4 +314,21 @@ export async function getLateFromApi(args = {}) {
 export async function getLateSmart(args = {}) {
   return getLateFromApi(args);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

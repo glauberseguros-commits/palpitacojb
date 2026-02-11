@@ -390,17 +390,17 @@ function resolveAnimalUI(prize) {
 ========================= */
 
 function drawKeyForDedup(d, scopeKey, ymd) {
-  const id = safeStr(d?.drawId || d?.id || "");
-  const lotCode = safeStr(d?.lottery_code || d?.lotteryCode || d?.lot_code || d?.code || "");
+  // ✅ Nesta página (Resultados), a identidade lógica é: DATA + HORÁRIO (+ scope)
+  // Isso elimina duplicações causadas por docs diferentes (drawId/lottery_code) para o mesmo horário.
   const hour = normalizeHourLike(
     d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
   );
 
-  // ✅ se tiver id, ainda assim inclui lotCode para não colapsar docs distintos em migrações
-  if (id) return `ID:${scopeKey}|${ymd}|${id}|${lotCode || "-"}`;
+  if (hour) return `HOUR:${scopeKey}|${ymd}|${hour}`;
 
-  // ✅ chave lógica: ymd + hour + lottery_code (quando existir)
-  return `DH:${scopeKey}|${ymd}|${hour || "??"}|${lotCode || "-"}`;
+  // fallback raríssimo: se não veio horário, tenta id
+  const id = safeStr(d?.drawId || d?.id || "");
+  return `ID:${scopeKey}|${ymd}|${id || "?"}`;
 }
 
 function countPrizes(d) {
@@ -1203,4 +1203,5 @@ export default function Results() {
     </div>
   );
 }
+
 

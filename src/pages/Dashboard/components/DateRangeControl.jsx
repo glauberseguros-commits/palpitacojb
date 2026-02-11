@@ -494,7 +494,6 @@ export default function DateRangeControl({
       WebkitAppearance: "none",
       outline: "none",
       margin: 0,
-      pointerEvents: boundsReady ? "auto" : "none",
       cursor: disabled ? "not-allowed" : "pointer",
     },
 
@@ -620,7 +619,7 @@ export default function DateRangeControl({
             <button
               type="button"
               className="pp_yearchip"
-              onMouseDown={(e) => e.preventDefault()}
+              tabIndex={disabled ? -1 : 0} aria-disabled={disabled} onMouseDown={(e) => e.preventDefault()}
               onClick={handleClearYears}
               style={{ ...ui.chip, ...(isAllYears ? ui.chipActive : null) }}
               title={disabled ? "Bloqueado no modo demonstração" : "Todos os anos"}
@@ -693,7 +692,7 @@ export default function DateRangeControl({
           <button
             type="button"
             className="pp_calbtn"
-            style={ui.iconBtn}
+            tabIndex={disabled ? -1 : 0} aria-disabled={disabled} style={ui.iconBtn}
             aria-label="Abrir calendário (data inicial)"
             onMouseDown={(e) => e.preventDefault()}
             onClick={(e) => {
@@ -732,7 +731,7 @@ export default function DateRangeControl({
           <button
             type="button"
             className="pp_calbtn"
-            style={ui.iconBtn}
+            tabIndex={disabled ? -1 : 0} aria-disabled={disabled} style={ui.iconBtn}
             aria-label="Abrir calendário (data final)"
             onMouseDown={(e) => e.preventDefault()}
             onClick={(e) => {
@@ -781,7 +780,7 @@ export default function DateRangeControl({
           onMouseUp={() => setActiveThumb(null)}
           onTouchEnd={() => setActiveThumb(null)}
           disabled={false}
-          style={{ ...ui.slider, zIndex: zFrom }}
+          style={{ ...ui.slider, zIndex: zFrom, pointerEvents: sliderIsInteractable ? "auto" : "none" }}
           aria-label="Ajustar data inicial"
         />
 
@@ -807,10 +806,12 @@ export default function DateRangeControl({
           onMouseUp={() => setActiveThumb(null)}
           onTouchEnd={() => setActiveThumb(null)}
           disabled={false}
-          style={{ ...ui.slider, zIndex: zTo }}
+          style={{ ...ui.slider, zIndex: zTo, pointerEvents: sliderIsInteractable ? "auto" : "none" }}
           aria-label="Ajustar data final"
         />
       </div>
     </div>
   );
 }
+
+

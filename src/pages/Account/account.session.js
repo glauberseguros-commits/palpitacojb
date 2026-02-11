@@ -8,12 +8,33 @@
 
 import { ACCOUNT_SESSION_KEY, SESSION_CHANGED_EVENT } from "./account.constants";
 
+function hasWindow() {
+  return typeof window !== "undefined";
+}
+
+function canUseLocalStorage() {
+  if (!hasWindow()) return false;
+  try {
+    const ls = window.localStorage;
+    if (!ls) return false;
+
+    // probe rápido para garantir que não é bloqueado (Safari private / políticas)
+    const k = "__pp_ls_probe__";
+    ls.setItem(k, "1");
+    ls.removeItem(k);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /* =========================
    Event
 ========================= */
 
 export function dispatchSessionChanged() {
   try {
+    if (!hasWindow()) return;
     window.dispatchEvent(new Event(SESSION_CHANGED_EVENT));
   } catch {}
 }
@@ -24,14 +45,16 @@ export function dispatchSessionChanged() {
 
 export function safeWriteSession(obj) {
   try {
-    localStorage.setItem(ACCOUNT_SESSION_KEY, JSON.stringify(obj));
+    if (!canUseLocalStorage()) return;
+    window.localStorage.setItem(ACCOUNT_SESSION_KEY, JSON.stringify(obj));
   } catch {}
   dispatchSessionChanged();
 }
 
 export function safeRemoveSession() {
   try {
-    localStorage.removeItem(ACCOUNT_SESSION_KEY);
+    if (!canUseLocalStorage()) return;
+    window.localStorage.removeItem(ACCOUNT_SESSION_KEY);
   } catch {}
   dispatchSessionChanged();
 }

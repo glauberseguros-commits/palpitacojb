@@ -29,3 +29,6 @@ backend/.env.local
 
 .vercel
 .env*.local
+
+backend/data/pt_rio_calendar_rules.json
+

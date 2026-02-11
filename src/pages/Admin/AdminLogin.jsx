@@ -203,11 +203,11 @@ export default function AdminLogin({ onAuthed, onCancel }) {
     const eMail = normEmail(email);
     const pWord = safeStr(pass);
 
-    if (!isEmailLike(eMail)) return setErr("Informe um e-mail válido.");
-    if (pWord.length < 6) return setErr("Senha deve ter pelo menos 6 caracteres.");
+    if (!isEmailLike(eMail)) return setSafeErr("Informe um e-mail válido.");
+    if (pWord.length < 6) return setSafeErr("Senha deve ter pelo menos 6 caracteres.");
 
-    setErr("");
-    setBusy(true);
+    setSafeErr("");
+    setSafeBusy(true);
     lockRef.current = true;
 
     try {
@@ -227,7 +227,7 @@ export default function AdminLogin({ onAuthed, onCancel }) {
       if (!ok) {
         await signOut(auth);
         safeRemoveLS(LS_ADMIN_LAST_UID);
-        setErr("Acesso negado: este usuário não é Admin do Palpitaco.");
+        setSafeErr("Acesso negado: este usuário não é Admin do Palpitaco.");
         return;
       }
 
@@ -236,10 +236,10 @@ export default function AdminLogin({ onAuthed, onCancel }) {
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error("[AdminLogin] auth error:", error?.code, error);
-      setErr(humanizeFirebaseAuthError(error));
+      setSafeErr(humanizeFirebaseAuthError(error));
     } finally {
       lockRef.current = false;
-      setBusy(false);
+      setSafeBusy(false);
     }
   };
 
@@ -415,3 +415,4 @@ export default function AdminLogin({ onAuthed, onCancel }) {
     </div>
   );
 }
+

@@ -16,7 +16,7 @@ function safeSetLS(key, value) {
   } catch {}
 }
 
-export default function LoginVisual({ onEnter }) {
+export default function LoginVisual({ onEnter, onSkip }) {
   // ✅ auditoria RJ somente em DEV (evita custo/log em produção)
   useEffect(() => {
     if (process.env.NODE_ENV === "production") return;
@@ -151,6 +151,16 @@ export default function LoginVisual({ onEnter }) {
         fontWeight: 950,
         cursor: "pointer",
       },
+
+      btnSecondary: {
+        height: 48,
+        borderRadius: 16,
+        border: "1px solid rgba(255,255,255,0.18)",
+        background: "rgba(255,255,255,0.06)",
+        color: WHITE,
+        fontWeight: 900,
+        cursor: "pointer",
+      },
     };
   }, []);
 
@@ -162,6 +172,18 @@ export default function LoginVisual({ onEnter }) {
     safeSetLS(LS_GUEST_ACTIVE_KEY, "0");
     dispatchSessionChanged();
     onEnter?.("dashboard");
+  };
+
+  
+
+  const enterGuest = () => {
+    safeSetLS(
+      ACCOUNT_SESSION_KEY,
+      JSON.stringify({ ok: true, type: "guest", plan: "FREE", ts: Date.now() })
+    );
+    safeSetLS(LS_GUEST_ACTIVE_KEY, "1");
+    dispatchSessionChanged();
+    onSkip?.();
   };
 
   return (
@@ -186,6 +208,10 @@ export default function LoginVisual({ onEnter }) {
               <button style={ui.btnPrimary} onClick={enterLogin}>
                 ENTRAR
               </button>
+
+              <button style={ui.btnSecondary} onClick={enterGuest}>
+                ENTRAR COMO CONVIDADO
+              </button>
             </div>
           </div>
         </div>
@@ -193,3 +219,5 @@ export default function LoginVisual({ onEnter }) {
     </div>
   );
 }
+
+

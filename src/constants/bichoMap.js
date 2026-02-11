@@ -72,7 +72,7 @@ function getPublicBase() {
   }
 
   // CRA
-  const craBase = String(process.env.PUBLIC_URL || "").trim();
+  const craBase = (typeof process !== "undefined" && process.env && typeof process.env.PUBLIC_URL === "string") ? String(process.env.PUBLIC_URL).trim() : "";
   if (craBase && craBase !== "/") return stripSlashes(craBase);
 
   return "";
@@ -319,3 +319,4 @@ export function getSlugByGrupo(grupo) {
   const b = getBichoByGrupo(grupo);
   return b?.slug || "";
 }
+

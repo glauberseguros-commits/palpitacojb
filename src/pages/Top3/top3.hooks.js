@@ -196,12 +196,11 @@ export function useTop3Controller() {
       }
 
       // hoje: precisamos de prizes para achar o 1º do último draw
-      const outToday = await getKingResultsByDate({
-        uf: lKey,
+      const outToday = await getKingResultsByDate({ uf: lKey,
         date: ymdSafe,
         closeHour: null,
         positions: null,
-      });
+      readPolicy: "server" });
       const today = Array.isArray(outToday) ? outToday : [];
 
       const last = findLastDrawInList(today, schedule);
@@ -248,14 +247,13 @@ export function useTop3Controller() {
       setRangeInfo({ from: rangeFrom, to: rangeTo });
 
       // IMPORTANTE: positions:null para contar aparições
-      const outRange = await getKingResultsByRange({
-        uf: lKey,
+      const outRange = await getKingResultsByRange({ uf: lKey,
         dateFrom: rangeFrom,
         dateTo: rangeTo,
         closeHour: null,
         positions: null,
         mode: "detailed",
-      });
+      readPolicy: "server" });
 
       const hist = Array.isArray(outRange) ? outRange : [];
       setRangeDraws(hist);
@@ -367,7 +365,7 @@ export function useTop3Controller() {
       targetText: `${ymdToBR(m.next.ymd)} ${m.next.hour}`,
       samples: Number(m.samples || 0),
     };
-  }, [analytics, getDowKey]);
+  }, [analytics]);
 
   const top3 = useMemo(() => {
     const arr = Array.isArray(analytics?.top) ? analytics.top : [];
@@ -480,3 +478,6 @@ export function useTop3Controller() {
     normalizeImgSrc,
   };
 }
+
+
+
