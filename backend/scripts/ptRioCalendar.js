@@ -1,4 +1,4 @@
-﻿"use strict";
+"use strict";
 
 const fs = require("fs");
 const path = require("path");
@@ -206,3 +206,32 @@ function getPtRioSlotsByDate(ymd) {
 }
 
 module.exports = { getPtRioSlotsByDate };
+
+/**
+ * CLI helper:
+ *   node backend/scripts/ptRioCalendar.js --date 2026-02-09
+ *   node backend/scripts/ptRioCalendar.js 2026-02-09
+ */
+if (require.main === module) {
+  const argv = process.argv.slice(2);
+  const pick = (k) => {
+    const i = argv.indexOf(k);
+    if (i >= 0 && argv[i + 1]) return argv[i + 1];
+    return null;
+  };
+  const ymd = pick("--date") || argv.find((x) => /^\d{4}-\d{2}-\d{2}$/.test(String(x || ""))) || null;
+
+  if (!ymd) {
+    console.log("usage: node backend/scripts/ptRioCalendar.js --date YYYY-MM-DD");
+    process.exit(2);
+  }
+
+  try {
+    const out = module.exports.getPtRioSlotsByDate(ymd);
+    console.log(JSON.stringify({ date: ymd, ...out }, null, 2));
+    process.exit(0);
+  } catch (e) {
+    console.error(e && e.stack ? e.stack : e);
+    process.exit(1);
+  }
+}

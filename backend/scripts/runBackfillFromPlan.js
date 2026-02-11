@@ -279,7 +279,7 @@ async function main() {
 
         // ✅ Se a fonte disse "não existe sorteio nesse slot", não é furo.
         // Para backfill, isso deve encerrar o slot como API_NO_SLOT imediatamente.
-        if (blocked && blockedReason === "no_draw_for_slot") {
+        if (blocked && (blockedReason === "no_draw_for_slot" || blockedReason === "no_draw_for_slot_calendar")) {
           slotRes.tries.push({
             closeHour,
             ok: true,
@@ -306,7 +306,7 @@ async function main() {
           console.log(
             "    [NO_DRAW] close=" +
               closeHour +
-              " API_NO_SLOT (blockedReason=no_draw_for_slot)"
+              " API_NO_SLOT (blockedReason=no_draw_for_slot|no_draw_for_slot_calendar)"
           );
 
           slotDone = true;
@@ -445,3 +445,4 @@ main().catch((e) => {
   console.error("ERRO:", e?.stack || e?.message || e);
   process.exit(1);
 });
+

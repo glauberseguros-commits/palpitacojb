@@ -1,4 +1,73 @@
-// 🔒 Normalização única de lottery_key
+"use strict";
+
+const express = require("express");
+const fs = require("fs");
+const path = require("path");
+const { getDb } = require("../service/firebaseAdmin");
+
+const router = express.Router();
+
+/* =========================
+   TIME (America/Sao_Paulo)
+========================= */
+
+function todayYMDInSaoPaulo() {
+  try {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Sao_Paulo",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(new Date());
+    const y = parts.find((p) => p.type === "year")?.value || "1970";
+    const m = parts.find((p) => p.type === "month")?.value || "01";
+    const d = parts.find((p) => p.type === "day")?.value || "01";
+    return `${y}-${m}-${d}`;
+  } catch {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${dd}`;
+  }
+}
+
+function nowMinutesInSaoPaulo() {
+  try {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "America/Sao_Paulo",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).formatToParts(new Date());
+
+    const hh = Number(parts.find((p) => p.type === "hour")?.value || "0");
+    const mm = Number(parts.find((p) => p.type === "minute")?.value || "0");
+    if (!Number.isFinite(hh) || !Number.isFinite(mm)) return 0;
+    return hh * 60 + mm;
+  } catch {
+    const d = new Date();
+    return d.getHours() * 60 + d.getMinutes();
+  }
+}
+
+function hourToMinutes(hh) {
+  const n = Number(String(hh ?? "").trim());
+  if (!Number.isFinite(n)) return NaN;
+  return n * 60;
+}
+
+function isSlotPublishedToday(hh, nowMin, graceMin) {
+  const hm = hourToMinutes(hh);
+  if (!Number.isFinite(hm)) return false;
+  const g = Number.isFinite(graceMin) ? graceMin : 25;
+  return nowMin >= hm + g;
+}
+
+/* =========================
+   LOTTERY KEY NORMALIZATION
+========================= */
+
 function normalizeLotteryKey(v) {
   const s = String(v || "").trim().toUpperCase();
   if (s === "RJ") return "PT_RIO";
@@ -6,33 +75,26 @@ function normalizeLotteryKey(v) {
   if (s === "PT-RIO") return "PT_RIO";
   return s || "PT_RIO";
 }
-'use strict';
 
-const express = require('express');
-const fs = require('fs');
-const path = require('path');
-const { getDb } = require('../service/firebaseAdmin');
+/* =========================
+   HELPERS
+========================= */
 
-const router = express.Router();
-
-/**
- * Helpers
- */
 function isISODate(s) {
-  return /^\d{4}-\d{2}-\d{2}$/.test(String(s || '').trim());
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
 }
 
 function isHHMM(s) {
-  return /^\d{2}:\d{2}$/.test(String(s || '').trim());
+  return /^\d{2}:\d{2}$/.test(String(s || "").trim());
 }
 
 function pad2(n) {
-  return String(n).padStart(2, '0');
+  return String(n).padStart(2, "0");
 }
 
 function normalizeHHMM(value) {
-  const s = String(value ?? '').trim();
-  if (!s) return '';
+  const s = String(value ?? "").trim();
+  if (!s) return "";
 
   if (isHHMM(s)) return s;
 
@@ -52,11 +114,11 @@ function normalizeHHMM(value) {
     return `${hh}:${mm}`;
   }
 
-  return '';
+  return "";
 }
 
 function hourFromCloseHour(closeHour) {
-  const s0 = String(closeHour ?? '').trim();
+  const s0 = String(closeHour ?? "").trim();
   if (!s0) return null;
   const m = s0.match(/(\d{1,2})/);
   if (!m) return null;
@@ -66,21 +128,25 @@ function hourFromCloseHour(closeHour) {
 }
 
 function cmpHHMM(a, b) {
-  return String(a || '').localeCompare(String(b || ''));
+  return String(a || "").localeCompare(String(b || ""));
 }
 
 function upTrim(v) {
-  return String(v ?? '').trim().toUpperCase();
+  return String(v ?? "").trim().toUpperCase();
 }
 
 function parseBool01(v) {
-  const s = String(v ?? '').trim().toLowerCase();
-  return s === '1' || s === 'true' || s === 'yes' || s === 'y';
+  const s = String(v ?? "").trim().toLowerCase();
+  return s === "1" || s === "true" || s === "yes" || s === "y";
 }
 
 function parsePosInt(v, def, min, max) {
-  const n = Number(String(v ?? '').trim());
+  const s = String(v ?? "").trim();
+  if (!s) return def; // ✅ evita Number('') => 0 quando v é undefined/empty
+
+  const n = Number(s);
   if (!Number.isFinite(n)) return def;
+
   const i = Math.trunc(n);
   if (Number.isFinite(min) && i < min) return min;
   if (Number.isFinite(max) && i > max) return max;
@@ -88,7 +154,9 @@ function parsePosInt(v, def, min, max) {
 }
 
 function uniqSorted(arr) {
-  return Array.from(new Set((Array.isArray(arr) ? arr : []).filter(Boolean))).sort();
+  return Array.from(
+    new Set((Array.isArray(arr) ? arr : []).filter(Boolean))
+  ).sort();
 }
 
 function setDiff(a, bSet) {
@@ -107,43 +175,21 @@ function intersectToSet(a, bSet) {
   return out;
 }
 
-/**
- * ✅ Hoje no fuso do Brasil (America/Sao_Paulo), em YYYY-MM-DD
- * - Sem libs externas
- * - Comparação lexicográfica funciona em ISO (YYYY-MM-DD)
- */
-function todayYMDInSaoPaulo() {
-  try {
-    // en-CA formata como YYYY-MM-DD
-    const fmt = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'America/Sao_Paulo',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    });
-    return fmt.format(new Date());
-  } catch {
-    // fallback: UTC (último recurso)
-    return new Date().toISOString().slice(0, 10);
-  }
-}
-
 function isFutureISODate(ymd) {
   if (!isISODate(ymd)) return false;
   const todayBR = todayYMDInSaoPaulo();
   return String(ymd) > String(todayBR);
 }
 
-/**
- * Day Status (cache em memória)
- * - Arquivo gerado: backend/data/day_status/<LOTTERY>.json
- * - Ex.: PT_RIO.json com { "YYYY-MM-DD": "normal|normal_partial|partial_hard|holiday_no_draw|incomplete" }
- */
+/* =========================
+   Day Status cache
+========================= */
+
 const _dayStatusCache = new Map(); // lottery -> { loadedAt, map }
 const DAY_STATUS_TTL_MS = 60_000; // 1 min (dev-friendly)
 
 function readDayStatusMap(lottery, opts) {
-  const key = upTrim(lottery || 'PT_RIO') || 'PT_RIO';
+  const key = upTrim(lottery || "PT_RIO") || "PT_RIO";
   const reload = !!(opts && opts.reload);
 
   const cached = _dayStatusCache.get(key);
@@ -151,13 +197,13 @@ function readDayStatusMap(lottery, opts) {
     return cached.map;
   }
 
-  const p = path.join(__dirname, '..', 'data', 'day_status', `${key}.json`);
+  const p = path.join(__dirname, "..", "data", "day_status", `${key}.json`);
   let map = {};
   try {
     if (fs.existsSync(p)) {
-      const raw = fs.readFileSync(p, 'utf8');
+      const raw = fs.readFileSync(p, "utf8");
       const j = raw ? JSON.parse(raw) : {};
-      if (j && typeof j === 'object') map = j;
+      if (j && typeof j === "object") map = j;
     }
   } catch {
     map = {};
@@ -169,49 +215,38 @@ function readDayStatusMap(lottery, opts) {
 
 function shouldBlockDayStatus(dayStatus, strict) {
   // sempre bloqueia
-  if (dayStatus === 'holiday_no_draw') return true;
-  if (dayStatus === 'incomplete') return true;
+  if (dayStatus === "holiday_no_draw") return true;
+  if (dayStatus === "incomplete") return true;
 
   // modo estrito: só dias "completos" (normal / normal_partial)
-  if (strict && dayStatus === 'partial_hard') return true;
+  if (strict && dayStatus === "partial_hard") return true;
 
   return false;
 }
 
-/**
- * ============================
- * SLOT SCHEDULE (normalização)
- * ============================
- * Objetivo: gerar o "universo de slots" do dia (hard + soft), para nunca faltar horário.
- *
- * Fonte primária: backend/data/slot_schedule/<LOTTERY>.json
- * Fallback: regras PT_RIO (compat) com include09From (mesmo padrão do audit)
- */
-const DEFAULT_SCHEDULE_DIR = path.join(__dirname, '..', 'data', 'slot_schedule');
-const DEFAULT_GAPS_DIR = path.join(__dirname, '..', 'data', 'source_gaps');
+/* =========================
+   SLOT SCHEDULE
+========================= */
+
+const DEFAULT_SCHEDULE_DIR = path.join(__dirname, "..", "data", "slot_schedule");
+const DEFAULT_GAPS_DIR = path.join(__dirname, "..", "data", "source_gaps");
 
 function safeReadJson(p, fallback) {
   try {
     if (!fs.existsSync(p)) return fallback;
-    const raw = fs.readFileSync(p, 'utf8');
-    const j = JSON.parse(raw || '{}');
-    return j && typeof j === 'object' ? j : fallback;
+    const raw = fs.readFileSync(p, "utf8");
+    const j = JSON.parse(raw || "{}");
+    return j && typeof j === "object" ? j : fallback;
   } catch {
     return fallback;
   }
 }
 
-/**
- * schedule pode ser:
- * - array de ranges: [{from,to,hours:[...]}, ...]
- * - ou objeto com ranges: { ranges: [...] }
- * - ou schedule global (sem ranges): { hours:[...]} ou { hard:[...], soft:[...] }
- */
 function normalizeHourList(arr) {
   const out = [];
   const seen = new Set();
   for (const v of Array.isArray(arr) ? arr : []) {
-    const m = String(v ?? '').match(/\d{1,2}/);
+    const m = String(v ?? "").match(/\d{1,2}/);
     if (!m) continue;
     const hh = pad2(Number(m[0]));
     const n = Number(hh);
@@ -229,10 +264,6 @@ function shouldInclude09ForDate(ymd, include09FromYmd) {
   return false;
 }
 
-/**
- * Fallback hardcoded (compat) — PT_RIO
- * Retorna { hard:[], soft:[] }
- */
 function expectedHoursPT_RIO_FALLBACK(ymd, include09FromYmd) {
   // dow SP (-03:00) no meio-dia evita edge de DST
   const d = new Date(`${ymd}T12:00:00-03:00`);
@@ -240,34 +271,28 @@ function expectedHoursPT_RIO_FALLBACK(ymd, include09FromYmd) {
 
   const has09 = shouldInclude09ForDate(ymd, include09FromYmd);
 
-  const hardWeek = ['11', '14', '16', '18', '21'];
-  const hardSun = ['11', '14', '16'];
+  const hardWeek = ["11", "14", "16", "18", "21"];
+  const hardSun = ["11", "14", "16"];
 
   const hard = [];
   const soft = [];
 
   if (dow === 0) {
     hard.push(...hardSun);
-    if (has09) soft.push('09'); // domingo 09 variável
-    return { hard, soft, mode: 'fallback', scheduleFile: false };
+    if (has09) soft.push("09"); // domingo 09 variável
+    return { hard, soft, mode: "fallback", scheduleFile: false };
   }
 
-  if (has09) hard.push('09');
+  if (has09) hard.push("09");
   hard.push(...hardWeek);
 
-  return { hard, soft, mode: 'fallback', scheduleFile: false };
+  return { hard, soft, mode: "fallback", scheduleFile: false };
 }
 
-/**
- * Ranges: aceita:
- * - {from,to} ambos presentes
- * - from vazio => aberto pra trás
- * - to vazio   => aberto pra frente
- */
 function pickRangeForDate(ranges, ymd) {
   for (const r of Array.isArray(ranges) ? ranges : []) {
-    const from0 = String(r?.from || '').trim();
-    const to0 = String(r?.to || '').trim();
+    const from0 = String(r?.from || "").trim();
+    const to0 = String(r?.to || "").trim();
 
     const hasFrom = isISODate(from0);
     const hasTo = isISODate(to0);
@@ -295,8 +320,8 @@ function parseScheduleGlobal(scheduleRaw) {
   const hard = normalizeHourList(scheduleRaw?.hard || scheduleRaw?.expectedHard || []);
   const soft = normalizeHourList(scheduleRaw?.soft || scheduleRaw?.expectedSoft || []);
   const hours = normalizeHourList(scheduleRaw?.hours || []);
-  if (hours.length) return { hard: hours, soft: [], mode: 'schedule', scheduleFile: true };
-  if (hard.length || soft.length) return { hard, soft, mode: 'schedule', scheduleFile: true };
+  if (hours.length) return { hard: hours, soft: [], mode: "schedule", scheduleFile: true };
+  if (hard.length || soft.length) return { hard, soft, mode: "schedule", scheduleFile: true };
   return null;
 }
 
@@ -308,7 +333,6 @@ function getExpectedForDate(lotteryKey, ymd, include09FromYmdDefault) {
   // 1) se schedule existir e for "global" (sem ranges), usa
   if (scheduleRaw) {
     const global = parseScheduleGlobal(scheduleRaw);
-    // se for objeto com ranges, global pode vir vazio; aí seguimos pros ranges
     if (global && (global.hard.length || global.soft.length)) return global;
   }
 
@@ -318,10 +342,8 @@ function getExpectedForDate(lotteryKey, ymd, include09FromYmdDefault) {
 
   if (r) {
     // ✅ Suporta schedule por dia da semana:
-    // r.dow = { "0":{hard,soft}, "1":{...}, ... }
-    // (usa meio-dia -03:00 pra evitar edge)
-    if (r.dow && typeof r.dow === 'object') {
-      const d = new Date(String(ymd) + 'T12:00:00-03:00');
+    if (r.dow && typeof r.dow === "object") {
+      const d = new Date(String(ymd) + "T12:00:00-03:00");
       const dow = String(d.getDay()); // 0=dom
       const block = r.dow[dow] || r.dow[Number(dow)] || null;
 
@@ -329,47 +351,36 @@ function getExpectedForDate(lotteryKey, ymd, include09FromYmdDefault) {
       const soft = normalizeHourList(block?.soft || block?.expectedSoft || []);
       const hours = normalizeHourList(block?.hours || []);
 
-      if (hours.length) {
-        return { hard: hours, soft: [], mode: 'schedule', scheduleFile: true };
-      }
-      return { hard, soft, mode: 'schedule', scheduleFile: true };
+      if (hours.length) return { hard: hours, soft: [], mode: "schedule", scheduleFile: true };
+      return { hard, soft, mode: "schedule", scheduleFile: true };
     }
 
-    // formato antigo: hard/soft/hours direto no range
+    // formato antigo
     const hard = normalizeHourList(r?.hard || r?.expectedHard || []);
     const soft = normalizeHourList(r?.soft || r?.expectedSoft || []);
     const hours = normalizeHourList(r?.hours || []);
-    if (hours.length) {
-      return { hard: hours, soft: [], mode: 'schedule', scheduleFile: true };
-    }
-    return { hard, soft, mode: 'schedule', scheduleFile: true };
+    if (hours.length) return { hard: hours, soft: [], mode: "schedule", scheduleFile: true };
+    return { hard, soft, mode: "schedule", scheduleFile: true };
   }
 
-  // 3) fallback: PT_RIO (mantém consistência com seu audit)
-  if (lotteryKey === 'PT_RIO') {
-    return expectedHoursPT_RIO_FALLBACK(ymd, include09FromYmdDefault || '2024-01-05');
+  // 3) fallback: PT_RIO
+  if (lotteryKey === "PT_RIO") {
+    return expectedHoursPT_RIO_FALLBACK(ymd, include09FromYmdDefault || "2024-01-05");
   }
 
-  // 4) sem schedule e sem fallback conhecido: universo vazio
-  return { hard: [], soft: [], mode: 'none', scheduleFile: scheduleFile };
+  // 4) universo vazio
+  return { hard: [], soft: [], mode: "none", scheduleFile };
 }
 
-/**
- * ============================
- * SOURCE GAPS (alinha com audit)
- * ============================
- * Arquivo: backend/data/source_gaps/<LOTTERY>.json
- * Aceita formatos comuns:
- * - { "YYYY-MM-DD": { removedHard:[18], removedSoft:[] } }
- * - { "YYYY-MM-DD": { removeHard:[...], removeSoft:[...] } }
- * - { "YYYY-MM-DD": { hard:[...], soft:[...] } }
- * - { "YYYY-MM-DD": [18] }  (interpreta como hard)
- */
+/* =========================
+   SOURCE GAPS
+========================= */
+
 const _gapsCache = new Map(); // lottery -> { loadedAt, map }
 const GAPS_TTL_MS = 60_000;
 
 function readGapsMap(lottery, opts) {
-  const key = upTrim(lottery || 'PT_RIO') || 'PT_RIO';
+  const key = upTrim(lottery || "PT_RIO") || "PT_RIO";
   const reload = !!(opts && opts.reload);
 
   const cached = _gapsCache.get(key);
@@ -381,9 +392,9 @@ function readGapsMap(lottery, opts) {
   let map = {};
   try {
     if (fs.existsSync(p)) {
-      const raw = fs.readFileSync(p, 'utf8');
+      const raw = fs.readFileSync(p, "utf8");
       const j = raw ? JSON.parse(raw) : {};
-      if (j && typeof j === 'object') map = j;
+      if (j && typeof j === "object") map = j;
     }
   } catch {
     map = {};
@@ -394,7 +405,6 @@ function readGapsMap(lottery, opts) {
 }
 
 function normalizeGapEntry(entry) {
-  // array => hard
   if (Array.isArray(entry)) {
     return {
       removedHard: normalizeHourList(entry),
@@ -402,19 +412,9 @@ function normalizeGapEntry(entry) {
     };
   }
 
-  const obj = entry && typeof entry === 'object' ? entry : {};
-  const hard =
-    obj.removedHard ||
-    obj.removeHard ||
-    obj.hard ||
-    obj.expectedRemovedHard ||
-    [];
-  const soft =
-    obj.removedSoft ||
-    obj.removeSoft ||
-    obj.soft ||
-    obj.expectedRemovedSoft ||
-    [];
+  const obj = entry && typeof entry === "object" ? entry : {};
+  const hard = obj.removedHard || obj.removeHard || obj.hard || obj.expectedRemovedHard || [];
+  const soft = obj.removedSoft || obj.removeSoft || obj.soft || obj.expectedRemovedSoft || [];
 
   return {
     removedHard: normalizeHourList(hard),
@@ -429,9 +429,10 @@ function getGapsForDate(lotteryKey, ymd, opts) {
   return normalizeGapEntry(entry);
 }
 
-/**
- * Concorrência limitada (evita flood e acelera)
- */
+/* =========================
+   CONCURRENCY
+========================= */
+
 async function mapWithConcurrency(items, limitN, mapper) {
   const arr = Array.isArray(items) ? items : [];
   const concurrency = Math.max(1, Number(limitN) || 6);
@@ -453,48 +454,113 @@ async function mapWithConcurrency(items, limitN, mapper) {
   return results;
 }
 
-/**
- * ============================
- * ROUTE
- * ============================
- */
+/* =========================
+   ROUTE
+========================= */
+
 // GET /api/pitaco/results?date=YYYY-MM-DD&lottery=PT_RIO
-// Opcional:
-// - &strict=1              (exclui também partial_hard)
-// - &reloadDayStatus=1     (recarrega arquivo day_status na hora)
-// - &reloadGaps=1          (recarrega arquivo source_gaps na hora)
-// - &includePrizes=0|1     (default 1; 0 = não busca subcoleção prizes)
-// - &limitDocs=120         (guard rail por dia; default 120; min 20 max 500)
-//
-// ✅ slots: universo normalizado do dia, com status (valid/gap/missing/soft_missing)
-router.get('/results', async (req, res) => {
-  // aceita ?lottery= ou ?uf=
-  const lotteryKey = normalizeLotteryKey(req.query.lottery || req.query.uf);
+// compat:
+// - aceita também ?uf= e ?lotteryKey=
+// - &strict=1
+// - &reloadDayStatus=1
+// - &reloadGaps=1
+// - &includePrizes=0|1 (default 1)
+// - &limitDocs=120 (min 20 max 500)
+// - &slotGraceMin=25
+// - &noCapToday=1
+
+function buildSlots(opts) {
+  const {
+    scheduleAll,
+    byHour,
+    baseSoft,
+    removedHardApplied,
+    removedSoftApplied,
+    expectedHard,
+    expectedSoft,
+    expectedHardPublished,
+    expectedSoftPublished,
+    capToday,
+    isToday,
+    nowMinBR,
+    slotGraceMin,
+  } = opts || {};
+
+  return (Array.isArray(scheduleAll) ? scheduleAll : []).map((hh) => {
+    const draw = byHour?.get ? byHour.get(hh) || null : null;
+
+    const isSoft = Array.isArray(baseSoft) && baseSoft.includes(hh);
+    const kind = isSoft ? "soft" : "hard";
+
+    // GAP (escusado)
+    if (removedHardApplied?.has?.(hh) || removedSoftApplied?.has?.(hh)) {
+      return { hour: hh, kind, status: "gap", reason: "source_gap", draw: null };
+    }
+
+    // válido
+    if (draw) return { hour: hh, kind, status: "valid", draw };
+
+    // ✅ HOJE + ainda não publicado → FUTURE
+    if (
+      capToday &&
+      isToday &&
+      ((expectedHard && expectedHard.includes(hh)) ||
+        (expectedSoft && expectedSoft.includes(hh)))
+    ) {
+      const published = isSlotPublishedToday(hh, nowMinBR, slotGraceMin);
+      if (!published) {
+        return {
+          hour: hh,
+          kind,
+          status: "future",
+          reason: "not_yet_published",
+          draw: null,
+        };
+      }
+    }
+
+    // faltante — apenas se já deveria ter saído
+    if (expectedHardPublished && expectedHardPublished.includes(hh)) {
+      return { hour: hh, kind: "hard", status: "missing", draw: null };
+    }
+    if (expectedSoftPublished && expectedSoftPublished.includes(hh)) {
+      return { hour: hh, kind: "soft", status: "soft_missing", draw: null };
+    }
+
+    // defensivo: não esperado
+    return { hour: hh, kind, status: "gap", reason: "not_expected", draw: null };
+  });
+}
+
+router.get("/results", async (req, res) => {
+  const slotGraceMin = parsePosInt(req.query.slotGraceMin, 25, 0, 240);
+  const noCapToday = parseBool01(req.query.noCapToday);
+  const capToday = !noCapToday;
+
+  // aceita ?lottery= ou ?lotteryKey= ou ?uf=
+  const lotteryKey = normalizeLotteryKey(
+    req.query.lotteryKey || req.query.lottery || req.query.uf
+  );
 
   try {
-    const date = String(req.query.date || '').trim();
+    const date = String(req.query.date || "").trim();
     const lottery = lotteryKey;
     const strict = parseBool01(req.query.strict);
     const reloadDayStatus = parseBool01(req.query.reloadDayStatus);
     const reloadGaps = parseBool01(req.query.reloadGaps);
 
-    const includePrizes = req.query.includePrizes == null
-      ? true
-      : parseBool01(req.query.includePrizes);
+    const includePrizes =
+      req.query.includePrizes == null ? true : parseBool01(req.query.includePrizes);
 
     const limitDocs = parsePosInt(req.query.limitDocs, 120, 20, 500);
 
-    if (!date) {
-      return res.status(400).json({ ok: false, error: 'date obrigatório' });
-    }
+    if (!date) return res.status(400).json({ ok: false, error: "date obrigatório" });
     if (!isISODate(date)) {
       return res
         .status(400)
-        .json({ ok: false, error: 'date inválido (use YYYY-MM-DD)' });
+        .json({ ok: false, error: "date inválido (use YYYY-MM-DD)" });
     }
-    if (!lottery) {
-      return res.status(400).json({ ok: false, error: 'lottery obrigatório' });
-    }
+    if (!lottery) return res.status(400).json({ ok: false, error: "lottery obrigatório" });
 
     // ✅ HARD GUARD: bloqueia datas futuras (fuso Brasil)
     if (isFutureISODate(date)) {
@@ -506,9 +572,9 @@ router.get('/results', async (req, res) => {
         strict,
         includePrizes,
         limitDocs,
-        dayStatus: '',
+        dayStatus: "",
         blocked: true,
-        blockedReason: 'future_date',
+        blockedReason: "future_date",
         todayBR,
         count: 0,
         draws: [],
@@ -516,17 +582,14 @@ router.get('/results', async (req, res) => {
       });
     }
 
-    // ✅ lê day_status (hint) — MAS vamos confirmar no Firestore antes de bloquear
+    // lê day_status (hint) — MAS vamos confirmar no Firestore antes de bloquear
     const dayStatusMap = readDayStatusMap(lottery, { reload: reloadDayStatus });
-    const dayStatus = String(dayStatusMap?.[date] || '').trim();
+    const dayStatus = String(dayStatusMap?.[date] || "").trim();
 
     const db = getDb();
 
-    /**
-     * Query mínima: SOMENTE date (evita índice composto)
-     * (vamos usar tanto pro “confirmar bloqueio” quanto pro fluxo normal)
-     */
-    const snap = await db.collection('draws').where('date', '==', date).get();
+    // Query mínima: SOMENTE date (evita índice composto)
+    const snap = await db.collection("draws").where("date", "==", date).get();
 
     // filtra lottery em memória, sem bater prizes ainda
     const docsAll = snap.docs.filter((doc) => {
@@ -535,8 +598,6 @@ router.get('/results', async (req, res) => {
     });
 
     // Se day_status mandar bloquear, confirma:
-    // - se NÃO tem docs => bloqueia
-    // - se TEM docs => NÃO bloqueia (prioriza dado real)
     if (dayStatus && shouldBlockDayStatus(dayStatus, strict)) {
       if (!docsAll.length) {
         return res.json({
@@ -548,7 +609,7 @@ router.get('/results', async (req, res) => {
           limitDocs,
           dayStatus,
           blocked: true,
-          blockedReason: 'day_status_confirmed_no_docs',
+          blockedReason: "day_status_confirmed_no_docs",
           count: 0,
           draws: [],
           slots: [],
@@ -557,20 +618,41 @@ router.get('/results', async (req, res) => {
       // existe dado real -> segue o fluxo normal
     }
 
-    // Guard rail: evita “flood” de subcoleções se algo vier muito sujo
+    // Guard rail
     const docsFound = docsAll.length;
     const docs = docsAll.slice(0, limitDocs);
     const docsCapped = docs.length !== docsFound;
 
     // Esperado (universo) do dia — hard + soft (BASE schedule)
-    // mantém consistência com audit: include09From default 2024-01-05
-    const include09FromDefault = '2024-01-05';
+    const include09FromDefault = "2024-01-05";
     const expectedBase = getExpectedForDate(lottery, date, include09FromDefault);
 
     const baseHard = expectedBase?.hard || [];
     const baseSoft = expectedBase?.soft || [];
 
-    // GAPS (source gaps) — alinha com audit
+    // ✅ CAP do dia atual
+    const todayBR = todayYMDInSaoPaulo();
+    const isToday = date === todayBR;
+    const nowMinBR = nowMinutesInSaoPaulo();
+
+    // DEBUG CAP TODAY
+    try {
+      const dbg18 = isSlotPublishedToday("18", nowMinBR, slotGraceMin);
+      const dbg21 = isSlotPublishedToday("21", nowMinBR, slotGraceMin);
+      console.log("[pitaco/results][capToday]", {
+        date,
+        todayBR,
+        isToday,
+        nowMinBR,
+        slotGraceMin,
+        dbg18,
+        dbg21,
+      });
+    } catch (e) {
+      console.log("[pitaco/results][capToday] debug error", e?.message || e);
+    }
+
+    // GAPS (source gaps)
     const gaps = getGapsForDate(lottery, date, { reload: reloadGaps });
     const removedHardSet = new Set(gaps.removedHard || []);
     const removedSoftSet = new Set(gaps.removedSoft || []);
@@ -583,11 +665,22 @@ router.get('/results', async (req, res) => {
     const expectedSoft = setDiff(baseSoft, removedSoftSet);
     const expectedAll = uniqSorted([...expectedHard, ...expectedSoft]);
 
+    // somente slots que já deveriam ter sido publicados hoje
+    const expectedHardPublished =
+      capToday && isToday
+        ? expectedHard.filter((hh) => isSlotPublishedToday(hh, nowMinBR, slotGraceMin))
+        : expectedHard;
+
+    const expectedSoftPublished =
+      capToday && isToday
+        ? expectedSoft.filter((hh) => isSlotPublishedToday(hh, nowMinBR, slotGraceMin))
+        : expectedSoft;
+
     // contagens removidas (somente se estavam no schedule base)
     const removedHardApplied = intersectToSet(baseHard, removedHardSet);
     const removedSoftApplied = intersectToSet(baseSoft, removedSoftSet);
 
-    // Se não incluir prizes, devolve só os docs (com close_hour normalizado) + slots
+    // Se não incluir prizes, devolve só os docs + slots
     if (!includePrizes) {
       const drawsNoPrizes = docs.map((doc) => {
         const d = doc.data() || {};
@@ -595,13 +688,14 @@ router.get('/results', async (req, res) => {
           id: doc.id,
           ...d,
           close_hour: normalizeHHMM(d.close_hour),
-          prizesCount: typeof d.prizesCount !== 'undefined' ? d.prizesCount : undefined,
+          prizesCount:
+            typeof d.prizesCount !== "undefined" ? d.prizesCount : undefined,
         };
       });
 
       drawsNoPrizes.sort((a, b) => cmpHHMM(a.close_hour, b.close_hour));
 
-      // mapa hour -> draw (se houver duplicidade de hora, escolhe close_hour menor)
+      // mapa hour -> draw
       const byHour = new Map();
       for (const dr of drawsNoPrizes) {
         const hh = hourFromCloseHour(dr?.close_hour);
@@ -610,51 +704,32 @@ router.get('/results', async (req, res) => {
         if (!prev) {
           byHour.set(hh, dr);
         } else {
-          const a = String(prev.close_hour || '');
-          const b = String(dr.close_hour || '');
+          const a = String(prev.close_hour || "");
+          const b = String(dr.close_hour || "");
           if (b && (!a || b < a)) byHour.set(hh, dr);
         }
       }
 
       const presentHours = uniqSorted(Array.from(byHour.keys()));
 
-      const slots = scheduleAll.map((hh) => {
-        const draw = byHour.get(hh) || null;
-
-        const isSoft = baseSoft.includes(hh);
-        const kind = isSoft ? 'soft' : 'hard';
-
-        // GAP (escusado)
-        if (removedHardApplied.has(hh) || removedSoftApplied.has(hh)) {
-          return {
-            hour: hh,
-            kind,
-            status: 'gap',
-            reason: 'source_gap',
-            draw: null,
-          };
-        }
-
-        // válido
-        if (draw) {
-          return { hour: hh, kind, status: 'valid', draw };
-        }
-
-        // faltante (problema)
-        if (expectedHard.includes(hh)) {
-          return { hour: hh, kind: 'hard', status: 'missing', draw: null };
-        }
-        if (expectedSoft.includes(hh)) {
-          return { hour: hh, kind: 'soft', status: 'soft_missing', draw: null };
-        }
-
-        // se chegou aqui, era um slot do schedule base, mas saiu do expected por alguma regra
-        // (em tese só aconteceria por gap, já tratado). Mantemos como gap defensivo.
-        return { hour: hh, kind, status: 'gap', reason: 'not_expected', draw: null };
+      const slots = buildSlots({
+        scheduleAll,
+        byHour,
+        baseSoft,
+        removedHardApplied,
+        removedSoftApplied,
+        expectedHard,
+        expectedSoft,
+        expectedHardPublished,
+        expectedSoftPublished,
+        capToday,
+        isToday,
+        nowMinBR,
+        slotGraceMin,
       });
 
       const slotsSummary = {
-        mode: expectedBase?.mode || 'none',
+        mode: expectedBase?.mode || "none",
         scheduleFile: !!expectedBase?.scheduleFile,
 
         scheduleHard: baseHard.length,
@@ -670,8 +745,8 @@ router.get('/results', async (req, res) => {
         removedHard: removedHardApplied.size,
         removedSoft: removedSoftApplied.size,
 
-        missingHard: slots.filter((s) => s.status === 'missing').length,
-        missingSoft: slots.filter((s) => s.status === 'soft_missing').length,
+        missingHard: slots.filter((s) => s.status === "missing").length,
+        missingSoft: slots.filter((s) => s.status === "soft_missing").length,
       };
 
       return res.json({
@@ -690,7 +765,7 @@ router.get('/results', async (req, res) => {
         count: drawsNoPrizes.length,
         draws: drawsNoPrizes,
 
-        // novo (alinhado com audit)
+        // novo
         expectedHard,
         expectedSoft,
         presentHours,
@@ -704,8 +779,8 @@ router.get('/results', async (req, res) => {
       const d = doc.data() || {};
 
       const prizesSnap = await doc.ref
-        .collection('prizes')
-        .orderBy('position', 'asc')
+        .collection("prizes")
+        .orderBy("position", "asc")
         .get();
 
       return {
@@ -716,10 +791,9 @@ router.get('/results', async (req, res) => {
       };
     });
 
-    // ordena por close_hour normalizado
     draws.sort((a, b) => cmpHHMM(a.close_hour, b.close_hour));
 
-    // mapa hour -> draw (se houver duplicidade de hora, escolhe close_hour menor)
+    // mapa hour -> draw
     const byHour = new Map();
     for (const dr of draws) {
       const hh = hourFromCloseHour(dr?.close_hour);
@@ -728,47 +802,32 @@ router.get('/results', async (req, res) => {
       if (!prev) {
         byHour.set(hh, dr);
       } else {
-        const a = String(prev.close_hour || '');
-        const b = String(dr.close_hour || '');
+        const a = String(prev.close_hour || "");
+        const b = String(dr.close_hour || "");
         if (b && (!a || b < a)) byHour.set(hh, dr);
       }
     }
 
     const presentHours = uniqSorted(Array.from(byHour.keys()));
 
-    const slots = scheduleAll.map((hh) => {
-      const draw = byHour.get(hh) || null;
-
-      const isSoft = baseSoft.includes(hh);
-      const kind = isSoft ? 'soft' : 'hard';
-
-      // GAP (escusado)
-      if (removedHardApplied.has(hh) || removedSoftApplied.has(hh)) {
-        return {
-          hour: hh,
-          kind,
-          status: 'gap',
-          reason: 'source_gap',
-          draw: null,
-        };
-      }
-
-      if (draw) {
-        return { hour: hh, kind, status: 'valid', draw };
-      }
-
-      if (expectedHard.includes(hh)) {
-        return { hour: hh, kind: 'hard', status: 'missing', draw: null };
-      }
-      if (expectedSoft.includes(hh)) {
-        return { hour: hh, kind: 'soft', status: 'soft_missing', draw: null };
-      }
-
-      return { hour: hh, kind, status: 'gap', reason: 'not_expected', draw: null };
+    const slots = buildSlots({
+      scheduleAll,
+      byHour,
+      baseSoft,
+      removedHardApplied,
+      removedSoftApplied,
+      expectedHard,
+      expectedSoft,
+      expectedHardPublished,
+      expectedSoftPublished,
+      capToday,
+      isToday,
+      nowMinBR,
+      slotGraceMin,
     });
 
     const slotsSummary = {
-      mode: expectedBase?.mode || 'none',
+      mode: expectedBase?.mode || "none",
       scheduleFile: !!expectedBase?.scheduleFile,
 
       scheduleHard: baseHard.length,
@@ -784,8 +843,8 @@ router.get('/results', async (req, res) => {
       removedHard: removedHardApplied.size,
       removedSoft: removedSoftApplied.size,
 
-      missingHard: slots.filter((s) => s.status === 'missing').length,
-      missingSoft: slots.filter((s) => s.status === 'soft_missing').length,
+      missingHard: slots.filter((s) => s.status === "missing").length,
+      missingSoft: slots.filter((s) => s.status === "soft_missing").length,
     };
 
     return res.json({
@@ -804,7 +863,7 @@ router.get('/results', async (req, res) => {
       count: draws.length,
       draws,
 
-      // novo (alinhado com audit)
+      // novo
       expectedHard,
       expectedSoft,
       presentHours,
@@ -812,7 +871,7 @@ router.get('/results', async (req, res) => {
       slots,
     });
   } catch (e) {
-    return res.status(500).json({ ok: false, error: e?.message || 'erro' });
+    return res.status(500).json({ ok: false, error: e?.message || "erro" });
   }
 });
 

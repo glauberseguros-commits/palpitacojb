@@ -2,9 +2,25 @@
 
 const axios = require("axios");
 
-const DATE = process.argv[2] || "2026-01-28";
-const ids = (process.argv[3] || "").split(",").map(s => s.trim()).filter(Boolean);
+function isISODate(s) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
+}
 
+function uniq(arr) {
+  return Array.from(new Set(arr));
+}
+const DATE = String(process.argv[2] || "2026-01-28").trim();
+const ids = uniq(
+  String(process.argv[3] || "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+);
+
+if (!isISODate(DATE)) {
+  console.log("ERRO: data inválida. Use YYYY-MM-DD.");
+  process.exit(1);
+}
 if (!ids.length) {
   console.log("Uso: node scripts/probeKingLotteryIds.js YYYY-MM-DD uuid1,uuid2,uuid3");
   process.exit(1);
@@ -19,17 +35,28 @@ async function main() {
     const url = `${base}?${params.toString()}`;
 
     try {
-      const { data } = await axios.get(url, {
+      const resp = await axios.get(url, {
         headers: {
           Accept: "application/json, text/plain, */*",
           Origin: "https://app.kingapostas.com",
           Referer: "https://app.kingapostas.com/",
         },
         timeout: 20000,
-        validateStatus: (s) => s >= 200 && s < 300,
+        validateStatus: () => true,
       });
 
-      const ok = !!data?.success && Array.isArray(data?.data);
+      const status = Number(resp?.status);
+      const data = resp?.data;
+
+      if (!(status >= 200 && status < 300)) {
+        const hint =
+          data && typeof data === "object"
+            ? JSON.stringify(data).slice(0, 250)
+            : String(data || "");
+        console.log(`[PROBE] id=${id} ERROR=HTTP_${status} body=${hint}`);
+        continue;
+      }
+const ok = !!data?.success && Array.isArray(data?.data);
       const n = ok ? data.data.length : -1;
 
       const closes = ok
@@ -44,4 +71,7 @@ async function main() {
   }
 }
 
-main();
+main().catch((e) => {
+  console.log("[PROBE] FATAL:", e?.stack || e?.message || e);
+  process.exit(1);
+});

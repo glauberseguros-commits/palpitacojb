@@ -81,9 +81,14 @@ const IMPORT_RETRY_DELAY_MS = Number.isFinite(
 function sleepMs(ms) {
   const n = Number(ms);
   if (!Number.isFinite(n) || n <= 0) return;
-  const end = Date.now() + n;
-  while (Date.now() < end) {
-    // busy sleep (script CLI). Evita async aqui.
+
+  // Bloqueante sem consumir CPU (bom para CLI)
+  try {
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, n);
+  } catch {
+    // fallback (muito raro): busy-wait
+    const end = Date.now() + n;
+    while (Date.now() < end) {}
   }
 }
 
@@ -164,7 +169,9 @@ function resolveGlobalMaxDate() {
 }
 
 function normLotteryKey(v) {
-  return String(v || "PT_RIO").trim().toUpperCase() || "PT_RIO";
+  const s = String(v || "").trim().toUpperCase();
+  if (s === "RJ" || s === "RIO" || s === "PT-RIO") return "PT_RIO";
+  return s || "PT_RIO";
 }
 
 /**
@@ -189,13 +196,15 @@ function runImportDay(importApostasPath, date, lotteryKey) {
       env: process.env,
     });
 
-    // spawnSync: se timeout, r.error pode ser ETIMEDOUT e status null
     const ok = r && r.status === 0;
     if (ok) return { ok: true, attempt, status: r.status };
 
+    // spawnSync: se timeout, r.error pode ser ETIMEDOUT e status null
     const timedOut =
-      (r && r.error && (r.error.code === "ETIMEDOUT" || r.error.code === "ETIMEDOUT")) ||
-      (r && r.signal === "SIGTERM" && r.status === null);
+      (r &&
+        r.error &&
+        (r.error.code === "ETIMEDOUT" || r.error.code === "ETIMEOUT")) ||
+      (r && (r.signal === "SIGTERM" || r.signal === "SIGKILL") && r.status === null);
 
     if (timedOut) {
       console.error(
@@ -203,9 +212,7 @@ function runImportDay(importApostasPath, date, lotteryKey) {
       );
     } else {
       const code = r?.status;
-      console.error(
-        `[FALHA] status=${code} em ${date} (${lotteryKey}).`
-      );
+      console.error(`[FALHA] status=${code} em ${date} (${lotteryKey}).`);
     }
 
     if (attempt < maxAttempts) {

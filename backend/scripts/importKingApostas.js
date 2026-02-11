@@ -146,6 +146,8 @@ const axios = require("axios");
  */
 const { admin, db } = require("../service/firebaseAdmin");
 
+
+const { getPtRioSlotsByDate } = require('./ptRioCalendar');
 /**
  * =========================
  * Config / toggles
@@ -1276,6 +1278,62 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
 
   const startedAt = Date.now();
 
+  
+  // ✅ GATE POR CALENDÁRIO (PT_RIO)
+  // Bloqueia slot NÃO esperado antes de chamar a API
+  if (normalizedClose && lk === 'PT_RIO') {
+    const cal = getPtRioSlotsByDate(date);
+    const expected = new Set((cal.core || []).concat(cal.opcional || []));
+    if (!expected.has(normalizedClose)) {
+      const ms0 = Date.now() - startedAt;
+      return {
+        ok: true,
+        lotteryKey: lk,
+        date,
+        closeHour: normalizedClose,
+        blocked: true,
+        blockedReason: 'no_draw_for_slot_calendar',
+        todayBR,
+        captured: false,
+        apiHasPrizes: false,
+        alreadyCompleteAny: false,
+        alreadyCompleteAll: false,
+        expectedTargets: 0,
+        alreadyCompleteCount: 0,
+        slotDocsFound: 0,
+        apiReturnedTargetDraws: 0,
+        savedCount: 0,
+        writeCount: 0,
+        targetDrawIds: [],
+        tookMs: ms0,
+        totalDrawsFromApi: 0,
+        totalDrawsMatchedClose: 0,
+        totalDrawsValid: 0,
+        totalDrawsSaved: 0,
+        totalDrawsUpserted: 0,
+        totalPrizesSaved: 0,
+        totalPrizesUpserted: 0,
+        skippedEmpty: 0,
+        skippedInvalid: 0,
+        skippedCloseHour: 0,
+        skippedAlreadyComplete: 0,
+        proof: {
+          filterClose: normalizedClose,
+          apiHasPrizes: false,
+          apiReturnedTargetDraws: 0,
+          targetDrawIds: [],
+          inferredDate: null,
+          expectedTargets: 0,
+          slotDocsFound: 0,
+          alreadyCompleteCount: 0,
+          alreadyCompleteAny: false,
+          alreadyCompleteAll: false,
+          targetWriteCount: 0,
+          targetSavedCount: 0
+        }
+      };
+    }
+  }
   const payload = await fetchKingResults({ date, lotteryKey: lk });
 
   // ✅ NOVO: se pediram closeHour e ele NÃO existe no dia (close_hours do FETCH),
@@ -1497,9 +1555,8 @@ async function main() {
   }
 
   console.log(
-    `[1/3] Buscando API: ${lk} ${date}${normalizedClose ? ` ${normalizedClose}` : ""}`
+    `STEP 1/3 Buscando API: ${lk} ${date}${normalizedClose ? ` ${normalizedClose}` : ""}`
   );
-
   const payload = await fetchKingResults({ date, lotteryKey: lk });
 
   // ✅ NOVO (CLI também): se pediram closeHour e ele não existe no dia, avisa e sai 0
@@ -1536,7 +1593,7 @@ async function main() {
   }
 
   console.log(
-    `[2/3] Processando ${
+    `STEP 2/3 Processando ${
       Array.isArray(payload?.data) ? payload.data.length : 0
     } draws retornados pela API...`
   );
@@ -1549,7 +1606,7 @@ async function main() {
   });
 
   console.log(
-    `[3/3] OK. Import concluído: ${lk} ${date}${normalizedClose ? ` ${normalizedClose}` : ""}`
+    `STEP 3/3 OK. Import concluído: ${lk} ${date}${normalizedClose ? ` ${normalizedClose}` : ""}`
   );
 }
 
@@ -1566,4 +1623,15 @@ module.exports = {
   importFromPayload,
   buildResultsUrl,
 };
+
+
+
+
+
+
+
+
+
+
+
 

@@ -7,6 +7,12 @@ function isISODate(s) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
 }
 
+function normalizeLotteryKey(v, fallback = "PT_RIO") {
+  const s = String(v ?? "").trim().toUpperCase();
+  if (s === "RJ" || s === "RIO" || s === "PT-RIO") return "PT_RIO";
+  return s || fallback;
+}
+
 function pad2(n) {
   return String(n).padStart(2, "0");
 }
@@ -121,12 +127,30 @@ async function fetchJson(url) {
   throw new Error("fetchJson: falha inesperada");
 }
 
+function isDayNoDraw({ blocked, dayStatus, blockedReason }) {
+  const ds = String(dayStatus || "").trim();
+  const br = String(blockedReason || "").trim();
+
+  // regra explícita do projeto: feriado sem sorteio encerra o dia
+  if (ds === "holiday_no_draw") return true;
+
+  // se está bloqueado e o status do dia indica no-draw, também é dia sem sorteio
+  if (blocked === true && ds === "holiday_no_draw") return true;
+
+  // (não tratamos no_draw_for_slot / no_draw_for_slot_calendar como bloqueio do DIA)
+  // esses são bloqueios de SLOT/horário e não devem zerar backfill do dia.
+  if (blocked === true && (br === "holiday_no_draw" || br === "day_no_draw"))
+    return true;
+
+  return false;
+}
+
 async function main() {
   const auditPathArg = process.argv[2];
   const baseUrl = String(process.argv[3] || "http://127.0.0.1:3333")
     .trim()
     .replace(/\/+$/, "");
-  const lottery = String(process.argv[4] || "PT_RIO").trim().toUpperCase();
+  const lottery = normalizeLotteryKey(process.argv[4] || "PT_RIO");
 
   if (!auditPathArg) {
     throw new Error(
@@ -146,22 +170,22 @@ async function main() {
     : [];
 
   // index por dia (evita find() dentro do loop)
+  // ✅ merge por ymd (se vier duplicado no audit)
   const missingMap = new Map();
   for (const x of missingHardByDay) {
     const ymd = String(x?.ymd || "").trim();
     if (!isISODate(ymd)) continue;
 
     const rawMissing = Array.isArray(x?.missing) ? x.missing : [];
-    const normalizedMissing = uniqSorted(
-      rawMissing
-        .map((hh) => {
-          const m = String(hh ?? "").match(/\d{1,2}/);
-          return m ? pad2(m[0]) : null;
-        })
-        .filter((hh) => /^\d{2}$/.test(String(hh || "")))
-    );
+    const normalizedMissing = rawMissing
+      .map((hh) => {
+        const m = String(hh ?? "").match(/\d{1,2}/);
+        return m ? pad2(m[0]) : null;
+      })
+      .filter((hh) => /^\d{2}$/.test(String(hh || "")));
 
-    missingMap.set(ymd, normalizedMissing);
+    const prev = missingMap.get(ymd) || [];
+    missingMap.set(ymd, uniqSorted(prev.concat(normalizedMissing)));
   }
 
   // ✅ dedup + sort por data (evita repetir dia, mantém plano estável)
@@ -169,7 +193,9 @@ async function main() {
 
   const rows = [];
   for (const ymd of dates) {
-    const url = `${baseUrl}/api/pitaco/results?date=${ymd}&lottery=${lottery}`;
+    const url = `${baseUrl}/api/pitaco/results?date=${encodeURIComponent(
+      ymd
+    )}&lottery=${encodeURIComponent(lottery)}`;
     const res = await fetchJson(url);
 
     const blocked = !!res?.blocked;
@@ -188,14 +214,17 @@ async function main() {
 
     const missing = missingMap.get(ymd) || [];
 
-    // ✅ regra: só backfill se não estiver bloqueado e tiver missing hard
-    const shouldBackfill = !blocked && missing.length > 0;
+    const dayNoDraw = isDayNoDraw({ blocked, dayStatus, blockedReason });
+
+    // ✅ regra: só backfill se tiver missingHard e NÃO for dia sem sorteio
+    const shouldBackfill = !dayNoDraw && missing.length > 0;
 
     rows.push({
       ymd,
       dayStatus,
       blocked,
       blockedReason,
+      dayNoDraw,
       presentHours,
       missingHard: missing,
       shouldBackfill,
@@ -210,6 +239,7 @@ async function main() {
     totals: {
       daysMissingHard: rows.length,
       daysBlocked: rows.filter((r) => r.blocked).length,
+      daysNoDraw: rows.filter((r) => r.dayNoDraw).length,
       daysToBackfill: rows.filter((r) => r.shouldBackfill).length,
       slotsToBackfill: rows
         .filter((r) => r.shouldBackfill)

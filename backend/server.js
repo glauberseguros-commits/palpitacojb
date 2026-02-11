@@ -1,8 +1,9 @@
-"use strict";
+﻿"use strict";
 
+/* =========================
+   LOTTERY KEY NORMALIZATION
+========================= */
 
-
-// 🔒 Normalização única de lottery_key
 function normalizeLotteryKey(v) {
   const s = String(v || "").trim().toUpperCase();
   if (s === "RJ") return "PT_RIO";
@@ -11,13 +12,16 @@ function normalizeLotteryKey(v) {
   return s || "PT_RIO";
 }
 
-
 function getLotteryFromReq(req, fallback = "PT_RIO") {
-  return normalizeLotteryKey(req?.query?.lottery || req?.query?.uf || fallback);
+  return normalizeLotteryKey(
+    req?.query?.lotteryKey || req?.query?.lottery || req?.query?.uf || fallback
+  );
 }
-/**
- * ENV loader (.env.local) — sem dotenv
- */
+
+/* =========================
+   ENV loader (.env.local) — sem dotenv
+========================= */
+
 const fs = require("fs");
 const path = require("path");
 
@@ -33,9 +37,7 @@ function parseEnvValue(val) {
   }
 
   // remove comentários inline: KEY=val # comment
-  // (apenas se houver espaço antes do #)
   v = v.replace(/\s+#.*$/, "").trim();
-
   return v;
 }
 
@@ -61,112 +63,141 @@ function parseEnvValue(val) {
       const key = s.slice(0, i).trim();
       const val = parseEnvValue(s.slice(i + 1));
 
-      if (!process.env[key]) {
-        process.env[key] = val;
-      }
+      if (!process.env[key]) process.env[key] = val;
     });
 
     console.log("[ENV] .env.local carregado");
   } catch (e) {
-    console.warn("[ENV] Falha ao carregar .env.local:", e.message);
+    console.warn("[ENV] Falha ao carregar .env.local:", e?.message || e);
   }
 })();
+
+/* =========================
+   APP
+========================= */
 
 const express = require("express");
 const app = express();
 
-/**
- * Config
- */
+/* =========================
+   CONFIG
+========================= */
+
 function parsePort(raw, fallback) {
   const s = String(raw ?? "").trim();
   if (!s) return fallback;
 
-  // aceita "3333" e 3333
   const n = Number(s);
   if (!Number.isFinite(n) || !Number.isInteger(n)) return fallback;
 
-  // portas válidas 1..65535 (0 é "random port", não queremos aqui)
   if (n < 1 || n > 65535) return fallback;
-
   return n;
 }
 
 const PORT = parsePort(process.env.PORT, 3333);
 
-// opcional: bind explícito (recomendado p/ evitar IPv6/localhost estranho)
 const HOST = (
   process.env.HOST ||
   (process.env.NODE_ENV === "production" ? "0.0.0.0" : "127.0.0.1")
 ).trim();
 
-/**
- * JSON + URLENCODED
- */
+/* =========================
+   BODY
+========================= */
+
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 
-/**
- * CORS simples (sem libs)
- * - Ajuste ALLOWED_ORIGINS se quiser travar em produção
- */
+/* =========================
+   CORS (DEV + PROD) — sem libs
+========================= */
+
 app.use((req, res, next) => {
   const origin = req.headers.origin;
 
-  // Se quiser travar: defina ALLOWED_ORIGINS="http://localhost:3000,https://seu-dominio"
-  const allowed = String(process.env.ALLOWED_ORIGINS || "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-
-  // Só setar Allow-Origin se houver origin (evita header inválido)
-  if (origin) {
-    if (!allowed.length) {
-      // modo dev: libera origem que vier
-      res.setHeader("Access-Control-Allow-Origin", origin);
-    } else if (allowed.includes(origin)) {
-      res.setHeader("Access-Control-Allow-Origin", origin);
-    }
+  // Sem Origin: curl/postman/SSR. Não inventa credenciais.
+  if (!origin) {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader(
+      "Access-Control-Allow-Methods",
+      "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+    );
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization");
+    return req.method === "OPTIONS" ? res.sendStatus(204) : next();
   }
 
+  let ok = false;
+
+  try {
+    const u = new URL(origin);
+    const h = String(u.hostname || "").toLowerCase();
+
+    const isLocalhost = h === "localhost" || h === "127.0.0.1" || h === "::1";
+
+    const isLan =
+      /^(\d{1,3}\.){3}\d{1,3}$/.test(h) &&
+      (h.startsWith("192.168.") ||
+        h.startsWith("10.") ||
+        /^172\.(1[6-9]|2\d|3[0-1])\./.test(h));
+
+    const isProd = h === "palpitacojb.com.br" || h.endsWith(".palpitacojb.com.br");
+
+    ok = isLocalhost || isLan || isProd;
+  } catch {
+    ok = false;
+  }
+
+  if (!ok) {
+    return res.status(403).json({ ok: false, error: "cors_blocked", origin });
+  }
+
+  // ✅ ecoa origin (obrigatório com credentials)
+  res.setHeader("Access-Control-Allow-Origin", origin);
   res.setHeader("Vary", "Origin");
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader(
     "Access-Control-Allow-Methods",
     "GET,POST,PUT,PATCH,DELETE,OPTIONS"
   );
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization");
 
   if (req.method === "OPTIONS") return res.sendStatus(204);
   next();
 });
 
-// ✅ NO-CACHE para API (blindagem contra cache de CDN/proxy)
+/* =========================
+   NO-CACHE
+========================= */
+
 app.use("/api", (req, res, next) => {
-  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.setHeader(
+    "Cache-Control",
+    "no-store, no-cache, must-revalidate, proxy-revalidate"
+  );
   res.setHeader("Pragma", "no-cache");
   res.setHeader("Expires", "0");
   res.setHeader("Surrogate-Control", "no-store");
   next();
 });
 
-// ✅ NO-CACHE para health
 app.use("/health", (req, res, next) => {
-  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.setHeader(
+    "Cache-Control",
+    "no-store, no-cache, must-revalidate, proxy-revalidate"
+  );
   res.setHeader("Pragma", "no-cache");
   res.setHeader("Expires", "0");
   res.setHeader("Surrogate-Control", "no-store");
   next();
 });
 
-/**
- * Firebase Admin init (centralizado)
- * Usa service/firebaseAdmin.js (CommonJS) com ADC.
- */
+/* =========================
+   Firebase Admin init
+========================= */
+
 const { initAdmin } = require("./service/firebaseAdmin");
 
 (function bootAdmin() {
-  // ✅ PRODUÇÃO: se vier JSON, grava cred temporária e seta GOOGLE_APPLICATION_CREDENTIALS
   try {
     const json = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
     if (json && !process.env.GOOGLE_APPLICATION_CREDENTIALS) {
@@ -178,11 +209,10 @@ const { initAdmin } = require("./service/firebaseAdmin");
   } catch (e) {
     console.warn("[WARN] Falha ao preparar cred JSON:", e?.message || e);
   }
-const credPath = process.env.GOOGLE_APPLICATION_CREDENTIALS || "";
+
+  const credPath = process.env.GOOGLE_APPLICATION_CREDENTIALS || "";
   if (!credPath) {
-    console.warn(
-      "[WARN] GOOGLE_APPLICATION_CREDENTIALS não definido. Admin SDK pode falhar."
-    );
+    console.warn("[WARN] GOOGLE_APPLICATION_CREDENTIALS não definido. Admin SDK pode falhar.");
   } else {
     console.log("[INFO] GOOGLE_APPLICATION_CREDENTIALS:", credPath);
   }
@@ -195,9 +225,10 @@ const credPath = process.env.GOOGLE_APPLICATION_CREDENTIALS || "";
   }
 })();
 
-/**
- * Utils
- */
+/* =========================
+   UTILS (datas/horas)
+========================= */
+
 function isISODate(s) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(s || ""));
 }
@@ -212,6 +243,23 @@ function pad2(n) {
 
 function safeStr(v) {
   return String(v ?? "").trim();
+}
+
+function brTodayYmd() {
+  try {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Sao_Paulo",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(new Date());
+    const y = parts.find((p) => p.type === "year")?.value || "1970";
+    const m = parts.find((p) => p.type === "month")?.value || "01";
+    const d = parts.find((p) => p.type === "day")?.value || "01";
+    return `${y}-${m}-${d}`;
+  } catch {
+    return new Date().toISOString().slice(0, 10);
+  }
 }
 
 function normalizeHourLike(value) {
@@ -277,9 +325,7 @@ function addDaysUTC(ymd, days) {
   const dt = ymdToUTCDate(ymd);
   if (!dt) return ymd;
   dt.setUTCDate(dt.getUTCDate() + Number(days || 0));
-  return `${dt.getUTCFullYear()}-${pad2(dt.getUTCMonth() + 1)}-${pad2(
-    dt.getUTCDate()
-  )}`;
+  return `${dt.getUTCFullYear()}-${pad2(dt.getUTCMonth() + 1)}-${pad2(dt.getUTCDate())}`;
 }
 
 function daysDiffUTC(fromYmd, toYmd) {
@@ -289,25 +335,6 @@ function daysDiffUTC(fromYmd, toYmd) {
   const ms = db.getTime() - da.getTime();
   return Math.floor(ms / 86400000);
 }
-
-function utcTodayYmd() {
-  const d = new Date();
-  const y = d.getUTCFullYear();
-  const m = pad2(d.getUTCMonth() + 1);
-  const dd = pad2(d.getUTCDate());
-  return `${y}-${m}-${dd}`;
-}
-
-function brTodayYmd() {
-  // BR = UTC-03 (sem DST)
-  const now = new Date();
-  const br = new Date(now.getTime() - 3 * 60 * 60 * 1000);
-  const y = br.getUTCFullYear();
-  const m = pad2(br.getUTCMonth() + 1);
-  const d = pad2(br.getUTCDate());
-  return `${y}-${m}-${d}`;
-}
-
 
 function isValidGrupo(n) {
   const v = Number(n);
@@ -354,11 +381,12 @@ function pickPrizePositionFromAny(prizeLike) {
   return Number.isFinite(pos) ? pos : null;
 }
 
-/**
- * Healthcheck
- */
+/* =========================
+   HEALTH
+========================= */
+
 app.get("/health", (req, res) => {
-    const lk = getLotteryFromReq(req);
+  const lk = getLotteryFromReq(req);
   res.json({
     ok: true,
     service: "palpitaco-backend",
@@ -366,120 +394,103 @@ app.get("/health", (req, res) => {
     host: HOST,
     port: PORT,
     pid: process.pid,
-      lotteryKey: lk,
+    lotteryKey: lk,
   });
-
 });
 
-/**
- * Routes existentes
- */
+/* =========================
+   ROUTES
+========================= */
+
 const pitacoResults = require("./routes/pitacoResults");
 const kingDraws = require("./routes/kingDraws");
 const receiveResults = require("./routes/receiveResults");
-
-
 const bounds = require("./routes/bounds");
+
 app.use("/api/pitaco", pitacoResults);
 app.use("/api/king", kingDraws);
 app.use("/api", receiveResults);
-
-
 app.use("/api", bounds);
+
 /* =========================================================
    ✅ /api/lates — ATRASADOS (server-side, Admin SDK)
-   - Compatível com teu curl:
-     /api/lates?lottery=PT_RIO&modality=PT&prize=1&page=1&pageSize=25
-   - Implementação:
-     varre dias pra trás e acha a última aparição do grupo (1..25)
-     no prêmio solicitado (1..5), opcionalmente filtrando por hourBucket.
-   - Não depende do front SDK.
 ========================================================= */
 
 app.get("/api/lates", async (req, res) => {
-  // aceita ?lottery= ou ?uf=
   try {
     const admin = require("firebase-admin");
     const db = admin.firestore();
 
-    // params
-    const lottery = getLotteryFromReq(req); // usa ?lottery= ou ?uf=
+    const lottery = getLotteryFromReq(req);
 
-    // regra RJ/PT_RIO (lock) — precisa existir ANTES de qualquer return/guard (evita TDZ)
+    // regra RJ/PT_RIO (lock)
     const RJ_LOCK_LOTTERY_KEY = "PT_RIO";
     const RJ_LOCK_UF = "RJ";
     const targetLotteryKey = lottery === "RJ" ? RJ_LOCK_LOTTERY_KEY : lottery;
 
-const modality = safeStr(req.query.modality || "PT").toUpperCase(); // reservado (não quebra compat)
+    const modality = safeStr(req.query.modality || "PT").toUpperCase();
     const prizeRaw = safeStr(req.query.prize || "1");
     const page = Math.max(1, Number(req.query.page || 1) || 1);
-    const pageSize = Math.max(1, Math.min(100, Number(req.query.pageSize || 25) || 25));
+    const pageSize = Math.max(
+      1,
+      Math.min(100, Number(req.query.pageSize || 25) || 25)
+    );
 
-    // closeHour / bucket (opcional)
-    // - aceita closeHour=18:00  OU  closeHourBucket=18h  OU  hour=18h
     const closeHour = safeStr(req.query.closeHour || "");
     const closeHourBucket = safeStr(req.query.closeHourBucket || req.query.hour || "");
     const hourBucket = toHourBucket(closeHourBucket || closeHour);
 
-    // baseDate (opcional)
     const baseDateParam = safeStr(req.query.baseDate || req.query.date || "");
     const baseYmd = isISODate(baseDateParam) ? baseDateParam : "";
 
     const PROBE_LOOKBACK_DAYS = 60;
     const baseDateSource = baseYmd ? "param" : "brToday";
     const baseDateYmd = baseYmd || brTodayYmd();
-    const scanStartYmd = baseYmd || (await probeRecentMaxYmd(PROBE_LOOKBACK_DAYS));
 
-
-    // regra RJ/PT_RIO (lock)
-    // - No teu Firestore, RJ é uf="RJ" + lottery_key="PT_RIO"
-    // - Pra evitar vazamento, preferimos filtrar por lottery_key PT_RIO.
-// [DUP_REMOVIDO]     const RJ_LOCK_LOTTERY_KEY = "PT_RIO";
-// [DUP_REMOVIDO]     const RJ_LOCK_UF = "RJ";
-// [DUP_REMOVIDO]     const targetLotteryKey = lottery === "RJ" ? RJ_LOCK_LOTTERY_KEY : lottery;
-
-    // positions: 1..5 (ou "1-5" se quiser)
+    // positions
     let positions = [];
     if (prizeRaw === "1-5") positions = [1, 2, 3, 4, 5];
     else {
       const p = Number(prizeRaw);
       if (!Number.isFinite(p) || p < 1 || p > 10) {
-        return res.status(400).json({ ok: false, error: "prize inválido (use 1..5 ou 1-5)" });
+        return res
+          .status(400)
+          .json({ ok: false, error: "prize inválido (use 1..5 ou 1-5)" });
       }
       positions = [p];
     }
-    // NOTE: rota /api/lates é tipicamente 1..5 (não 7º centena), mas não bloqueio.
 
-    // -----------------------------------------------------
-    // Helper: busca draws de um dia (sem índice composto)
-    // - where(ymd==day) é índice simples e estável.
-    // - filtramos em memória por RJ lock e hourBucket.
-    // -----------------------------------------------------
     async function fetchDayDraws(dayYmd) {
-      const snap = await db
-        .collection("draws")
-        .where("ymd", "==", dayYmd)
-        .get();
+      const snap = await db.collection("draws").where("ymd", "==", dayYmd).get();
 
       const draws = [];
       snap.forEach((doc) => {
         const d = doc.data() || {};
         const ymd = safeStr(d.ymd || "");
-        const close_hour = normalizeHourLike(d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? "");
+        const close_hour = normalizeHourLike(
+          d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? ""
+        );
         const uf = safeStr(d.uf || "").toUpperCase();
-        const lottery_key = safeStr(d.lottery_key ?? d.lotteryKey ?? d.lottery ?? "").toUpperCase();
-        const lottery_code = safeStr(d.lottery_code ?? d.lotteryCode ?? d.lot_code ?? d.lotCode ?? d.lot ?? d.code ?? "").toUpperCase();
+        const lottery_key = safeStr(
+          d.lottery_key ?? d.lotteryKey ?? d.lottery ?? ""
+        ).toUpperCase();
+        const lottery_code = safeStr(
+          d.lottery_code ??
+            d.lotteryCode ??
+            d.lot_code ??
+            d.lotCode ??
+            d.lot ??
+            d.code ??
+            ""
+        ).toUpperCase();
 
-        // lock RJ/PT_RIO
         if (targetLotteryKey === RJ_LOCK_LOTTERY_KEY) {
           if (lottery_key && lottery_key !== RJ_LOCK_LOTTERY_KEY) return;
           if (uf && uf !== RJ_LOCK_UF) return;
         } else {
-          // se não for RJ, ao menos respeita lottery_key quando existir
           if (lottery_key && lottery_key !== targetLotteryKey) return;
         }
 
-        // filtro por bucket
         if (hourBucket) {
           if (toHourBucket(close_hour) !== hourBucket) return;
         }
@@ -495,16 +506,10 @@ const modality = safeStr(req.query.modality || "PT").toUpperCase(); // reservado
         });
       });
 
-      // ordena do mais recente p/ mais antigo no dia (hora DESC)
       draws.sort((a, b) => hourToNumSafe(b.close_hour) - hourToNumSafe(a.close_hour));
       return draws;
     }
 
-    // -----------------------------------------------------
-    // Helper: pega grupo do prêmio (pos) num draw
-    // - tenta embedded prizes
-    // - senão consulta subcollection draws/{id}/prizes (server)
-    // -----------------------------------------------------
     async function findGrupoForDrawPosition(drawId, embeddedPrizes, posWanted) {
       if (Array.isArray(embeddedPrizes) && embeddedPrizes.length) {
         for (const p of embeddedPrizes) {
@@ -515,8 +520,6 @@ const modality = safeStr(req.query.modality || "PT").toUpperCase(); // reservado
         }
       }
 
-      // fallback subcollection
-      // (where position==N é índice simples)
       const snap = await db
         .collection("draws")
         .doc(String(drawId))
@@ -536,12 +539,6 @@ const modality = safeStr(req.query.modality || "PT").toUpperCase(); // reservado
       return bestG;
     }
 
-    // -----------------------------------------------------
-    // Descobre baseYmd se não veio:
-    // - varre últimos 60 dias procurando o dia mais recente que tenha draw RJ/PT_RIO
-    // -----------------------------------------------------
-
-
     async function probeRecentMaxYmd(lookbackDays = 60) {
       const base = brTodayYmd();
       const n = Math.max(3, Math.min(180, Number(lookbackDays) || 60));
@@ -554,9 +551,8 @@ const modality = safeStr(req.query.modality || "PT").toUpperCase(); // reservado
       return "";
     }
 
-// [DUP_REMOVIDO]     const PROBE_LOOKBACK_DAYS = 60;
-// [DUP_REMOVIDO]     const baseDateSource = baseYmd ? "param" : "brToday";
-// [DUP_REMOVIDO]     const scanStartYmd = baseYmd || (await probeRecentMaxYmd(PROBE_LOOKBACK_DAYS));
+    const scanStartYmd = baseYmd || (await probeRecentMaxYmd(PROBE_LOOKBACK_DAYS));
+
     if (!baseDateYmd) {
       return res.json({
         ok: true,
@@ -581,25 +577,17 @@ const modality = safeStr(req.query.modality || "PT").toUpperCase(); // reservado
       });
     }
 
-    // -----------------------------------------------------
-    // Core: varre histórico (chunk por dias) até achar todos os 25 grupos
-    // -----------------------------------------------------
     const lastSeen = new Map(); // grupo -> { ymd, closeHour, drawId, lottery_code }
-    const MAX_LOOKBACK_DAYS = 370; // segurança (1 ano)
+    const MAX_LOOKBACK_DAYS = 370;
     let cursor = scanStartYmd;
 
-    // guard para evitar loop infinito
     for (let iter = 0; iter < MAX_LOOKBACK_DAYS && lastSeen.size < 25; iter += 1) {
       const dayDraws = await fetchDayDraws(cursor);
 
       for (const d of dayDraws) {
-        // para cada posição desejada, tenta achar grupo
         for (const posWanted of positions) {
-          // se já fechou tudo, para
           if (lastSeen.size >= 25) break;
 
-          // tenta achar o grupo desse prêmio
-          // (se o grupo já está marcado, ignora)
           const g = await findGrupoForDrawPosition(d.id, d.embeddedPrizes, posWanted);
           if (!isValidGrupo(g)) continue;
           if (lastSeen.has(g)) continue;
@@ -616,16 +604,9 @@ const modality = safeStr(req.query.modality || "PT").toUpperCase(); // reservado
         if (lastSeen.size >= 25) break;
       }
 
-      // próximo dia
       cursor = addDaysUTC(cursor, -1);
     }
 
-    // -----------------------------------------------------
-    // Monta rows (1..25), calcula atraso, e ordena como seu serviço:
-    // - atrasoDias DESC
-    // - lastHour ASC
-    // - grupo ASC
-    // -----------------------------------------------------
     const rowsAll = [];
     for (let g = 1; g <= 25; g += 1) {
       const seen = lastSeen.get(g) || null;
@@ -659,7 +640,6 @@ const modality = safeStr(req.query.modality || "PT").toUpperCase(); // reservado
 
     const ranked = sorted.map((r, idx) => ({ ...r, pos: idx + 1 }));
 
-    // paginação
     const total = ranked.length;
     const start = (page - 1) * pageSize;
     const end = start + pageSize;
@@ -693,33 +673,23 @@ const modality = safeStr(req.query.modality || "PT").toUpperCase(); // reservado
   }
 });
 
-/**
- * IMPORT (Opção A)
- * - manual: importa uma data (e opcionalmente um close_hour)
- * - window: percorre horários e para quando capturar (gravou >= 1 draw)
- */
+/* =========================
+   IMPORT
+========================= */
+
 const { runImport } = require("./scripts/importKingApostas");
 
-/**
- * GET /api/import/manual?date=YYYY-MM-DD&lottery=PT_RIO&close=HH:MM
- * - close é opcional
- */
 app.get("/api/import/manual", async (req, res) => {
-  // aceita ?lottery= ou ?uf=
   try {
     const date = String(req.query.date || "").trim();
     const lk = getLotteryFromReq(req);
-const closeHour = req.query.close ? String(req.query.close).trim() : null;
+    const closeHour = req.query.close ? String(req.query.close).trim() : null;
 
     if (!isISODate(date)) {
-      return res
-        .status(400)
-        .json({ ok: false, error: "date inválido (use YYYY-MM-DD)" });
+      return res.status(400).json({ ok: false, error: "date inválido (use YYYY-MM-DD)" });
     }
     if (closeHour && !isHHMM(closeHour)) {
-      return res
-        .status(400)
-        .json({ ok: false, error: "close inválido (use HH:MM)" });
+      return res.status(400).json({ ok: false, error: "close inválido (use HH:MM)" });
     }
 
     const result = await runImport({
@@ -734,18 +704,13 @@ const closeHour = req.query.close ? String(req.query.close).trim() : null;
   }
 });
 
-/**
- * GET /api/import/window?date=YYYY-MM-DD&lottery=PT_RIO&hours=09:09,11:09,14:09,16:09&stop=1
- */
 app.get("/api/import/window", async (req, res) => {
-  // aceita ?lottery= ou ?uf=
   try {
     const date = String(req.query.date || "").trim();
     const lk = getLotteryFromReq(req);
-if (!isISODate(date)) {
-      return res
-        .status(400)
-        .json({ ok: false, error: "date inválido (use YYYY-MM-DD)" });
+
+    if (!isISODate(date)) {
+      return res.status(400).json({ ok: false, error: "date inválido (use YYYY-MM-DD)" });
     }
 
     const stop = String(req.query.stop ?? "1").trim() !== "0";
@@ -807,17 +772,14 @@ if (!isISODate(date)) {
   }
 });
 
-/**
- * 404
- */
+/* =========================
+   404 + ERROR
+========================= */
+
 app.use((req, res) => {
-  // aceita ?lottery= ou ?uf=
   res.status(404).json({ ok: false, error: "not_found", path: req.path });
 });
 
-/**
- * Error handler (último middleware)
- */
 app.use((err, req, res, next) => {
   console.error("[ERR] Unhandled error:", err);
   if (res.headersSent) return next(err);
@@ -828,9 +790,10 @@ app.use((err, req, res, next) => {
   });
 });
 
-/**
- * Process-level safety nets
- */
+/* =========================
+   PROCESS SAFETY NETS
+========================= */
+
 process.on("unhandledRejection", (reason) => {
   console.error("[ERR] unhandledRejection:", reason);
 });
@@ -838,9 +801,10 @@ process.on("uncaughtException", (err) => {
   console.error("[ERR] uncaughtException:", err);
 });
 
-/**
- * Start (robusto)
- */
+/* =========================
+   START
+========================= */
+
 const server = app.listen(PORT, HOST);
 
 server.on("listening", () => {
@@ -849,7 +813,6 @@ server.on("listening", () => {
   console.log(`[START] health: http://${HOST}:${PORT}/health`);
 });
 
-// se algum módulo fizer unref() no server, isso força manter o loop vivo
 if (typeof server.ref === "function") {
   server.ref();
 }
@@ -862,20 +825,9 @@ server.on("close", () => {
   console.warn("[WARN] server close fired");
 });
 
-// opcional: loga se algo está encerrando o processo
 process.on("beforeExit", (code) => {
   console.warn("[WARN] beforeExit code=", code);
 });
 process.on("exit", (code) => {
   console.warn("[WARN] exit code=", code);
 });
-
-
-
-
-
-
-
-
-
-

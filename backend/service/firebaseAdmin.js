@@ -57,7 +57,9 @@ function fail(msg) {
 
 function safeJsonParse(v) {
   try {
-    const o = JSON.parse(String(v || ""));
+    const raw = String(v || "").replace(/^\uFEFF/, "").trim();
+    if (!raw) return null;
+    const o = JSON.parse(raw);
     return o && typeof o === "object" ? o : null;
   } catch {
     return null;
@@ -332,3 +334,4 @@ Object.defineProperty(exportsObj, "db", {
 });
 
 module.exports = exportsObj;
+

@@ -904,19 +904,19 @@ async function main() {
         }
 
         // ✅ Se o import disse "no_draw_for_slot", isso NÃO é furo.
-        if (r && r.blocked === true && String(r.blockedReason || "").trim() === "no_draw_for_slot") {
+        if (r && r.blocked === true && (String(r.blockedReason || "").trim() === "no_draw_for_slot" || String(r.blockedReason || "").trim() === "no_draw_for_slot_calendar")) {
           // Em qualquer dia: não marca "DONE", mantém pendente p/ retry (exceto se calendário for OFF, que já virou N/A acima)
           slot.lastResult = {
             ...(slot.lastResult || {}),
             ok: true,
             closeHourTried: closeHour,
             blocked: true,
-            blockedReason: "no_draw_for_slot",
-            note: "no_draw_for_slot (will retry)",
+            blockedReason: String(r.blockedReason || "").trim(),
+            note: "no_draw_for_slot|no_draw_for_slot_calendar (will retry)",
           };
           saveState(date, state);
 
-          logLine(`[AUTO] no_draw_for_slot slot=${sched.hour} (${st}) -> mantendo PENDENTE p/ retry`, "INFO");
+          logLine(`[AUTO] ${String(r.blockedReason || "").trim()} slot=${sched.hour} (${st}) -> mantendo PENDENTE p/ retry`, "INFO");
           didSomething = true;
           break;
         }
@@ -1040,6 +1040,8 @@ main().catch((e) => {
   releaseLock();
   process.exit(1);
 });
+
+
 
 
 
