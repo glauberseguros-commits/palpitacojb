@@ -155,10 +155,12 @@ function makeImgVariants(src) {
 function RowImg({ variants, alt, fallbackText }) {
   const [failed, setFailed] = useState(false);
 
+  const primary = variants?.[0] || "";
+
   // ✅ quando variants muda (nova linha/grupo), reseta o fallback
   useEffect(() => {
     setFailed(false);
-  }, [variants?.[0]]); // muda o "principal" => reseta
+  }, [primary]); // muda o "principal" => reseta
 
   if (!variants.length || failed) {
     return <div className="imgFallback">{fallbackText || "—"}</div>;
@@ -572,5 +574,6 @@ export default function SearchResultsTable({
     </div>
   );
 }
+
 
 
