@@ -159,29 +159,46 @@ function hasActiveSession() {
 
 function normalizeLoteriaInput(v) {
   const raw = String(v ?? "").trim();
+
+  // ✅ default só quando realmente não veio nada
   if (!raw) return "PT_RIO";
+
+  // base para comparar aliases (minúsculo, sem acento)
   const key = raw
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/\s+/g, " ")
     .trim();
-  if (
-    key === "federal" ||
-    key === "fed" ||
-    key === "br" ||
-    key === "brasil"
-  )
+
+  // ✅ aliases conhecidos
+  if (key === "federal" || key === "fed" || key === "br" || key === "brasil") {
     return "FEDERAL";
-  if (key === "rj" || key === "rio" || key === "pt_rio" || key === "pt-rio")
+  }
+
+  if (key === "rj" || key === "rio" || key === "pt_rio" || key === "pt-rio") {
     return "PT_RIO";
-  return "PT_RIO";
+  }
+
+  // ✅ qualquer outra loteria: retorna canônico (UPPER + underscore)
+  // Exemplos:
+  //  "pt-rio" => PT_RIO (cai acima)
+  //  "look"   => LOOK
+  //  "sp"     => SP
+  //  "pt rio" => PT_RIO (não, aqui vira PT_RIO só se bater alias; senão PT_RIO? -> não)
+  //  "nacional" => NACIONAL (se vier assim)
+  const out = key
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+
+  // fallback defensivo (não deve acontecer)
+  return out || "PT_RIO";
+}
+function loteriaToLotteryKey(loteria) {
+  return normalizeLoteriaInput(loteria);
 }
 
-function loteriaToLotteryKey(loteria) {
-  const l = String(loteria || "").toUpperCase().trim();
-  return l === "FEDERAL" ? "FEDERAL" : "PT_RIO";
-}
 function getDefaultDashboardFilters() {
   return {
     // ✅ NOVO: loteria persistente
@@ -470,32 +487,32 @@ export default function App() {
   );
 
   // ✅ garante coerência:
-  // - FEDERAL => horário 19h ou 20h (default 20h)
-  // - PT_RIO => loteria PT_RIO
-  useEffect(() => {
-    const lot = normalizeLoteriaInput(dashboardFilters?.loteria);
+// - FEDERAL => horário 19h ou 20h (default 20h)
+// - outras loterias => NÃO força PT_RIO; apenas normaliza aliases (ex.: "rio" => PT_RIO)
+useEffect(() => {
+  const lot = normalizeLoteriaInput(dashboardFilters?.loteria);
 
-    if (lot === "FEDERAL") {
-      const h = String(dashboardFilters?.horario || "");
-      if (h !== "19h" && h !== "20h") {
-        setDashboardFilters((prev) => ({
-          ...prev,
-          loteria: "FEDERAL",
-          horario: "20h",
-        }));
-      } else if (dashboardFilters?.loteria !== "FEDERAL") {
-        setDashboardFilters((prev) => ({ ...prev, loteria: "FEDERAL" }));
-      }
-      return;
+  if (lot === "FEDERAL") {
+    const h = String(dashboardFilters?.horario || "");
+    if (h !== "19h" && h !== "20h") {
+      setDashboardFilters((prev) => ({
+        ...prev,
+        loteria: "FEDERAL",
+        horario: "20h",
+      }));
+    } else if (dashboardFilters?.loteria !== "FEDERAL") {
+      setDashboardFilters((prev) => ({ ...prev, loteria: "FEDERAL" }));
     }
+    return;
+  }
 
-    if (lot === "PT_RIO" && dashboardFilters?.loteria !== "PT_RIO") {
-      setDashboardFilters((prev) => ({ ...prev, loteria: "PT_RIO" }));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dashboardFilters?.loteria, dashboardFilters?.horario]);
-
-  useEffect(() => {
+  // ✅ só normaliza aliases/forma (ex.: "pt-rio" => "PT_RIO"), sem impor loteria
+  if (dashboardFilters?.loteria !== lot) {
+    setDashboardFilters((prev) => ({ ...prev, loteria: lot }));
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [dashboardFilters?.loteria, dashboardFilters?.horario]);
+useEffect(() => {
     safeWriteLS(DASH_FILTERS_KEY, JSON.stringify(dashboardFilters));
   }, [dashboardFilters]);
 
@@ -734,3 +751,5 @@ export default function App() {
     </ErrorBoundary>
   );
 }
+
+

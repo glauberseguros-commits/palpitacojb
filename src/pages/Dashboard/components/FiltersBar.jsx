@@ -50,7 +50,13 @@ function normalizeLoteriaInput(v) {
 
   if (key === "federal" || key === "fed" || key === "br" || key === "brasil") return "FEDERAL";
   if (key === "rj" || key === "rio" || key === "pt_rio" || key === "pt-rio") return "PT_RIO";
-  return "PT_RIO";
+
+  const out = key
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+
+  return out || "PT_RIO";
 }
 
 /** Normaliza posição para "1º..7º" ou "Todos" */
@@ -725,4 +731,5 @@ export default function FiltersBar({
     </div>
   );
 }
+
 

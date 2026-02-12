@@ -9,6 +9,7 @@ import {
 } from "../services/kingResultsService";
 import { buildRanking } from "../utils/buildRanking";
 import { buildPalpite } from "../utils/buildPalpites";
+import { normalizeToYMD_SP } from "../utils/ymd";
 
 /* =========================
    Utils
@@ -37,48 +38,7 @@ function isIndexErrorMessage(err) {
 }
 
 function normalizeToYMD(input) {
-  if (!input) return null;
-
-  // Firestore Timestamp com toDate()
-  if (typeof input === "object" && typeof input.toDate === "function") {
-    const d = input.toDate();
-    if (d instanceof Date && !Number.isNaN(d.getTime())) {
-      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-    }
-  }
-
-  // Timestamp-like { seconds } / { _seconds }
-  if (
-    typeof input === "object" &&
-    (Number.isFinite(Number(input.seconds)) ||
-      Number.isFinite(Number(input._seconds)))
-  ) {
-    const sec = Number.isFinite(Number(input.seconds))
-      ? Number(input.seconds)
-      : Number(input._seconds);
-
-    const d = new Date(sec * 1000);
-    if (!Number.isNaN(d.getTime())) {
-      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-    }
-  }
-
-  if (input instanceof Date && !Number.isNaN(input.getTime())) {
-    return `${input.getFullYear()}-${pad2(input.getMonth() + 1)}-${pad2(
-      input.getDate()
-    )}`;
-  }
-
-  const s = String(input).trim();
-  if (!s) return null;
-
-  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
-
-  const br = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if (br) return `${br[3]}-${br[2]}-${br[1]}`;
-
-  return null;
+  return normalizeToYMD_SP(input);
 }
 
 function ymdToNumber(ymd) {
@@ -905,6 +865,7 @@ export function useKingRanking({
 
   return { loading, error, data, meta, drawsRaw };
 }
+
 
 
 

@@ -13,13 +13,11 @@
 
 import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import "./dashboard.css";
-
 import LeftRankingTable from "./components/LeftRankingTable";
 import FiltersBar from "./components/FiltersBar";
 import KpiCards from "./components/KpiCards";
 import ChartsGrid from "./components/ChartsGrid";
 import DateRangeControl from "./components/DateRangeControl";
-
 import { useKingRanking } from "../../hooks/useKingRanking";
 import {
   BICHO_MAP,
@@ -30,6 +28,7 @@ import {
 import { buildPalpiteV2 } from "../../utils/buildPalpites";
 import { getKingBoundsByUf } from "../../services/kingResultsService";
 import { buildRanking } from "../../utils/buildRanking";
+import { normalizeToYMD_SP } from "../../utils/ymd";
 
 /* =========================
    DATA MODE
@@ -206,40 +205,7 @@ function isISODate(s) {
 }
 
 function normalizeToYMD(input) {
-  if (!input) return null;
-
-  if (typeof input === "object" && typeof input.toDate === "function") {
-    const d = input.toDate();
-    if (d instanceof Date && !Number.isNaN(d.getTime())) {
-      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-    }
-  }
-
-  if (
-    typeof input === "object" &&
-    (Number.isFinite(Number(input.seconds)) || Number.isFinite(Number(input._seconds)))
-  ) {
-    const sec = Number.isFinite(Number(input.seconds)) ? Number(input.seconds) : Number(input._seconds);
-    const d = new Date(sec * 1000);
-    if (!Number.isNaN(d.getTime())) {
-      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-    }
-  }
-
-  if (input instanceof Date && !Number.isNaN(input.getTime())) {
-    return `${input.getFullYear()}-${pad2(input.getMonth() + 1)}-${pad2(input.getDate())}`;
-  }
-
-  const s = String(input).trim();
-  if (!s) return null;
-
-  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
-
-  const br = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if (br) return `${br[3]}-${br[2]}-${br[1]}`;
-
-  return null;
+  return normalizeToYMD_SP(input);
 }
 
 function getDrawDate(d) {
@@ -510,15 +476,27 @@ function clampRangeToBounds(next, minDate, maxDate) {
 
 function normalizeLoteriaKey(v) {
   const raw = String(v ?? "").trim();
+
+  // ✅ default só quando não veio nada
   if (!raw) return "PT_RIO";
+
   const key = raw
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/\s+/g, " ")
     .trim();
+
   if (key === "federal" || key === "fed" || key === "br" || key === "brasil") return "FEDERAL";
-  return "PT_RIO";
+  if (key === "rj" || key === "rio" || key === "pt_rio" || key === "pt-rio") return "PT_RIO";
+
+  // ✅ canônico para outras loterias
+  const out = key
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+
+  return out || "PT_RIO";
 }
 
 /**
@@ -593,7 +571,7 @@ export default function Dashboard(props) {
     return typeof externalSetFilters === "function" ? externalSetFilters : noopSetFilters;
   }, [externalSetFilters, noopSetFilters, isGuest]);
 
-  const loteriaKey = useMemo(() => normalizeLoteriaKey(filters?.loteria), [filters?.loteria]);
+  const loteriaKey = useMemo(() => normalizeLoteriaKey(filters?.lotteryKey || filters?.loteria), [filters?.lotteryKey, filters?.loteria]);
   const isFederal = loteriaKey === "FEDERAL";
 
   // ✅ FEDERAL: força horário = 20h (se não for guest)
@@ -607,8 +585,15 @@ export default function Dashboard(props) {
     }
   }, [isFederal, isGuest, filters?.horario, setFilters]);
 
-  const locationLabel = isFederal ? "FEDERAL (Brasil) — 20h" : "Rio de Janeiro, RJ, Brasil";
-  const uf = isFederal ? "FEDERAL" : "PT_RIO";
+  const locationLabel = isFederal ? "FEDERAL (Brasil) — 20h" : `${loteriaKey} — Brasil`;
+  const uf = loteriaKey;
+
+  // DEBUG (temporário): confirma loteria/uf efetivos
+  useEffect(() => {
+    try {
+      console.log('[DASH_LOT]', { loteria: filters?.loteria, lotteryKey: filters?.lotteryKey, loteriaKey, uf, horario: filters?.horario, isFederal, isGuest });
+    } catch {}
+  }, [filters?.loteria, filters?.lotteryKey, loteriaKey, uf, filters?.horario, isFederal, isGuest]);
 
   // ✅ restaura apenas estado auxiliar (range/anos/grupo) do localStorage
   const savedDashState = useMemo(() => loadDashStateV2(), []);
@@ -708,9 +693,11 @@ export default function Dashboard(props) {
           const hasRestoredRange = rr?.from && rr?.to && isISODate(rr.from) && isISODate(rr.to);
           const hasRestoredQuery = rq?.from && rq?.to && isISODate(rq.from) && isISODate(rq.to);
 
-          const savedYearsRaw = Array.isArray(savedDashState?.selectedYears) ? savedDashState.selectedYears : [];
-const savedYears = savedYearsRaw.map((y) => Number(y)).filter((y) => Number.isFinite(y));
-const hasSavedYears = savedYears.length > 0;
+          const savedYearsRaw = Array.isArray(savedDashState?.selectedYears)
+            ? savedDashState.selectedYears
+            : [];
+          const savedYears = savedYearsRaw.map((y) => Number(y)).filter((y) => Number.isFinite(y));
+          const hasSavedYears = savedYears.length > 0;
 
           // ✅ MIGRAÇÃO: se existir range salvo antigo e NÃO há anos selecionados,
           // força “to” para o max atual e liga followMax.
@@ -822,20 +809,22 @@ const hasSavedYears = savedYears.length > 0;
       if (!next) return;
       if (isGuest) return;
 
-      // ✅ usuário mexeu no range: followMax só fica true se “to” = MAX_DATE
-      if (boundsReady && MAX_DATE && isISODate(next?.to)) {
-        setFollowMax(String(next.to) === String(MAX_DATE));
-      } else {
-        setFollowMax(false);
-      }
-
-      setDateRange(next);
-
+      // ✅ clamp primeiro, para followMax refletir o valor FINAL
       let clampedNext = next;
+
       if (boundsReady && MIN_DATE && MAX_DATE) {
         const c = clampRangeToBounds(next, MIN_DATE, MAX_DATE);
         clampedNext = c || { from: MIN_DATE, to: MAX_DATE };
       }
+
+      // ✅ usuário mexeu no range: followMax só fica true se “to” = MAX_DATE (já clampado)
+      if (boundsReady && MAX_DATE && isISODate(clampedNext?.to)) {
+        setFollowMax(String(clampedNext.to) === String(MAX_DATE));
+      } else {
+        setFollowMax(false);
+      }
+
+      setDateRange(clampedNext);
 
       if (clampedNext?.from && clampedNext?.to && clampedNext.from === clampedNext.to) {
         setSelectedYears([]);
@@ -1240,6 +1229,16 @@ const hasSavedYears = savedYears.length > 0;
 
   const yearsAvailable = useMemo(() => {
     const fromDraws = extractYearsFromDraws(drawsForUi);
+
+    // ✅ Corrigido: se bounds existem, evita ano fora do intervalo real
+    if (fromDraws.length && MIN_DATE && MAX_DATE) {
+      const yMin = Number(String(MIN_DATE).slice(0, 4));
+      const yMax = Number(String(MAX_DATE).slice(0, 4));
+      if (Number.isFinite(yMin) && Number.isFinite(yMax)) {
+        return fromDraws.filter((y) => y >= Math.min(yMin, yMax) && y <= Math.max(yMin, yMax));
+      }
+    }
+
     if (fromDraws.length) return fromDraws;
 
     if (!MIN_DATE || !MAX_DATE) return [];
@@ -1671,4 +1670,6 @@ const hasSavedYears = savedYears.length > 0;
     </div>
   );
 }
+
+
 

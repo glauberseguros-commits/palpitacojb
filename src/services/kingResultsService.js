@@ -1,4 +1,6 @@
 // src/services/kingResultsService.js
+import { normalizeToYMD_SP } from "../utils/ymd";
+
 import {
   collection,
   query,
@@ -98,10 +100,7 @@ function isFederalInput(scopeInput) {
 
   // normaliza espaços/underscores pra captar variações
   const compact = up.replace(/[\s_]+/g, " ").trim();
-  return (
-    FEDERAL_INPUT_ALIASES.has(compact) ||
-    FEDERAL_INPUT_ALIASES.has(up.replace(/[\s_]+/g, "_"))
-  );
+  return FEDERAL_INPUT_ALIASES.has(compact) || FEDERAL_INPUT_ALIASES.has(up.replace(/[\s_]+/g, "_"));
 }
 
 /**
@@ -166,6 +165,7 @@ function normalizeValueForField(fieldName, valueInput) {
 
   if (fieldName === "lottery_key") {
     const up = s.toUpperCase();
+    if (up === RJ_STATE_CODE) return RJ_LOTTERY_KEY; // ✅ PREVENTIVO: RJ -> PT_RIO
     if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
     return up;
   }
@@ -186,9 +186,7 @@ function isYMD(s) {
 }
 
 function ymdToBR(ymd) {
-  const m = String(ymd || "")
-    .trim()
-    .match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const m = String(ymd || "").trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!m) return null;
   return `${m[3]}/${m[2]}/${m[1]}`;
 }
@@ -273,8 +271,7 @@ function resolveHourFilter({ closeHour = null, closeHourBucket = null }) {
 function drawPassesHourFilter(draw, hourFilter) {
   if (!hourFilter || !hourFilter.kind) return true;
 
-  const raw =
-    draw?.close_hour ?? draw?.closeHour ?? draw?.hour ?? draw?.hora ?? "";
+  const raw = draw?.close_hour ?? draw?.closeHour ?? draw?.hour ?? draw?.hora ?? "";
   const norm = normalizeHourLike(raw);
 
   if (hourFilter.kind === "exact") {
@@ -293,54 +290,12 @@ function drawPassesHourFilter(draw, hourFilter) {
 ========================= */
 
 function normalizeToYMD(input) {
-  if (!input) return null;
-
-  // Firestore Timestamp com toDate()
-  if (typeof input === "object" && typeof input.toDate === "function") {
-    const d = input.toDate();
-    if (!Number.isNaN(d.getTime())) {
-      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-    }
-  }
-
-  // Timestamp-like { seconds } / { _seconds }
-  if (
-    typeof input === "object" &&
-    (Number.isFinite(Number(input.seconds)) ||
-      Number.isFinite(Number(input._seconds)))
-  ) {
-    const sec = Number.isFinite(Number(input.seconds))
-      ? Number(input.seconds)
-      : Number(input._seconds);
-    const d = new Date(sec * 1000);
-    if (!Number.isNaN(d.getTime())) {
-      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-    }
-  }
-
-  if (input instanceof Date && !Number.isNaN(input.getTime())) {
-    return `${input.getFullYear()}-${pad2(input.getMonth() + 1)}-${pad2(
-      input.getDate()
-    )}`;
-  }
-
-  const s = String(input).trim();
-  if (!s) return null;
-
-  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
-
-  const br = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if (br) return `${br[3]}-${br[2]}-${br[1]}`;
-
-  return null;
+  return normalizeToYMD_SP(input);
 }
 
 function normalizePositions(positions) {
   const arr =
-    Array.isArray(positions) && positions.length
-      ? positions.map(Number).filter((n) => Number.isFinite(n) && n > 0)
-      : null;
+    Array.isArray(positions) && positions.length ? positions.map(Number).filter((n) => Number.isFinite(n) && n > 0) : null;
 
   if (!arr || !arr.length) return null;
   return Array.from(new Set(arr)).sort((a, b) => a - b);
@@ -510,9 +465,7 @@ function dedupeDrawsLocal(draws) {
 
   function score(d) {
     const prizesLen = Array.isArray(d?.prizes) ? d.prizes.length : 0;
-    const pc = Number.isFinite(Number(d?.prizesCount))
-      ? Number(d.prizesCount)
-      : 0;
+    const pc = Number.isFinite(Number(d?.prizesCount)) ? Number(d.prizesCount) : 0;
     const hasLogical = !!(d?.ymd && d?.close_hour);
     return prizesLen * 1_000_000 + pc * 1_000 + (hasLogical ? 10 : 0);
   }
@@ -531,11 +484,7 @@ function dedupeDrawsLocal(draws) {
     const hasLogical = !!(ymd && hour);
 
     // ✅ se houver lottery_code, entra na chave lógica
-    const key = hasLogical
-      ? lotCode
-        ? `${ymd}__${hour}__${lotCode}`
-        : `${ymd}__${hour}`
-      : `id__${idStr || `idx_${i}`}`;
+    const key = hasLogical ? (lotCode ? `${ymd}__${hour}__${lotCode}` : `${ymd}__${hour}`) : `id__${idStr || `idx_${i}`}`;
 
     const normalized = {
       ...raw,
@@ -578,9 +527,7 @@ async function mapWithConcurrency(items, limitN, mapper) {
     }
   }
 
-  await Promise.all(
-    Array.from({ length: Math.min(concurrency, arr.length) }, () => worker())
-  );
+  await Promise.all(Array.from({ length: Math.min(concurrency, arr.length) }, () => worker()));
   return results;
 }
 
@@ -610,8 +557,7 @@ async function safeGetDocsSmart(qRef, { policy = DEFAULT_READ_POLICY } = {}) {
   // - se vier vazio, tenta server uma vez (quando possível)
   try {
     const snapCache = await getDocs(qRef);
-    if (snapCache?.docs?.length)
-      return { snap: snapCache, error: null, source: "cache" };
+    if (snapCache?.docs?.length) return { snap: snapCache, error: null, source: "cache" };
 
     try {
       const snapServer = await getDocsFromServer(qRef);
@@ -741,13 +687,9 @@ async function fetchPrizesForDraw(drawId, positionsArr, embeddedPrizes) {
   if (!drawKey) return [];
 
   if (Array.isArray(embeddedPrizes) && embeddedPrizes.length) {
-    const normalized = embeddedPrizes.map((p, idx) =>
-      normalizePrize(p, p?.prizeId ?? `emb_${idx}`)
-    );
+    const normalized = embeddedPrizes.map((p, idx) => normalizePrize(p, p?.prizeId ?? `emb_${idx}`));
 
-    const cleaned = normalized.filter(
-      (x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position)
-    );
+    const cleaned = normalized.filter((x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position));
 
     if (cleaned.length) {
       const allSorted = sortPrizesByPosition(cleaned);
@@ -767,9 +709,7 @@ async function fetchPrizesForDraw(drawId, positionsArr, embeddedPrizes) {
 
   const allRaw = snap.docs.map((d) => normalizePrize(d.data(), d.id));
 
-  const all = allRaw.filter(
-    (x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position)
-  );
+  const all = allRaw.filter((x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position));
 
   const allSorted = sortPrizesByPosition(all);
   cacheSet(PRIZES_CACHE, allKey, allSorted);
@@ -785,9 +725,7 @@ function mapDrawDoc(doc) {
   const d = doc.data();
 
   const ymd = d.ymd || normalizeToYMD(getDocDateRaw(d));
-  const hourNorm = normalizeHourLike(
-    d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? ""
-  );
+  const hourNorm = normalizeHourLike(d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? "");
 
   const embeddedPrizes = Array.isArray(d.prizes) ? d.prizes : null;
 
@@ -869,8 +807,7 @@ async function queryDrawsByField({
 function extractUfParam(maybeUfOrObj) {
   if (!maybeUfOrObj) return "";
   if (typeof maybeUfOrObj === "string") return maybeUfOrObj;
-  if (typeof maybeUfOrObj === "object" && typeof maybeUfOrObj.uf === "string")
-    return maybeUfOrObj.uf;
+  if (typeof maybeUfOrObj === "object" && typeof maybeUfOrObj.uf === "string") return maybeUfOrObj.uf;
   return String(maybeUfOrObj || "");
 }
 
@@ -895,8 +832,7 @@ async function fetchDrawDocsPreferUf({
       policy,
     });
 
-    if (!error && snap?.docs?.length)
-      return { docs: snap.docs, usedField: "uf", error: null };
+    if (!error && snap?.docs?.length) return { docs: snap.docs, usedField: "uf", error: null };
     if (error) return { docs: [], usedField: "uf", error };
   }
 
@@ -923,8 +859,7 @@ async function fetchDrawDocsPreferUf({
       return { docs: [], usedField: "lottery_key", error: null };
     }
 
-    const lotteryKey =
-      ufUp === RJ_STATE_CODE ? RJ_LOTTERY_KEY : resolveLotteryKeyForQuery(ufTrim);
+    const lotteryKey = ufUp === RJ_STATE_CODE ? RJ_LOTTERY_KEY : resolveLotteryKeyForQuery(ufTrim);
 
     const { snap, error } = await queryDrawsByField({
       fieldName: "lottery_key",
@@ -935,8 +870,7 @@ async function fetchDrawDocsPreferUf({
       policy,
     });
 
-    if (!error && snap?.docs?.length)
-      return { docs: snap.docs, usedField: "lottery_key", error: null };
+    if (!error && snap?.docs?.length) return { docs: snap.docs, usedField: "lottery_key", error: null };
     if (error) return { docs: [], usedField: "lottery_key", error };
   }
 
@@ -980,9 +914,7 @@ function addDaysUTCLocal(ymd, days) {
   const dt = ymdToUTCDateLocal(ymd);
   if (!dt) return ymd;
   dt.setUTCDate(dt.getUTCDate() + Number(days || 0));
-  return `${dt.getUTCFullYear()}-${pad2(dt.getUTCMonth() + 1)}-${pad2(
-    dt.getUTCDate()
-  )}`;
+  return `${dt.getUTCFullYear()}-${pad2(dt.getUTCMonth() + 1)}-${pad2(dt.getUTCDate())}`;
 }
 
 /**
@@ -1062,21 +994,19 @@ export async function getKingBoundsByUf(ufOrObj) {
     const orderAsc = [orderBy("ymd", "asc"), orderBy(DOC_ID)];
     const orderDesc = [orderBy("ymd", "desc"), orderBy(DOC_ID)];
 
-    const { docs: minDocs, usedField: usedMin, error: eMin } =
-      await fetchDrawDocsPreferUf({
-        uf,
-        extraOrderBy: orderAsc,
-        extraLimit: limit(SCAN_LIMIT),
-        policy: "server",
-      });
+    const { docs: minDocs, usedField: usedMin, error: eMin } = await fetchDrawDocsPreferUf({
+      uf,
+      extraOrderBy: orderAsc,
+      extraLimit: limit(SCAN_LIMIT),
+      policy: "server",
+    });
 
-    const { docs: maxDocs, usedField: usedMax, error: eMax } =
-      await fetchDrawDocsPreferUf({
-        uf,
-        extraOrderBy: orderDesc,
-        extraLimit: limit(SCAN_LIMIT),
-        policy: "server",
-      });
+    const { docs: maxDocs, usedField: usedMax, error: eMax } = await fetchDrawDocsPreferUf({
+      uf,
+      extraOrderBy: orderDesc,
+      extraLimit: limit(SCAN_LIMIT),
+      policy: "server",
+    });
 
     if (eMin || eMax) {
       if (!isIndexError(eMin) && !isIndexError(eMax)) firstTryError = eMin || eMax;
@@ -1130,10 +1060,7 @@ export async function getKingBoundsByUf(ufOrObj) {
         if (b.ok) {
           const mm = pickMinMaxFromMapped(b.merged);
 
-          const maxFixed =
-            recentMaxYmd && (!mm.maxYmd || recentMaxYmd > mm.maxYmd)
-              ? recentMaxYmd
-              : mm.maxYmd;
+          const maxFixed = recentMaxYmd && (!mm.maxYmd || recentMaxYmd > mm.maxYmd) ? recentMaxYmd : mm.maxYmd;
 
           return {
             ok: !!(mm.minYmd && maxFixed),
@@ -1153,20 +1080,14 @@ export async function getKingBoundsByUf(ufOrObj) {
       }
     }
 
-    const lotteryKey =
-      ufUp === RJ_STATE_CODE ? RJ_LOTTERY_KEY : resolveLotteryKeyForQuery(uf);
+    const lotteryKey = ufUp === RJ_STATE_CODE ? RJ_LOTTERY_KEY : resolveLotteryKeyForQuery(uf);
 
-    const b = a.ok
-      ? null
-      : await sampleEdgesByDocId("lottery_key", String(lotteryKey).toUpperCase());
+    const b = a.ok ? null : await sampleEdgesByDocId("lottery_key", String(lotteryKey).toUpperCase());
 
     const merged = a.ok ? a.merged : b?.merged || [];
     const mm = pickMinMaxFromMapped(merged);
 
-    const maxFixed =
-      recentMaxYmd && (!mm.maxYmd || recentMaxYmd > mm.maxYmd)
-        ? recentMaxYmd
-        : mm.maxYmd;
+    const maxFixed = recentMaxYmd && (!mm.maxYmd || recentMaxYmd > mm.maxYmd) ? recentMaxYmd : mm.maxYmd;
 
     return {
       ok: !!(mm.minYmd && maxFixed),
@@ -1178,9 +1099,9 @@ export async function getKingBoundsByUf(ufOrObj) {
       minDate: mm.minYmd || null,
       maxDate: maxFixed || null,
 
-      source: `fallback_edges_docId_limit=${FALLBACK_EDGE_LIMIT}:${
-        a.ok ? "uf" : "lottery_key"
-      }:sampleCount=${merged.length}${recentMaxYmd ? ":max_probe" : ""}${idxInfo}`,
+      source: `fallback_edges_docId_limit=${FALLBACK_EDGE_LIMIT}:${a.ok ? "uf" : "lottery_key"}:sampleCount=${
+        merged.length
+      }${recentMaxYmd ? ":max_probe" : ""}${idxInfo}`,
     };
   }
 }
@@ -1217,12 +1138,7 @@ export async function getKingResultsByDate({
 
   const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
 
-  const dayKey = drawsCacheKeyDay({
-    scopeKey,
-    ymd: ymdDate,
-    positionsArr,
-    hourFilter,
-  });
+  const dayKey = drawsCacheKeyDay({ scopeKey, ymd: ymdDate, positionsArr, hourFilter });
   const cached = cacheGet(DRAWS_CACHE, dayKey);
   if (cached) return cached;
 
@@ -1283,18 +1199,12 @@ export async function getKingResultsByDate({
   let baseAll = dedupeDrawsLocal(docCandidates.map(mapDrawDoc));
   baseAll = baseAll.filter((x) => (x.ymd || normalizeToYMD(x.date)) === ymdDate);
 
-  const base = hourFilter?.kind
-    ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
-    : baseAll;
+  const base = hourFilter?.kind ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter)) : baseAll;
   const ordered = sortDrawsLocal(base);
 
   const results = await mapWithConcurrency(ordered, 6, async (item) => {
     const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
-
-    // ✅ FIX: manter "prova de vida" coerente com a hidratação
-    // (evita UI ignorar slots "válidos mas vazios" por prizesCount antigo/undefined)
     const pc = Array.isArray(prizes) ? prizes.length : 0;
-
     return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
   });
 
@@ -1463,9 +1373,7 @@ export async function getKingResultsByRange({
           }
 
           const baseAll = dedupeDrawsLocal(all);
-          const base = hourFilter?.kind
-            ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
-            : baseAll;
+          const base = hourFilter?.kind ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter)) : baseAll;
 
           const out = dedupeDrawsLocal(sortDrawsLocal(base));
           cacheSet(DRAWS_CACHE, rangeKey, out);
@@ -1486,9 +1394,7 @@ export async function getKingResultsByRange({
         }
 
         const baseAll = dedupeDrawsLocal(all);
-        const base = hourFilter?.kind
-          ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
-          : baseAll;
+        const base = hourFilter?.kind ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter)) : baseAll;
 
         const out = dedupeDrawsLocal(sortDrawsLocal(base));
         cacheSet(DRAWS_CACHE, rangeKey, out);
@@ -1523,9 +1429,7 @@ export async function getKingResultsByRange({
         }
 
         const baseAll = dedupeDrawsLocal(all);
-        const base = hourFilter?.kind
-          ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
-          : baseAll;
+        const base = hourFilter?.kind ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter)) : baseAll;
 
         const out = dedupeDrawsLocal(sortDrawsLocal(base));
         cacheSet(DRAWS_CACHE, rangeKey, out);
@@ -1546,19 +1450,14 @@ export async function getKingResultsByRange({
       }
 
       const baseAll = dedupeDrawsLocal(all);
-      const base = hourFilter?.kind
-        ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
-        : baseAll;
+      const base = hourFilter?.kind ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter)) : baseAll;
 
       const ordered = sortDrawsLocal(base);
 
       const conc = chooseRangeConcurrency(ordered.length);
       const results = await mapWithConcurrency(ordered, conc, async (item) => {
         const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
-
-        // ✅ FIX: prizesCount coerente após hidratação
         const pc = Array.isArray(prizes) ? prizes.length : 0;
-
         return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
       });
 
@@ -1571,9 +1470,7 @@ export async function getKingResultsByRange({
   }
 
   const baseAll = dedupeDrawsLocal(docs.map(mapDrawDoc));
-  const base = hourFilter?.kind
-    ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
-    : baseAll;
+  const base = hourFilter?.kind ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter)) : baseAll;
 
   const ordered = sortDrawsLocal(base);
 
@@ -1584,8 +1481,7 @@ export async function getKingResultsByRange({
         return {
           ...d,
           prizes: Array.isArray(d?.prizes) ? d.prizes : [],
-          prizesCount:
-            Number.isFinite(Number(d?.prizesCount)) ? Number(d.prizesCount) : embedded.length || 0,
+          prizesCount: Number.isFinite(Number(d?.prizesCount)) ? Number(d.prizesCount) : embedded.length || 0,
           __mode: "aggregated",
         };
       })
@@ -1598,10 +1494,7 @@ export async function getKingResultsByRange({
 
   const results = await mapWithConcurrency(ordered, conc, async (item) => {
     const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
-
-    // ✅ FIX: prizesCount coerente após hidratação
     const pc = Array.isArray(prizes) ? prizes.length : 0;
-
     return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
   });
 
@@ -1614,11 +1507,7 @@ export async function getKingResultsByRange({
    ✅ Hidratação de prizes (para UX no "Todos")
 ========================= */
 
-export async function hydrateKingDrawsWithPrizes({
-  draws,
-  positions = null,
-  concurrency = null,
-}) {
+export async function hydrateKingDrawsWithPrizes({ draws, positions = null, concurrency = null }) {
   const arr = Array.isArray(draws) ? draws : [];
   if (!arr.length) return [];
 
@@ -1631,10 +1520,7 @@ export async function hydrateKingDrawsWithPrizes({
 
   const results = await mapWithConcurrency(arr, conc, async (item) => {
     const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
-
-    // ✅ FIX: prizesCount coerente após hidratação
     const pc = Array.isArray(prizes) ? prizes.length : 0;
-
     return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
   });
 
@@ -1647,9 +1533,7 @@ export async function hydrateKingDrawsWithPrizes({
 
 function normalizeLotteriesList(lotteries) {
   const arr = Array.isArray(lotteries) ? lotteries : [];
-  const cleaned = arr
-    .map((x) => String(x ?? "").trim().toUpperCase())
-    .filter(Boolean);
+  const cleaned = arr.map((x) => String(x ?? "").trim().toUpperCase()).filter(Boolean);
   return cleaned.length ? Array.from(new Set(cleaned)) : null;
 }
 
@@ -1660,16 +1544,7 @@ function drawPassesLotteriesFilter(draw, lotteriesArr) {
   return lotteriesArr.includes(code);
 }
 
-function lateCacheKey({
-  scopeKey,
-  fromYmd,
-  toYmd,
-  baseYmd,
-  prizePosition,
-  hourFilter,
-  lotteriesArr,
-  chunkDays,
-}) {
+function lateCacheKey({ scopeKey, fromYmd, toYmd, baseYmd, prizePosition, hourFilter, lotteriesArr, chunkDays }) {
   const h =
     hourFilter?.kind === "bucket"
       ? `bucket:${hourFilter.bucket}`
