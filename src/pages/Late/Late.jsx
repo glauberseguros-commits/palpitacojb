@@ -30,6 +30,10 @@ function pad2(n) {
   return String(n).padStart(2, "0");
 }
 
+function safeStr(v) {
+  return String(v ?? "").trim();
+}
+
 function todayYMDLocal() {
   const d = new Date();
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
@@ -231,6 +235,32 @@ function mergeLateLists(lists, baseYmd) {
   });
 
   return out.map((r, idx) => ({ ...r, pos: idx + 1 }));
+}
+
+/* =========================
+   ✅ Bounds helpers (FIX UI)
+========================= */
+
+function clampYmd(ymd, minYmd, maxYmd) {
+  const d = safeStr(ymd);
+  if (!isYMD(d)) return null;
+
+  let out = d;
+  const min = safeStr(minYmd);
+  const max = safeStr(maxYmd);
+
+  if (isYMD(min) && out < min) out = min;
+  if (isYMD(max) && out > max) out = max;
+
+  return out;
+}
+
+function normalizeSingleDateWithBounds(dateIn, minYmd, maxYmd) {
+  const d = clampYmd(dateIn, minYmd, maxYmd);
+  if (d) return d;
+
+  const fallback = clampYmd(todayYMDLocal(), minYmd, maxYmd) || (isYMD(maxYmd) ? maxYmd : null) || (isYMD(minYmd) ? minYmd : null) || todayYMDLocal();
+  return fallback;
 }
 
 export default function Late() {
@@ -523,6 +553,16 @@ export default function Late() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ✅ FIX: clampa a data da UI quando bounds chega/atualiza (evita UI fora do range)
+  useEffect(() => {
+    const minYmd = bounds?.minYmd;
+    const maxYmd = bounds?.maxYmd;
+    if (!isYMD(minYmd) || !isYMD(maxYmd)) return;
+
+    const normalized = normalizeSingleDateWithBounds(dateYmd, minYmd, maxYmd);
+    if (normalized && normalized !== dateYmd) setDateYmd(normalized);
+  }, [bounds?.minYmd, bounds?.maxYmd, dateYmd]);
+
   // refresh quando muda filtros/data
   useEffect(() => {
     if (!boundsReady) return;
@@ -587,6 +627,17 @@ export default function Late() {
     const h = lastImported?.closeHour ? lastImported.closeHour : "";
     return d ? (h ? `${d} ${h}` : d) : "";
   }, [lastImported]);
+
+  // ✅ handler clamped (date input)
+  const onChangeDate = useCallback(
+    (raw) => {
+      const minYmd = bounds?.minYmd;
+      const maxYmd = bounds?.maxYmd;
+      const next = normalizeSingleDateWithBounds(String(raw || ""), minYmd, maxYmd);
+      setDateYmd(next);
+    },
+    [bounds?.minYmd, bounds?.maxYmd]
+  );
 
   return (
     <div className="ppLate">
@@ -792,7 +843,9 @@ export default function Late() {
             <input
               type="date"
               value={dateYmd}
-              onChange={(e) => setDateYmd(String(e.target.value || todayYMDLocal()))}
+              min={bounds?.minYmd || undefined}
+              max={bounds?.maxYmd || undefined}
+              onChange={(e) => onChangeDate(e.target.value || todayYMDLocal())}
             />
           </div>
 

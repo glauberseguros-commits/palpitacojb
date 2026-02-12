@@ -1,11 +1,7 @@
 // src/pages/Results/Results.jsx
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getKingResultsByDate } from "../../services/kingResultsService";
-import {
-  getAnimalLabel,
-  getImgFromGrupo,
-  getSlugByGrupo,
-} from "../../constants/bichoMap";
+import { getAnimalLabel, getImgFromGrupo, getSlugByGrupo } from "../../constants/bichoMap";
 
 /* =========================
    Helpers (locais e robustos)
@@ -163,11 +159,13 @@ function scopeDisplayName(scope) {
 
 /**
  * ✅ Regras do Federal
- * - 20h (20:00)
  * - Quarta e Sábado
+ * - Horário atual 20h, mas já existiu 19h => fallback automático (20h -> 19h)
  */
-const FEDERAL_CLOSE_HOUR_BUCKET = "20h";
-const FEDERAL_CLOSE_HOUR = "20:00";
+const FEDERAL_CLOSE_CANDIDATES = [
+  { bucket: "20h", hour: "20:00" },
+  { bucket: "19h", hour: "19:00" },
+];
 
 /* =========================
    prizeNumber:
@@ -392,9 +390,7 @@ function resolveAnimalUI(prize) {
 function drawKeyForDedup(d, scopeKey, ymd) {
   // ✅ Nesta página (Resultados), a identidade lógica é: DATA + HORÁRIO (+ scope)
   // Isso elimina duplicações causadas por docs diferentes (drawId/lottery_code) para o mesmo horário.
-  const hour = normalizeHourLike(
-    d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
-  );
+  const hour = normalizeHourLike(d?.close_hour || d?.closeHour || d?.hour || d?.hora || "");
 
   if (hour) return `HOUR:${scopeKey}|${ymd}|${hour}`;
 
@@ -524,19 +520,35 @@ export default function Results() {
     setError("");
 
     try {
-      // ✅ Federal: força filtro de horário para não “misturar” outros draws
-      const out = await getKingResultsByDate({
-        uf: sKey,
-        date: d,
-        closeHour: isFederal ? FEDERAL_CLOSE_HOUR : null,
-        closeHourBucket: isFederal ? FEDERAL_CLOSE_HOUR_BUCKET : null,
-        positions: "1-7",
-      });
+      // ✅ Federal: tenta 20h e faz fallback pra 19h se vier vazio
+      const tryFetch = async ({ hour, bucket }) => {
+        const out = await getKingResultsByDate({
+          uf: sKey,
+          date: d,
+          closeHour: isFederal ? hour : null,
+          closeHourBucket: isFederal ? bucket : null,
+          positions: "1-7",
+        });
+        const list = unwrapDraws(out);
+        return { out, list };
+      };
 
-      // ✅ robusto: aceita array OU objeto com arrays
-      const list = unwrapDraws(out);
-      const deduped = dedupeDraws(list, sKey, d);
-      setDraws(deduped);
+      if (!isFederal) {
+        const { list } = await tryFetch({ hour: null, bucket: null });
+        const deduped = dedupeDraws(list, sKey, d);
+        setDraws(deduped);
+      } else {
+        let listFinal = [];
+        for (const cand of FEDERAL_CLOSE_CANDIDATES) {
+          const { list } = await tryFetch({ hour: cand.hour, bucket: cand.bucket });
+          if (list && list.length) {
+            listFinal = list;
+            break;
+          }
+        }
+        const deduped = dedupeDraws(listFinal, sKey, d);
+        setDraws(deduped);
+      }
     } catch (e) {
       setDraws([]);
       setError(String(e?.message || e || "Falha ao carregar resultados."));
@@ -988,9 +1000,9 @@ export default function Results() {
   const federalInfoText = useMemo(() => {
     if (!isFederal) return "";
     if (federalScheduleOk) {
-      return "Federal: resultado às 20h (quarta e sábado).";
+      return "Federal: resultado às 20h (quarta e sábado). Se a data for antiga, o sistema tenta 19h automaticamente.";
     }
-    return "Federal só tem sorteio quarta e sábado às 20h. Clique em “Último Federal” para ir para a última data válida.";
+    return "Federal só tem sorteio quarta e sábado. O sistema busca 20h (e tenta 19h em datas antigas). Clique em “Último Federal” para ir para a última data válida.";
   }, [isFederal, federalScheduleOk]);
 
   return (
@@ -1019,7 +1031,7 @@ export default function Results() {
                 type="button"
                 className={scopePillClass(isFederal)}
                 onClick={() => setScopeUi(SCOPE_FEDERAL)}
-                title="Loteria Federal (20h qua/sáb)"
+                title="Loteria Federal (qua/sáb) — tenta 20h e fallback 19h"
               >
                 FEDERAL
               </button>
@@ -1039,9 +1051,7 @@ export default function Results() {
               <button
                 className="pp_btn"
                 type="button"
-                onClick={() =>
-                  setYmd((prev) => prevWedOrSatFromYmd(prev || todayYMDLocal()))
-                }
+                onClick={() => setYmd((prev) => prevWedOrSatFromYmd(prev || todayYMDLocal()))}
                 title="Ir para a última quarta/sábado"
               >
                 Último Federal
@@ -1067,12 +1077,11 @@ export default function Results() {
               </div>
             ) : drawsOrdered.length === 0 ? (
               <div className="pp_state">
-                Nenhum resultado para{" "}
-                <span className="pp_gold">{label || DEFAULT_SCOPE}</span> em{" "}
+                Nenhum resultado para <span className="pp_gold">{label || DEFAULT_SCOPE}</span> em{" "}
                 <span className="pp_gold">{dateBR}</span>
                 {isFederal && !federalScheduleOk ? (
                   <div style={{ marginTop: 8, opacity: 0.9 }}>
-                    Dica: Federal é <b>quarta</b> e <b>sábado</b> às <b>20h</b>.
+                    Dica: Federal é <b>quarta</b> e <b>sábado</b>.
                   </div>
                 ) : null}
                 .
@@ -1145,9 +1154,7 @@ export default function Results() {
                           <div className="pp_rows">
                             {rows.map((r) => {
                               const gtxt = r.grupo ? `G${pad2(r.grupo)}` : "—";
-                              const numFmt = r.numero
-                                ? formatPrizeNumberByPos(r.numero, r.pos)
-                                : "";
+                              const numFmt = r.numero ? formatPrizeNumberByPos(r.numero, r.pos) : "";
 
                               return (
                                 <div key={`${id}_pos_${r.pos}`} className="pp_row">
@@ -1203,5 +1210,3 @@ export default function Results() {
     </div>
   );
 }
-
-

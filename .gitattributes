@@ -1,0 +1,8 @@
+# Normaliza EOL no repo
+* text=auto eol=lf
+
+# (Opcional) refor?a para JS/React
+*.js   text eol=lf
+*.jsx  text eol=lf
+*.ts   text eol=lf
+*.tsx  text eol=lf

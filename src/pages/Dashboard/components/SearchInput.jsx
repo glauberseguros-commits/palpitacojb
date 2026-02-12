@@ -144,6 +144,13 @@ export default function SearchInput({
           justify-content:center;
           outline:none;
           min-width:0;
+          cursor:pointer;
+        }
+
+        .ppBoxesWrap[aria-disabled="true"]{
+          cursor:not-allowed;
+          opacity:0.75;
+          filter:grayscale(0.12);
         }
 
         .ppHiddenInput{
@@ -270,9 +277,12 @@ export default function SearchInput({
             className={["ppBoxesWrap", focused ? "isFocused" : ""].join(" ")}
             onClick={focusInput}
             role="button"
-            tabIndex={0}
+            tabIndex={loading ? -1 : 0}
+            aria-disabled={loading ? "true" : "false"}
             aria-label="Digite a dezena, centena ou milhar"
             onKeyDown={(e) => {
+              if (loading) return;
+
               if (e.key === "Enter") {
                 e.preventDefault();
                 if (focused) trySubmit();
@@ -288,12 +298,13 @@ export default function SearchInput({
               ref={inputRef}
               className="ppHiddenInput"
               value={digits}
-              onChange={(e) =>
-                onChange(normalizeDigitsOnly(e.target.value || "").slice(0, 4))
-              }
+              onChange={(e) => {
+                const v = normalizeDigitsOnly(e.target.value || "").slice(0, 4);
+                if (typeof onChange === "function") onChange(v);
+              }}
               inputMode="numeric"
               pattern="[0-9]*"
-              autoComplete="one-time-code"
+              autoComplete="off"
               disabled={!!loading}
               onFocus={() => setFocused(true)}
               onBlur={() => setFocused(false)}

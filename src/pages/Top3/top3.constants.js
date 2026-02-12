@@ -28,9 +28,8 @@ export const PT_RIO_SCHEDULE_NORMAL = [
   "21:00",
 ];
 
-// (mantendo como você tinha)
-export const PT_RIO_SCHEDULE_WED_SAT = PT_RIO_SCHEDULE_NORMAL;
+// (mantendo como você tinha, mas blindando contra mutação acidental)
+export const PT_RIO_SCHEDULE_WED_SAT = [...PT_RIO_SCHEDULE_NORMAL];
 
-// Federal: qua/sáb 20h
-export const FEDERAL_SCHEDULE = ["20:00"];
-
+// Federal: histórico 19h + atual 20h (blindagem)
+export const FEDERAL_SCHEDULE = ["19:00", "20:00"];

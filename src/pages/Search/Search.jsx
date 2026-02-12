@@ -119,7 +119,7 @@ function normalizeYmdAny(v) {
 }
 
 function buildQueryInfo(rawQuery) {
-  const digits = normalizeDigitsOnly(rawQuery).slice(0, 4);
+  const digits = normalizeDigitsOnly(rawQuery).slice(-4);
   const len0 = digits.length;
 
   if (len0 < 2) return { digits, len: len0, kind: "vazio" };
@@ -649,7 +649,7 @@ export default function Search() {
           uf: LOTTERY_KEY,
           dateFrom: ch.from,
           dateTo: ch.to,
-          closeHourBucket: selectedCloseHourBucket || null,
+          closeHourBucket: null,
           closeHour: selectedCloseHourBucket ? `${String(selectedCloseHourBucket).slice(0, 2)}:00` : null,
           positions: selectedPositions || null,
           mode: "detailed",
@@ -752,16 +752,18 @@ export default function Search() {
       await runPool(chunks, worker, 3);
 
       if (!safeOk()) return;
-
       // ordena no final
+      const hourRank = (h) => {
+        const m = String(h || "").match(/^(\d{2})/);
+        return m ? Number(m[1]) : 99;
+      };
       allHits.sort((a, b) => {
         const ya = String(a.ymd || "");
         const yb = String(b.ymd || "");
         if (ya !== yb) return yb.localeCompare(ya);
-
-        const ha = String(a.close_hour || "");
-        const hb = String(b.close_hour || "");
-        if (ha !== hb) return hb.localeCompare(ha);
+        const ha = hourRank(a.close_hour);
+        const hb = hourRank(b.close_hour);
+        if (ha !== hb) return hb - ha;
 
         const pa = a.position ?? 99;
         const pb = b.position ?? 99;
@@ -1162,3 +1164,9 @@ export default function Search() {
     </div>
   );
 }
+
+
+
+
+
+

@@ -8,7 +8,7 @@ export function getApiBase() {
   if (typeof window !== "undefined") {
     const host = String(window.location.host || "");
     // dev local
-    if (/localhost|127\.0\.0\.1/i.test(host)) return "http://127.0.0.1:3333";
+    if (/localhost|127\.0\.0\.1/i.test(host)) return "";
     // produção: mesma origem (Vercel rewrites -> api.palpitacojb.com.br)
     return window.location.origin;
   }
@@ -18,3 +18,4 @@ export function getApiBase() {
 }
 
 export default getApiBase;
+

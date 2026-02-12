@@ -624,6 +624,17 @@ export default function Dashboard(props) {
   const [bannerSrc, setBannerSrc] = useState(DEFAULT_BANNER_SRC);
   const bannerReqIdRef = useRef(0);
 
+  const restoredRangeRef = useRef({ from: null, to: null });
+  const restoredQueryRef = useRef({ from: null, to: null });
+
+  useEffect(() => {
+    restoredRangeRef.current = { from: dateRange?.from || null, to: dateRange?.to || null };
+  }, [dateRange?.from, dateRange?.to]);
+
+  useEffect(() => {
+    restoredQueryRef.current = { from: dateRangeQuery?.from || null, to: dateRangeQuery?.to || null };
+  }, [dateRangeQuery?.from, dateRangeQuery?.to]);
+
   useEffect(() => {
     if (DATA_MODE !== "firestore") return;
 
@@ -659,16 +670,14 @@ export default function Dashboard(props) {
         if (!didInitRangeFromBoundsRef.current) {
           didInitRangeFromBoundsRef.current = true;
 
+          const rr = restoredRangeRef.current;
+          const rq = restoredQueryRef.current;
+
           const hasRestoredRange =
-            dateRange?.from && dateRange?.to && isISODate(dateRange.from) && isISODate(dateRange.to);
+            rr?.from && rr?.to && isISODate(rr.from) && isISODate(rr.to);
 
           const hasRestoredQuery =
-            dateRangeQuery?.from &&
-            dateRangeQuery?.to &&
-            isISODate(dateRangeQuery.from) &&
-            isISODate(dateRangeQuery.to);
-
-          if (hasRestoredRange && hasRestoredQuery) return;
+            rq?.from && rq?.to && isISODate(rq.from) && isISODate(rq.to);if (hasRestoredRange && hasRestoredQuery) return;
 
           const init = { from: minYmd, to: maxYmd };
           setDateRange(init);
@@ -690,7 +699,7 @@ export default function Dashboard(props) {
     return () => {
       alive = false;
     };
-  }, [uf, dateRange?.from, dateRange?.to, dateRangeQuery?.from, dateRangeQuery?.to]);
+  }, [uf]);
 
   const MIN_DATE = bounds.minDate;
   const MAX_DATE = bounds.maxDate;
@@ -1566,6 +1575,9 @@ const rankingRowsFromMeta = useMemo(() => {
     </div>
   );
 }
+
+
+
 
 
 

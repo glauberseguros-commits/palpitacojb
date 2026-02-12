@@ -1,5 +1,5 @@
 // src/pages/Downloads/Downloads.jsx
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { getKingResultsByRange, getKingBoundsByUf } from "../../services/kingResultsService";
 import { getAnimalLabel } from "../../constants/bichoMap";
 
@@ -561,7 +561,13 @@ export default function Downloads() {
   const [exportLoading, setExportLoading] = useState(false);
   const [exportError, setExportError] = useState("");
 
+  // ✅ guard: normaliza range APENAS 1x por bounds (e reseta ao trocar UF)
+  const didInitRangeFromBoundsRef = useRef(false);
+
   useEffect(() => {
+    // UF mudou -> reseta guard (novo bounds vai reger o range)
+    didInitRangeFromBoundsRef.current = false;
+
     let alive = true;
 
     async function run() {
@@ -581,16 +587,6 @@ export default function Downloads() {
         const maxDate = isYMD(bMax) ? bMax : "";
 
         setBounds({ minDate, maxDate });
-
-        // ✅ NORMALIZA datas assim que bounds chega (fix do bug do print)
-        setDateFrom((prev) => {
-          const r = normalizeRangeWithBounds(prev, dateTo, minDate, maxDate);
-          return r.from;
-        });
-        setDateTo((prev) => {
-          const r = normalizeRangeWithBounds(dateFrom, prev, minDate, maxDate);
-          return r.to;
-        });
       } catch {
         // bounds é opcional
       }
@@ -602,6 +598,21 @@ export default function Downloads() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ufQueryKey]);
+
+  // ✅ Quando bounds chega, normaliza o range 1 vez (sem stale closure)
+  useEffect(() => {
+    const minDate = safeStr(bounds?.minDate);
+    const maxDate = safeStr(bounds?.maxDate);
+
+    if (!isYMD(minDate) || !isYMD(maxDate)) return;
+    if (didInitRangeFromBoundsRef.current) return;
+
+    didInitRangeFromBoundsRef.current = true;
+
+    const r = normalizeRangeWithBounds(dateFrom, dateTo, minDate, maxDate);
+    if (r.from !== dateFrom) setDateFrom(r.from);
+    if (r.to !== dateTo) setDateTo(r.to);
+  }, [bounds?.minDate, bounds?.maxDate, dateFrom, dateTo]);
 
   // ✅ sempre use bounds atuais para normalizar range nas ações/export
   const normalizeRange = useCallback(() => {
@@ -1249,4 +1260,3 @@ export default function Downloads() {
     </div>
   );
 }
-
