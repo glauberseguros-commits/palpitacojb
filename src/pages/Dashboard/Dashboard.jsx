@@ -43,7 +43,8 @@ const ALL_POSITIONS = [1, 2, 3, 4, 5, 6, 7];
    Persistência (Dashboard State)
    - Não inclui filtros (filtros ficam no App.js)
 ========================= */
-const DASH_STATE_KEY = "pp_dash_state_v1";
+const DASH_STATE_KEY_V1 = "pp_dash_state_v1";
+const DASH_STATE_KEY = "pp_dash_state_v2"; // versionado
 
 /* =========================
    Sessão / Guest (demo)
@@ -85,6 +86,7 @@ function isGuestSession(sess) {
   const id = String(s.loginId || "").toLowerCase();
   return t === "guest" || id === "guest" || s.skipped === true || String(s.mode || "") === "skip";
 }
+
 /* =========================
    Banner
 ========================= */
@@ -104,7 +106,49 @@ function safeReadJSON(key) {
 function safeWriteJSON(key, value) {
   try {
     localStorage.setItem(key, JSON.stringify(value));
-  } catch {}
+  } catch {
+    // silent
+  }
+}
+
+function normalizeDashState(raw) {
+  const s = raw && typeof raw === "object" ? raw : null;
+  if (!s) return null;
+
+  if (s.v === 2) {
+    return {
+      v: 2,
+      selectedGrupo: s.selectedGrupo ?? null,
+      selectedYears: Array.isArray(s.selectedYears) ? s.selectedYears : [],
+      dateRange: s.dateRange ?? null,
+      dateRangeQuery: s.dateRangeQuery ?? null,
+      lastBoundsMin: s.lastBoundsMin ?? null,
+      lastBoundsMax: s.lastBoundsMax ?? null,
+      followMax: s.followMax !== false,
+    };
+  }
+
+  // migração automática do V1
+  return {
+    v: 2,
+    selectedGrupo: s.selectedGrupo ?? null,
+    selectedYears: Array.isArray(s.selectedYears) ? s.selectedYears : [],
+    dateRange: s.dateRange ?? null,
+    dateRangeQuery: s.dateRangeQuery ?? null,
+    lastBoundsMin: null,
+    lastBoundsMax: null,
+    followMax: true,
+  };
+}
+
+function loadDashStateV2() {
+  const rawV2 = safeReadJSON(DASH_STATE_KEY);
+  if (rawV2) return normalizeDashState(rawV2);
+
+  const rawV1 = safeReadJSON(DASH_STATE_KEY_V1);
+  if (rawV1) return normalizeDashState(rawV1);
+
+  return null;
 }
 
 function isValidGrupo(g) {
@@ -351,6 +395,7 @@ function mapMetaRankingToRows(meta) {
     }))
     .filter((x) => x.grupo && Number.isFinite(Number(x.total)));
 }
+
 function mapRankingJsonToApp(json) {
   const safe = json && typeof json === "object" ? json : null;
   if (!safe) return null;
@@ -526,7 +571,6 @@ export default function Dashboard(props) {
     };
 
     const onVisibility = () => {
-      // ao voltar pra aba, atualiza imediatamente
       if (document.visibilityState === "visible") refresh();
     };
 
@@ -534,7 +578,6 @@ export default function Dashboard(props) {
     document.addEventListener("visibilitychange", onVisibility);
 
     const t = setInterval(() => {
-      // evita ficar “martelando” quando aba está oculta
       if (document.visibilityState !== "visible") return;
       refresh();
     }, SESSION_POLL_MS);
@@ -551,7 +594,7 @@ export default function Dashboard(props) {
     return externalFilters && typeof externalFilters === "object" ? externalFilters : fallbackFilters;
   }, [externalFilters, fallbackFilters]);
 
-  // ✅ no guest, força "Todos" (vitrine) — mantém loteria em PT_RIO (não vale FEDERAL no demo)
+  // ✅ no guest, força "Todos" (vitrine)
   const filters = useMemo(() => {
     if (!isGuest) return { ...fallbackFilters, ...rawFilters };
     return fallbackFilters;
@@ -581,8 +624,8 @@ export default function Dashboard(props) {
   const locationLabel = isFederal ? "FEDERAL (Brasil) — 20h" : "Rio de Janeiro, RJ, Brasil";
   const uf = isFederal ? "FEDERAL" : "PT_RIO";
 
-  // ✅ restaura apenas estado auxiliar (range/anos/grupo) do localStorage
-  const savedDashState = useMemo(() => safeReadJSON(DASH_STATE_KEY), []);
+  // ✅ restaura estado auxiliar (range/anos/grupo)
+  const savedDashState = useMemo(() => loadDashStateV2(), []);
 
   const [selectedGrupo, setSelectedGrupo] = useState(() => {
     const g = Number(savedDashState?.selectedGrupo);
@@ -597,6 +640,7 @@ export default function Dashboard(props) {
   });
 
   const didInitRangeFromBoundsRef = useRef(false);
+  const [followMax] = useState(() => savedDashState?.followMax !== false);
 
   const [dateRange, setDateRange] = useState(() => {
     const dr = savedDashState?.dateRange;
@@ -673,19 +717,12 @@ export default function Dashboard(props) {
           const rr = restoredRangeRef.current;
           const rq = restoredQueryRef.current;
 
-          const hasRestoredRange =
-            rr?.from && rr?.to && isISODate(rr.from) && isISODate(rr.to);
+          const hasRestoredRange = rr?.from && rr?.to && isISODate(rr.from) && isISODate(rr.to);
+          const hasRestoredQuery = rq?.from && rq?.to && isISODate(rq.from) && isISODate(rq.to);
 
-          const hasRestoredQuery =
-            rq?.from && rq?.to && isISODate(rq.from) && isISODate(rq.to);
-
-          // ✅ Se já existe range salvo, garante que ele NÃO “trave” o painel em max antigo.
-          // - clampa no bounds atual
-          // - e auto-estende o "to" para o maxYmd mais recente
           if (hasRestoredRange && hasRestoredQuery) {
             const clamped =
-              clampRangeToBounds({ from: rr.from, to: rr.to }, minYmd, maxYmd) ||
-              { from: minYmd, to: maxYmd };
+              clampRangeToBounds({ from: rr.from, to: rr.to }, minYmd, maxYmd) || { from: minYmd, to: maxYmd };
 
             const toFixed = maxYmd && clamped.to < maxYmd ? maxYmd : clamped.to;
 
@@ -695,7 +732,8 @@ export default function Dashboard(props) {
             setSelectedYears([]);
             return;
           }
-const init = { from: minYmd, to: maxYmd };
+
+          const init = { from: minYmd, to: maxYmd };
           setDateRange(init);
           setDateRangeQuery(init);
           setSelectedYears([]);
@@ -721,7 +759,7 @@ const init = { from: minYmd, to: maxYmd };
   const MAX_DATE = bounds.maxDate;
   const boundsReady = !!(MIN_DATE && MAX_DATE && !bounds.loading);
 
-  // ✅ Guest (demo): força SEMPRE período completo e filtros "Todos"
+  // ✅ Guest (demo): força período completo
   useEffect(() => {
     if (!isGuest) return;
     if (!boundsReady || !MIN_DATE || !MAX_DATE) return;
@@ -757,6 +795,21 @@ const init = { from: minYmd, to: maxYmd };
       setDateRangeQuery(clamped);
     }
   }, [boundsReady, MIN_DATE, MAX_DATE, dateRange?.from, dateRange?.to]);
+
+  // AUTO FOLLOW MAX_DATE (produção-first)
+  useEffect(() => {
+    if (!boundsReady || !MIN_DATE || !MAX_DATE) return;
+    if (isGuest) return;
+
+    const rq = dateRangeQuery;
+    if (!rq?.from || !rq?.to) return;
+
+    if (followMax && String(rq.to) < String(MAX_DATE)) {
+      const fixed = { from: rq.from < MIN_DATE ? MIN_DATE : rq.from, to: MAX_DATE };
+      setDateRange(fixed);
+      setDateRangeQuery(fixed);
+    }
+  }, [boundsReady, MIN_DATE, MAX_DATE, isGuest, followMax, dateRangeQuery]);
 
   const applyDateRange = useCallback(
     (next) => {
@@ -809,15 +862,14 @@ const init = { from: minYmd, to: maxYmd };
 
   const canQueryFirestore = DATA_MODE === "firestore" ? !!(boundsReady && dateRangeQuery) : true;
 
-  const { loading: fsLoading, error: fsError, meta: fsRankingMeta, drawsRaw: fsDrawsRaw } =
-    useKingRanking({
-      uf,
-      date: canQueryFirestore ? queryDate : null,
-      dateFrom: canQueryFirestore ? dateFrom : null,
-      dateTo: canQueryFirestore ? dateTo : null,
-      closeHourBucket: null,
-      positions: ALL_POSITIONS,
-    });
+  const { loading: fsLoading, error: fsError, meta: fsRankingMeta, drawsRaw: fsDrawsRaw } = useKingRanking({
+    uf,
+    date: canQueryFirestore ? queryDate : null,
+    dateFrom: canQueryFirestore ? dateFrom : null,
+    dateTo: canQueryFirestore ? dateTo : null,
+    closeHourBucket: null,
+    positions: ALL_POSITIONS,
+  });
 
   const [jsonState, setJsonState] = useState({
     loading: DATA_MODE === "json",
@@ -876,12 +928,10 @@ const init = { from: minYmd, to: maxYmd };
   const rankingError = DATA_MODE === "json" ? jsonState.error : fsError;
 
   const rankingMeta = DATA_MODE === "json" ? jsonState.rankingMeta : fsRankingMeta;
-const rankingRowsFromMeta = useMemo(() => {
-  // fallback: quando drawsRaw vierem agregados/sem prizes,
-  // usamos o ranking pronto que o hook já calculou.
-  return mapMetaRankingToRows(rankingMeta);
-}, [rankingMeta]);
 
+  const rankingRowsFromMeta = useMemo(() => {
+    return mapMetaRankingToRows(rankingMeta);
+  }, [rankingMeta]);
 
   const loadingEffective = !!rankingLoading || !!isHydrating;
 
@@ -1051,64 +1101,55 @@ const rankingRowsFromMeta = useMemo(() => {
   const hasAnyDrawsView = drawsForView.length > 0;
 
   const rankingDataGlobalForLabels = useMemo(() => {
-  if (!Array.isArray(drawsForUi) || !drawsForUi.length) return rankingRowsFromMeta;
-  try {
-    const built = buildRanking(drawsForUi);
-    const arr = Array.isArray(built?.byGrupo)
-      ? built.byGrupo
-      : Array.isArray(built?.ranking)
-      ? built.ranking
-      : [];
+    if (!Array.isArray(drawsForUi) || !drawsForUi.length) return rankingRowsFromMeta;
+    try {
+      const built = buildRanking(drawsForUi);
+      const arr = Array.isArray(built?.byGrupo) ? built.byGrupo : Array.isArray(built?.ranking) ? built.ranking : [];
 
-    const rows = arr.map((r) => ({
-      grupo: String(r?.grupo ?? r?.group ?? "").replace(/^0/, ""),
-      animal: r?.animal ?? r?.label ?? "",
-      total: Number(r?.apar ?? r?.total ?? r?.count ?? 0),
-    }));
+      const rows = arr.map((r) => ({
+        grupo: String(r?.grupo ?? r?.group ?? "").replace(/^0/, ""),
+        animal: r?.animal ?? r?.label ?? "",
+        total: Number(r?.apar ?? r?.total ?? r?.count ?? 0),
+      }));
 
-    return rows.length ? rows : rankingRowsFromMeta;
-  } catch {
-    return rankingRowsFromMeta;
-  }
-}, [drawsForUi, rankingRowsFromMeta]);
+      return rows.length ? rows : rankingRowsFromMeta;
+    } catch {
+      return rankingRowsFromMeta;
+    }
+  }, [drawsForUi, rankingRowsFromMeta]);
 
   const rankingDataForLeftTable = useMemo(() => {
-  if (!Array.isArray(drawsForView) || !drawsForView.length) return rankingRowsFromMeta;
-  try {
-    const built = buildRanking(drawsForView);
-    const arr = Array.isArray(built?.byGrupo)
-      ? built.byGrupo
-      : Array.isArray(built?.ranking)
-      ? built.ranking
-      : [];
+    if (!Array.isArray(drawsForView) || !drawsForView.length) return rankingRowsFromMeta;
+    try {
+      const built = buildRanking(drawsForView);
+      const arr = Array.isArray(built?.byGrupo) ? built.byGrupo : Array.isArray(built?.ranking) ? built.ranking : [];
 
-    const rows = arr.map((r) => ({
-      grupo: String(r?.grupo ?? r?.group ?? "").replace(/^0/, ""),
-      animal: r?.animal ?? r?.label ?? "",
-      total: Number(r?.apar ?? r?.total ?? r?.count ?? 0),
-    }));
+      const rows = arr.map((r) => ({
+        grupo: String(r?.grupo ?? r?.group ?? "").replace(/^0/, ""),
+        animal: r?.animal ?? r?.label ?? "",
+        total: Number(r?.apar ?? r?.total ?? r?.count ?? 0),
+      }));
 
-    return rows.length ? rows : rankingRowsFromMeta;
-  } catch {
-    return rankingRowsFromMeta;
-  }
-}, [drawsForView, rankingRowsFromMeta]);
+      return rows.length ? rows : rankingRowsFromMeta;
+    } catch {
+      return rankingRowsFromMeta;
+    }
+  }, [drawsForView, rankingRowsFromMeta]);
 
   const rankingDataForCharts = useMemo(() => {
-  try {
-    const built = buildRanking(drawsForView);
-    const arr = Array.isArray(built?.ranking) ? built.ranking : [];
-    if (arr.length) return arr;
-  } catch {}
+    try {
+      const built = buildRanking(drawsForView);
+      const arr = Array.isArray(built?.ranking) ? built.ranking : [];
+      if (arr.length) return arr;
+    } catch {}
 
-  // fallback: usa meta, mas no formato que ChartsGrid tolera (ranking[])
-  return (rankingRowsFromMeta || []).map((r) => ({
-    grupo: r.grupo,
-    animal: r.animal,
-    apar: r.total,
-    total: r.total,
-  }));
-}, [drawsForView, rankingRowsFromMeta]);
+    return (rankingRowsFromMeta || []).map((r) => ({
+      grupo: r.grupo,
+      animal: r.animal,
+      apar: r.total,
+      total: r.total,
+    }));
+  }, [drawsForView, rankingRowsFromMeta]);
 
   const palpitesByGrupo = useMemo(() => {
     if (!dataReady || !hasAnyDrawsView) return {};
@@ -1127,7 +1168,6 @@ const rankingRowsFromMeta = useMemo(() => {
       animais.push(lbl || `Grupo ${pad2(g)}`);
     }
 
-    // horários disponíveis (RJ) + FEDERAL 20h
     const baseBuckets = new Set();
     if (Array.isArray(drawsForUi) && drawsForUi.length) {
       for (const d of drawsForUi) {
@@ -1378,12 +1418,16 @@ const rankingRowsFromMeta = useMemo(() => {
     if (isGuest) return;
 
     safeWriteJSON(DASH_STATE_KEY, {
+      v: 2,
       selectedGrupo,
       selectedYears,
       dateRange,
       dateRangeQuery,
+      lastBoundsMin: MIN_DATE || null,
+      lastBoundsMax: MAX_DATE || null,
+      followMax: followMax !== false,
     });
-  }, [selectedGrupo, selectedYears, dateRange, dateRangeQuery, isGuest]);
+  }, [selectedGrupo, selectedYears, dateRange, dateRangeQuery, isGuest, MIN_DATE, MAX_DATE, followMax]);
 
   const hydratingBox = useMemo(() => {
     if (!isHydrating) return null;
@@ -1475,7 +1519,9 @@ const rankingRowsFromMeta = useMemo(() => {
                         <div
                           role="button"
                           aria-label="Período bloqueado no modo demonstração"
-                          onClick={() => showGuestToast("Modo demonstração: período está bloqueado. Faça login para usar.")}
+                          onClick={() =>
+                            showGuestToast("Modo demonstração: período está bloqueado. Faça login para usar.")
+                          }
                           style={{
                             position: "absolute",
                             inset: 0,
@@ -1498,14 +1544,14 @@ const rankingRowsFromMeta = useMemo(() => {
                   hydratingBox
                 ) : (
                   <KpiCards
-  items={kpiItems}
-  drawsRaw={dataReady ? drawsForView : []}
-  drawsRawGlobal={dataReady ? drawsForUi : []}
-  showGlobalAparicoes={true}
-  selectedGrupo={selectedGrupo}
-  selectedAnimalLabel={filters.animal}
-  selectedPosition={selectedPosition}
-/>
+                    items={kpiItems}
+                    drawsRaw={dataReady ? drawsForView : []}
+                    drawsRawGlobal={dataReady ? drawsForUi : []}
+                    showGlobalAparicoes={true}
+                    selectedGrupo={selectedGrupo}
+                    selectedAnimalLabel={filters.animal}
+                    selectedPosition={selectedPosition}
+                  />
                 )}
               </>
             )}
@@ -1591,11 +1637,4 @@ const rankingRowsFromMeta = useMemo(() => {
     </div>
   );
 }
-
-
-
-
-
-
-
 
