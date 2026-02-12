@@ -10,9 +10,9 @@ const path = require("path");
 function dowFromYMD(dateYMD) {
   const m = String(dateYMD || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!m) return new Date(dateYMD).getDay(); // fallback
-  const y = Number(m[1]),
-    mo = Number(m[2]) - 1,
-    d = Number(m[3]);
+  const y = Number(m[1]);
+  const mo = Number(m[2]) - 1;
+  const d = Number(m[3]);
   return new Date(Date.UTC(y, mo, d)).getUTCDay();
 }
 
@@ -37,16 +37,59 @@ const WARN_AFTER_MIN = Number(process.env.AUDIT_WARN_MIN || 20);
 const CRIT_AFTER_MIN = Number(process.env.AUDIT_CRIT_MIN || 60);
 const FAIL_ON_CRITICAL = String(process.env.FAIL_ON_CRITICAL || "0").trim() === "1";
 
-
 // ✅ Limite de catch-up pós-janela (minutos após windowEnd)
 // Default 90 (reduz spam em cron fora da janela)
 const CATCHUP_MAX_AFTER_END_MIN = Number(process.env.CATCHUP_MAX_AFTER_END_MIN || 90);
+
 /**
  * ✅ Base URL do backend (pra ler dayStatus sem duplicar regra)
  * - Local default: http://127.0.0.1:3333
  * - Override: PITACO_API_BASE="https://seu-dominio"
  */
 const PITACO_API_BASE = String(process.env.PITACO_API_BASE || "http://127.0.0.1:3333").trim();
+
+/**
+ * ✅ Cache do DayStatus (evita bater no backend a cada tick do cron)
+ * - Arquivo por (loteria+dia)
+ * - TTL default: 10 min
+ */
+const DAYSTATUS_CACHE_TTL_SEC = Number(process.env.DAYSTATUS_CACHE_TTL_SEC || 600);
+
+function dayStatusCacheFile(dateYMD) {
+  return path.join(LOG_DIR, `dayStatusCache-${LOTTERY}-${dateYMD}.json`);
+}
+
+function readJsonSafeFile(p) {
+  try {
+    if (!fs.existsSync(p)) return null;
+    return JSON.parse(fs.readFileSync(p, "utf8"));
+  } catch {
+    return null;
+  }
+}
+
+function writeJsonSafeFile(p, obj) {
+  try {
+    ensureLogDir();
+    const tmp = `${p}.tmp`;
+    fs.writeFileSync(tmp, JSON.stringify(obj, null, 2));
+    fs.renameSync(tmp, p);
+  } catch {}
+}
+
+async function fetchDayStatusCached({ date, lottery }) {
+  const f = dayStatusCacheFile(date);
+  const nowMs = Date.now();
+  const cached = readJsonSafeFile(f);
+
+  if (cached && cached.atMs && (nowMs - Number(cached.atMs)) < (DAYSTATUS_CACHE_TTL_SEC * 1000)) {
+    return cached.value || null;
+  }
+
+  const value = await fetchDayStatusFromBackend({ date, lottery });
+  writeJsonSafeFile(f, { atMs: nowMs, iso: new Date().toISOString(), value });
+  return value;
+}
 
 /* =========================
    Schedules (por loteria)
@@ -277,7 +320,7 @@ function isAllDone(state) {
 
 /**
  * Gera closes candidatos (tolerância de minutos)
- * Ex.: "11:00" => ["11:00","11:01","10:59","11:02","10:58","11:09",...]
+ * Ex.: "11:00" => ["11:00","11:01","11:02","11:09","11:10","11:11"]
  */
 function closeCandidates(hhmm) {
   const parsed = parseHH(hhmm);
@@ -468,7 +511,7 @@ function applyHolidayNoDrawToState({ state, statusMap, isoNow }) {
     const slot = state?.[sched.hour];
     if (!slot) continue;
 
-    const st = statusMap.get(sched.hour) || "OFF_confirm";
+    const st = statusMap.get(sched.hour) || "OFF";
     const applies = st === "HARD" || st === "SOFT";
     if (!applies) continue;
 
@@ -608,6 +651,17 @@ async function guardPersistedOrCritical({ date, slotHHMM, calendar, closeHourTri
   if (meta && (meta.mode === "ALREADY_COMPLETE" || meta.mode === "NO_DRAW")) {
     return { ok: true, skipped: true, reason: `SKIP_${meta.mode}` };
   }
+
+  // ✅ Otimização: se foi CAPTURE_WRITE e houve escrita, consideramos persistido (evita HTTP extra)
+  if (meta && meta.mode === "CAPTURE_WRITE") {
+    const sc = Number.isFinite(Number(meta.savedCount)) ? Number(meta.savedCount) : 0;
+    const wc = Number.isFinite(Number(meta.writeCount)) ? Number(meta.writeCount) : 0;
+
+    if (sc > 0 || wc > 0) {
+      return { ok: true, verified: true, where: "import_return", skippedBackend: true };
+    }
+  }
+
 
   const v = await verifySlotPersistedViaBackend({ date, slotHHMM });
   if (v.ok) return { ok: true, verified: true, where: v.where };
@@ -779,8 +833,8 @@ async function main() {
   if (String(process.env.NOW_HM || "").trim()) {
     logLine(`[TIME] NOW_HM override ativo => ${pad2(now.h)}:${pad2(now.m)} (America/Sao_Paulo)`, "INFO");
   }
-  const dow = dowFromYMD(date);
 
+  const dow = dowFromYMD(date);
   const catchupTried = new Set();
 
   const lock = acquireLock();
@@ -793,7 +847,16 @@ async function main() {
     const state = loadState(date);
     const isoNow = new Date().toISOString();
     const statusMap = buildTodaySlotStatusMap(date, dow);
-
+    // ✅ Se o dia já está completo, não precisa bater no backend (dayStatus) nem tentar imports.
+    // Ainda assim, geramos o audit e encerramos.
+    if (isAllDone(state)) {
+      try {
+        const report = buildAuditReport({ date, nowMin, isoNow: new Date().toISOString(), dow, statusMap, state });
+        safeWriteJson(auditOutFile(date), report);
+      } catch {}
+      logLine(`[AUTO] DIA COMPLETO (${date}) — slots concluídos (skip dayStatus/import)`, "INFO");
+      return;
+    }
     // 1) Marca N/A slots que não se aplicam hoje (OFF)
     let stateTouched = false;
     for (const sched of SCHEDULE) {
@@ -820,13 +883,20 @@ async function main() {
     if (stateTouched) saveState(date, state);
 
     // 1.5) DayStatus guard: feriado sem sorteio
-    const ds = await fetchDayStatusFromBackend({ date, lottery: LOTTERY });
+    const ds = await fetchDayStatusCached({ date, lottery: LOTTERY });
     if (ds && ds.blocked && String(ds.dayStatus || "") === "holiday_no_draw") {
       const touched = applyHolidayNoDrawToState({ state, statusMap, isoNow });
       if (touched > 0) saveState(date, state);
 
       try {
-        const report = buildAuditReport({ date, nowMin, isoNow: new Date().toISOString(), dow, statusMap, state });
+        const report = buildAuditReport({
+          date,
+          nowMin,
+          isoNow: new Date().toISOString(),
+          dow,
+          statusMap,
+          state,
+        });
         safeWriteJson(auditOutFile(date), report);
       } catch {}
 
@@ -854,26 +924,27 @@ async function main() {
       const inWindow = !(nowMin < w.start || nowMin > w.end);
       const afterRelease = nowMin >= w.release;
 
+      // Fora da janela: só tenta catch-up se já passou do release e ainda está dentro do limite
       if (!inWindow) {
-  if (!afterRelease) continue;
+        if (!afterRelease) continue;
 
-  // ✅ Não faz catch-up infinito: limita a X minutos após o fim da janela
-  const catchupLimit = w.end + CATCHUP_MAX_AFTER_END_MIN;
-  if (nowMin > catchupLimit) {
-    // Não tenta mais importar fora da janela (auditoria/alertas já cobrem)
-    continue;
-  }
+        const catchupLimit = w.end + CATCHUP_MAX_AFTER_END_MIN;
+        if (nowMin > catchupLimit) {
+          // Não tenta mais importar fora da janela (auditoria/alertas já cobrem)
+          continue;
+        }
 
-  const key = `${date}::${sched.hour}`;
-  if (catchupTried.has(key)) continue;
-  catchupTried.add(key);
+        const key = `${date}::${sched.hour}`;
+        if (catchupTried.has(key)) continue;
+        catchupTried.add(key);
 
-  logLine(
-    `[AUTO] CATCH-UP pós-release ${date} slot=${sched.hour} (${st}) releaseAt=${w.releaseLabel} window=${w.startLabel}~${w.endLabel} (fora da janela)`,
-    "INFO"
-  );
-}
+        logLine(
+          `[AUTO] CATCH-UP pós-release ${date} slot=${sched.hour} (${st}) releaseAt=${w.releaseLabel} window=${w.startLabel}~${w.endLabel} (fora da janela)`,
+          "INFO"
+        );
+      }
 
+      // Dentro da janela, ainda assim só roda após o release
       if (!afterRelease) continue;
 
       slot.tries = (slot.tries || 0) + 1;
@@ -903,20 +974,36 @@ async function main() {
           continue;
         }
 
-        // ✅ Se o import disse "no_draw_for_slot", isso NÃO é furo.
-        if (r && r.blocked === true && (String(r.blockedReason || "").trim() === "no_draw_for_slot" || String(r.blockedReason || "").trim() === "no_draw_for_slot_calendar")) {
-          // Em qualquer dia: não marca "DONE", mantém pendente p/ retry (exceto se calendário for OFF, que já virou N/A acima)
+        const blockedReason = String(r?.blockedReason || "").trim();
+
+        // ✅ Se o import disse "no_draw_for_slot|no_draw_for_slot_calendar", isso NÃO é furo.
+        if (r && r.blocked === true && (blockedReason === "no_draw_for_slot" || blockedReason === "no_draw_for_slot_calendar")) {
+          // Não marca DONE: mantém pendente p/ retry (exceto OFF, que já virou N/A acima)
           slot.lastResult = {
             ...(slot.lastResult || {}),
             ok: true,
             closeHourTried: closeHour,
             blocked: true,
-            blockedReason: String(r.blockedReason || "").trim(),
+            blockedReason,
             note: "no_draw_for_slot|no_draw_for_slot_calendar (will retry)",
           };
           saveState(date, state);
 
-          logLine(`[AUTO] ${String(r.blockedReason || "").trim()} slot=${sched.hour} (${st}) -> mantendo PENDENTE p/ retry`, "INFO");
+          logLine(`[AUTO] ${blockedReason} slot=${sched.hour} (${st}) -> mantendo PENDENTE p/ retry`, "INFO");
+          didSomething = true;
+          break;
+        }
+
+        // ✅ Se o import bloqueou por data futura (não deveria cair aqui), apenas registra e para
+        if (r && r.blocked === true && blockedReason === "future_date") {
+          slot.lastResult = {
+            ok: true,
+            closeHourTried: closeHour,
+            blocked: true,
+            blockedReason,
+          };
+          saveState(date, state);
+          logLine(`[AUTO] future_date bloqueado pelo import (defensivo). date=${date} slot=${sched.hour}`, "ERROR");
           didSomething = true;
           break;
         }
@@ -1040,6 +1127,8 @@ main().catch((e) => {
   releaseLock();
   process.exit(1);
 });
+
+
 
 
 
