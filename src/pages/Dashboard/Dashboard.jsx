@@ -103,50 +103,35 @@ function safeReadJSON(key) {
   }
 }
 
-function safeWriteJSON(key, value) {
+function safeWriteJSON(key, obj) {
   try {
-    localStorage.setItem(key, JSON.stringify(value));
+    localStorage.setItem(key, JSON.stringify(obj));
   } catch {
-    // silent
+    // ignore
   }
-}
-
-function normalizeDashState(raw) {
-  const s = raw && typeof raw === "object" ? raw : null;
-  if (!s) return null;
-
-  if (s.v === 2) {
-    return {
-      v: 2,
-      selectedGrupo: s.selectedGrupo ?? null,
-      selectedYears: Array.isArray(s.selectedYears) ? s.selectedYears : [],
-      dateRange: s.dateRange ?? null,
-      dateRangeQuery: s.dateRangeQuery ?? null,
-      lastBoundsMin: s.lastBoundsMin ?? null,
-      lastBoundsMax: s.lastBoundsMax ?? null,
-      followMax: s.followMax !== false,
-    };
-  }
-
-  // migração automática do V1
-  return {
-    v: 2,
-    selectedGrupo: s.selectedGrupo ?? null,
-    selectedYears: Array.isArray(s.selectedYears) ? s.selectedYears : [],
-    dateRange: s.dateRange ?? null,
-    dateRangeQuery: s.dateRangeQuery ?? null,
-    lastBoundsMin: null,
-    lastBoundsMax: null,
-    followMax: true,
-  };
 }
 
 function loadDashStateV2() {
-  const rawV2 = safeReadJSON(DASH_STATE_KEY);
-  if (rawV2) return normalizeDashState(rawV2);
+  // v2
+  const v2 = safeReadJSON(DASH_STATE_KEY);
+  if (v2 && typeof v2 === "object") return v2;
 
-  const rawV1 = safeReadJSON(DASH_STATE_KEY_V1);
-  if (rawV1) return normalizeDashState(rawV1);
+  // compat v1 -> migra pra v2 “light”
+  const v1 = safeReadJSON(DASH_STATE_KEY_V1);
+  if (v1 && typeof v1 === "object") {
+    const migrated = {
+      v: 2,
+      selectedGrupo: v1.selectedGrupo ?? null,
+      selectedYears: Array.isArray(v1.selectedYears) ? v1.selectedYears : [],
+      dateRange: v1.dateRange ?? null,
+      dateRangeQuery: v1.dateRangeQuery ?? null,
+      followMax: v1.followMax ?? true,
+      lastBoundsMin: v1.lastBoundsMin ?? null,
+      lastBoundsMax: v1.lastBoundsMax ?? null,
+    };
+    safeWriteJSON(DASH_STATE_KEY, migrated);
+    return migrated;
+  }
 
   return null;
 }
@@ -235,7 +220,6 @@ function normalizeToYMD(input) {
     (Number.isFinite(Number(input.seconds)) || Number.isFinite(Number(input._seconds)))
   ) {
     const sec = Number.isFinite(Number(input.seconds)) ? Number(input.seconds) : Number(input._seconds);
-
     const d = new Date(sec * 1000);
     if (!Number.isNaN(d.getTime())) {
       return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
@@ -571,6 +555,7 @@ export default function Dashboard(props) {
     };
 
     const onVisibility = () => {
+      // ao voltar pra aba, atualiza imediatamente
       if (document.visibilityState === "visible") refresh();
     };
 
@@ -578,6 +563,7 @@ export default function Dashboard(props) {
     document.addEventListener("visibilitychange", onVisibility);
 
     const t = setInterval(() => {
+      // evita ficar “martelando” quando aba está oculta
       if (document.visibilityState !== "visible") return;
       refresh();
     }, SESSION_POLL_MS);
@@ -594,7 +580,7 @@ export default function Dashboard(props) {
     return externalFilters && typeof externalFilters === "object" ? externalFilters : fallbackFilters;
   }, [externalFilters, fallbackFilters]);
 
-  // ✅ no guest, força "Todos" (vitrine)
+  // ✅ no guest, força "Todos" (vitrine) — mantém loteria em PT_RIO (não vale FEDERAL no demo)
   const filters = useMemo(() => {
     if (!isGuest) return { ...fallbackFilters, ...rawFilters };
     return fallbackFilters;
@@ -624,7 +610,7 @@ export default function Dashboard(props) {
   const locationLabel = isFederal ? "FEDERAL (Brasil) — 20h" : "Rio de Janeiro, RJ, Brasil";
   const uf = isFederal ? "FEDERAL" : "PT_RIO";
 
-  // ✅ restaura estado auxiliar (range/anos/grupo)
+  // ✅ restaura apenas estado auxiliar (range/anos/grupo) do localStorage
   const savedDashState = useMemo(() => loadDashStateV2(), []);
 
   const [selectedGrupo, setSelectedGrupo] = useState(() => {
@@ -640,7 +626,9 @@ export default function Dashboard(props) {
   });
 
   const didInitRangeFromBoundsRef = useRef(false);
-  const [followMax] = useState(() => savedDashState?.followMax !== false);
+
+  // ✅ followMax VOLTOU e é USADO (sem warning e sem travar usuário)
+  const [followMax, setFollowMax] = useState(() => savedDashState?.followMax !== false);
 
   const [dateRange, setDateRange] = useState(() => {
     const dr = savedDashState?.dateRange;
@@ -720,16 +708,30 @@ export default function Dashboard(props) {
           const hasRestoredRange = rr?.from && rr?.to && isISODate(rr.from) && isISODate(rr.to);
           const hasRestoredQuery = rq?.from && rq?.to && isISODate(rq.from) && isISODate(rq.to);
 
+          const savedYears = Array.isArray(savedDashState?.selectedYears) ? savedDashState.selectedYears : [];
+          const hasSavedYears = savedYears.length > 0;
+
+          // ✅ MIGRAÇÃO: se existir range salvo antigo e NÃO há anos selecionados,
+          // força “to” para o max atual e liga followMax.
           if (hasRestoredRange && hasRestoredQuery) {
             const clamped =
               clampRangeToBounds({ from: rr.from, to: rr.to }, minYmd, maxYmd) || { from: minYmd, to: maxYmd };
 
-            const toFixed = maxYmd && clamped.to < maxYmd ? maxYmd : clamped.to;
+            const shouldExtendToMax = !hasSavedYears && clamped.to < maxYmd;
 
-            const fixed = { from: clamped.from, to: toFixed };
+            const fixed = {
+              from: clamped.from,
+              to: shouldExtendToMax ? maxYmd : clamped.to,
+            };
+
             setDateRange(fixed);
             setDateRangeQuery(fixed);
-            setSelectedYears([]);
+
+            if (shouldExtendToMax) {
+              setSelectedYears([]);
+              setFollowMax(true);
+            }
+
             return;
           }
 
@@ -737,6 +739,7 @@ export default function Dashboard(props) {
           setDateRange(init);
           setDateRangeQuery(init);
           setSelectedYears([]);
+          setFollowMax(true);
         }
       } catch (e) {
         if (!alive) return;
@@ -753,13 +756,13 @@ export default function Dashboard(props) {
     return () => {
       alive = false;
     };
-  }, [uf]);
+  }, [uf, savedDashState]);
 
   const MIN_DATE = bounds.minDate;
   const MAX_DATE = bounds.maxDate;
   const boundsReady = !!(MIN_DATE && MAX_DATE && !bounds.loading);
 
-  // ✅ Guest (demo): força período completo
+  // ✅ Guest (demo): força SEMPRE período completo e filtros "Todos"
   useEffect(() => {
     if (!isGuest) return;
     if (!boundsReady || !MIN_DATE || !MAX_DATE) return;
@@ -770,6 +773,7 @@ export default function Dashboard(props) {
     const full = { from: MIN_DATE, to: MAX_DATE };
     setDateRange(full);
     setDateRangeQuery(full);
+    setFollowMax(true);
   }, [isGuest, boundsReady, MIN_DATE, MAX_DATE]);
 
   useEffect(() => {
@@ -783,6 +787,7 @@ export default function Dashboard(props) {
         const fix = { from: MIN_DATE, to: MAX_DATE };
         setDateRange(fix);
         setDateRangeQuery(fix);
+        setFollowMax(true);
       }
       return;
     }
@@ -815,6 +820,13 @@ export default function Dashboard(props) {
     (next) => {
       if (!next) return;
       if (isGuest) return;
+
+      // ✅ usuário mexeu no range: followMax só fica true se “to” = MAX_DATE
+      if (boundsReady && MAX_DATE && isISODate(next?.to)) {
+        setFollowMax(String(next.to) === String(MAX_DATE));
+      } else {
+        setFollowMax(false);
+      }
 
       setDateRange(next);
 
@@ -862,14 +874,15 @@ export default function Dashboard(props) {
 
   const canQueryFirestore = DATA_MODE === "firestore" ? !!(boundsReady && dateRangeQuery) : true;
 
-  const { loading: fsLoading, error: fsError, meta: fsRankingMeta, drawsRaw: fsDrawsRaw } = useKingRanking({
-    uf,
-    date: canQueryFirestore ? queryDate : null,
-    dateFrom: canQueryFirestore ? dateFrom : null,
-    dateTo: canQueryFirestore ? dateTo : null,
-    closeHourBucket: null,
-    positions: ALL_POSITIONS,
-  });
+  const { loading: fsLoading, error: fsError, meta: fsRankingMeta, drawsRaw: fsDrawsRaw } =
+    useKingRanking({
+      uf,
+      date: canQueryFirestore ? queryDate : null,
+      dateFrom: canQueryFirestore ? dateFrom : null,
+      dateTo: canQueryFirestore ? dateTo : null,
+      closeHourBucket: null,
+      positions: ALL_POSITIONS,
+    });
 
   const [jsonState, setJsonState] = useState({
     loading: DATA_MODE === "json",
@@ -930,6 +943,8 @@ export default function Dashboard(props) {
   const rankingMeta = DATA_MODE === "json" ? jsonState.rankingMeta : fsRankingMeta;
 
   const rankingRowsFromMeta = useMemo(() => {
+    // fallback: quando drawsRaw vierem agregados/sem prizes,
+    // usamos o ranking pronto que o hook já calculou.
     return mapMetaRankingToRows(rankingMeta);
   }, [rankingMeta]);
 
@@ -1104,7 +1119,11 @@ export default function Dashboard(props) {
     if (!Array.isArray(drawsForUi) || !drawsForUi.length) return rankingRowsFromMeta;
     try {
       const built = buildRanking(drawsForUi);
-      const arr = Array.isArray(built?.byGrupo) ? built.byGrupo : Array.isArray(built?.ranking) ? built.ranking : [];
+      const arr = Array.isArray(built?.byGrupo)
+        ? built.byGrupo
+        : Array.isArray(built?.ranking)
+        ? built.ranking
+        : [];
 
       const rows = arr.map((r) => ({
         grupo: String(r?.grupo ?? r?.group ?? "").replace(/^0/, ""),
@@ -1122,7 +1141,11 @@ export default function Dashboard(props) {
     if (!Array.isArray(drawsForView) || !drawsForView.length) return rankingRowsFromMeta;
     try {
       const built = buildRanking(drawsForView);
-      const arr = Array.isArray(built?.byGrupo) ? built.byGrupo : Array.isArray(built?.ranking) ? built.ranking : [];
+      const arr = Array.isArray(built?.byGrupo)
+        ? built.byGrupo
+        : Array.isArray(built?.ranking)
+        ? built.ranking
+        : [];
 
       const rows = arr.map((r) => ({
         grupo: String(r?.grupo ?? r?.group ?? "").replace(/^0/, ""),
@@ -1143,6 +1166,7 @@ export default function Dashboard(props) {
       if (arr.length) return arr;
     } catch {}
 
+    // fallback: usa meta, mas no formato que ChartsGrid tolera (ranking[])
     return (rankingRowsFromMeta || []).map((r) => ({
       grupo: r.grupo,
       animal: r.animal,
@@ -1168,6 +1192,7 @@ export default function Dashboard(props) {
       animais.push(lbl || `Grupo ${pad2(g)}`);
     }
 
+    // horários disponíveis (RJ) + FEDERAL 20h
     const baseBuckets = new Set();
     if (Array.isArray(drawsForUi) && drawsForUi.length) {
       for (const d of drawsForUi) {
@@ -1231,9 +1256,13 @@ export default function Dashboard(props) {
     if (!MIN_DATE || !MAX_DATE) return;
     setSelectedYears([]);
     if (isGuest) return;
+
     const full = { from: MIN_DATE, to: MAX_DATE };
     setDateRange(full);
     setDateRangeQuery(full);
+
+    // ✅ volta a seguir max quando “Todos”
+    setFollowMax(true);
   }, [MIN_DATE, MAX_DATE, isGuest]);
 
   const onClearYears = useCallback(() => {
@@ -1263,6 +1292,9 @@ export default function Dashboard(props) {
           applyAllYearsFull();
           return [];
         }
+
+        // ✅ seleção por ano é explícita, então não deve seguir o max automaticamente
+        setFollowMax(false);
 
         const minY = next[0];
         const maxY = next[next.length - 1];
@@ -1309,6 +1341,7 @@ export default function Dashboard(props) {
         return;
       }
 
+      // seleção de grupo é explícita -> não muda followMax
       setSelectedGrupo((prev) => {
         const next = prev === g ? null : g;
 
@@ -1637,4 +1670,3 @@ export default function Dashboard(props) {
     </div>
   );
 }
-
