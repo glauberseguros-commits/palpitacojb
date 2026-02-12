@@ -1667,7 +1667,7 @@ async function main() {
   });
   console.log(`STEP 3/3 OK. Import concluído: ${lk} ${date}${normalizedClose ? ` ${normalizedClose}` : ""}`);
 
-  // ✅ cleanup automático de legado (somente quando per-lottery está ON) (somente quando per-lottery está ON)
+  // ✅ cleanup automático de legado (somente quando per-lottery está ON)
   if (FETCH_PER_LOTTERY) {
     try {
       const c = await cleanupLegacyDrawsForDate({ date, lotteryKey: lk });
@@ -1696,7 +1696,5 @@ module.exports = {
   importFromPayload,
   buildResultsUrl,
 };
-
-
 
 
