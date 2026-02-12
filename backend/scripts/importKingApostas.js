@@ -760,6 +760,15 @@ async function fetchKingResults({ date, lotteryKey }) {
 
     try {
       const data = await axiosGetJson(url);
+
+      // ✅ carimba o UUID do request em cada draw (a API nem sempre retorna lottery_id)
+      if (data && Array.isArray(data.data)) {
+        data.data = data.data.map((d) => ({
+          ...d,
+          lottery_id: d?.lottery_id || lotteryId,
+          lotteryId: d?.lotteryId || lotteryId,
+        }));
+      }
       const list = Array.isArray(data?.data) ? data.data : [];
       parts.push(list);
 
@@ -1205,6 +1214,58 @@ async function importFromPayload({
  * - se normalizedClose NÃO existir nos close_hours do dia, retorna blocked/no_draw_for_slot
  *   (isso NÃO é furo)
  */
+/**
+ * ✅ Cleanup automático: remove docs legados (lottery_id null) quando existe doc UUID no mesmo date+slot.
+ * - Usa query mínima por date (sem índice composto)
+ * - Seguro: só apaga legado se existe UUID no slot
+ */
+async function cleanupLegacyDrawsForDate({ date, lotteryKey }) {
+  const lk = String(lotteryKey || "").trim().toUpperCase();
+  if (!date || !isISODate(date) || !lk) return { ok: false, deleted: 0, slots: 0, reason: "bad_args" };
+
+  const snap = await db.collection("draws").where("date", "==", date).get();
+  const rows = snap.docs.map((doc) => ({ ref: doc.ref, id: doc.id, ...doc.data() }));
+
+  const mine = rows.filter((r) => String(r.lottery_key || "").trim().toUpperCase() === lk);
+
+  const bySlot = new Map();
+  for (const r of mine) {
+    const slot = String(r.close_hour || "").trim();
+    if (!slot) continue;
+    if (!bySlot.has(slot)) bySlot.set(slot, []);
+    bySlot.get(slot).push(r);
+  }
+
+  let deleted = 0;
+  let slots = 0;
+  let batch = db.batch();
+  let ops = 0;
+
+  for (const [slot, arr] of bySlot.entries()) {
+    const hasUuid = arr.some((x) => x.lottery_id && String(x.lottery_id).includes("-"));
+    if (!hasUuid) continue;
+
+    const leg = arr.filter((x) => !x.lottery_id);
+    if (!leg.length) continue;
+
+    for (const d of leg) {
+      batch.delete(d.ref);
+      deleted += 1;
+      ops += 1;
+      if (ops >= 450) {
+        await batch.commit();
+        batch = db.batch();
+        ops = 0;
+      }
+    }
+    slots += 1;
+  }
+
+  if (ops > 0) await batch.commit();
+
+  return { ok: true, deleted, slots };
+}
+
 async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {}) {
   if (!date || !isISODate(date)) {
     throw new Error('Parâmetro "date" inválido. Use YYYY-MM-DD.');
@@ -1604,11 +1665,23 @@ async function main() {
     closeHour: normalizedClose,
     skipIfAlreadyComplete: false, // CLI regrava
   });
+  console.log(`STEP 3/3 OK. Import concluído: ${lk} ${date}${normalizedClose ? ` ${normalizedClose}` : ""}`);
 
-  console.log(
-    `STEP 3/3 OK. Import concluído: ${lk} ${date}${normalizedClose ? ` ${normalizedClose}` : ""}`
-  );
+  // ✅ cleanup automático de legado (somente quando per-lottery está ON) (somente quando per-lottery está ON)
+  if (FETCH_PER_LOTTERY) {
+    try {
+      const c = await cleanupLegacyDrawsForDate({ date, lotteryKey: lk });
+      if (c && c.ok && c.deleted) {
+        console.log(`[CLEANUP] ${lk} ${date} slots=${c.slots} deleted=${c.deleted}`);
+      } else {
+        console.log(`[CLEANUP] ${lk} ${date} slots=${c?.slots || 0} deleted=${c?.deleted || 0}`);
+      }
+    } catch (e) {
+      console.warn(`[CLEANUP] ${lk} ${date} ERROR=${String(e?.message || e || "")}`);
+    }
+  }
 }
+
 
 if (require.main === module) {
   main().catch((e) => {
@@ -1623,14 +1696,6 @@ module.exports = {
   importFromPayload,
   buildResultsUrl,
 };
-
-
-
-
-
-
-
-
 
 
 
