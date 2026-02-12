@@ -14,7 +14,8 @@ const root = ReactDOM.createRoot(rootEl);
 // Se quiser desligar double-effects no DEV, troque STRICTMODE_DEV para false.
 const STRICTMODE_DEV = true;
 
-const isProd = process.env.NODE_ENV === "production";
+// ✅ Vite: flags oficiais
+const isProd = import.meta.env.PROD;
 
 const AppTree = (
   <BrowserRouter>

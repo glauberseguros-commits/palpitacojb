@@ -52,6 +52,24 @@ function pad2(n) {
   return String(n).padStart(2, "0");
 }
 
+
+function normalizeHourLike(value) {
+  const s0 = String(value ?? "").trim();
+  if (!s0) return "";
+  const s = s0.replace(/\s+/g, "");
+
+  const mhx = s.match(/^(\d{1,2})(?:h|hs|hr|hrs)$/i);
+  if (mhx) return `${pad2(mhx[1])}:00`;
+
+  const mISO = s.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
+  if (mISO) return `${pad2(mISO[1])}:${pad2(mISO[2])}`;
+
+  const m0 = s.match(/^(\d{1,2})$/);
+  if (m0) return `${pad2(m0[1])}:00`;
+
+  return s0;
+}
+
 function normalizeDigitsOnly(v) {
   const s = String(v ?? "").trim();
   if (!s) return "";
@@ -223,7 +241,7 @@ function dedupeDraws(draws) {
     const key =
       (d?.drawId != null && String(d.drawId)) ||
       (d?.id != null && String(d.id)) ||
-      `${getDrawYmd(d) || ""}__${getDrawCloseHour(d) || ""}`;
+      `${getDrawYmd(d) || ""}__${normalizeHourLike(getDrawCloseHour(d) || "")}`;
 
     if (seen.has(key)) continue;
     seen.add(key);
@@ -239,7 +257,7 @@ function sortDrawsChrono(draws) {
     const da = String(getDrawYmd(a) || "");
     const db = String(getDrawYmd(b) || "");
     if (da !== db) return da.localeCompare(db);
-    return toHourNum(getDrawCloseHour(a)) - toHourNum(getDrawCloseHour(b));
+    return toHourNum(normalizeHourLike(getDrawCloseHour(a))) - toHourNum(normalizeHourLike(getDrawCloseHour(b)));
   });
   return list;
 }
@@ -393,6 +411,7 @@ export function buildPalpite(draws, opts = {}) {
   return {
     palpitesByGrupo,
     sampleDrawsUsed: windowed.length,
+    hasMinSample: windowed.length >= minDraws,
     totalCandidates: ordered.length,
     usedBucket: closeHourBucket || null,
     debugByGrupo,
@@ -505,3 +524,8 @@ export function buildPalpiteV2(draws, opts = {}) {
     debugByGrupo,
   };
 }
+
+
+
+
+

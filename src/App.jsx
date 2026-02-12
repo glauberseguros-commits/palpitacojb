@@ -166,8 +166,15 @@ function normalizeLoteriaInput(v) {
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/\s+/g, " ")
     .trim();
-  if (key === "federal" || key === "fed" || key === "br" || key === "brasil") return "FEDERAL";
-  if (key === "rj" || key === "rio" || key === "pt_rio" || key === "pt-rio") return "PT_RIO";
+  if (
+    key === "federal" ||
+    key === "fed" ||
+    key === "br" ||
+    key === "brasil"
+  )
+    return "FEDERAL";
+  if (key === "rj" || key === "rio" || key === "pt_rio" || key === "pt-rio")
+    return "PT_RIO";
   return "PT_RIO";
 }
 
@@ -200,10 +207,12 @@ function loadDashboardFilters() {
 
   const loteria = normalizeLoteriaInput(obj.loteria);
 
-  // ✅ coerência: FEDERAL => horário deve ser 20h
+  // ✅ coerência: FEDERAL => horário deve ser 19h ou 20h (default 20h)
   const horario =
     loteria === "FEDERAL"
-      ? "20h"
+      ? obj.horario === "19h" || obj.horario === "20h"
+        ? obj.horario
+        : "20h"
       : typeof obj.horario === "string"
       ? obj.horario
       : base.horario;
@@ -213,8 +222,7 @@ function loadDashboardFilters() {
 
     mes: typeof obj.mes === "string" ? obj.mes : base.mes,
     diaMes: typeof obj.diaMes === "string" ? obj.diaMes : base.diaMes,
-    diaSemana:
-      typeof obj.diaSemana === "string" ? obj.diaSemana : base.diaSemana,
+    diaSemana: typeof obj.diaSemana === "string" ? obj.diaSemana : base.diaSemana,
     horario,
     animal: typeof obj.animal === "string" ? obj.animal : base.animal,
     posicao: typeof obj.posicao === "string" ? obj.posicao : base.posicao,
@@ -369,32 +377,21 @@ export default function App() {
   // ✅ trava de boot para evitar "screen -> URL" atropelar deep-link (/centenas etc.)
   const bootRef = useRef(false);
   const [routerBooted, setRouterBooted] = useState(false);
-  const Dashboard = useMemo(
-    () => resolveComponent(DashboardMod, "Dashboard"),
-    []
-  );
+
+  const Dashboard = useMemo(() => resolveComponent(DashboardMod, "Dashboard"), []);
   const Account = useMemo(() => resolveComponent(AccountMod, "Account"), []);
   const Results = useMemo(() => resolveComponent(ResultsMod, "Results"), []);
   const Top3 = useMemo(() => resolveComponent(Top3Mod, "Top3"), []);
   const Late = useMemo(() => resolveComponent(LateMod, "Late"), []);
   const Search = useMemo(() => resolveComponent(SearchMod, "Search"), []);
   const Payments = useMemo(() => resolveComponent(PaymentsMod, "Payments"), []);
-  const Downloads = useMemo(
-    () => resolveComponent(DownloadsMod, "Downloads"),
-    []
-  );
-  const Centenas = useMemo(
-    () => resolveComponent(CentenasMod, "Centenas"),
-    []
-  );
+  const Downloads = useMemo(() => resolveComponent(DownloadsMod, "Downloads"), []);
+  const Centenas = useMemo(() => resolveComponent(CentenasMod, "Centenas"), []);
 
   const AppShell = useMemo(() => resolveComponent(AppShellMod, "AppShell"), []);
 
   const Admin = useMemo(() => resolveComponent(AdminMod, "Admin"), []);
-  const AdminLogin = useMemo(
-    () => resolveComponent(AdminLoginMod, "AdminLogin"),
-    []
-  );
+  const AdminLogin = useMemo(() => resolveComponent(AdminLoginMod, "AdminLogin"), []);
 
   // ✅ hash gate isolado
   const [adminMode, setAdminMode] = useState(() => isAdminHashNow());
@@ -472,21 +469,31 @@ export default function App() {
     loadDashboardFilters()
   );
 
-  // ✅ garante coerência: FEDERAL => horário 20h (mesmo se algum código setar errado)
+  // ✅ garante coerência:
+  // - FEDERAL => horário 19h ou 20h (default 20h)
+  // - PT_RIO => loteria PT_RIO
   useEffect(() => {
     const lot = normalizeLoteriaInput(dashboardFilters?.loteria);
-    if (lot === "FEDERAL" && dashboardFilters?.horario !== "20h") {
-      setDashboardFilters((prev) => ({
-        ...prev,
-        loteria: "FEDERAL",
-        horario: "20h",
-      }));
+
+    if (lot === "FEDERAL") {
+      const h = String(dashboardFilters?.horario || "");
+      if (h !== "19h" && h !== "20h") {
+        setDashboardFilters((prev) => ({
+          ...prev,
+          loteria: "FEDERAL",
+          horario: "20h",
+        }));
+      } else if (dashboardFilters?.loteria !== "FEDERAL") {
+        setDashboardFilters((prev) => ({ ...prev, loteria: "FEDERAL" }));
+      }
+      return;
     }
+
     if (lot === "PT_RIO" && dashboardFilters?.loteria !== "PT_RIO") {
       setDashboardFilters((prev) => ({ ...prev, loteria: "PT_RIO" }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dashboardFilters?.loteria]);
+  }, [dashboardFilters?.loteria, dashboardFilters?.horario]);
 
   useEffect(() => {
     safeWriteLS(DASH_FILTERS_KEY, JSON.stringify(dashboardFilters));
@@ -565,6 +572,7 @@ export default function App() {
       bootRef.current = true;
       setRouterBooted(true);
     }
+
     const wanted = pathToScreen(location?.pathname);
     if (!wanted) return;
 
@@ -586,25 +594,22 @@ export default function App() {
 
   /* =========================
      ✅ screen -> URL (somente app normal)
+     (deps completas, mesma lógica)
   ========================= */
   useEffect(() => {
     if (adminMode) return;
-
-    // ✅ evita navegar antes do URL->screen “assumir” a rota inicial (deep-link)
     if (!routerBooted) return;
-    // ✅ se o pathname atual já aponta pra uma tela válida diferente,
-    // deixa o URL->screen ajustar o estado antes de tentar navegar
+
     const wanted = pathToScreen(location?.pathname);
     if (wanted && wanted !== screen) return;
+
     const path = screenToPath(screen);
     const cur = cleanPathname(location?.pathname);
 
     if (cur !== path) {
-      // replace para não poluir histórico quando App salva screen
       navigate(path, { replace: true });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [screen, adminMode]);
+  }, [screen, adminMode, routerBooted, location?.pathname, navigate]);
 
   const PageRouter = ({ screen: s }) => {
     switch (s) {
@@ -729,8 +734,3 @@ export default function App() {
     </ErrorBoundary>
   );
 }
-
-
-
-
-

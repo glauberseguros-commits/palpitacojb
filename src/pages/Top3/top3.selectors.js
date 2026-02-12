@@ -1,8 +1,9 @@
 import { pad2, safeStr } from "./top3.formatters";
 
 function publicBase() {
+  // CRA: process.env.PUBLIC_URL
   const b = String(process.env.PUBLIC_URL || "").trim();
-  return b && b !== "/" ? b : "";
+  return b && b !== "/" ? b.replace(/\/+$/, "") : "";
 }
 
 export function normalizeImgSrc(src) {
@@ -58,8 +59,10 @@ export function makeImgVariantsFromGrupo({ grupo, size, getImgFromGrupo, getAnim
     if (clean.match(/\.png$/)) out.push(clean.replace(/\.png$/, ".PNG"));
     if (clean.match(/\.PNG$/)) out.push(clean.replace(/\.PNG$/, ".png"));
 
-    out.push(clean.replace(/\.(png|PNG)$/i, ".jpg"));
-    out.push(clean.replace(/\.(png|PNG|jpg)$/i, ".jpeg"));
+    if (clean.match(/\.(png|PNG|jpg|jpeg)$/i)) {
+      out.push(clean.replace(/\.(png|PNG)$/i, ".jpg"));
+      out.push(clean.replace(/\.(png|PNG|jpg|jpeg)$/i, ".jpeg"));
+    }
     out.push(`${clean}?v=1`);
   }
 
@@ -72,3 +75,4 @@ export function lotteryLabel(lotteryKey) {
   if (k === "PT_RIO") return "RIO (PT_RIO)";
   return k || "—";
 }
+

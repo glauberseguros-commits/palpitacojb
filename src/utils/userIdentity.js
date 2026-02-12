@@ -18,7 +18,7 @@ async function sha256Hex(str) {
 
   // 1) WebCrypto (preferido)
   try {
-    const subtle = window?.crypto?.subtle;
+    const subtle = globalThis?.crypto?.subtle;
     if (subtle) {
       const enc = new TextEncoder().encode(input);
       const buf = await subtle.digest("SHA-256", enc);
@@ -46,3 +46,4 @@ export async function userIdFromCpfDigits(cpfDigits11) {
   const h = await sha256Hex(cpf);
   return `cpf:${h}`;
 }
+

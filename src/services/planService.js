@@ -1,12 +1,5 @@
 // src/services/planService.js
-import {
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc,
-  serverTimestamp,
-} from "firebase/firestore";
-
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "./firebase";
 
 /**
@@ -47,13 +40,19 @@ function safeNum(v) {
   return Number.isFinite(n) ? n : null;
 }
 
+function normalizeTier(tierRaw) {
+  const t = String(tierRaw ?? "free").trim().toLowerCase();
+  if (t === "premium" || t === "trial") return t;
+  return "free";
+}
+
 function normalizePlan(plan) {
-  const tier = String(plan?.tier || "free");
+  const tier = normalizeTier(plan?.tier);
   const trialStartMs = safeNum(plan?.trialStartMs);
   const premiumUntilMs = safeNum(plan?.premiumUntilMs);
 
   return {
-    tier: tier === "premium" || tier === "trial" ? tier : "free",
+    tier,
     trialStartMs,
     premiumUntilMs,
     lastPayment: plan?.lastPayment || null,
@@ -78,7 +77,8 @@ export function computeEntitlement(plan, atMs = nowMs()) {
     premiumActive,
     trialActive,
     premiumUntilMs: p.premiumUntilMs,
-    trialEndMs: typeof p.trialStartMs === "number" ? p.trialStartMs + TRIAL_MS : null,
+    trialEndMs:
+      typeof p.trialStartMs === "number" ? p.trialStartMs + TRIAL_MS : null,
   };
 }
 
@@ -115,15 +115,38 @@ export async function ensureUserPlan(uid) {
   const data = snap.data() || {};
   const currentPlan = normalizePlan(data.plan);
 
-  // ✅ downgrade automático (sem inventar premium):
-  // - Se premium expirou e trial não está ativo => free
-  // - Se trial expirou e não tem premium => free
   const ent = computeEntitlement(currentPlan, t);
-
   const desiredTier = ent.tier;
-  if (currentPlan.tier !== desiredTier) {
-    const nextPlan = { ...currentPlan, tier: desiredTier };
 
+  // ✅ downgrade/normalização automática SEM inventar premium
+  // - Se premium expirou => free (e limpa premiumUntilMs expirado)
+  // - Se trial expirou => free (e limpa trialStartMs expirado)
+  // - Se tier divergente (ex.: "FREE"/"Premium") => corrige
+  let changed = false;
+  const nextPlan = { ...currentPlan };
+
+  if (nextPlan.tier !== desiredTier) {
+    nextPlan.tier = desiredTier;
+    changed = true;
+  }
+
+  // limpa premiumUntilMs expirado (mantém se ainda ativo)
+  if (typeof nextPlan.premiumUntilMs === "number" && nextPlan.premiumUntilMs <= t) {
+    if (desiredTier !== "premium") {
+      nextPlan.premiumUntilMs = null;
+      changed = true;
+    }
+  }
+
+  // limpa trialStartMs expirado (mantém se ainda ativo)
+  if (typeof nextPlan.trialStartMs === "number" && nextPlan.trialStartMs + TRIAL_MS <= t) {
+    if (desiredTier !== "trial") {
+      nextPlan.trialStartMs = null;
+      changed = true;
+    }
+  }
+
+  if (changed) {
     await updateDoc(ref, {
       updatedAt: serverTimestamp(),
       plan: nextPlan,
@@ -151,7 +174,8 @@ export async function activatePremium30d(uid, payload = {}) {
     basePlan = normalizePlan(snap.data()?.plan);
   }
 
-  const currentUntil = typeof basePlan.premiumUntilMs === "number" ? basePlan.premiumUntilMs : 0;
+  const currentUntil =
+    typeof basePlan.premiumUntilMs === "number" ? basePlan.premiumUntilMs : 0;
 
   // ✅ Se ainda está premium, soma a partir do vencimento atual; senão soma a partir de agora
   const startFrom = currentUntil > t ? currentUntil : t;
@@ -161,10 +185,11 @@ export async function activatePremium30d(uid, payload = {}) {
     ...basePlan,
     tier: "premium",
     premiumUntilMs: newUntil,
+    // trial pode existir historicamente, mas não interfere no entitlement (premium manda)
     lastPayment: {
       amount: safeNum(payload.amount) ?? 10,
-      provider: payload.provider || "mercadopago",
-      paymentId: payload.paymentId || "",
+      provider: String(payload.provider || "mercadopago"),
+      paymentId: String(payload.paymentId || ""),
       confirmedAtMs: t,
     },
   };

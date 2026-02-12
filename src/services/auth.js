@@ -1,11 +1,10 @@
-// src/services/auth.js
 import {
   signInAnonymously,
   onAuthStateChanged,
   signOut,
 } from "firebase/auth";
 
-import { auth } from "./firebase";
+import { auth, authReady } from "./firebase";
 
 /**
  * =====================================================
@@ -18,12 +17,22 @@ import { auth } from "./firebase";
  */
 
 /**
+ * Garante que o Auth está pronto (persistência aplicada quando possível)
+ */
+async function ensureAuthReady() {
+  try {
+    await authReady;
+  } catch {}
+}
+
+/**
  * Login anônimo
  * Usado para:
  * - usuário free
  * - trial automático (24h)
  */
 export async function loginAnonymous() {
+  await ensureAuthReady();
   const cred = await signInAnonymously(auth);
   return cred.user;
 }
@@ -32,6 +41,7 @@ export async function loginAnonymous() {
  * Logout completo
  */
 export async function logoutAuth() {
+  await ensureAuthReady();
   await signOut(auth);
 }
 

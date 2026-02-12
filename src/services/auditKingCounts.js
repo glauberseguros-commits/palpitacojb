@@ -2,7 +2,7 @@
 import {
   getBichoByGrupo as getBichoByGrupoFn,
   normalizeAnimal as normalizeAnimalFn,
-} from "../constants/bichoMap";
+} from "../constants/bichoMap.js";
 
 function pad2(n) {
   return String(n).padStart(2, "0");
@@ -299,7 +299,12 @@ export function auditCountsByGrupo(drawsRaw, options = {}) {
       // integridade: grupo deve bater com animal oficial (quando animal existir no dado)
       const bicho = safeGetBichoByGrupo(gNum);
       const animalBase = bicho ? safeNormalizeAnimal(bicho.animal) : "";
-      const animalFromData = safeNormalizeAnimal(p?.animal);
+
+      const rawAnimal = String(p?.animal ?? "");
+      // se vier mojibake/corrompido (ex.: "Le├úo", "Jacar├®"), ignora a checagem
+      const animalFromData = /[├ÃÂ�]/.test(rawAnimal)
+        ? ""
+        : safeNormalizeAnimal(rawAnimal);
 
       if (animalFromData && animalBase && animalFromData !== animalBase) {
         integrityIssues.push({

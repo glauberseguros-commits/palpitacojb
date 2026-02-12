@@ -11,18 +11,18 @@ function toNumber(v) {
 
 /**
  * Normaliza grupo para "01".."25"
- * Aceita: 1, "1", "01", etc.
+ * Aceita: 1, "1", "01", " 01 ", etc.
  * Se vier fora do range 1..25, retorna "00".
  */
 function normalizeGrupo(g) {
   const s = String(g ?? "").trim();
   if (!s) return "00";
 
-  // se já vier "01" etc
+  // se já vier com 2 dígitos (ex: "01", " 01 ")
   if (/^\d{2}$/.test(s)) {
     const n = Number(s);
     if (!Number.isFinite(n) || n < 1 || n > 25) return "00";
-    return s;
+    return pad2(n); // ✅ garante "01".."25" SEM espaços / formatação consistente
   }
 
   // se vier "1" etc

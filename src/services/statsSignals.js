@@ -423,6 +423,10 @@ export function computeTop3Signals({
     Number.isFinite(Number(g))
   );
 
+  // ✅ regra de produto:
+  // global só “ajuda” quando o horário alvo NÃO tem pelo menos 3 candidatos
+  const useGlobalBoost = baseCounts.size < 3;
+
   const scored = candidates.map((g) => {
     const baseHit = baseCounts.get(g) || 0;
     const pBase = prob(baseHit, baseTotal);
@@ -445,10 +449,10 @@ export function computeTop3Signals({
 
     // ✅ score:
     // - base do horário é a principal
-    // - base global é fallback leve (e ajuda a completar 3 cards)
+    // - global entra SOMENTE no fallback (para completar Top3)
     const finalScore =
       W.base * pBase +
-      W.global * (baseTotal > 0 ? pGlob : pGlob) +
+      (useGlobalBoost ? W.global * pGlob : 0) +
       W.trans * bonusTrans +
       W.dow * bonusDow +
       W.dom * bonusDom;
@@ -602,6 +606,7 @@ export function computeTop3Signals({
         baseCandidates: baseCounts.size,
         usedGlobalToComplete: baseCounts.size < 3,
       },
+      useGlobalBoost,
     },
   };
 }
