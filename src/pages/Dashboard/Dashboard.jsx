@@ -708,8 +708,9 @@ export default function Dashboard(props) {
           const hasRestoredRange = rr?.from && rr?.to && isISODate(rr.from) && isISODate(rr.to);
           const hasRestoredQuery = rq?.from && rq?.to && isISODate(rq.from) && isISODate(rq.to);
 
-          const savedYears = Array.isArray(savedDashState?.selectedYears) ? savedDashState.selectedYears : [];
-          const hasSavedYears = savedYears.length > 0;
+          const savedYearsRaw = Array.isArray(savedDashState?.selectedYears) ? savedDashState.selectedYears : [];
+const savedYears = savedYearsRaw.map((y) => Number(y)).filter((y) => Number.isFinite(y));
+const hasSavedYears = savedYears.length > 0;
 
           // ✅ MIGRAÇÃO: se existir range salvo antigo e NÃO há anos selecionados,
           // força “to” para o max atual e liga followMax.
@@ -1670,3 +1671,4 @@ export default function Dashboard(props) {
     </div>
   );
 }
+
