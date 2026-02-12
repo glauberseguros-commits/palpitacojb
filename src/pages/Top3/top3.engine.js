@@ -427,46 +427,75 @@ export function computeConditionalNextTop3({
   const drawsIndex = indexDrawsByYmdHour(list);
   const lastSeen = computeLastSeenByGrupo(list);
 
-  let samples = 0;
-  const freq = new Map(); // grupo -> total aparições
+  function runScenario({ label, matchDow, matchHour }) {
+    let samples = 0;
+    const freq = new Map();
 
-  // percorre o range buscando ocorrências do cenário
-  for (const d of list) {
-    const y = pickDrawYMD(d);
-    const h = toHourBucket(pickDrawHour(d));
-    if (!isYMD(y) || !h) continue;
+    for (const d of list) {
+      const y = pickDrawYMD(d);
+      const h = toHourBucket(pickDrawHour(d));
+      if (!isYMD(y) || !h) continue;
 
-    // mesmo DOW e mesmo horário do último draw
-    if (getDowKey(y) !== lastDow) continue;
-    if (h !== lastH) continue;
+      if (matchDow && getDowKey(y) !== lastDow) continue;
+      if (matchHour && h !== lastH) continue;
 
-    // 1º == triggerGrupo
-    const g1 = pickPrize1GrupoFromDraw(d);
-    if (Number(g1) !== Number(triggerGrupo)) continue;
+      const g1 = pickPrize1GrupoFromDraw(d);
+      if (Number(g1) !== Number(triggerGrupo)) continue;
 
-    // próximo sorteio da ocorrência
-    const ns = getNextSlotForLottery({
-      lotteryKey,
-      ymd: y,
-      hourBucket: h,
-      PT_RIO_SCHEDULE_NORMAL,
-      PT_RIO_SCHEDULE_WED_SAT,
-      FEDERAL_SCHEDULE,
-    });
+      const ns = getNextSlotForLottery({
+        lotteryKey,
+        ymd: y,
+        hourBucket: h,
+        PT_RIO_SCHEDULE_NORMAL,
+        PT_RIO_SCHEDULE_WED_SAT,
+        FEDERAL_SCHEDULE,
+      });
 
-    if (!ns?.ymd || !ns?.hour) continue;
-    const nextDraw = drawsIndex.get(`${ns.ymd}|${toHourBucket(ns.hour)}`) || null;
-    if (!nextDraw) continue;
+      if (!ns?.ymd || !ns?.hour) continue;
+      const nextDraw = drawsIndex.get(`${ns.ymd}|${toHourBucket(ns.hour)}`) || null;
+      if (!nextDraw) continue;
 
-    samples += 1;
+      samples += 1;
 
-    const c = countAparicoesByGrupoInDraw(nextDraw);
-    for (const [gg, n] of c.entries()) {
-      freq.set(gg, (freq.get(gg) || 0) + Number(n || 0));
+      const c = countAparicoesByGrupoInDraw(nextDraw);
+      for (const [gg, n] of c.entries()) {
+        freq.set(gg, (freq.get(gg) || 0) + Number(n || 0));
+      }
+    }
+
+    return { label, samples, freq };
+  }
+
+  // 🔥 fallback progressivo (evita Top3 vazio por cenário raro)
+  const tries = [
+    { label: "DOW+HORA", matchDow: true, matchHour: true },
+    { label: "HORA", matchDow: false, matchHour: true },
+    { label: "DOW", matchDow: true, matchHour: false },
+    { label: "QUALQUER", matchDow: false, matchHour: false },
+  ];
+
+  let chosen = null;
+  for (const t of tries) {
+    const out = runScenario(t);
+    if (out.samples > 0 && out.freq.size > 0) {
+      chosen = out;
+      break;
     }
   }
 
-  const ranked = Array.from(freq.entries())
+  if (!chosen) {
+    return {
+      top: [],
+      meta: {
+        trigger: { ymd: lastY, hour: lastH, dow: lastDow, grupo: Number(triggerGrupo) },
+        next: { ymd: safeStr(nextSlot?.ymd), hour: safeStr(toHourBucket(nextSlot?.hour)) },
+        samples: 0,
+        scenario: "NONE",
+      },
+    };
+  }
+
+  const ranked = Array.from(chosen.freq.entries())
     .map(([grupo, n]) => {
       const ls = lastSeen.get(Number(grupo));
       return {
@@ -476,11 +505,8 @@ export function computeConditionalNextTop3({
       };
     })
     .sort((a, b) => {
-      // 1) freq desc
       if (b.freq !== a.freq) return b.freq - a.freq;
-      // 2) mais atrasado = lastSeen mais antigo => ts menor primeiro
       if (a.lastSeenTs !== b.lastSeenTs) return a.lastSeenTs - b.lastSeenTs;
-      // 3) estável
       return a.grupo - b.grupo;
     })
     .slice(0, Math.max(1, Number(topN || 3)));
@@ -490,17 +516,18 @@ export function computeConditionalNextTop3({
     title: idx === 0 ? "Mais frequente" : idx === 1 ? "2º mais frequente" : "3º mais frequente",
     grupo: x.grupo,
     freq: x.freq,
-    // para o view montar a leitura
     reasons: [
-      `Condição: 1º lugar = G${String(triggerGrupo).padStart(2, "0")} no mesmo dia/horário do último sorteio`,
-      `Próximo sorteio analisado: ${nextSlot?.ymd ? nextSlot.ymd : "—"} ${nextSlot?.hour ? toHourBucket(nextSlot.hour) : ""}`,
-      `Amostras (ocorrências do cenário no histórico): ${samples}`,
+      `Condição base: 1º lugar = G${String(triggerGrupo).padStart(2, "0")} (gatilho do último sorteio)`,
+      `Filtro usado (fallback): ${chosen.label}`,
+      `Próximo sorteio (slot válido): ${nextSlot?.ymd ? nextSlot.ymd : "—"} ${nextSlot?.hour ? toHourBucket(nextSlot.hour) : ""}`,
+      `Amostras no histórico: ${chosen.samples}`,
       `Desempate: empate em frequência → mais atrasado (última aparição mais antiga)`,
     ],
     meta: {
       trigger: { ymd: lastY, hour: lastH, dow: lastDow, grupo: Number(triggerGrupo) },
       next: { ymd: safeStr(nextSlot?.ymd), hour: safeStr(toHourBucket(nextSlot?.hour)) },
-      samples,
+      samples: chosen.samples,
+      scenario: chosen.label,
     },
   }));
 
@@ -509,11 +536,11 @@ export function computeConditionalNextTop3({
     meta: {
       trigger: { ymd: lastY, hour: lastH, dow: lastDow, grupo: Number(triggerGrupo) },
       next: { ymd: safeStr(nextSlot?.ymd), hour: safeStr(toHourBucket(nextSlot?.hour)) },
-      samples,
+      samples: chosen.samples,
+      scenario: chosen.label,
     },
   };
 }
-
 /* =========================
    16 milhares (por grupo)
 ========================= */
@@ -665,6 +692,7 @@ export function build16MilharesForGrupo({
   while (slots.length < 16) slots.push({ dezena: "", milhar: "" });
   return { dezenas: topDezenas, slots: slots.slice(0, 16) };
 }
+
 
 
 

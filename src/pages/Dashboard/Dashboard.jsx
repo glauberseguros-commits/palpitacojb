@@ -677,9 +677,25 @@ export default function Dashboard(props) {
             rr?.from && rr?.to && isISODate(rr.from) && isISODate(rr.to);
 
           const hasRestoredQuery =
-            rq?.from && rq?.to && isISODate(rq.from) && isISODate(rq.to);if (hasRestoredRange && hasRestoredQuery) return;
+            rq?.from && rq?.to && isISODate(rq.from) && isISODate(rq.to);
 
-          const init = { from: minYmd, to: maxYmd };
+          // ✅ Se já existe range salvo, garante que ele NÃO “trave” o painel em max antigo.
+          // - clampa no bounds atual
+          // - e auto-estende o "to" para o maxYmd mais recente
+          if (hasRestoredRange && hasRestoredQuery) {
+            const clamped =
+              clampRangeToBounds({ from: rr.from, to: rr.to }, minYmd, maxYmd) ||
+              { from: minYmd, to: maxYmd };
+
+            const toFixed = maxYmd && clamped.to < maxYmd ? maxYmd : clamped.to;
+
+            const fixed = { from: clamped.from, to: toFixed };
+            setDateRange(fixed);
+            setDateRangeQuery(fixed);
+            setSelectedYears([]);
+            return;
+          }
+const init = { from: minYmd, to: maxYmd };
           setDateRange(init);
           setDateRangeQuery(init);
           setSelectedYears([]);
@@ -1575,6 +1591,7 @@ const rankingRowsFromMeta = useMemo(() => {
     </div>
   );
 }
+
 
 
 

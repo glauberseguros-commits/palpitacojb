@@ -168,7 +168,7 @@ export function useTop3Controller() {
       if (requestIdRef.current === currentRequestId) setRangeDraws([]);
       if (requestIdRef.current === currentRequestId) setLastHourBucket("");
       if (requestIdRef.current === currentRequestId) setTargetHourBucket("");
-      if (requestIdRef.current === currentRequestId) setTargetYmd("");
+if (requestIdRef.current === currentRequestId) setTargetYmd("");
       if (requestIdRef.current === currentRequestId) setLastInfo({ lastYmd: "", lastHour: "", lastGrupo: null, lastAnimal: "" });
       if (requestIdRef.current === currentRequestId) setPrevInfo({ prevYmd: "", prevHour: "", prevGrupo: null, prevAnimal: "", source: "none" });
       if (requestIdRef.current === currentRequestId) setRangeInfo({ from: "", to: "" });
@@ -237,10 +237,14 @@ export function useTop3Controller() {
       if (requestIdRef.current === currentRequestId) setTargetHourBucket(safeStr(nextSlot?.hour || ""));
 
       // range
-      const rangeTo = ymdSafe;
-      let rangeFrom = "";
+      let rangeTo = ymdSafe;
+let rangeFrom = "";
 
-      if (lookback === LOOKBACK_ALL) {
+// ✅ garante que o range inclui o "próximo slot" quando ele cai no dia seguinte
+if (nextSlot?.ymd && isYMD(nextSlot.ymd)) {
+  if (nextSlot.ymd > rangeTo) rangeTo = nextSlot.ymd;
+}
+if (lookback === LOOKBACK_ALL) {
         rangeFrom = isYMD(minDate) ? minDate : addDaysYMD(ymdSafe, -180);
       } else {
         const days = Math.max(1, Number(lookback || 30));
@@ -252,7 +256,7 @@ export function useTop3Controller() {
       // IMPORTANTE: positions:null para contar aparições
       const outRange = await getKingResultsByRange({ uf: lKey,
         dateFrom: rangeFrom,
-        dateTo: rangeTo,
+        dateTo: addDaysYMD(rangeTo, 1),
         closeHour: null,
         positions: null,
         mode: "detailed",
@@ -355,7 +359,8 @@ export function useTop3Controller() {
   const metaNext = useMemo(() => {
     const m = analytics?.meta;
     if (!(m?.trigger?.grupo && m?.next?.ymd && m?.next?.hour)) {
-      return { triggerText: "", targetText: "", samples: 0 };
+  
+  return { triggerText: "", targetText: "", samples: 0 };
     }
 
     const g = Number(m.trigger.grupo);
@@ -369,8 +374,8 @@ export function useTop3Controller() {
       dow === 4 ? "QUI" :
       dow === 5 ? "SEX" :
       dow === 6 ? "SÁB" : "—";
-
-    return {
+  
+  return {
       triggerText: `G${String(g).padStart(2, "0")}${animal ? " • " + animal.toUpperCase() : ""} • ${dowLabel} ${m.trigger.hour}`,
       targetText: `${ymdToBR(m.next.ymd)} ${m.next.hour}`,
       samples: Number(m.samples || 0),
@@ -403,8 +408,8 @@ export function useTop3Controller() {
             getImgFromGrupo,
             getAnimalLabel,
           });
-
-      return { ...x, animal, imgBg: bgVariants, imgIcon: iconVariants };
+  
+  return { ...x, animal, imgBg: bgVariants, imgIcon: iconVariants };
     });
   }, [analytics]);
 
@@ -450,7 +455,7 @@ export function useTop3Controller() {
     },
     [rangeDraws, analysisHourBucket, schedule]
   );
-
+  
   return {
     LOOKBACK_ALL,
     LOOKBACK_OPTIONS,
@@ -488,6 +493,14 @@ export function useTop3Controller() {
     normalizeImgSrc,
   };
 }
+
+
+
+
+
+
+
+
 
 
 
