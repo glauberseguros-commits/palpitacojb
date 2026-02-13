@@ -3,9 +3,8 @@
 // 🔒 Normalização única de lottery_key
 function normalizeLotteryKey(v) {
   const s = String(v || "").trim().toUpperCase();
-  if (s === "RJ") return "PT_RIO";
-  if (s === "RIO") return "PT_RIO";
-  if (s === "PT-RIO") return "PT_RIO";
+  if (s === "RJ" || s === "RIO" || s === "PT-RIO") return "PT_RIO";
+  if (s === "FED" || s === "FEDERAL" || s === "BR" || s === "NACIONAL") return "FEDERAL";
   return s || "PT_RIO";
 }
 
@@ -46,25 +45,60 @@ function isISODateStrict(s) {
   return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
 }
 
+function todayUtcYmd() {
+  const now = new Date();
+  return `${now.getUTCFullYear()}-${pad2(now.getUTCMonth() + 1)}-${pad2(now.getUTCDate())}`;
+}
+
 async function scanMaxYmd(db, lotteryKey, scanLimit = 80) {
   const DOC_ID = admin.firestore.FieldPath.documentId();
-
   const lk = String(lotteryKey || "").trim().toUpperCase() || "PT_RIO";
 
   const base = db.collection("draws").where("lottery_key", "==", lk);
 
-  const descSnap = await base.orderBy("ymd", "desc").orderBy(DOC_ID, "desc").limit(scanLimit).get();
+  // 1) Caminho ideal (pode exigir índice composto em alguns projetos)
+  try {
+    const descSnap = await base
+      .orderBy("ymd", "desc")
+      .orderBy(DOC_ID, "desc")
+      .limit(scanLimit)
+      .get();
 
-  for (const doc of descSnap.docs) {
-    const d = doc.data() || {};
-    const y = normalizeToYMD(d.ymd ?? d.date);
-    if (y && isISODateStrict(y)) return { maxYmd: y, maxDocId: doc.id };
+    for (const doc of descSnap.docs) {
+      const d = doc.data() || {};
+      const y = normalizeToYMD(d.ymd ?? d.date);
+      if (y && isISODateStrict(y)) return { maxYmd: y, maxDocId: doc.id, source: "orderBy_ymd_desc" };
+    }
+  } catch (e) {
+    // fallback abaixo
   }
 
-  // fallback: hoje UTC
-  const now = new Date();
-  const today = `${now.getUTCFullYear()}-${pad2(now.getUTCMonth() + 1)}-${pad2(now.getUTCDate())}`;
-  return { maxYmd: today, maxDocId: null };
+  // 2) Fallback “sem índice”: ordena só por documentId e varre mais docs
+  try {
+    const fallbackLimit = Math.max(scanLimit * 5, 200);
+    const snap = await base.orderBy(DOC_ID, "desc").limit(fallbackLimit).get();
+
+    let best = null;
+    let bestId = null;
+
+    for (const doc of snap.docs) {
+      const d = doc.data() || {};
+      const y = normalizeToYMD(d.ymd ?? d.date);
+      if (y && isISODateStrict(y)) {
+        if (!best || y > best) {
+          best = y;
+          bestId = doc.id;
+        }
+      }
+    }
+
+    if (best) return { maxYmd: best, maxDocId: bestId, source: "orderBy_docId_desc_fallback" };
+  } catch (e) {
+    // ignora e cai pro fallback final
+  }
+
+  // fallback final: hoje UTC
+  return { maxYmd: todayUtcYmd(), maxDocId: null, source: "today_utc_fallback" };
 }
 
 /**
@@ -86,15 +120,15 @@ router.get("/bounds", async (req, res) => {
     };
 
     const minYmd = MIN_BY_LOTTERY[lottery] || "2022-06-07";
-    const { maxYmd, maxDocId } = await scanMaxYmd(db, lottery, 80);
+    const r = await scanMaxYmd(db, lottery, 80);
 
     return res.json({
       ok: true,
       lottery,
       minYmd,
-      maxYmd,
-      source: "min_fixed + scanMaxYmd(desc)",
-      maxDocId: maxDocId || null,
+      maxYmd: r.maxYmd,
+      source: `min_fixed + scanMaxYmd(${r.source})`,
+      maxDocId: r.maxDocId || null,
     });
   } catch (e) {
     return res.status(500).json({
@@ -106,3 +140,4 @@ router.get("/bounds", async (req, res) => {
 });
 
 module.exports = router;
+
