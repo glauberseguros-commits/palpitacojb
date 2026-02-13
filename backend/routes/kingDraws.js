@@ -67,6 +67,21 @@ function upTrim(v) {
 }
 
 /**
+ * ✅ Harden: fetch do DIA robusto
+ * - prioriza ymd (canônico nos teus endpoints de range)
+ * - fallback para date quando ymd não existir/estiver inconsistente
+ */
+async function fetchDayDraws(db, ymd) {
+  // tenta por ymd primeiro
+  const s1 = await db.collection("draws").where("ymd", "==", ymd).get();
+  if (s1 && !s1.empty) return s1;
+
+  // fallback por date
+  const s2 = await db.collection("draws").where("date", "==", ymd).get();
+  return s2;
+}
+
+/**
  * Concorrência limitada
  */
 async function mapWithConcurrency(items, limitN, mapper) {
@@ -92,7 +107,9 @@ async function mapWithConcurrency(items, limitN, mapper) {
  * Helpers (aliases)
  */
 function parseIncludePrizes(v, defBool) {
-  const raw = String(v ?? (defBool ? "1" : "0")).trim().toLowerCase();
+  const raw = String(v ?? (defBool ? "1" : "0"))
+    .trim()
+    .toLowerCase();
   return raw === "1" || raw === "true" || raw === "yes";
 }
 
@@ -217,7 +234,7 @@ router.get("/draws", async (req, res) => {
       return res.status(400).json({ ok: false, error: "Parâmetro inválido: to (use HH:MM, 10h ou 10)" });
     }
 
-    const snap = await db.collection("draws").where("date", "==", date).get();
+    const snap = await fetchDayDraws(db, date);
 
     const rawDraws = snap.docs.map((doc) => {
       const data = doc.data() || {};
@@ -272,7 +289,7 @@ async function handleDay(req, res) {
     const includePrizes = parseIncludePrizes(req.query.includePrizes, true);
     const positionsInfo = parsePositionsParam(req.query.positions);
 
-    const snap = await db.collection("draws").where("date", "==", date).get();
+    const snap = await fetchDayDraws(db, date);
 
     const rawDraws = snap.docs.map((doc) => {
       const data = doc.data() || {};
