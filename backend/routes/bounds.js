@@ -1,7 +1,5 @@
 "use strict";
 
-
-
 // 🔒 Normalização única de lottery_key
 function normalizeLotteryKey(v) {
   const s = String(v || "").trim().toUpperCase();
@@ -10,12 +8,15 @@ function normalizeLotteryKey(v) {
   if (s === "PT-RIO") return "PT_RIO";
   return s || "PT_RIO";
 }
+
 const express = require("express");
 const { admin, getDb } = require("../service/firebaseAdmin");
 
 const router = express.Router();
 
-function pad2(n) { return String(n).padStart(2, "0"); }
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
 
 function normalizeToYMD(input) {
   if (!input) return null;
@@ -48,15 +49,11 @@ function isISODateStrict(s) {
 async function scanMaxYmd(db, lotteryKey, scanLimit = 80) {
   const DOC_ID = admin.firestore.FieldPath.documentId();
 
-  const base = db
-    .collection("draws")
-    .where("lottery_key", "==", String(lotteryKey).trim().toUpperCase());
+  const lk = String(lotteryKey || "").trim().toUpperCase() || "PT_RIO";
 
-  const descSnap = await base
-    .orderBy("ymd", "desc")
-    .orderBy(DOC_ID, "desc")
-    .limit(scanLimit)
-    .get();
+  const base = db.collection("draws").where("lottery_key", "==", lk);
+
+  const descSnap = await base.orderBy("ymd", "desc").orderBy(DOC_ID, "desc").limit(scanLimit).get();
 
   for (const doc of descSnap.docs) {
     const d = doc.data() || {};
@@ -73,19 +70,19 @@ async function scanMaxYmd(db, lotteryKey, scanLimit = 80) {
 /**
  * GET /api/bounds?lottery=PT_RIO
  * GET /api/bounds?lottery=FEDERAL
+ * compat: ?uf=RJ etc.
  */
 router.get("/bounds", async (req, res) => {
-  // aceita ?lottery= ou ?uf=
-  const lotteryKey = normalizeLotteryKey(req.query.lottery || req.query.uf);
+  // ✅ canônico: aceita ?lottery= ou ?uf=
+  const lottery = normalizeLotteryKey(req.query.lottery || req.query.uf);
 
   try {
     const db = getDb();
-    const lottery = String(req.query.lottery || "PT_RIO").trim().toUpperCase();
 
     // ✅ mínimos oficiais
     const MIN_BY_LOTTERY = {
-      PT_RIO: "2022-06-07",   // RJ
-      FEDERAL: "2022-06-08",  // Federal
+      PT_RIO: "2022-06-07", // RJ
+      FEDERAL: "2022-06-08", // Federal
     };
 
     const minYmd = MIN_BY_LOTTERY[lottery] || "2022-06-07";
@@ -109,4 +106,3 @@ router.get("/bounds", async (req, res) => {
 });
 
 module.exports = router;
-
