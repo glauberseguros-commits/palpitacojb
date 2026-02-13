@@ -574,18 +574,12 @@ export default function Dashboard(props) {
   const loteriaKey = useMemo(() => normalizeLoteriaKey(filters?.lotteryKey || filters?.loteria), [filters?.lotteryKey, filters?.loteria]);
   const isFederal = loteriaKey === "FEDERAL";
 
-  // ✅ FEDERAL: força horário = 20h (se não for guest)
-  useEffect(() => {
-    if (isGuest) return;
-    if (!isFederal) return;
+  
 
-    const cur = String(filters?.horario ?? "");
-    if (cur !== "20h") {
-      setFilters((prev) => ({ ...prev, horario: "20h" }));
-    }
-  }, [isFederal, isGuest, filters?.horario, setFilters]);
-
-  const locationLabel = isFederal ? "FEDERAL (Brasil) — 20h" : `${loteriaKey} — Brasil`;
+  const fedBucket = isFederal ? normalizeHourBucket(filters?.horario) : null;
+const locationLabel = isFederal
+  ? `FEDERAL (Brasil)${fedBucket ? ` — ${fedBucket}` : ""}`
+  : `${loteriaKey} — Brasil`;
   const uf = loteriaKey;
 
   // DEBUG (temporário): confirma loteria/uf efetivos
@@ -1191,7 +1185,10 @@ export default function Dashboard(props) {
       }
     }
 
-    if (isFederal) baseBuckets.add("20h");
+    if (isFederal) {
+  baseBuckets.add("19h");
+  baseBuckets.add("20h");
+}
 
     const horarios = Array.from(baseBuckets)
       .sort((a, b) => a.localeCompare(b))
@@ -1670,6 +1667,7 @@ export default function Dashboard(props) {
     </div>
   );
 }
+
 
 
 

@@ -251,8 +251,12 @@ export default function FiltersBar({
       { label: "21h", value: "21h" },
     ];
 
-    // ✅ FEDERAL (forçado)
-    const horariosFED = [{ label: "20h", value: "20h" }];
+    // ✅ FEDERAL (tem 19h e 20h — permite escolher)
+const horariosFED = [
+  { label: "Todos", value: "Todos" },
+  { label: "19h", value: "19h" },
+  { label: "20h", value: "20h" },
+];
 
     const posicoesDefaultFull = [
       { label: "Todos", value: "Todos" },
@@ -528,19 +532,17 @@ export default function FiltersBar({
         return;
       }
 
-      // ✅ Troca loteria: se FEDERAL, força horário = 20h
-      if (name === "loteria") {
-        const nextLot = normalizeLoteriaInput(next);
-        onChange("loteria", nextLot);
+      // ✅ Troca loteria: ao ir para FEDERAL não força "20h" (permite Todos/19h/20h)
+if (name === "loteria") {
+  const nextLot = normalizeLoteriaInput(next);
+  onChange("loteria", nextLot);
 
-        if (nextLot === "FEDERAL") {
-          onChange("horario", "20h");
-        } else {
-          const curH = String(filters?.horario ?? "Todos");
-          if (curH === "20h") onChange("horario", "Todos");
-        }
-        return;
-      }
+  if (nextLot === "FEDERAL") {
+    // default seguro: Todos
+    onChange("horario", "Todos");
+  }
+  return;
+}
 
       if (lockPosicaoV1 && name === "posicao") {
         onChange("posicao", "1º");
@@ -556,14 +558,7 @@ export default function FiltersBar({
         onChange(name, normalizeDiaSemanaInput(next));
         return;
       }
-
-      // ✅ Se for FEDERAL, horário fica travado em 20h
-      if (name === "horario" && isFederal) {
-        onChange("horario", "20h");
-        return;
-      }
-
-      onChange(name, next);
+onChange(name, next);
     },
     [disabledAll, onBlocked, lockPosicaoV1, onChange, filters?.horario, isFederal]
   );
@@ -653,8 +648,8 @@ export default function FiltersBar({
     );
   };
 
-  const horarioForcedValue = isFederal ? "20h" : null;
-  const horarioDisabled = isFederal;
+  const horarioForcedValue = null;
+  const horarioDisabled = false;
 
   return (
     <div style={ui.bar}>
@@ -731,5 +726,7 @@ export default function FiltersBar({
     </div>
   );
 }
+
+
 
 

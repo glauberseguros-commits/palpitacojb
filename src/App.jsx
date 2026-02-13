@@ -226,10 +226,7 @@ function loadDashboardFilters() {
 
   // ✅ coerência: FEDERAL => horário deve ser 19h ou 20h (default 20h)
   const horario =
-    loteria === "FEDERAL"
-      ? obj.horario === "19h" || obj.horario === "20h"
-        ? obj.horario
-        : "20h"
+    loteria === "FEDERAL" ? (obj.horario === "Todos" || obj.horario === "19h" || obj.horario === "20h") ? obj.horario : "Todos"
       : typeof obj.horario === "string"
       ? obj.horario
       : base.horario;
@@ -494,11 +491,10 @@ useEffect(() => {
 
   if (lot === "FEDERAL") {
     const h = String(dashboardFilters?.horario || "");
-    if (h !== "19h" && h !== "20h") {
+    if (h !== "Todos" && h !== "19h" && h !== "20h") {
       setDashboardFilters((prev) => ({
         ...prev,
-        loteria: "FEDERAL",
-        horario: "20h",
+        horario: "Todos",
       }));
     } else if (dashboardFilters?.loteria !== "FEDERAL") {
       setDashboardFilters((prev) => ({ ...prev, loteria: "FEDERAL" }));
@@ -751,5 +747,7 @@ useEffect(() => {
     </ErrorBoundary>
   );
 }
+
+
 
 
