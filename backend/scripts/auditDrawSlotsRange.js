@@ -13,10 +13,9 @@ const DEFAULT_SCHEDULE_DIR = path.join(__dirname, "..", "data", "slot_schedule")
 // ✅ NOVO: gaps de fonte (API_NO_SLOT)
 const DEFAULT_GAPS_DIR = path.join(__dirname, "..", "data", "source_gaps");
 
-
-
 // ✅ NOVO: no-draw days (holiday_no_draw/blocked)
 const DEFAULT_NO_DRAW_DIR = path.join(__dirname, "..", "data", "no_draw_days");
+
 function ensureDir(p) {
   try {
     if (!fs.existsSync(p)) fs.mkdirSync(p, { recursive: true });
@@ -74,12 +73,12 @@ function hourFromCloseHour(closeHour) {
  * Horários HH:00 e HH:10 representam o MESMO sorteio.
  * Não devem ser tratados como duplicidade real.
  */
-function isLegacySlotDup(hh, count) {
+function isLegacySlotDup(lotteryKey, hh, count) {
+  if (String(lotteryKey || "").toUpperCase() !== "PT_RIO") return false;
   if (!hh) return false;
   // regra objetiva: exatamente 2 docs no mesmo HH = legado normalizado
   return count === 2;
 }
-
 
 function parseArg(name) {
   const prefix = `--${name}=`;
@@ -109,12 +108,9 @@ function printUsage() {
 Uso:
   node backend/scripts/auditDrawSlotsRange.js PT_RIO 2022-06-07 2026-01-21 [--details] [--limit=50]
     [--soft18WedSat] [--include09From=YYYY-MM-DD] [--scheduleFile=PATH] [--strictSchedule]
-    [--gapsFile=PATH]
+    [--gapsFile=PATH] [--noDrawFile=PATH]
+    [--today=YYYY-MM-DD] [--slotGraceMin=MIN] [--noCapToday]
 
-        [--today=YYYY-MM-DD]
-    [--slotGraceMin=MIN]
-    [--noCapToday]
-[--noDrawFile=PATH]
 Opções:
   --details                 informa que os detalhes completos estão no JSON
   --limit=N                 limita o print no console (padrão 50)
@@ -130,18 +126,16 @@ Opções:
   --gapsFile=PATH
                             arquivo de gaps da fonte (API_NO_SLOT). default:
                             backend/data/source_gaps/<LOTTERY>.json
-
-
-  
-  --today=YYYY-MM-DD
-                             força qual "dia atual" considerar (debug/replay). default: hoje (local)
-  --slotGraceMin=MIN
-                             tolerância (minutos) após a hora do slot para considerar "já publicado". default: 25
-  --noCapToday
-                             desativa o cap do dia atual (volta a esperar todos os slots do schedule)
---noDrawFile=PATH
+  --noDrawFile=PATH
                             arquivo de dias sem sorteio (holiday_no_draw/blocked). default:
                             backend/data/no_draw_days/<LOTTERY>.json
+  --today=YYYY-MM-DD
+                            força qual "dia atual" considerar (debug/replay). default: hoje (local)
+  --slotGraceMin=MIN
+                            tolerância (minutos) após a hora do slot para considerar "já publicado". default: 25
+  --noCapToday
+                            desativa o cap do dia atual (volta a esperar todos os slots do schedule)
+
 Saída:
   backend/logs/auditSlots-PT_RIO-<start>_to_<end>.json
 `.trim()
@@ -280,6 +274,54 @@ function expectedHoursFromSchedule(schedule, ymd, dow) {
 }
 
 // =====================
+// ✅ SCHEDULE DIGEST (não infla JSON)
+// =====================
+function buildScheduleDigestFromFileOrNull(scheduleFile) {
+  try {
+    const sf = String(scheduleFile || "").trim();
+    if (!sf || !fs.existsSync(sf)) return null;
+
+    const raw = safeReadJson(sf, null);
+    if (!raw || typeof raw !== "object") return null;
+
+    const ranges = Array.isArray(raw.ranges) ? raw.ranges : [];
+    const oneoffs = [];
+    let hardSlotsTotal = 0;
+    let softSlotsTotal = 0;
+
+    for (const r of ranges) {
+      if (r && r.from && r.to && String(r.from) === String(r.to) && isISODate(r.from)) {
+        oneoffs.push(String(r.from));
+      }
+
+      const dow = r && typeof r.dow === "object" && r.dow ? r.dow : {};
+      for (const k of Object.keys(dow)) {
+        const obj = dow[k] || {};
+        const h = Array.isArray(obj.hard) ? obj.hard : [];
+        const s = Array.isArray(obj.soft) ? obj.soft : [];
+        hardSlotsTotal += h.length;
+        softSlotsTotal += s.length;
+      }
+    }
+
+    const stat = fs.statSync(sf);
+    const uniqOneoffs = Array.from(new Set(oneoffs)).sort();
+
+    return {
+      rangesCount: ranges.length,
+      oneOffCount: uniqOneoffs.length,
+      oneOffDays: uniqOneoffs, // se quiser enxugar depois, limitamos a 50
+      hardSlotsTotal,
+      softSlotsTotal,
+      file: sf,
+      mtimeMs: Number(stat.mtimeMs || 0),
+    };
+  } catch {
+    return null;
+  }
+}
+
+// =====================
 // ✅ GAPS (API_NO_SLOT)
 // =====================
 function loadGapsOrNull(lotteryKey, gapsFileArg) {
@@ -393,21 +435,20 @@ function noDrawSetHas(noDraw, ymd) {
 }
 
 // =====================
- // Time helpers (local)
- // =====================
- function pad2(n) { return String(n).padStart(2, "0"); }
- function getLocalYmd(d) {
-   const x = d ? new Date(d) : new Date();
-   return `${x.getFullYear()}-${pad2(x.getMonth()+1)}-${pad2(x.getDate())}`;
- }
- function getLocalNowMinutes(d) {
-   const x = d ? new Date(d) : new Date();
-   return (x.getHours() * 60) + x.getMinutes();
- }
- function hourToMinutes(h) {
-   const n = Number(h);
-   return Number.isFinite(n) ? (n * 60) : NaN;
- }
+// Time helpers (local)
+// =====================
+function getLocalYmd(d) {
+  const x = d ? new Date(d) : new Date();
+  return `${x.getFullYear()}-${pad2(x.getMonth() + 1)}-${pad2(x.getDate())}`;
+}
+function getLocalNowMinutes(d) {
+  const x = d ? new Date(d) : new Date();
+  return x.getHours() * 60 + x.getMinutes();
+}
+function hourToMinutes(h) {
+  const n = Number(h);
+  return Number.isFinite(n) ? n * 60 : NaN;
+}
 
 // =====================
 // Main
@@ -436,15 +477,14 @@ async function main() {
   const scheduleFileArg = parseArg("scheduleFile");
   const strictSchedule = hasFlag("strictSchedule");
 
-  
-  
   // ✅ cap do DIA ATUAL até o último horário que já deveria estar publicado
   const todayYmd = String(parseArg("today") || "").trim() || getLocalYmd();
   const slotGraceMin = Number(parseArg("slotGraceMin") || 25);
   const capToday = !hasFlag("noCapToday");
   const nowMinLocal = getLocalNowMinutes();
-const noDrawFileArg = parseArg("noDrawFile");
-const gapsFileArg = parseArg("gapsFile");
+
+  const noDrawFileArg = parseArg("noDrawFile");
+  const gapsFileArg = parseArg("gapsFile");
 
   ensureLogDir();
   const db = getDb();
@@ -452,23 +492,23 @@ const gapsFileArg = parseArg("gapsFile");
   const { schedule, scheduleFile } = loadScheduleOrNull(lotteryKey, scheduleFileArg);
   const scheduleOn = !!schedule;
 
+  const scheduleDigest = scheduleOn ? buildScheduleDigestFromFileOrNull(scheduleFile) : null;
+
   const { gaps, gapsFile } = loadGapsOrNull(lotteryKey, gapsFileArg);
   const gapsOn = !!gaps;
 
-  
-
   const { noDraw, noDrawFile } = loadNoDrawOrNull(lotteryKey, noDrawFileArg);
   const noDrawOn = !!noDraw;
-console.log("==================================");
+
+  console.log("==================================");
   console.log(`[AUDIT-SLOTS] lottery_key=${lotteryKey}`);
   console.log(`range: ${startYmd} -> ${endYmd}`);
   console.log(
     `schedule: ${scheduleOn ? "ON" : "OFF"} file=${scheduleFile} strict=${strictSchedule ? "YES" : "NO"}`
   );
   console.log(`gaps: ${gapsOn ? "ON" : "OFF"} file=${gapsFile}`);
-  
   console.log(`noDraw: ${noDrawOn ? "ON" : "OFF"} file=${noDrawFile}`);
-console.log(
+  console.log(
     `fallbackFlags: soft18WedSat=${soft18WedSat ? "YES" : "NO"} include09From=${include09FromYmd}`
   );
   console.log("==================================");
@@ -496,11 +536,10 @@ console.log(
   let gapsRemovedHardTotal = 0;
   let gapsRemovedSoftTotal = 0;
 
-  
-
   // ✅ no-draw stats
   let noDrawDaysCount = 0;
-const missingHardByDay = [];
+
+  const missingHardByDay = [];
   const missingSoftByDay = [];
   const dupByDay = [];
   const unexpectedByDay = [];
@@ -536,6 +575,7 @@ const missingHardByDay = [];
     // IMPORTANT: let, porque vamos aplicar gaps
     let expectedHard = expected.expectedHard || [];
     let expectedSoft = expected.expectedSoft || [];
+
     // ✅ aplica gaps da fonte (API_NO_SLOT): remove horas "esperadas" daquele dia
     const gset = gapsOn ? gapSetForDate(gaps, ymd) : null;
     if (gset) {
@@ -550,7 +590,6 @@ const missingHardByDay = [];
       }
     }
 
-
     // ✅ aplica no-draw (holiday_no_draw/blocked): não espera slots
     if (noDrawOn && noDrawSetHas(noDraw, ymd)) {
       if (expectedHard.length || expectedSoft.length) noDrawDaysCount += 1;
@@ -558,14 +597,13 @@ const missingHardByDay = [];
       expectedSoft = [];
     }
 
-
     // ✅ cap do DIA ATUAL: só espera slots cujo horário já deveria ter saído (agora + grace)
     if (capToday && ymd === todayYmd) {
       const grace = Number.isFinite(slotGraceMin) ? slotGraceMin : 25;
       const allow = (h) => {
         const hm = hourToMinutes(h);
         if (!Number.isFinite(hm)) return false;
-        return nowMinLocal >= (hm + grace);
+        return nowMinLocal >= hm + grace;
       };
       expectedHard = Array.isArray(expectedHard) ? expectedHard.filter(allow) : [];
       expectedSoft = Array.isArray(expectedSoft) ? expectedSoft.filter(allow) : [];
@@ -614,32 +652,35 @@ const missingHardByDay = [];
         missingHardSlotsTotal += 1;
       }
       if (c > 1) {
-      if (!isLegacySlotDup(hh, c)) {
-        dup.push({ hh, count: c });
-        duplicateExtraDocsExpected += c - 1;
-      }
-    }
-    }
-    for (const hh of expectedSoft) {
-      const c = dayMap.get(hh) || 0;
-      if (c > 0) foundSoftSlotsTotal += 1;
-    
-      // ✅ Regra: 18h em qua/sáb é "soft variável" por padrão.
-      // Só conta como missingSoft se o usuário ligar --soft18WedSat.
-      const ignoreSoftMissing = (!soft18WedSat && (dow === 3 || dow === 6) && hh === "18");
-    
-      if (c <= 0 && !ignoreSoftMissing) {
-        missingSoft.push(hh);
-        missingSoftSlotsTotal += 1;
-      }
-    
-      if (c > 1) {
-        if (!isLegacySlotDup(hh, c)) {
+        if (!isLegacySlotDup(lotteryKey, hh, c)) {
           dup.push({ hh, count: c });
           duplicateExtraDocsExpected += c - 1;
         }
       }
-    }const unexpected = [];
+    }
+
+    for (const hh of expectedSoft) {
+      const c = dayMap.get(hh) || 0;
+      if (c > 0) foundSoftSlotsTotal += 1;
+
+      // ✅ Regra: 18h em qua/sáb é "soft variável" por padrão.
+      // Só conta como missingSoft se o usuário ligar --soft18WedSat.
+      const ignoreSoftMissing = !soft18WedSat && (dow === 3 || dow === 6) && hh === "18";
+
+      if (c <= 0 && !ignoreSoftMissing) {
+        missingSoft.push(hh);
+        missingSoftSlotsTotal += 1;
+      }
+
+      if (c > 1) {
+        if (!isLegacySlotDup(lotteryKey, hh, c)) {
+          dup.push({ hh, count: c });
+          duplicateExtraDocsExpected += c - 1;
+        }
+      }
+    }
+
+    const unexpected = [];
     for (const [hh, c] of dayMap.entries()) {
       if (!expectedAllSet.has(hh)) {
         unexpected.push({ hh, count: c });
@@ -672,6 +713,8 @@ const missingHardByDay = [];
       strictSchedule,
       missingDaysNoRange: scheduleMissByDay.length,
     },
+    // ✅ digest do schedule (conteúdo do arquivo, sem inflar o JSON)
+    scheduleDigest,
 
     gaps: {
       enabled: gapsOn,
@@ -679,6 +722,16 @@ const missingHardByDay = [];
       daysWithGapsApplied,
       removedHardSlots: gapsRemovedHardTotal,
       removedSoftSlots: gapsRemovedSoftTotal,
+    },
+
+    // ✅ agora vai para o JSON (antes só imprimia no console)
+    noDraw: {
+      enabled: noDrawOn,
+      noDrawFile,
+      daysIgnored: noDrawDaysCount,
+      listed: noDrawOn ? (noDraw.days?.length || 0) : 0,
+      // só inclui a lista completa quando --details
+      days: details && noDrawOn ? noDraw.days : undefined,
     },
 
     fallbackFlags: { soft18WedSat, include09FromYmd },
@@ -743,11 +796,11 @@ const missingHardByDay = [];
       `[GAPS] daysWithGapsApplied=${daysWithGapsApplied} removedHard=${gapsRemovedHardTotal} removedSoft=${gapsRemovedSoftTotal}`
     );
   }
-
-  
   if (noDrawOn) {
     console.log(`[NO-DRAW] daysIgnored=${noDrawDaysCount} listed=${noDraw.days.length}`);
-  }console.log(`[OUTPUT] ${outFile}`);
+  }
+
+  console.log(`[OUTPUT] ${outFile}`);
   console.log("==================================");
 
   if (scheduleMissByDay.length) {
@@ -810,11 +863,3 @@ main().catch((e) => {
   console.error("ERRO:", e?.stack || e?.message || e);
   process.exit(1);
 });
-
-
-
-
-
-
-
-
