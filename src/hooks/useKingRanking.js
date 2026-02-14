@@ -345,8 +345,7 @@ export function useKingRanking({
 
       try {
         const b = await getKingBoundsByUf({ uf: key });
-
-        const safe = {
+const safe = {
           ok: !!b?.ok,
           uf: key,
           minYmd: b?.minYmd || null,
@@ -865,6 +864,8 @@ export function useKingRanking({
 
   return { loading, error, data, meta, drawsRaw };
 }
+
+
 
 
 

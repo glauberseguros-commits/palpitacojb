@@ -947,9 +947,82 @@ async function probeRecentMaxYmd(uf, lookbackDays = 45) {
  * - aceita getKingBoundsByUf({ uf: "RJ" })
  * - aceita getKingBoundsByUf("FEDERAL") (se existir no Firestore)
  */
+/**
+ * ✅ API bounds (backend) — fonte única preferencial
+ * - usa /api/bounds?lottery=...
+ * - valida min/max
+ * - retorna também minDocId/maxDocId quando existir
+ */
+async function fetchBoundsFromApi(ufOrObj) {
+  const uf = String(extractUfParam(ufOrObj) || "").trim();
+  if (!uf) return { ok: false, error: new Error("uf vazio") };
+
+  // backend aceita ?lottery= e normaliza RJ/FEDERAL/aliases
+  // aqui mandamos chave canônica (evita ambiguidade)
+  const lot = canonicalScopeKey(uf) || String(uf).trim().toUpperCase();
+  const url = `/api/bounds?lottery=${encodeURIComponent(lot)}`;
+
+  try {
+    const r = await fetch(url, { method: "GET" });
+    const j = await r.json().catch(() => null);
+
+    if (!r.ok || !j || !j.ok) {
+      return {
+        ok: false,
+        error: new Error(`bounds api not ok: ${j?.message || r.status}`),
+        payload: j || null,
+      };
+    }
+
+    const minYmd = String(j.minYmd || "").trim();
+    const maxYmd = String(j.maxYmd || "").trim();
+    if (!isYMD(minYmd) || !isYMD(maxYmd)) {
+      return {
+        ok: false,
+        error: new Error("bounds api retornou min/max inválidos"),
+        payload: j,
+      };
+    }
+
+    return {
+      ok: true,
+      uf,
+      lottery: String(j.lottery || lot).trim(),
+      minYmd,
+      maxYmd,
+      minDocId: j.minDocId || null,
+      maxDocId: j.maxDocId || null,
+      source: String(j.source || "api_bounds"),
+    };
+  } catch (e) {
+    return { ok: false, error: e };
+  }
+}
 export async function getKingBoundsByUf(ufOrObj) {
   const uf = String(extractUfParam(ufOrObj) || "").trim();
   if (!uf) throw new Error("Parâmetro obrigatório: uf");
+
+  // ✅ 0) Preferencial: backend /api/bounds (mais barato e confiável)
+  const apiTry = await fetchBoundsFromApi(ufOrObj);
+  if (apiTry?.ok) {
+    return {
+      ok: true,
+      uf,
+
+      minYmd: apiTry.minYmd,
+      maxYmd: apiTry.maxYmd,
+
+      // ✅ compat: UI antiga espera minDate/maxDate
+      minDate: apiTry.minYmd,
+      maxDate: apiTry.maxYmd,
+
+      // extras (debug/auditoria)
+      minDocId: apiTry.minDocId || null,
+      maxDocId: apiTry.maxDocId || null,
+
+      source: `api_bounds:${apiTry.source}`,
+    };
+  }
 
   const SCAN_LIMIT = 50;
   const FALLBACK_EDGE_LIMIT = 600;
@@ -1104,9 +1177,7 @@ export async function getKingBoundsByUf(ufOrObj) {
       }${recentMaxYmd ? ":max_probe" : ""}${idxInfo}`,
     };
   }
-}
-
-/* =========================
+}/* =========================
    API: Day
 ========================= */
 
@@ -1711,3 +1782,5 @@ export async function getKingLateByRange({
   cacheSet(LATE_CACHE, cacheKey, out);
   return out;
 }
+
+
