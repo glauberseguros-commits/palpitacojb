@@ -43,6 +43,14 @@ function upTrim(v) {
   return String(v ?? "").trim().toUpperCase();
 }
 
+function normalizeLotteryKey(v) {
+  const s = String(v ?? "").trim().toUpperCase();
+  if (s === "RJ") return "PT_RIO";
+  if (s === "RIO") return "PT_RIO";
+  if (s === "PT-RIO") return "PT_RIO";
+  return s;
+}
+
 function onlyDigits(s) {
   return String(s ?? "").replace(/\D/g, "");
 }
@@ -86,7 +94,7 @@ router.post("/receive_results", async (req, res) => {
     if (!body) return res.status(400).json({ ok: false, error: "body_invalid" });
 
     const source = String(body.source || "").trim() || "unknown";
-    const lottery = upTrim(body.lottery);
+    const lottery = normalizeLotteryKey(body.lottery);
     const date = String(body.date || "").trim();
     const close = normalizeHHMM(body.close);
     const results = Array.isArray(body.results) ? body.results : null;
@@ -103,6 +111,8 @@ router.post("/receive_results", async (req, res) => {
     await drawRef.set(
       {
         date,
+        
+        ymd: date,
         lottery_key: lottery,
         close_hour: close,
         source,
@@ -136,3 +146,4 @@ router.post("/receive_results", async (req, res) => {
 });
 
 module.exports = router;
+
