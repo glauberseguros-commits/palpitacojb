@@ -211,6 +211,7 @@ async function main() {
       summary: {
         capturedSlots: 0,
         alreadyHadSlots: 0,
+        updatedSlots: 0,
         notFoundSlots: 0,
         apiNoSlot: 0,
         apiSlotEmpty: 0,
@@ -342,10 +343,12 @@ async function main() {
         const doneNow = captured && (savedCount > 0 || alreadyCompleteAny);
         if (doneNow) {
           slotRes.ok = true;
-          slotRes.doneReason = alreadyCompleteAny ? "FS_ALREADY_HAS" : "CAPTURED";
+          slotRes.doneReason = (Number(savedCount || 0) > 0) ? "CAPTURED" : (Number(writeCount || 0) > 0) ? "UPDATED" : alreadyCompleteAny ? "FS_ALREADY_HAS" : "CAPTURED";
           slotDone = true;
 
-          if (alreadyCompleteAny) dayRes.summary.alreadyHadSlots += 1;
+          if (Number(savedCount || 0) > 0) dayRes.summary.capturedSlots += 1;
+          else if (Number(writeCount || 0) > 0) dayRes.summary.updatedSlots += 1;
+          else if (alreadyCompleteAny) dayRes.summary.alreadyHadSlots += 1;
           else dayRes.summary.capturedSlots += 1;
 
           console.log(
@@ -425,6 +428,7 @@ async function main() {
       daysProcessed: results.length,
       capturedSlots: results.reduce((a, r) => a + (r.summary.capturedSlots || 0), 0),
       alreadyHadSlots: results.reduce((a, r) => a + (r.summary.alreadyHadSlots || 0), 0),
+      updatedSlots: results.reduce((a, r) => a + (r.summary.updatedSlots || 0), 0),
       notFoundSlots: results.reduce((a, r) => a + (r.summary.notFoundSlots || 0), 0),
       apiNoSlot: results.reduce((a, r) => a + (r.summary.apiNoSlot || 0), 0),
       apiSlotEmpty: results.reduce((a, r) => a + (r.summary.apiSlotEmpty || 0), 0),
@@ -445,4 +449,5 @@ main().catch((e) => {
   console.error("ERRO:", e?.stack || e?.message || e);
   process.exit(1);
 });
+
 

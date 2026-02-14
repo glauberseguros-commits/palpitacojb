@@ -250,9 +250,11 @@ async function main() {
   }
 
   // 3) run backfill (lotes)
-  const limitDays = Number(parseArg("limitDays", "14"));
+  let limitDays = Number(parseArg("limitDays", "14"));
+  if (!Number.isFinite(limitDays) || limitDays <= 0) limitDays = 14;
   const baseMins = String(parseArg("baseMins", "0,9"));
-  const tolMin = Number(parseArg("tolMin", "2"));
+  let tolMin = Number(parseArg("tolMin", "2"));
+  if (!Number.isFinite(tolMin) || tolMin < 0) tolMin = 2;
 
   console.log("==================================");
   console.log(
@@ -276,4 +278,6 @@ main().catch((e) => {
   console.error("ERR:", e?.stack || e?.message || e);
   process.exit(1);
 });
+
+
 
