@@ -105,13 +105,13 @@ router.post("/receive_results", async (req, res) => {
     if (!results || !results.length) return res.status(400).json({ ok: false, error: "results_required" });
 
     const db = getDb();
-    const drawId = `d_${lottery}_${date}_${close.replace(":", "")}`;
+    const hhmm = close.replace(":", "-"); // "21:00" -> "21-00"
+    const drawId = `${lottery}__${date}__${hhmm}__RECEIVE`;
     const drawRef = db.collection("draws").doc(drawId);
 
     await drawRef.set(
       {
         date,
-        
         ymd: date,
         lottery_key: lottery,
         close_hour: close,
@@ -146,4 +146,6 @@ router.post("/receive_results", async (req, res) => {
 });
 
 module.exports = router;
+
+
 
