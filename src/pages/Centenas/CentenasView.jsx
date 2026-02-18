@@ -1251,7 +1251,6 @@ export default function CentenasView() {
       );
 
       if (!grupoAtual) {
-        alert("Nenhum grupo selecionado.");
         return;
       }
 
@@ -1270,21 +1269,11 @@ export default function CentenasView() {
 
       await navigator.clipboard.writeText(texto);
 
-      alert(
-        "✅ Palpites copiados!\n\n" +
-        "Agora na KING:\n" +
-        "1) Clique em PALPITES\n" +
-        "2) Escolha a modalidade (PT RIO)\n" +
-        "3) Cole (CTRL+V) no campo de palpites\n\n" +
-        "Vou abrir a KING pra você agora."
-      );
-
       window.open(
-        "https://app.kingapostas.com/",
+        "https://app.kingapostas.com/bet/guess",
         "_blank"
       );
     } catch (e) {
-      alert("Erro ao enviar para o King.");
       console.error(e);
     }
   };
@@ -1555,6 +1544,7 @@ export default function CentenasView() {
     </div>
   );
 }
+
 
 
 
