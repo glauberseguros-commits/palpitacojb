@@ -483,6 +483,7 @@ export default function CentenasView() {
   const [error, setError] = useState("");
   const [groups, setGroups] = useState([]);
   const [openGrupo, setOpenGrupo] = useState(19);
+  const [sendingKing, setSendingKing] = useState(false);
 
   // ✅ ref para NÃO disparar rebuild quando abre/fecha card
   const openGrupoRef = useRef(openGrupo);
@@ -1244,37 +1245,52 @@ export default function CentenasView() {
   }, []);
 
   
-  const handleEnviarKing = async () => {
-    try {
-      const grupoAtual = groups.find(
-        (g) => Number(g.grupo) === Number(openGrupo)
-      );
+    const handleEnviarKing = async () => {
+    if (sendingKing) return;
 
-      if (!grupoAtual) {
-        return;
-      }
+    try {
+      const grupoAtual = groups.find((g) => Number(g.grupo) === Number(openGrupo));
+      if (!grupoAtual) return;
+
+      setSendingKing(true);
 
       const today = todayYMDLocal();
 
-      const milhares = grupoAtual.list40.map((it) => {
-        const dig = dailyDigitForRow(
-          today,
-          grupoAtual.grupo2,
-          it.centena
-        );
+      // monta milhar por linha (mais compatível com colagem na King)
+      const milhares = (grupoAtual.list40 || []).map((it) => {
+        const dig = dailyDigitForRow(today, grupoAtual.grupo2, it.centena);
         return `${dig}${it.centena}`;
       });
 
+      // King costuma aceitar melhor por linhas (1 palpite por linha)
       const texto = milhares.join("\n");
 
+      // copia (precisa ser gesto do usuário — no mobile isso é OK)
       await navigator.clipboard.writeText(texto);
 
-      window.open(
-        "https://app.kingapostas.com/bet/guess",
-        "_blank"
-      );
+      // MOBILE-FIRST: abrir na MESMA ABA (evita bloqueio de popup e fica só por toque)
+      window.location.assign("https://app.kingapostas.com/bet/guess");
     } catch (e) {
       console.error(e);
+
+      // fallback: se clipboard falhar, tenta Web Share (mobile)
+      try {
+        const grupoAtual = groups.find((g) => Number(g.grupo) === Number(openGrupo));
+        if (grupoAtual) {
+          const today = todayYMDLocal();
+          const milhares = (grupoAtual.list40 || []).map((it) => {
+            const dig = dailyDigitForRow(today, grupoAtual.grupo2, it.centena);
+            return `${dig}${it.centena}`;
+          });
+          const texto = milhares.join("\n");
+
+          if (navigator.share) {
+            await navigator.share({ text: texto, title: "Palpites Palpitaco" });
+          }
+        }
+      } catch {}
+    } finally {
+      setSendingKing(false);
     }
   };
 
@@ -1413,9 +1429,9 @@ export default function CentenasView() {
         <button
           className="cx0_btn"
           onClick={handleEnviarKing}
-          disabled={!groups.length}
+          disabled={sendingKing || !groups.length}
         >
-          Enviar p/ King
+          {sendingKing ? "Abrindo KING..." : "Enviar p/ King"}
         </button>
       </div>
 
@@ -1544,6 +1560,8 @@ export default function CentenasView() {
     </div>
   );
 }
+
+
 
 
 
