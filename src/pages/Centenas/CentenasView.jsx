@@ -483,7 +483,10 @@ export default function CentenasView() {
   const [error, setError] = useState("");
   const [groups, setGroups] = useState([]);
   const [openGrupo, setOpenGrupo] = useState(19);
-  const [sendingKing, setSendingKing] = useState(false);
+  
+  const [kingModalOpen, setKingModalOpen] = useState(false);
+  const [kingText, setKingText] = useState("");
+  const [kingCopyOk, setKingCopyOk] = useState(false);
 
   // ✅ ref para NÃO disparar rebuild quando abre/fecha card
   const openGrupoRef = useRef(openGrupo);
@@ -1075,7 +1078,99 @@ export default function CentenasView() {
         font-size:12px;
       }
 
-      .cx0_panel{
+      
+
+      .cx0_modalBackdrop{
+        position:fixed; inset:0;
+        background:rgba(0,0,0,0.72);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        padding:16px;
+        z-index:9999;
+      }
+      .cx0_modal{
+        width:min(560px, 96vw);
+        border-radius:16px;
+        border:1px solid rgba(202,166,75,0.22);
+        background:rgba(0,0,0,0.88);
+        box-shadow:0 24px 80px rgba(0,0,0,0.65);
+        padding:14px;
+      }
+      .cx0_modal h3{
+        margin:0 0 8px;
+        font-size:14px;
+        font-weight:1000;
+        letter-spacing:.4px;
+        color:#e9e9e9;
+        text-align:center;
+      }
+      .cx0_modal p{
+        margin:0 0 10px;
+        font-size:12px;
+        color:rgba(233,233,233,0.78);
+        text-align:center;
+        line-height:1.35;
+      }
+      .cx0_modalOk{
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        gap:8px;
+        margin:0 auto 10px;
+        padding:8px 10px;
+        border-radius:999px;
+        border:1px solid rgba(255,255,255,0.10);
+        background:rgba(202,166,75,0.12);
+        font-size:11px;
+        font-weight:900;
+        color:#caa64b;
+        width:fit-content;
+      }
+      .cx0_modalBtns{
+        display:grid;
+        grid-template-columns:1fr;
+        gap:10px;
+        margin-top:10px;
+      }
+      @media (min-width:520px){
+        .cx0_modalBtns{ grid-template-columns:1fr 1fr; }
+      }
+      .cx0_modalBtn{
+        cursor:pointer;
+        border-radius:12px;
+        padding:12px 12px;
+        font-weight:1000;
+        font-size:13px;
+        background:rgba(0,0,0,0.55);
+        color:#e9e9e9;
+        border:1px solid rgba(202,166,75,0.28);
+      }
+      .cx0_modalBtn2{
+        cursor:pointer;
+        border-radius:12px;
+        padding:12px 12px;
+        font-weight:1000;
+        font-size:13px;
+        background:rgba(0,0,0,0.35);
+        color:rgba(233,233,233,0.85);
+        border:1px solid rgba(255,255,255,0.10);
+      }
+      .cx0_textarea{
+        width:100%;
+        min-height:110px;
+        resize:none;
+        border-radius:12px;
+        border:1px solid rgba(255,255,255,0.10);
+        background:rgba(0,0,0,0.40);
+        color:#e9e9e9;
+        padding:10px;
+        box-sizing:border-box;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        font-weight:900;
+        font-size:12px;
+        line-height:1.3;
+      }.cx0_panel{
         border-radius:14px;
         border:1px solid rgba(202,166,75,0.16);
         background:
@@ -1245,50 +1340,41 @@ export default function CentenasView() {
   }, []);
 
   
-    const handleEnviarKing = async () => {
+      const handleEnviarKing = async () => {
     if (sendingKing) return;
 
+    const grupoAtual = groups.find((g) => Number(g.grupo) === Number(openGrupo));
+    if (!grupoAtual) return;
+
+    setSendingKing(true);
+
     try {
-      const grupoAtual = groups.find((g) => Number(g.grupo) === Number(openGrupo));
-      if (!grupoAtual) return;
-
-      setSendingKing(true);
-
       const today = todayYMDLocal();
 
-      // monta milhar por linha (mais compatível com colagem na King)
+      // 1 palpite por linha (compatível com a King)
       const milhares = (grupoAtual.list40 || []).map((it) => {
         const dig = dailyDigitForRow(today, grupoAtual.grupo2, it.centena);
         return `${dig}${it.centena}`;
       });
 
-      // King costuma aceitar melhor por linhas (1 palpite por linha)
       const texto = milhares.join("\n");
+      setKingText(texto);
 
-      // copia (precisa ser gesto do usuário — no mobile isso é OK)
-      await navigator.clipboard.writeText(texto);
+      // tenta copiar (mobile: precisa ser gesto do usuário — aqui é clique)
+      let ok = false;
+      try {
+        await navigator.clipboard.writeText(texto);
+        ok = true;
+      } catch {
+        ok = false;
+      }
 
-      // MOBILE-FIRST: abrir na MESMA ABA (evita bloqueio de popup e fica só por toque)
-      window.location.assign("https://app.kingapostas.com/bet/guess");
+      setKingCopyOk(ok);
+      setKingModalOpen(true);
     } catch (e) {
       console.error(e);
-
-      // fallback: se clipboard falhar, tenta Web Share (mobile)
-      try {
-        const grupoAtual = groups.find((g) => Number(g.grupo) === Number(openGrupo));
-        if (grupoAtual) {
-          const today = todayYMDLocal();
-          const milhares = (grupoAtual.list40 || []).map((it) => {
-            const dig = dailyDigitForRow(today, grupoAtual.grupo2, it.centena);
-            return `${dig}${it.centena}`;
-          });
-          const texto = milhares.join("\n");
-
-          if (navigator.share) {
-            await navigator.share({ text: texto, title: "Palpites Palpitaco" });
-          }
-        }
-      } catch {}
+      setKingCopyOk(false);
+      setKingModalOpen(true);
     } finally {
       setSendingKing(false);
     }
@@ -1304,6 +1390,62 @@ export default function CentenasView() {
   return (
     <div className="cx0_wrap">
       <style>{css}</style>
+
+      {kingModalOpen ? (
+        <div className="cx0_modalBackdrop" role="dialog" aria-modal="true">
+          <div className="cx0_modal">
+            <h3>Enviar para a KING</h3>
+
+            {kingCopyOk ? (
+              <div className="cx0_modalOk">✅ Palpites copiados</div>
+            ) : (
+              <div className="cx0_modalOk">⚠️ Toque em “COPIAR” e depois “ABRIR KING”</div>
+            )}
+
+            <p>
+              Ao abrir a KING, toque no campo <b>“Insira o Palpite”</b> e use <b>Colar</b>.
+              Depois é só <b>Avançar</b>.
+            </p>
+
+            {!kingCopyOk ? (
+              <textarea className="cx0_textarea" value={kingText} readOnly />
+            ) : null}
+
+            <div className="cx0_modalBtns">
+              <button
+                className="cx0_modalBtn"
+                type="button"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(kingText || "");
+                    setKingCopyOk(true);
+                  } catch {}
+                }}
+              >
+                COPIAR PALPITES
+              </button>
+
+              <button
+                className="cx0_modalBtn"
+                type="button"
+                onClick={() => {
+                  window.location.assign("https://app.kingapostas.com/bet/guess");
+                }}
+              >
+                ABRIR KING
+              </button>
+
+              <button
+                className="cx0_modalBtn2"
+                type="button"
+                onClick={() => setKingModalOpen(false)}
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <div>
         <h1 className="cx0_title">CENTENAS +</h1>
@@ -1431,7 +1573,7 @@ export default function CentenasView() {
           onClick={handleEnviarKing}
           disabled={sendingKing || !groups.length}
         >
-          {sendingKing ? "Abrindo KING..." : "Enviar p/ King"}
+          {sendingKing ? "Preparando..." : "Enviar p/ King"}
         </button>
       </div>
 
@@ -1560,6 +1702,8 @@ export default function CentenasView() {
     </div>
   );
 }
+
+
 
 
 
