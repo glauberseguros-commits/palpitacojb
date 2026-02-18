@@ -1243,6 +1243,52 @@ export default function CentenasView() {
     `;
   }, []);
 
+  
+  const handleEnviarKing = async () => {
+    try {
+      const grupoAtual = groups.find(
+        (g) => Number(g.grupo) === Number(openGrupo)
+      );
+
+      if (!grupoAtual) {
+        alert("Nenhum grupo selecionado.");
+        return;
+      }
+
+      const today = todayYMDLocal();
+
+      const milhares = grupoAtual.list40.map((it) => {
+        const dig = dailyDigitForRow(
+          today,
+          grupoAtual.grupo2,
+          it.centena
+        );
+        return `${dig}${it.centena}`;
+      });
+
+      const texto = milhares.join("\n");
+
+      await navigator.clipboard.writeText(texto);
+
+      alert(
+        "✅ Palpites copiados!\n\n" +
+        "Agora na KING:\n" +
+        "1) Clique em PALPITES\n" +
+        "2) Escolha a modalidade (PT RIO)\n" +
+        "3) Cole (CTRL+V) no campo de palpites\n\n" +
+        "Vou abrir a KING pra você agora."
+      );
+
+      window.open(
+        "https://app.kingapostas.com/",
+        "_blank"
+      );
+    } catch (e) {
+      alert("Erro ao enviar para o King.");
+      console.error(e);
+    }
+  };
+
   const progressPct = useMemo(() => {
     const total = Number(progress?.total || 0);
     const done = Number(progress?.done || 0);
@@ -1375,6 +1421,13 @@ export default function CentenasView() {
         <button className="cx0_btn" onClick={build} disabled={loading || loadingBounds || !boundsReady}>
           {loading ? "Carregando..." : "Atualizar"}
         </button>
+        <button
+          className="cx0_btn"
+          onClick={handleEnviarKing}
+          disabled={!groups.length}
+        >
+          Enviar p/ King
+        </button>
       </div>
 
       {loading && progress?.total ? (
@@ -1447,7 +1500,7 @@ export default function CentenasView() {
                         <button className="cx0_toggle" type="button" onClick={() => setShowOnlyHits((v) => !v)}>
                           {showOnlyHits ? "Mostrar todas (40)" : "Mostrar só ocorridas"}
                         </button>
-                      </div>
+                        </div>
 
                       <div className="cx0_tbl">
                         <div className="cx0_row cx0_headRow">
@@ -1502,3 +1555,7 @@ export default function CentenasView() {
     </div>
   );
 }
+
+
+
+
