@@ -1338,6 +1338,8 @@ export default function CentenasView() {
       }
     `;
   }, []);
+  const [sendingKing, setSendingKing] = useState(false);
+
 
   
       const handleEnviarKing = async () => {
@@ -1702,6 +1704,7 @@ export default function CentenasView() {
     </div>
   );
 }
+
 
 
 
