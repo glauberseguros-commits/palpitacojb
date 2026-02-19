@@ -26,7 +26,8 @@
     "test": "react-scripts test",
     "start": "react-scripts start",
     "auto:federal": "powershell -NoProfile -Command \"$env:LOTTERY='FEDERAL'; node backend/scripts/autoImportToday.js\"",
-    "vitenode:import": "powershell -ExecutionPolicy Bypass -File .\\tools\\run-vitenode.ps1 -Entry"
+    "vitenode:import": "powershell -ExecutionPolicy Bypass -File .\\tools\\run-vitenode.ps1 -Entry",
+    "build:vercel": "REACT_APP_BUILD_SHA=$VERCEL_GIT_COMMIT_SHA REACT_APP_BUILD_REF=$VERCEL_GIT_COMMIT_REF REACT_APP_BUILD_TIME=$VERCEL_BUILD_TIME react-scripts build"
   },
   "eslintConfig": {
     "extends": [
