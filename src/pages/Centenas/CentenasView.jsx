@@ -447,6 +447,17 @@ function tryGetImg(getImgFromGrupo, grupo, size) {
   return "";
 }
 
+/* ========= King URL helper ========= */
+function buildKingGuessUrlFromPalpites(palpites4) {
+  const list = (Array.isArray(palpites4) ? palpites4 : [])
+    .map((x) => String(x || "").trim())
+    .filter(Boolean);
+
+  // Hash (não envia pro servidor, e o Tampermonkey lê)
+  const payload = encodeURIComponent(list.join(","));
+  return `https://app.kingapostas.com/bet/guess#pp=${payload}`;
+}
+
 export default function CentenasView() {
   const LOTTERY_OPTIONS = useMemo(
     () => [
@@ -483,10 +494,11 @@ export default function CentenasView() {
   const [error, setError] = useState("");
   const [groups, setGroups] = useState([]);
   const [openGrupo, setOpenGrupo] = useState(19);
-  
+
   const [kingModalOpen, setKingModalOpen] = useState(false);
   const [kingText, setKingText] = useState("");
   const [kingCopyOk, setKingCopyOk] = useState(false);
+  const [kingUrl, setKingUrl] = useState("");
 
   // ✅ ref para NÃO disparar rebuild quando abre/fecha card
   const openGrupoRef = useRef(openGrupo);
@@ -1078,8 +1090,6 @@ export default function CentenasView() {
         font-size:12px;
       }
 
-      
-
       .cx0_modalBackdrop{
         position:fixed; inset:0;
         background:rgba(0,0,0,0.72);
@@ -1170,7 +1180,8 @@ export default function CentenasView() {
         font-weight:900;
         font-size:12px;
         line-height:1.3;
-      }.cx0_panel{
+      }
+      .cx0_panel{
         border-radius:14px;
         border:1px solid rgba(202,166,75,0.16);
         background:
@@ -1338,14 +1349,20 @@ export default function CentenasView() {
       }
     `;
   }, []);
+
   const [sendingKing, setSendingKing] = useState(false);
 
-
-  
-      const handleEnviarKing = async () => {
+  const handleEnviarKing = async () => {
     if (sendingKing) return;
+    if (!groups || !groups.length) return;
 
-    const grupoAtual = groups.find((g) => Number(g.grupo) === Number(openGrupo));
+    // escolhe o grupo ativo: openGrupo > bannerGrupo > primeiro
+    const targetGrupo =
+      (Number.isFinite(Number(openGrupo)) && Number(openGrupo)) ||
+      (Number.isFinite(Number(bannerGrupo)) && Number(bannerGrupo)) ||
+      Number(groups?.[0]?.grupo || 0);
+
+    const grupoAtual = groups.find((g) => Number(g.grupo) === Number(targetGrupo)) || null;
     if (!grupoAtual) return;
 
     setSendingKing(true);
@@ -1353,16 +1370,33 @@ export default function CentenasView() {
     try {
       const today = todayYMDLocal();
 
+      // respeita o toggle "Mostrar só ocorridas"
+      const rows = showOnlyHits
+        ? (grupoAtual.list40 || []).filter((x) => (Number(x.count) || 0) > 0)
+        : (grupoAtual.list40 || []);
+
       // 1 palpite por linha (compatível com a King)
-      const milhares = (grupoAtual.list40 || []).map((it) => {
+      const milhares = rows.map((it) => {
         const dig = dailyDigitForRow(today, grupoAtual.grupo2, it.centena);
-        return `${dig}${it.centena}`;
+        return `${dig}${it.centena}`; // 4 dígitos (string) preservando zero
       });
 
       const texto = milhares.join("\n");
-      setKingText(texto);
+      const url = buildKingGuessUrlFromPalpites(milhares);
 
-      // tenta copiar (mobile: precisa ser gesto do usuário — aqui é clique)
+      setKingText(texto);
+      setKingUrl(url);
+
+      // tenta abrir direto (fluxo automático)
+      const w = window.open(url, "_blank", "noopener,noreferrer");
+      if (w && !w.closed) {
+        // sucesso: não precisa modal
+        setKingModalOpen(false);
+        setKingCopyOk(true);
+        return;
+      }
+
+      // fallback: popup bloqueado -> abre modal com copiar/abrir
       let ok = false;
       try {
         await navigator.clipboard.writeText(texto);
@@ -1370,7 +1404,6 @@ export default function CentenasView() {
       } catch {
         ok = false;
       }
-
       setKingCopyOk(ok);
       setKingModalOpen(true);
     } catch (e) {
@@ -1398,20 +1431,17 @@ export default function CentenasView() {
           <div className="cx0_modal">
             <h3>Enviar para a KING</h3>
 
-            {kingCopyOk ? (
-              <div className="cx0_modalOk">✅ Palpites copiados</div>
-            ) : (
-              <div className="cx0_modalOk">⚠️ Toque em “COPIAR” e depois “ABRIR KING”</div>
-            )}
+            <div className="cx0_modalOk">
+              {kingCopyOk ? "✅ Palpites copiados / URL pronta" : "⚠️ Popup bloqueado — use COPIAR ou ABRIR KING"}
+            </div>
 
             <p>
-              Ao abrir a KING, toque no campo <b>“Insira o Palpite”</b> e use <b>Colar</b>.
-              Depois é só <b>Avançar</b>.
+              O King vai abrir em <b>/bet/guess</b> já com os palpites no <b>link</b>.
+              <br />
+              Se o Tampermonkey estiver instalado, ele <b>digita tudo sozinho</b>.
             </p>
 
-            {!kingCopyOk ? (
-              <textarea className="cx0_textarea" value={kingText} readOnly />
-            ) : null}
+            {!kingCopyOk ? <textarea className="cx0_textarea" value={kingText} readOnly /> : null}
 
             <div className="cx0_modalBtns">
               <button
@@ -1431,17 +1461,14 @@ export default function CentenasView() {
                 className="cx0_modalBtn"
                 type="button"
                 onClick={() => {
-                  window.location.assign("https://app.kingapostas.com/bet/guess");
+                  const u = kingUrl || "https://app.kingapostas.com/bet/guess";
+                  window.location.assign(u);
                 }}
               >
                 ABRIR KING
               </button>
 
-              <button
-                className="cx0_modalBtn2"
-                type="button"
-                onClick={() => setKingModalOpen(false)}
-              >
+              <button className="cx0_modalBtn2" type="button" onClick={() => setKingModalOpen(false)}>
                 Fechar
               </button>
             </div>
@@ -1486,11 +1513,7 @@ export default function CentenasView() {
         <div className="cx0_fItem">
           <div className="cx0_fLab">Dia da Semana</div>
           <div className="cx0_selWrap">
-            <select
-              className="cx0_sel"
-              value={fDiaSemana}
-              onChange={(e) => setFDiaSemana(String(e.target.value || "Todos"))}
-            >
+            <select className="cx0_sel" value={fDiaSemana} onChange={(e) => setFDiaSemana(String(e.target.value || "Todos"))}>
               {diaSemanaOptions.map((o) => (
                 <option key={o.v} value={o.v}>
                   {o.label}
@@ -1570,11 +1593,8 @@ export default function CentenasView() {
         <button className="cx0_btn" onClick={build} disabled={loading || loadingBounds || !boundsReady}>
           {loading ? "Carregando..." : "Atualizar"}
         </button>
-        <button
-          className="cx0_btn"
-          onClick={handleEnviarKing}
-          disabled={sendingKing || !groups.length}
-        >
+
+        <button className="cx0_btn" onClick={handleEnviarKing} disabled={sendingKing || !groups.length}>
           {sendingKing ? "Preparando..." : "Enviar p/ King"}
         </button>
       </div>
@@ -1649,7 +1669,7 @@ export default function CentenasView() {
                         <button className="cx0_toggle" type="button" onClick={() => setShowOnlyHits((v) => !v)}>
                           {showOnlyHits ? "Mostrar todas (40)" : "Mostrar só ocorridas"}
                         </button>
-                        </div>
+                      </div>
 
                       <div className="cx0_tbl">
                         <div className="cx0_row cx0_headRow">
@@ -1704,13 +1724,3 @@ export default function CentenasView() {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-

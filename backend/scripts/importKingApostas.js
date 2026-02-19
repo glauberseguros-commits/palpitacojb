@@ -557,11 +557,15 @@ async function axiosGetJson(url) {
 ========================= */
 function buildDetailsUrl({ date, lotteryKey }) {
   const lk = String(lotteryKey || "").trim().toUpperCase();
-  // Para PT_RIO: a rota web usa "PtRio" (como no app)
-  const lot = lk === "PT_RIO" ? "PtRio" : encodeURIComponent(lk.replace(/_/g, ""));
-  return `https://app.kingapostas.com/results/details?lottery=${lot}&date=${encodeURIComponent(
-    String(date || "").trim()
-  )}`;
+
+  // ✅ bate com o print: lottery=PT+RIO
+  const lot = lk === "PT_RIO" ? "PT RIO" : lk.replace(/_/g, " ");
+
+  const q =
+    "lottery=" + encodeURIComponent(lot) +
+    "&date=" + encodeURIComponent(String(date || "").trim());
+
+  return "https://app.kingapostas.com/results/details?" + q;
 }
 
 async function axiosGetText(url) {
@@ -1395,7 +1399,7 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
       };
     }
   }
-  const payload = await fetchKingResults({ date, lotteryKey: lk });
+  let payload = await fetchKingResults({ date, lotteryKey: lk });
 
   // ✅ NOVO: se pediram closeHour e ele NÃO existe no dia (close_hours do FETCH),
   // retorna blocked/no_draw_for_slot e NÃO tenta importar nem gerar "furo".
@@ -1435,7 +1439,7 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
         closeHour: normalizedClose,
 
         blocked: true,
-        blockedReason: "no_draw_for_slot",
+        blockedReason: "api_missing_slot",
         todayBR,
 
         // aqui é crucial: não é capturado porque não existe slot
@@ -1618,7 +1622,7 @@ async function main() {
   console.log(
     `STEP 1/3 Buscando API: ${lk} ${date}${normalizedClose ? ` ${normalizedClose}` : ""}`
   );
-  const payload = await fetchKingResults({ date, lotteryKey: lk });
+  let payload = await fetchKingResults({ date, lotteryKey: lk });
 
   // ✅ NOVO (CLI também): se pediram closeHour e ele não existe no dia, avisa e sai 0
   if (normalizedClose) {
@@ -1696,5 +1700,8 @@ module.exports = {
   importFromPayload,
   buildResultsUrl,
 };
+
+
+
 
 

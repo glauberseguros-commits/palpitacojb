@@ -32,3 +32,10 @@ backend/.env.local
 
 backend/data/pt_rio_calendar_rules.json
 
+# local scripts / smoke / audit (não subir)
+backend/scripts/auditBounds.js
+backend/scripts/smoke-receive.ps1
+
+# ferramentas locais
+tools/bookmarklets_king.txt
+tools/makeKingBookmarklets.js
