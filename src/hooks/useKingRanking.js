@@ -15,9 +15,6 @@ import { normalizeToYMD_SP } from "../utils/ymd";
    Utils
 ========================= */
 
-function pad2(n) {
-  return String(n).padStart(2, "0");
-}
 
 function isIndexErrorMessage(err) {
   const msg = String(err?.message || err || "").toLowerCase();

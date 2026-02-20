@@ -1166,15 +1166,21 @@ export async function getKingBoundsByUf(ufOrObj) {
 
           const maxFixed = recentMaxYmd && (!mm.maxYmd || recentMaxYmd > mm.maxYmd) ? recentMaxYmd : mm.maxYmd;
 
+          const floored = applyBoundsFloor(scopeKeyBounds, {
+            minYmd: mm.minYmd || null,
+            maxYmd: maxFixed || null,
+          });
+
           return {
-            ok: !!(mm.minYmd && maxFixed),
+            ok: !!(floored.minYmd && floored.maxYmd),
             uf,
-            minYmd: applyBoundsFloor(scopeKeyBounds, { minYmd: mm.minYmd || null, maxYmd: maxFixed || null  }).minYmd,
-            maxYmd: applyBoundsFloor(scopeKeyBounds, { minYmd: mm.minYmd || null, maxYmd: maxFixed || null  }).maxYmd,
+
+            minYmd: floored.minYmd,
+            maxYmd: floored.maxYmd,
 
             // ✅ compat: UI antiga espera minDate/maxDate
-            minDate: applyBoundsFloor(scopeKeyBounds, { minYmd: mm.minYmd || null, maxYmd: maxFixed || null  }).minYmd,
-            maxDate: applyBoundsFloor(scopeKeyBounds, { minYmd: mm.minYmd || null, maxYmd: maxFixed || null  }).maxYmd,
+            minDate: floored.minYmd,
+            maxDate: floored.maxYmd,
 
             source: `fallback_edges_docId_limit=${FALLBACK_EDGE_LIMIT}:lottery_key(${lk}):sampleCount=${b.merged.length}${
               recentMaxYmd ? ":max_probe" : ""
@@ -1193,15 +1199,21 @@ export async function getKingBoundsByUf(ufOrObj) {
 
     const maxFixed = recentMaxYmd && (!mm.maxYmd || recentMaxYmd > mm.maxYmd) ? recentMaxYmd : mm.maxYmd;
 
+    const floored = applyBoundsFloor(scopeKeyBounds, {
+      minYmd: mm.minYmd || null,
+      maxYmd: maxFixed || null,
+    });
+
     return {
-      ok: !!(mm.minYmd && maxFixed),
+      ok: !!(floored.minYmd && floored.maxYmd),
       uf,
-      minYmd: applyBoundsFloor(scopeKeyBounds, { minYmd: mm.minYmd || null, maxYmd: maxFixed || null  }).minYmd,
-      maxYmd: applyBoundsFloor(scopeKeyBounds, { minYmd: mm.minYmd || null, maxYmd: maxFixed || null  }).maxYmd,
+
+      minYmd: floored.minYmd,
+      maxYmd: floored.maxYmd,
 
       // ✅ compat: UI antiga espera minDate/maxDate
-      minDate: applyBoundsFloor(scopeKeyBounds, { minYmd: mm.minYmd || null, maxYmd: maxFixed || null  }).minYmd,
-      maxDate: applyBoundsFloor(scopeKeyBounds, { minYmd: mm.minYmd || null, maxYmd: maxFixed || null  }).maxYmd,
+      minDate: floored.minYmd,
+      maxDate: floored.maxYmd,
 
       source: `fallback_edges_docId_limit=${FALLBACK_EDGE_LIMIT}:${a.ok ? "uf" : "lottery_key"}:sampleCount=${
         merged.length
@@ -1816,6 +1828,7 @@ export async function getKingLateByRange({
   cacheSet(LATE_CACHE, cacheKey, out);
   return out;
 }
+
 
 
 

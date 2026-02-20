@@ -560,7 +560,7 @@ if (name === "loteria") {
       }
 onChange(name, next);
     },
-    [disabledAll, onBlocked, lockPosicaoV1, onChange, filters?.horario, isFederal]
+    [disabledAll, onBlocked, lockPosicaoV1, onChange]
   );
 
   const Item = ({
@@ -726,6 +726,8 @@ onChange(name, next);
     </div>
   );
 }
+
+
 
 
 

@@ -240,17 +240,6 @@ function getDrawCloseHour(d) {
   return String(cand ?? "").trim();
 }
 
-function extractYearsFromDraws(drawsRaw) {
-  if (!Array.isArray(drawsRaw) || !drawsRaw.length) return [];
-  const set = new Set();
-  for (const d of drawsRaw) {
-    const ymd = getDrawDate(d);
-    if (!ymd) continue;
-    const y = Number(ymd.slice(0, 4));
-    if (Number.isFinite(y)) set.add(y);
-  }
-  return Array.from(set).sort((a, b) => a - b);
-}
 
 const MONTH_NAME_TO_MM = {
   janeiro: "01",
@@ -523,6 +512,61 @@ function yearRangeToDates(minY, maxY, floorISO, ceilISO) {
   return { from, to };
 }
 
+function normalizeCloseHourForKpi(raw) {
+  const s = String(raw ?? "").trim();
+  if (!s) return "";
+
+  // reaproveita sua normalizeHourBucket -> "11h", "09h" etc
+  const bucket = normalizeHourBucket(s);
+  if (bucket) {
+    const hh = String(bucket).replace(/\D/g, "").padStart(2, "0");
+    return `${hh}:00`;
+  }
+
+  // tenta hh:mm
+  let m = s.match(/^(\d{1,2}):(\d{2})/);
+  if (m) return `${String(m[1]).padStart(2, "0")}:00`;
+
+  // tenta hh puro
+  m = s.match(/^(\d{1,2})/);
+  if (m) return `${String(m[1]).padStart(2, "0")}:00`;
+
+  return "";
+}
+
+function getDrawUniqKeyForKpi(d, ufKey) {
+  if (!d) return null;
+
+  // 1) preferir drawId quando existir (mais forte)
+  const drawId = String(d.drawId ?? d.draw_id ?? d.lottery_id ?? "").trim();
+  if (drawId) return `ID__${drawId}`;
+
+  // 2) fallback: uf + ymd + closeHour normalizado
+  const ymd = getDrawDate(d);
+  if (!ymd) return null;
+
+  const chRaw = getDrawCloseHour(d);
+  const ch = normalizeCloseHourForKpi(chRaw);
+
+  const uf = String(ufKey ?? d.uf ?? d.lottery_key ?? d.lotteryKey ?? "").trim().toUpperCase() || "UF";
+  return `UF__${uf}__${ymd}__${ch || "NA"}`;
+}
+
+function dedupeDrawsForKpi(list, ufKey) {
+  const arr = Array.isArray(list) ? list : [];
+  if (!arr.length) return [];
+  const seen = new Set();
+  const out = [];
+  for (const d of arr) {
+    const k = getDrawUniqKeyForKpi(d, ufKey);
+    if (!k) continue;
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(d);
+  }
+  return out;
+}
+
 function buildYearsAvailable(minISO, maxISO) {
   if (!isISODate(minISO) || !isISODate(maxISO)) return [];
   const y1 = Number(String(minISO).slice(0, 4));
@@ -610,7 +654,8 @@ export default function Dashboard(props) {
 const locationLabel = isFederal
   ? `FEDERAL (Brasil)${fedBucket ? ` — ${fedBucket}` : ""}`
   : `${loteriaKey} — Brasil`;
-  const uf = loteriaKey;  // ✅ restaura apenas estado auxiliar (range/anos/grupo) do localStorage
+  const uf = loteriaKey;
+  // ✅ restaura apenas estado auxiliar (range/anos/grupo) do localStorage
   const savedDashState = useMemo(() => loadDashStateV2(), []);
 
   const [selectedGrupo, setSelectedGrupo] = useState(() => {
@@ -666,9 +711,10 @@ const locationLabel = isFederal
     let alive = true;
 
     (async () => {
-      // ✅ precisa existir também no catch
+      // ✅ vars usadas em lógica de range (evita no-undef)
       let minYmd = null;
       let maxYmd = null;
+      void minYmd; void maxYmd;
 
       try {
         setBounds((b) => ({ ...b, loading: true, error: null }));
@@ -911,9 +957,6 @@ const locationLabel = isFederal
     let alive = true;
 
     (async () => {
-      // ✅ precisa existir também no catch
-      let minYmd = null;
-      let maxYmd = null;
 
       try {
         setJsonState((s) => ({ ...s, loading: true, error: null }));
@@ -1316,27 +1359,30 @@ const locationLabel = isFederal
         return next;
       });
     },
-    [applyAllYearsFull, isGuest, showGuestToast]
+    [applyAllYearsFull, isGuest, showGuestToast, MIN_DATE, MAX_DATE]
   );
 
   const kpiItems = useMemo(() => {
-    if (!dataReady || !hasAnyDrawsView) {
-      return [
-        { key: "dias", title: "Qtde Dias de sorteios", value: null, icon: "calendar" },
-        { key: "sorteios", title: "Qtde de sorteios", value: null, icon: "ticket" },
-      ];
-    }
-
-    const diasFromDraws = new Set(drawsForView.map((d) => getDrawDate(d)).filter(Boolean)).size;
-    const totalDrawsFromDraws = drawsForView.length;
-
+  if (!dataReady || !hasAnyDrawsView) {
     return [
-      { key: "dias", title: "Qtde Dias de sorteios", value: diasFromDraws, icon: "calendar" },
-      { key: "sorteios", title: "Qtde de sorteios", value: totalDrawsFromDraws, icon: "ticket" },
+      { key: "dias", title: "Qtde Dias de sorteios", value: null, icon: "calendar" },
+      { key: "sorteios", title: "Qtde de sorteios", value: null, icon: "ticket" },
     ];
-  }, [drawsForView, dataReady, hasAnyDrawsView]);
+  }
 
-  const onSelectGrupo = useCallback(
+  // ✅ KPI deve contar sorteios reais (dedupe por drawId ou ymd+hora+uf)
+  const uniqDraws = dedupeDrawsForKpi(drawsForView, uf);
+
+  const dias = new Set(uniqDraws.map((d) => getDrawDate(d)).filter(Boolean)).size;
+  const sorteios = uniqDraws.length;
+
+  return [
+    { key: "dias", title: "Qtde Dias de sorteios", value: dias, icon: "calendar" },
+    { key: "sorteios", title: "Qtde de sorteios", value: sorteios, icon: "ticket" },
+  ];
+}, [drawsForView, dataReady, hasAnyDrawsView, uf]);
+
+const onSelectGrupo = useCallback(
     (grupoNum) => {
       if (isGuest) {
         showGuestToast("Modo demonstração: seleção de bicho está bloqueada. Faça login para usar.");
@@ -1679,6 +1725,12 @@ const locationLabel = isFederal
     </div>
   );
 }
+
+
+
+
+
+
 
 
 
