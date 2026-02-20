@@ -12,8 +12,11 @@ function arg(name, def = null) {
 
 function normalizeLotteryKey(v, fallback = "PT_RIO") {
   const s = String(v ?? "").trim().toUpperCase();
-  if (s === "RJ" || s === "RIO" || s === "PT-RIO") return "PT_RIO";
-  return s || fallback;
+
+  if (s === "RJ" || s === "RIO" || s === "PT-RIO" || s === "PT_RIO") return "PT_RIO";
+  if (s === "FED" || s === "FEDERAL") return "FEDERAL";
+
+  return fallback;
 }
 
 function pad2(n) {
@@ -187,3 +190,4 @@ function safeFilePart(s) {
     process.exit(1);
   }
 })();
+

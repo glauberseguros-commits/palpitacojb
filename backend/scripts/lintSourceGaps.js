@@ -6,8 +6,11 @@ const { getDb } = require("../service/firebaseAdmin");
 
 function normalizeLotteryKey(v) {
   const s = String(v ?? "").trim().toUpperCase();
-  if (s === "RJ" || s === "RIO" || s === "PT-RIO") return "PT_RIO";
-  return s || "PT_RIO";
+
+  if (s === "RJ" || s === "RIO" || s === "PT-RIO" || s === "PT_RIO") return "PT_RIO";
+  if (s === "FED" || s === "FEDERAL") return "FEDERAL";
+
+  return "PT_RIO";
 }
 
 function normHour(x) {
@@ -102,3 +105,4 @@ main().catch((err) => {
   console.error("ERRO:", err?.stack || err?.message || err);
   process.exit(1);
 });
+

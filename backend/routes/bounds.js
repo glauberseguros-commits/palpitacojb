@@ -2,10 +2,16 @@
 
 // 🔒 Normalização única de lottery_key
 function normalizeLotteryKey(v) {
-  const s = String(v || "").trim().toUpperCase();
-  if (s === "RJ" || s === "RIO" || s === "PT-RIO") return "PT_RIO";
-  if (s === "FED" || s === "FEDERAL" || s === "BR" || s === "NACIONAL") return "FEDERAL";
-  return s || "PT_RIO";
+  const s = String(v ?? "").trim().toUpperCase();
+
+  // RJ
+  if (s === "RJ" || s === "RIO" || s === "PT-RIO" || s === "PT_RIO") return "PT_RIO";
+
+  // FEDERAL
+  if (s === "FED" || s === "FEDERAL") return "FEDERAL";
+
+  // fallback seguro (projeto atual só usa esses 2)
+  return "PT_RIO";
 }
 
 const express = require("express");
@@ -260,4 +266,5 @@ router.get("/bounds", async (req, res) => {
 });
 
 module.exports = router;
+
 

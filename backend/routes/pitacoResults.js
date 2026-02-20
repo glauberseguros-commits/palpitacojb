@@ -69,11 +69,16 @@ function isSlotPublishedToday(hh, nowMin, graceMin) {
 ========================= */
 
 function normalizeLotteryKey(v) {
-  const s = String(v || "").trim().toUpperCase();
-  if (s === "RJ") return "PT_RIO";
-  if (s === "RIO") return "PT_RIO";
-  if (s === "PT-RIO") return "PT_RIO";
-  return s || "PT_RIO";
+  const s = String(v ?? "").trim().toUpperCase();
+
+  // RJ
+  if (s === "RJ" || s === "RIO" || s === "PT-RIO" || s === "PT_RIO") return "PT_RIO";
+
+  // FEDERAL
+  if (s === "FED" || s === "FEDERAL") return "FEDERAL";
+
+  // fallback seguro (projeto atual só usa esses 2)
+  return "PT_RIO";
 }
 
 /* =========================
@@ -876,3 +881,4 @@ router.get("/results", async (req, res) => {
 });
 
 module.exports = router;
+

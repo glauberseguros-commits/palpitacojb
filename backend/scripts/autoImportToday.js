@@ -3,6 +3,8 @@
 const fs = require("fs");
 const path = require("path");
 
+
+const axios = require("axios");
 /* =========================
    DOW seguro para YYYY-MM-DD (independe de timezone)
    - calcula como UTC do próprio dia
@@ -46,8 +48,30 @@ const CATCHUP_MAX_AFTER_END_MIN = Number(process.env.CATCHUP_MAX_AFTER_END_MIN |
  * - Local default: http://127.0.0.1:3333
  * - Override: PITACO_API_BASE="https://seu-dominio"
  */
-const PITACO_API_BASE = String(process.env.PITACO_API_BASE || "http://127.0.0.1:3333").trim();
+let PITACO_API_BASE = String(process.env.PITACO_API_BASE || "http://127.0.0.1:3333").trim();
 
+// ✅ hardening: se vier "localhost:3334" (ou 3333 errado), cai automaticamente pro backend local padrão
+try {
+  const u = new URL(PITACO_API_BASE);
+  const host = String(u.hostname || "").toLowerCase();
+  const port = String(u.port || "");
+  if ((host === "localhost" || host === "127.0.0.1") && port === "3334") {
+    PITACO_API_BASE = "http://127.0.0.1:3333";
+  }
+} catch {}
+
+
+
+// ✅ log da base efetiva (ajuda a detectar env poluído)
+try { 
+  const eff = PITACO_API_BASE;
+  // só loga uma vez por execução
+  if (!globalThis.__PITACO_API_BASE_LOGGED__) {
+    globalThis.__PITACO_API_BASE_LOGGED__ = true;
+    // sem logLine aqui (ainda não declarado); console direto é ok
+    console.log(`[CFG] PITACO_API_BASE efetivo => ${eff}`);
+  }
+} catch {}
 /**
  * ✅ Cache do DayStatus (evita bater no backend a cada tick do cron)
  * - Arquivo por (loteria+dia)
@@ -210,6 +234,11 @@ function nowHMInSaoPaulo() {
   }
 }
 
+function isNowHmOverrideActive() {
+  const ov = String(process.env.NOW_HM || "").trim();
+  return /^\d{2}:\d{2}$/.test(ov);
+}
+
 function isFutureISODate(ymd) {
   if (!isISODate(ymd)) return false;
   const todayBR = todayYMDInSaoPaulo();
@@ -314,8 +343,23 @@ function saveState(date, state) {
   safeWriteJson(stateFile(date), state);
 }
 
-function isAllDone(state) {
-  return Object.values(state).every((x) => x && x.done === true);
+function isAllDoneHardOnly(state, statusMap) {
+  let hardCount = 0;
+
+  for (const sched of SCHEDULE) {
+    const st = statusMap.get(sched.hour) || "OFF";
+    if (st !== "HARD") continue;
+
+    hardCount += 1;
+    if (!state[sched.hour] || state[sched.hour].done !== true) {
+      return false;
+    }
+  }
+
+  // ✅ Sem HARD hoje -> NÃO considerar dia completo (ainda queremos tentar SOFT)
+  if (hardCount === 0) return false;
+
+  return true;
 }
 
 /**
@@ -399,8 +443,9 @@ function buildTodaySlotStatusMap(dateYMD, dow) {
 
   if (LOTTERY === "FEDERAL") {
     const ok = isWedOrSat(dow);
-    for (const sched of SCHEDULE) {
-      map.set(sched.hour, ok ? "HARD" : "OFF");
+      const isSunday = dow === 0;
+for (const sched of SCHEDULE) {
+      map.set(sched.hour, isSunday ? "OFF" : (ok ? "HARD" : "SOFT"));
     }
     return map;
   }
@@ -482,14 +527,18 @@ function releaseLock() {
 ========================= */
 async function fetchDayStatusFromBackend({ date, lottery }) {
   try {
-    const u = `${PITACO_API_BASE.replace(/\/+$/, "")}/api/pitaco/results?date=${encodeURIComponent(
-      String(date || "").trim()
-    )}&lottery=${encodeURIComponent(String(lottery || "").trim())}`;
+    const base = PITACO_API_BASE.replace(/\/+$/, "");
+    const u = `${base}/api/pitaco/results?date=${encodeURIComponent(String(date || "").trim())}&lottery=${encodeURIComponent(
+      String(lottery || "").trim()
+    )}`;
 
-    const res = await fetch(u, { method: "GET" });
-    if (!res.ok) return null;
+    const res = await axios.get(u, {
+      timeout: 15000,
+      validateStatus: (s) => s >= 200 && s < 400,
+      headers: { "User-Agent": "palpitaco-autoImportToday" },
+    });
 
-    const j = await res.json().catch(() => null);
+    const j = res && res.data ? res.data : null;
     if (!j || typeof j !== "object") return null;
 
     return {
@@ -499,7 +548,7 @@ async function fetchDayStatusFromBackend({ date, lottery }) {
       blockedReason: String(j.blockedReason || "").trim(),
       count: Number.isFinite(Number(j.count)) ? Number(j.count) : null,
     };
-  } catch {
+  } catch (e) {
     return null;
   }
 }
@@ -508,8 +557,18 @@ function applyHolidayNoDrawToState({ state, statusMap, isoNow }) {
   let touched = 0;
 
   for (const sched of SCHEDULE) {
-    const slot = state?.[sched.hour];
-    if (!slot) continue;
+    let slot = state?.[sched.hour];
+
+// ✅ Se não existe slot no state, cria placeholder para permitir reconcile retroativo
+if (!slot) {
+  slot = {
+    hour: sched.hour,
+    done: false,
+    na: false,
+    tries: 0
+  };
+  state[sched.hour] = slot;
+}
 
     const st = statusMap.get(sched.hour) || "OFF";
     const applies = st === "HARD" || st === "SOFT";
@@ -617,10 +676,13 @@ async function verifySlotPersistedViaBackend({ date, slotHHMM }) {
     const base = PITACO_API_BASE.replace(/\/+$/, "");
     const u = `${base}/api/pitaco/results?date=${encodeURIComponent(date)}&lottery=${encodeURIComponent(LOTTERY)}`;
 
-    const res = await fetch(u, { method: "GET" });
-    if (!res.ok) return { ok: false, reason: `HTTP_${res.status}` };
+    const res = await axios.get(u, {
+      timeout: 15000,
+      validateStatus: (s) => s >= 200 && s < 400,
+      headers: { "User-Agent": "palpitaco-autoImportToday" },
+    });
 
-    const j = await res.json().catch(() => null);
+    const j = res && res.data ? res.data : null;
     if (!j || typeof j !== "object") return { ok: false, reason: "BAD_JSON" };
 
     const draws = Array.isArray(j.draws) ? j.draws : [];
@@ -640,7 +702,10 @@ async function verifySlotPersistedViaBackend({ date, slotHHMM }) {
 
     return { ok: false, reason: "NOT_FOUND", drawsCount: draws.length, slotsCount: slots.length };
   } catch (e) {
-    return { ok: false, reason: `EX:${e?.message || e}` };
+    const code = e?.code || e?.cause?.code || "";
+    const msg = e?.message || e?.cause?.message || String(e);
+    const r = code ? `${code}:${msg}` : msg;
+    return { ok: false, reason: `EX:${r}` };
   }
 }
 
@@ -775,8 +840,18 @@ function emitHardAlertsIfNeeded({ date, nowMin, state, statusMap }) {
   let touched = false;
 
   for (const sched of SCHEDULE) {
-    const slot = state?.[sched.hour];
-    if (!slot) continue;
+    let slot = state?.[sched.hour];
+
+// ✅ Se não existe slot no state, cria placeholder para permitir reconcile retroativo
+if (!slot) {
+  slot = {
+    hour: sched.hour,
+    done: false,
+    na: false,
+    tries: 0
+  };
+  state[sched.hour] = slot;
+}
     if (slot.done || slot.na) continue;
 
     const st = statusMap.get(sched.hour) || "OFF";
@@ -849,10 +924,15 @@ async function main() {
     const statusMap = buildTodaySlotStatusMap(date, dow);
     // ✅ Se o dia já está completo, não precisa bater no backend (dayStatus) nem tentar imports.
     // Ainda assim, geramos o audit e encerramos.
-    if (isAllDone(state)) {
+    if (isAllDoneHardOnly(state, statusMap)) {
       try {
-        const report = buildAuditReport({ date, nowMin, isoNow: new Date().toISOString(), dow, statusMap, state });
-        safeWriteJson(auditOutFile(date), report);
+              const report = buildAuditReport({ date, nowMin, isoNow: new Date().toISOString(), dow, statusMap, state });
+
+      // ✅ NOW_HM (modo teste): não “pune” retroativo (mantém conteúdo, mas neutraliza status)
+      if (isNowHmOverrideActive()) {
+        report.status = "ok";
+        report.note = "NOW_HM override ativo: audit retroativo neutralizado (informativo).";
+      }safeWriteJson(auditOutFile(date), report);
       } catch {}
       logLine(`[AUTO] DIA COMPLETO (${date}) — slots concluídos (skip dayStatus/import)`, "INFO");
       return;
@@ -870,7 +950,7 @@ async function main() {
         slot.done = true;
         slot.na = true;
 
-        if (LOTTERY === "FEDERAL") slot.naReason = "FEDERAL_SO_QUA_SAB";
+        if (LOTTERY === "FEDERAL") slot.naReason = (dow === 0 ? "FEDERAL_DOMINGO_OFF" : "NAO_APLICA");
         else slot.naReason = "NAO_APLICA";
 
         slot.lastTryISO = isoNow;
@@ -922,13 +1002,14 @@ async function main() {
       const w = slotWindow(sched);
 
       const inWindow = !(nowMin < w.start || nowMin > w.end);
-      const afterRelease = nowMin >= w.release;
+      const afterRelease = nowMin >= w.start;
 
       // Fora da janela: só tenta catch-up se já passou do release e ainda está dentro do limite
       if (!inWindow) {
         if (!afterRelease) continue;
 
-        const catchupLimit = w.end + CATCHUP_MAX_AFTER_END_MIN;
+        const extraCatchup = (st === "SOFT") ? Math.max(CATCHUP_MAX_AFTER_END_MIN, 360) : CATCHUP_MAX_AFTER_END_MIN;
+        const catchupLimit = w.end + extraCatchup;
         if (nowMin > catchupLimit) {
           // Não tenta mais importar fora da janela (auditoria/alertas já cobrem)
           continue;
@@ -950,8 +1031,9 @@ async function main() {
       slot.tries = (slot.tries || 0) + 1;
       slot.lastTryISO = isoNow;
 
-      const candidates = closeCandidates(sched.hour);
-      slot.lastTriedCloses = candidates;
+      const candidates = (st === "SOFT")
+  ? [sched.hour]               // SOFT: só 1 tentativa (retry no próximo tick)
+  : closeCandidates(sched.hour); // HARD: robusto com closes candidatosslot.lastTriedCloses = candidates;
       saveState(date, state);
 
       logLine(
@@ -990,6 +1072,28 @@ async function main() {
           saveState(date, state);
 
           logLine(`[AUTO] ${blockedReason} slot=${sched.hour} (${st}) -> mantendo PENDENTE p/ retry`, "INFO");
+          didSomething = true;
+          break;
+        }
+
+        // ✅ Se a API não retornou slot para esse dia/loteria, não adianta tentar outros closes agora.
+        // Mantém pendente para o próximo tick do cron, mas corta spam de fetch.
+        if (r && r.blocked === true && blockedReason === "api_missing_slot") {
+          slot.lastResult = {
+            ...(slot.lastResult || {}),
+            ok: true,
+            closeHourTried: closeHour,
+            blocked: true,
+            blockedReason,
+            note: "api_missing_slot (stop candidates; will retry later)",
+          };
+          saveState(date, state);
+
+          logLine(
+            `[AUTO] api_missing_slot slot=${sched.hour} (${st}) close=${closeHour} -> parando closes candidatos (vai retry depois)`,
+            "INFO"
+          );
+
           didSomething = true;
           break;
         }
@@ -1077,18 +1181,71 @@ async function main() {
           logLine(`[AUTO] ainda indisponível slot=${sched.hour} (nenhum close candidato capturou)`, "INFO");
         }
       }
+    }    // 🔎 RECONCILE HARD SLOTS COM BACKEND (modelo inteligente)
+    try {
+      for (const sched of SCHEDULE) {
+                const st = statusMap.get(sched.hour) || "OFF";
+        // ✅ RECONCILE usa o mesmo HARD do calendário já aplicado no statusMap ([CAL])
+        if (st !== "HARD") continue;
+let slot = state?.[sched.hour];
+
+// ✅ Se não existe slot no state, cria placeholder para permitir reconcile retroativo
+if (!slot) {
+  slot = {
+    hour: sched.hour,
+    done: false,
+    na: false,
+    tries: 0
+  };
+  state[sched.hour] = slot;
+}
+        if (slot.done || slot.na) continue;
+
+        const persisted = await verifySlotPersistedViaBackend({
+          date,
+          slotHHMM: sched.hour
+        });
+
+        if (!persisted || !persisted.ok) {
+          logLine(`[RECONCILE] HARD slot ${sched.hour} NÃO confirmado no backend: ${persisted?.reason || "NO_REASON"}`, "WARN");
+          continue;
+        }
+
+        if (persisted && persisted.ok) {
+          slot.done = true;
+          slot.lastResult = {
+            ...(slot.lastResult || {}),
+            ok: true,
+            note: "reconciled_from_backend"
+          };
+          logLine(`[RECONCILE] HARD slot ${sched.hour} já persistido no backend -> marcado DONE`, "INFO");
+          saveState(date, state);
+        }
+      }
+    } catch (e) {
+      logLine(`[RECONCILE] erro ao verificar persistência HARD: ${e?.message || e}`, "WARN");
     }
 
+
+
     // 2.5) ALERTAS HARD (anti-spam)
-    try {
-      const touchedAlerts = emitHardAlertsIfNeeded({ date, nowMin, state, statusMap });
-      if (touchedAlerts) saveState(date, state);
-    } catch {}
+    try {      const isTestNowHm = isNowHmOverrideActive();
+      if (!isTestNowHm) {
+        const touchedAlerts = emitHardAlertsIfNeeded({ date, nowMin, state, statusMap });
+        if (touchedAlerts) saveState(date, state);
+      } else {
+        logLine(`[ALERT] NOW_HM ativo => suprimindo alertas HARD retroativos (modo teste)`, "INFO");
+      }} catch {}
 
     // 3) Auditoria pós-execução
     try {
-      const report = buildAuditReport({ date, nowMin, isoNow: new Date().toISOString(), dow, statusMap, state });
-      safeWriteJson(auditOutFile(date), report);
+            const report = buildAuditReport({ date, nowMin, isoNow: new Date().toISOString(), dow, statusMap, state });
+
+      // ✅ NOW_HM (modo teste): não “pune” retroativo (mantém conteúdo, mas neutraliza status)
+      if (isNowHmOverrideActive()) {
+        report.status = "ok";
+        report.note = "NOW_HM override ativo: audit retroativo neutralizado (informativo).";
+      }safeWriteJson(auditOutFile(date), report);
 
       if (report.status === "critical") {
         logLine(
@@ -1115,7 +1272,7 @@ async function main() {
       logLine(`[AUDIT] erro ao gerar relatório: ${e?.message || e}`, "ERROR");
     }
 
-    if (isAllDone(state)) logLine(`[AUTO] DIA COMPLETO (${date}) — slots concluídos`, "INFO");
+    if (isAllDoneHardOnly(state, statusMap)) logLine(`[AUTO] DIA COMPLETO (${date}) — slots concluídos`, "INFO");
     else if (!didSomething) logLine(`[AUTO] nada para fazer agora (${date})`, "INFO");
   } finally {
     releaseLock();
@@ -1127,6 +1284,26 @@ main().catch((e) => {
   releaseLock();
   process.exit(1);
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
