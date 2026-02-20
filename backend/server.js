@@ -390,12 +390,14 @@ app.get("/health", (req, res) => {
   res.json({
     ok: true,
     service: "palpitaco-backend",
+    version: "PATCH_CLOSEHOUR_V1",
     ts: new Date().toISOString(),
     host: HOST,
     port: PORT,
     pid: process.pid,
     lotteryKey: lk,
   });
+});
 });
 
 /* =========================
@@ -846,5 +848,6 @@ process.on("beforeExit", (code) => {
 process.on("exit", (code) => {
   console.warn("[WARN] exit code=", code);
 });
+
 
 
