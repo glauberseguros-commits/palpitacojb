@@ -412,6 +412,8 @@ app.use("/api/pitaco", pitacoResults);
 app.use("/api/king", kingDraws);
 app.use("/api", receiveResults);
 app.use("/api", bounds);
+// ✅ alias compat: alguns pontos chamam /api/king/bounds (mantém /api/bounds intacto)
+app.use("/api/king", bounds);
 
 /* =========================================================
    ✅ /api/lates — ATRASADOS (server-side, Admin SDK)
@@ -847,5 +849,6 @@ process.on("beforeExit", (code) => {
 process.on("exit", (code) => {
   console.warn("[WARN] exit code=", code);
 });
+
 
 
