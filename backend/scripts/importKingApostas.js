@@ -307,10 +307,8 @@ function normalizePrize(raw) {
   const dezena = milhar.slice(-2);
   const grupo = dezenaToGrupo(dezena);
   const animal = grupo ? GRUPO_TO_ANIMAL[grupo] : null;
-
   return { raw: String(raw), milhar, centena, dezena, grupo, animal };
 }
-
 function isISODate(s) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
 }
@@ -1306,7 +1304,6 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
       targetDrawIds: null,
       tookMs: 0,
 
-      // mantém shape compatível
       totalDrawsFromApi: 0,
       totalDrawsMatchedClose: 0,
       totalDrawsValid: 0,
@@ -1343,66 +1340,84 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
 
   const startedAt = Date.now();
 
-  
+  // ✅ SOFT OVERRIDE: PT_RIO 18:00 fora do calendário (controlado por env)
+  const allowSoftOverride18 =
+    lk === "PT_RIO" &&
+    normalizedClose === "18:00" &&
+    String(process.env.PT_RIO_SOFT_OVERRIDE_18 || "1").trim() === "1";
+
   // ✅ GATE POR CALENDÁRIO (PT_RIO)
-  // Bloqueia slot NÃO esperado antes de chamar a API
-  if (normalizedClose && lk === 'PT_RIO') {
+  if (normalizedClose && lk === "PT_RIO") {
     const cal = getPtRioSlotsByDate(date);
     const expected = new Set((cal.core || []).concat(cal.opcional || []));
+
     if (!expected.has(normalizedClose)) {
-      const ms0 = Date.now() - startedAt;
-      return {
-        ok: true,
-        lotteryKey: lk,
-        date,
-        closeHour: normalizedClose,
-        blocked: true,
-        blockedReason: 'no_draw_for_slot_calendar',
-        todayBR,
-        captured: false,
-        apiHasPrizes: false,
-        alreadyCompleteAny: false,
-        alreadyCompleteAll: false,
-        expectedTargets: 0,
-        alreadyCompleteCount: 0,
-        slotDocsFound: 0,
-        apiReturnedTargetDraws: 0,
-        savedCount: 0,
-        writeCount: 0,
-        targetDrawIds: [],
-        tookMs: ms0,
-        totalDrawsFromApi: 0,
-        totalDrawsMatchedClose: 0,
-        totalDrawsValid: 0,
-        totalDrawsSaved: 0,
-        totalDrawsUpserted: 0,
-        totalPrizesSaved: 0,
-        totalPrizesUpserted: 0,
-        skippedEmpty: 0,
-        skippedInvalid: 0,
-        skippedCloseHour: 0,
-        skippedAlreadyComplete: 0,
-        proof: {
-          filterClose: normalizedClose,
+      if (allowSoftOverride18) {
+        try {
+          console.log(
+            "[CAL-OVERRIDE] PT_RIO " +
+              date +
+              " slot=" +
+              normalizedClose +
+              " fora do calendário -> tentando mesmo assim (SOFT 18h override)"
+          );
+        } catch {}
+      } else {
+        const ms0 = Date.now() - startedAt;
+        return {
+          ok: true,
+          lotteryKey: lk,
+          date,
+          closeHour: normalizedClose,
+          blocked: true,
+          blockedReason: "no_draw_for_slot_calendar",
+          todayBR,
+          captured: false,
           apiHasPrizes: false,
-          apiReturnedTargetDraws: 0,
-          targetDrawIds: [],
-          inferredDate: null,
-          expectedTargets: 0,
-          slotDocsFound: 0,
-          alreadyCompleteCount: 0,
           alreadyCompleteAny: false,
           alreadyCompleteAll: false,
-          targetWriteCount: 0,
-          targetSavedCount: 0
-        }
-      };
+          expectedTargets: 0,
+          alreadyCompleteCount: 0,
+          slotDocsFound: 0,
+          apiReturnedTargetDraws: 0,
+          savedCount: 0,
+          writeCount: 0,
+          targetDrawIds: [],
+          tookMs: ms0,
+          totalDrawsFromApi: 0,
+          totalDrawsMatchedClose: 0,
+          totalDrawsValid: 0,
+          totalDrawsSaved: 0,
+          totalDrawsUpserted: 0,
+          totalPrizesSaved: 0,
+          totalPrizesUpserted: 0,
+          skippedEmpty: 0,
+          skippedInvalid: 0,
+          skippedCloseHour: 0,
+          skippedAlreadyComplete: 0,
+          proof: {
+            filterClose: normalizedClose,
+            apiHasPrizes: false,
+            apiReturnedTargetDraws: 0,
+            targetDrawIds: [],
+            inferredDate: null,
+            expectedTargets: 0,
+            slotDocsFound: 0,
+            alreadyCompleteCount: 0,
+            alreadyCompleteAny: false,
+            alreadyCompleteAll: false,
+            targetWriteCount: 0,
+            targetSavedCount: 0,
+          },
+        };
+      }
     }
   }
+
+  // ✅ Fetch API (JSON)
   let payload = await fetchKingResults({ date, lotteryKey: lk });
 
-  // ✅ NOVO: se pediram closeHour e ele NÃO existe no dia (close_hours do FETCH),
-  // retorna blocked/no_draw_for_slot e NÃO tenta importar nem gerar "furo".
+  // ✅ Se pediram closeHour e ele NÃO existe no dia (close_hours do FETCH), retorna blocked/api_missing_slot
   if (normalizedClose) {
     const closes = summarizeCloseHours(
       Array.isArray(payload?.data) ? payload.data : [],
@@ -1411,7 +1426,7 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
     const hasTarget = closes.includes(normalizedClose);
 
     if (!hasTarget) {
-      // ainda assim, loga fallback HTML apenas para diagnóstico (não muda o blocked)
+      // diagnóstico: tenta fallback HTML apenas para logar
       try {
         const fb = await tryHtmlDetailsFallback({
           date,
@@ -1421,12 +1436,25 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
 
         if (fb.ok) {
           console.warn(
-            `[FALLBACK:DETAILS] lk=${lk} date=${date} slot=${fb.slot} kind=${fb.kind} hasSlot=${fb.hasSlot} hasAnyPrize=${fb.hasAnyPrize} url=${fb.url}`
+            "[FALLBACK:DETAILS] lk=" +
+              lk +
+              " date=" +
+              date +
+              " slot=" +
+              fb.slot +
+              " kind=" +
+              fb.kind +
+              " hasSlot=" +
+              fb.hasSlot +
+              " hasAnyPrize=" +
+              fb.hasAnyPrize +
+              " url=" +
+              fb.url
           );
         }
       } catch (e) {
         console.warn(
-          `[FALLBACK:DETAILS] erro: ${String(e?.message || e || "unknown")}`
+          "[FALLBACK:DETAILS] erro: " + String(e?.message || e || "unknown")
         );
       }
 
@@ -1442,7 +1470,6 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
         blockedReason: "api_missing_slot",
         todayBR,
 
-        // aqui é crucial: não é capturado porque não existe slot
         captured: false,
         apiHasPrizes: false,
         alreadyCompleteAny: false,
@@ -1485,35 +1512,6 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
           targetSavedCount: 0,
         },
       };
-    }
-  }
-
-  // ✅ fallback HTML (apenas PT_RIO 18:00) quando o JSON não retorna o slot (diagnóstico)
-  if (normalizedClose) {
-    try {
-      const closes = summarizeCloseHours(
-        Array.isArray(payload?.data) ? payload.data : [],
-        lk
-      );
-      const hasTarget = closes.includes(normalizedClose);
-
-      if (!hasTarget) {
-        const fb = await tryHtmlDetailsFallback({
-          date,
-          lotteryKey: lk,
-          closeHour: normalizedClose,
-        });
-
-        if (fb.ok) {
-          console.warn(
-            `[FALLBACK:DETAILS] lk=${lk} date=${date} slot=${fb.slot} kind=${fb.kind} hasSlot=${fb.hasSlot} hasAnyPrize=${fb.hasAnyPrize} url=${fb.url}`
-          );
-        }
-      }
-    } catch (e) {
-      console.warn(
-        `[FALLBACK:DETAILS] erro: ${String(e?.message || e || "unknown")}`
-      );
     }
   }
 
@@ -1581,7 +1579,6 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
     ...result,
   };
 }
-
 /**
  * CLI wrapper (mantém compatibilidade)
  */
@@ -1700,6 +1697,9 @@ module.exports = {
   importFromPayload,
   buildResultsUrl,
 };
+
+
+
 
 
 
