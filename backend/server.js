@@ -398,7 +398,6 @@ app.get("/health", (req, res) => {
     lotteryKey: lk,
   });
 });
-});
 
 /* =========================
    ROUTES
@@ -848,6 +847,5 @@ process.on("beforeExit", (code) => {
 process.on("exit", (code) => {
   console.warn("[WARN] exit code=", code);
 });
-
 
 
