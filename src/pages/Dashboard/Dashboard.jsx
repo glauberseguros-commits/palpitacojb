@@ -537,19 +537,26 @@ function normalizeCloseHourForKpi(raw) {
 function getDrawUniqKeyForKpi(d, ufKey) {
   if (!d) return null;
 
-  // 1) preferir drawId quando existir (mais forte)
-  const drawId = String(d.drawId ?? d.draw_id ?? d.lottery_id ?? "").trim();
-  if (drawId) return `ID__${drawId}`;
+  // ✅ Para KPI, o "sorteio real" é por SLOT: UF + YMD + CLOSE_HOUR (normalizado)
+  // drawId é instável quando há duplicações/imports e não deve ser prioridade aqui.
 
-  // 2) fallback: uf + ymd + closeHour normalizado
   const ymd = getDrawDate(d);
-  if (!ymd) return null;
-
-  const chRaw = getDrawCloseHour(d);
+  const chRaw = d.close_hour ?? d.closeHour ?? d.hora ?? d.hour ?? d.close_hour_raw ?? "";
   const ch = normalizeCloseHourForKpi(chRaw);
 
-  const uf = String(ufKey ?? d.uf ?? d.lottery_key ?? d.lotteryKey ?? "").trim().toUpperCase() || "UF";
-  return `UF__${uf}__${ymd}__${ch || "NA"}`;
+  const uf = String(ufKey ?? d.uf ?? d.lottery_key ?? d.lotteryKey ?? "")
+    .trim()
+    .toUpperCase() || "UF";
+
+  if (ymd && ch) return `UF__${uf}__${ymd}__${ch}`;
+
+  // fallback: se faltar info de slot, tenta drawId
+  const drawId = String(d.drawId ?? d.draw_id ?? d.lottery_id ?? d.id ?? "").trim();
+  if (drawId) return `UF__${uf}__DRAWID__${drawId}`;
+
+  // último fallback
+  if (ymd) return `UF__${uf}__${ymd}__NA`;
+  return null;
 }
 
 function dedupeDrawsForKpi(list, ufKey) {
@@ -1725,6 +1732,7 @@ const onSelectGrupo = useCallback(
     </div>
   );
 }
+
 
 
 

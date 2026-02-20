@@ -45,3 +45,7 @@ _BACKUPS_OLD/
 node_modules_cache__*
 *.pack.old
 
+
+# build artifacts
+build_upload.zip
+
