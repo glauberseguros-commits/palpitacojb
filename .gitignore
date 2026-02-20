@@ -49,3 +49,4 @@ node_modules_cache__*
 # build artifacts
 build_upload.zip
 
+.vercel
