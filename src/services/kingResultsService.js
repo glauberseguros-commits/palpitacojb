@@ -1,3 +1,4 @@
+import { apiUrl } from "../config/apiBase";
 // src/services/kingResultsService.js
 import { normalizeToYMD_SP } from "../utils/ymd";
 
@@ -59,9 +60,34 @@ function cacheSet(map, key, data) {
    ✅ REGRA DE NEGÓCIO (RJ x Federal)
 ========================= */
 
+
+
 const RJ_STATE_CODE = "RJ";
 const RJ_LOTTERY_KEY = "PT_RIO";
 
+// ✅ chão histórico oficial do PT_RIO (NUNCA pode passar disso)
+const PT_RIO_GLOBAL_MIN_YMD = "2022-06-07";
+
+function applyBoundsFloor(scopeKey, boundsLike) {
+  const min = String(boundsLike?.minYmd || "").trim();
+  const max = String(boundsLike?.maxYmd || "").trim();
+
+  // só aplica regra rígida no PT_RIO
+  if (String(scopeKey || "") !== RJ_LOTTERY_KEY) {
+    return { minYmd: isYMD(min) ? min : null, maxYmd: isYMD(max) ? max : null };
+  }
+
+  let outMin = isYMD(min) ? min : PT_RIO_GLOBAL_MIN_YMD;
+  let outMax = isYMD(max) ? max : null;
+
+  // ✅ se o backend/scan vier com min maior (ex: 2022-06-08), força voltar pra 2022-06-07
+  if (isYMD(outMin) && outMin > PT_RIO_GLOBAL_MIN_YMD) outMin = PT_RIO_GLOBAL_MIN_YMD;
+
+  // ✅ sanidade: se max < min, corrige max => min (evita UI travar)
+  if (isYMD(outMax) && isYMD(outMin) && outMax < outMin) outMax = outMin;
+
+  return { minYmd: outMin, maxYmd: outMax };
+}
 // ✅ Escopo canônico para Federal no app
 const FEDERAL_SCOPE_CODE = "FEDERAL";
 
@@ -960,8 +986,7 @@ async function fetchBoundsFromApi(ufOrObj) {
   // backend aceita ?lottery= e normaliza RJ/FEDERAL/aliases
   // aqui mandamos chave canônica (evita ambiguidade)
   const lot = canonicalScopeKey(uf) || String(uf).trim().toUpperCase();
-  const url = `/api/bounds?lottery=${encodeURIComponent(lot)}`;
-
+  const url = apiUrl(`/api/bounds?lottery=${encodeURIComponent(lot)}`);
   try {
     const r = await fetch(url, { method: "GET" });
     const j = await r.json().catch(() => null);
@@ -1005,16 +1030,20 @@ export async function getKingBoundsByUf(ufOrObj) {
   // ✅ 0) Preferencial: backend /api/bounds (mais barato e confiável)
   const apiTry = await fetchBoundsFromApi(ufOrObj);
   if (apiTry?.ok) {
+    const scopeKey = canonicalScopeKey(uf);
+    const floored = applyBoundsFloor(scopeKey, { minYmd: apiTry.minYmd, maxYmd: apiTry.maxYmd });
+
     return {
       ok: true,
       uf,
 
-      minYmd: apiTry.minYmd,
-      maxYmd: apiTry.maxYmd,
+      minYmd: floored.minYmd,
+      maxYmd: floored.maxYmd,
+
 
       // ✅ compat: UI antiga espera minDate/maxDate
-      minDate: apiTry.minYmd,
-      maxDate: apiTry.maxYmd,
+      minDate: floored.minYmd,
+      maxDate: floored.maxYmd,
 
       // extras (debug/auditoria)
       minDocId: apiTry.minDocId || null,
@@ -1113,7 +1142,9 @@ export async function getKingBoundsByUf(ufOrObj) {
   const recentProbe = await probeRecentMaxYmd(uf, 60);
   const recentMaxYmd = recentProbe?.ok ? recentProbe.maxYmd : null;
 
-  // 2) fallback robusto: bordas via documentId (para min) + correção de max via probe
+  
+  const scopeKeyBounds = canonicalScopeKey(uf);
+// 2) fallback robusto: bordas via documentId (para min) + correção de max via probe
   {
     const idxInfo = (() => {
       const code = String(firstTryError?.code || "");
@@ -1138,12 +1169,12 @@ export async function getKingBoundsByUf(ufOrObj) {
           return {
             ok: !!(mm.minYmd && maxFixed),
             uf,
-            minYmd: mm.minYmd || null,
-            maxYmd: maxFixed || null,
+            minYmd: applyBoundsFloor(scopeKeyBounds, { minYmd: mm.minYmd || null, maxYmd: maxFixed || null  }).minYmd,
+            maxYmd: applyBoundsFloor(scopeKeyBounds, { minYmd: mm.minYmd || null, maxYmd: maxFixed || null  }).maxYmd,
 
             // ✅ compat: UI antiga espera minDate/maxDate
-            minDate: mm.minYmd || null,
-            maxDate: maxFixed || null,
+            minDate: applyBoundsFloor(scopeKeyBounds, { minYmd: mm.minYmd || null, maxYmd: maxFixed || null  }).minYmd,
+            maxDate: applyBoundsFloor(scopeKeyBounds, { minYmd: mm.minYmd || null, maxYmd: maxFixed || null  }).maxYmd,
 
             source: `fallback_edges_docId_limit=${FALLBACK_EDGE_LIMIT}:lottery_key(${lk}):sampleCount=${b.merged.length}${
               recentMaxYmd ? ":max_probe" : ""
@@ -1165,12 +1196,12 @@ export async function getKingBoundsByUf(ufOrObj) {
     return {
       ok: !!(mm.minYmd && maxFixed),
       uf,
-      minYmd: mm.minYmd || null,
-      maxYmd: maxFixed || null,
+      minYmd: applyBoundsFloor(scopeKeyBounds, { minYmd: mm.minYmd || null, maxYmd: maxFixed || null  }).minYmd,
+      maxYmd: applyBoundsFloor(scopeKeyBounds, { minYmd: mm.minYmd || null, maxYmd: maxFixed || null  }).maxYmd,
 
       // ✅ compat: UI antiga espera minDate/maxDate
-      minDate: mm.minYmd || null,
-      maxDate: maxFixed || null,
+      minDate: applyBoundsFloor(scopeKeyBounds, { minYmd: mm.minYmd || null, maxYmd: maxFixed || null  }).minYmd,
+      maxDate: applyBoundsFloor(scopeKeyBounds, { minYmd: mm.minYmd || null, maxYmd: maxFixed || null  }).maxYmd,
 
       source: `fallback_edges_docId_limit=${FALLBACK_EDGE_LIMIT}:${a.ok ? "uf" : "lottery_key"}:sampleCount=${
         merged.length
@@ -1476,9 +1507,12 @@ export async function getKingResultsByRange({
       const rawMsg = String(error?.message || "");
 
       throw new Error(
-        `Firestore: falta índice composto para RANGE (campo ${usedField} + ymd).\n` +
-          `Crie/valide o índice no console (Collection: draws | Fields: ${usedField} ASC, ymd ASC, __name__ (documentId) ASC).\n` +
-          `Obs: fallback automático só é aplicado para ranges até ${MAX_FALLBACK_DAYS} dias.\n` +
+        `Firestore: falta índice composto para RANGE (campo ${usedField} + ymd).
+` +
+          `Crie/valide o índice no console (Collection: draws | Fields: ${usedField} ASC, ymd ASC, __name__ (documentId) ASC).
+` +
+          `Obs: fallback automático só é aplicado para ranges até ${MAX_FALLBACK_DAYS} dias.
+` +
           (rawCode || rawMsg ? `Detalhe: ${rawCode} ${rawMsg}` : "")
       );
     }
@@ -1782,5 +1816,12 @@ export async function getKingLateByRange({
   cacheSet(LATE_CACHE, cacheKey, out);
   return out;
 }
+
+
+
+
+
+
+
 
 

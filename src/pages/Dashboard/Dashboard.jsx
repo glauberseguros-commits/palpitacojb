@@ -658,8 +658,25 @@ const locationLabel = isFederal
         const res = await getKingBoundsByUf({ uf });
         if (!alive) return;
 
-        const minYmd = normalizeToYMD(res?.minYmd) || null;
-        const maxYmd = normalizeToYMD(res?.maxYmd) || null;
+        // ✅ bounds já vêm como YYYY-MM-DD -> NÃO normalizar com timezone
+        const rawMin = String(res?.minYmd ?? res?.minDate ?? "").trim();
+        const rawMax = String(res?.maxYmd ?? res?.maxDate ?? "").trim();
+
+        let minYmd = isISODate(rawMin) ? rawMin : normalizeToYMD(rawMin) || null;
+        let maxYmd = isISODate(rawMax) ? rawMax : normalizeToYMD(rawMax) || null;
+
+        // ✅ redundância: chão histórico do PT_RIO (evita 08/06 por qualquer motivo)
+        if (String(uf || "").toUpperCase() === "PT_RIO") {
+          const FLOOR = "2022-06-07";
+          if (minYmd && isISODate(minYmd) && minYmd > FLOOR) minYmd = FLOOR;
+          if (!minYmd) minYmd = FLOOR;
+          if (maxYmd && isISODate(maxYmd) && maxYmd < minYmd) maxYmd = minYmd;
+        }
+
+        // DEBUG definitivo (pode remover depois)
+        try {
+          console.log("[DASH_BOUNDS_RAW]", { uf, rawMin, rawMax, svcMin: res?.minYmd, svcMax: res?.maxYmd, minYmd, maxYmd, source: res?.source });
+        } catch {}
 
         if (!minYmd || !maxYmd) {
           setBounds({
@@ -1667,6 +1684,7 @@ const locationLabel = isFederal
     </div>
   );
 }
+
 
 
 
