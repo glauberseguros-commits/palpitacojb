@@ -3,14 +3,11 @@
   "buildCommand": null,
   "installCommand": null,
   "outputDirectory": "build",
-  "rewrites": [
-    {
-      "source": "/health",
-      "destination": "https://palpitacojb.onrender.com/health"
-    },
-    {
-      "source": "/api/:path*",
-      "destination": "https://palpitacojb.onrender.com/api/:path*"
-    }
+  "routes": [
+    { "src": "^/health$", "dest": "https://palpitacojb.onrender.com/health" },
+    { "src": "^/api/(.*)$", "dest": "https://palpitacojb.onrender.com/api/$1" },
+
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
