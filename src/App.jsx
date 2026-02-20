@@ -36,6 +36,14 @@ const LS_GUEST_ACTIVE_KEY = "pp_guest_active_v1";
 const DASH_FILTERS_KEY = "pp_dashboard_filters_v1";
 
 /* =========================
+   ✅ Build stamp (Vercel)
+   - CRA só expõe env vars com prefixo REACT_APP_
+========================= */
+const BUILD_SHA = String(process.env.REACT_APP_BUILD_SHA || "").trim();
+const BUILD_REF = String(process.env.REACT_APP_BUILD_REF || "").trim();
+const BUILD_TIME = String(process.env.REACT_APP_BUILD_TIME || "").trim();
+
+/* =========================
    Admin (hash gate)
 ========================= */
 
@@ -181,12 +189,6 @@ function normalizeLoteriaInput(v) {
   }
 
   // ✅ qualquer outra loteria: retorna canônico (UPPER + underscore)
-  // Exemplos:
-  //  "pt-rio" => PT_RIO (cai acima)
-  //  "look"   => LOOK
-  //  "sp"     => SP
-  //  "pt rio" => PT_RIO (não, aqui vira PT_RIO só se bater alias; senão PT_RIO? -> não)
-  //  "nacional" => NACIONAL (se vier assim)
   const out = key
     .toUpperCase()
     .replace(/[^A-Z0-9]+/g, "_")
@@ -226,10 +228,13 @@ function loadDashboardFilters() {
 
   // ✅ coerência: FEDERAL => horário deve ser 19h ou 20h (default 20h)
   const horario =
-    loteria === "FEDERAL" ? (obj.horario === "Todos" || obj.horario === "19h" || obj.horario === "20h") ? obj.horario : "Todos"
+    loteria === "FEDERAL"
+      ? obj.horario === "Todos" || obj.horario === "19h" || obj.horario === "20h"
+        ? obj.horario
+        : "Todos"
       : typeof obj.horario === "string"
-      ? obj.horario
-      : base.horario;
+        ? obj.horario
+        : base.horario;
 
   return {
     loteria,
@@ -384,6 +389,39 @@ function pathToScreen(pathname) {
   return null;
 }
 
+function BuildStamp() {
+  const shaShort = BUILD_SHA ? BUILD_SHA.slice(0, 7) : "";
+  const ref = BUILD_REF || "";
+  const tm = BUILD_TIME || "";
+  const text = shaShort ? `build ${shaShort}${ref ? ` · ${ref}` : ""}${tm ? ` · ${tm}` : ""}` : "";
+
+  if (!shaShort) return null;
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        left: 10,
+        bottom: 10,
+        zIndex: 99999,
+        padding: "7px 10px",
+        borderRadius: 999,
+        background: "rgba(0,0,0,0.62)",
+        border: "1px solid rgba(202,166,75,0.28)",
+        color: "rgba(233,233,233,0.88)",
+        fontSize: 11,
+        fontWeight: 900,
+        letterSpacing: 0.2,
+        boxShadow: "0 14px 40px rgba(0,0,0,0.40)",
+        userSelect: "text",
+      }}
+      title={`SHA=${BUILD_SHA}${ref ? ` | ref=${ref}` : ""}${tm ? ` | time=${tm}` : ""}`}
+    >
+      {text}
+    </div>
+  );
+}
+
 export default function App() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -406,6 +444,21 @@ export default function App() {
 
   const Admin = useMemo(() => resolveComponent(AdminMod, "Admin"), []);
   const AdminLogin = useMemo(() => resolveComponent(AdminLoginMod, "AdminLogin"), []);
+
+  // ✅ log de build (uma vez)
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.log(
+      "[PALPITACO BUILD]",
+      {
+        sha: BUILD_SHA || "(none)",
+        ref: BUILD_REF || "(none)",
+        time: BUILD_TIME || "(none)",
+        href: typeof window !== "undefined" ? window.location.href : "",
+      }
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ✅ hash gate isolado
   const [adminMode, setAdminMode] = useState(() => isAdminHashNow());
@@ -484,31 +537,32 @@ export default function App() {
   );
 
   // ✅ garante coerência:
-// - FEDERAL => horário 19h ou 20h (default 20h)
-// - outras loterias => NÃO força PT_RIO; apenas normaliza aliases (ex.: "rio" => PT_RIO)
-useEffect(() => {
-  const lot = normalizeLoteriaInput(dashboardFilters?.loteria);
+  // - FEDERAL => horário 19h ou 20h (default 20h)
+  // - outras loterias => NÃO força PT_RIO; apenas normaliza aliases
+  useEffect(() => {
+    const lot = normalizeLoteriaInput(dashboardFilters?.loteria);
 
-  if (lot === "FEDERAL") {
-    const h = String(dashboardFilters?.horario || "");
-    if (h !== "Todos" && h !== "19h" && h !== "20h") {
-      setDashboardFilters((prev) => ({
-        ...prev,
-        horario: "Todos",
-      }));
-    } else if (dashboardFilters?.loteria !== "FEDERAL") {
-      setDashboardFilters((prev) => ({ ...prev, loteria: "FEDERAL" }));
+    if (lot === "FEDERAL") {
+      const h = String(dashboardFilters?.horario || "");
+      if (h !== "Todos" && h !== "19h" && h !== "20h") {
+        setDashboardFilters((prev) => ({
+          ...prev,
+          horario: "Todos",
+        }));
+      } else if (dashboardFilters?.loteria !== "FEDERAL") {
+        setDashboardFilters((prev) => ({ ...prev, loteria: "FEDERAL" }));
+      }
+      return;
     }
-    return;
-  }
 
-  // ✅ só normaliza aliases/forma (ex.: "pt-rio" => "PT_RIO"), sem impor loteria
-  if (dashboardFilters?.loteria !== lot) {
-    setDashboardFilters((prev) => ({ ...prev, loteria: lot }));
-  }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [dashboardFilters?.loteria, dashboardFilters?.horario]);
-useEffect(() => {
+    // ✅ só normaliza aliases/forma, sem impor loteria
+    if (dashboardFilters?.loteria !== lot) {
+      setDashboardFilters((prev) => ({ ...prev, loteria: lot }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dashboardFilters?.loteria, dashboardFilters?.horario]);
+
+  useEffect(() => {
     safeWriteLS(DASH_FILTERS_KEY, JSON.stringify(dashboardFilters));
   }, [dashboardFilters]);
 
@@ -707,6 +761,7 @@ useEffect(() => {
             }}
           />
         )}
+        <BuildStamp />
       </ErrorBoundary>
     );
   }
@@ -725,6 +780,7 @@ useEffect(() => {
             setScreen(ROUTES.LOGIN);
           }}
         />
+        <BuildStamp />
       </ErrorBoundary>
     );
   }
@@ -744,10 +800,7 @@ useEffect(() => {
           <PageRouter screen={screen} />
         )}
       </AppShell>
+      <BuildStamp />
     </ErrorBoundary>
   );
 }
-
-
-
-

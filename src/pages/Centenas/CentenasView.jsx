@@ -453,9 +453,10 @@ function buildKingGuessUrlFromPalpites(palpites4) {
     .map((x) => String(x || "").trim())
     .filter(Boolean);
 
-  // Hash (não envia pro servidor, e o Tampermonkey lê)
   const payload = encodeURIComponent(list.join(","));
-  return `https://app.kingapostas.com/bet/guess#pp=${payload}`;
+
+  // usando querystring (envia pro servidor)
+  return `https://app.kingapostas.com/bet/guess?pp=${payload}`;
 }
 
 export default function CentenasView() {
@@ -639,6 +640,7 @@ export default function CentenasView() {
         if (alive) setLoadingBounds(false);
       }
     })();
+
     return () => {
       alive = false;
     };
@@ -943,10 +945,7 @@ export default function CentenasView() {
     return upgradeImg(raw, 128);
   }, [getImgFromGrupo, bannerGrupo]);
 
-  const bannerLabel = useMemo(
-    () => (getAnimalLabel && getAnimalLabel(bannerGrupo)) || "",
-    [getAnimalLabel, bannerGrupo]
-  );
+  const bannerLabel = useMemo(() => (getAnimalLabel && getAnimalLabel(bannerGrupo)) || "", [getAnimalLabel, bannerGrupo]);
 
   const css = useMemo(() => {
     return `
@@ -1373,7 +1372,7 @@ export default function CentenasView() {
       // respeita o toggle "Mostrar só ocorridas"
       const rows = showOnlyHits
         ? (grupoAtual.list40 || []).filter((x) => (Number(x.count) || 0) > 0)
-        : (grupoAtual.list40 || []);
+        : grupoAtual.list40 || [];
 
       // 1 palpite por linha (compatível com a King)
       const milhares = rows.map((it) => {
@@ -1513,7 +1512,11 @@ export default function CentenasView() {
         <div className="cx0_fItem">
           <div className="cx0_fLab">Dia da Semana</div>
           <div className="cx0_selWrap">
-            <select className="cx0_sel" value={fDiaSemana} onChange={(e) => setFDiaSemana(String(e.target.value || "Todos"))}>
+            <select
+              className="cx0_sel"
+              value={fDiaSemana}
+              onChange={(e) => setFDiaSemana(String(e.target.value || "Todos"))}
+            >
               {diaSemanaOptions.map((o) => (
                 <option key={o.v} value={o.v}>
                   {o.label}
@@ -1527,7 +1530,11 @@ export default function CentenasView() {
         <div className="cx0_fItem">
           <div className="cx0_fLab">Horário</div>
           <div className="cx0_selWrap">
-            <select className="cx0_sel" value={fHorario} onChange={(e) => setFHorario(String(e.target.value || "Todos"))}>
+            <select
+              className="cx0_sel"
+              value={fHorario}
+              onChange={(e) => setFHorario(String(e.target.value || "Todos"))}
+            >
               {horarioOptions.map((o) => (
                 <option key={o.v} value={o.v}>
                   {o.label}
@@ -1566,7 +1573,11 @@ export default function CentenasView() {
         <div className="cx0_fItem">
           <div className="cx0_fLab">Posição</div>
           <div className="cx0_selWrap">
-            <select className="cx0_sel" value={fPosicao} onChange={(e) => setFPosicao(String(e.target.value || "Todos"))}>
+            <select
+              className="cx0_sel"
+              value={fPosicao}
+              onChange={(e) => setFPosicao(String(e.target.value || "Todos"))}
+            >
               {posicaoOptions.map((o) => (
                 <option key={o.v} value={o.v}>
                   {o.label}
@@ -1622,9 +1633,7 @@ export default function CentenasView() {
 
           <div className="cx0_list">
             {!loading && (!groups || !groups.length) ? (
-              <div style={{ padding: 14, textAlign: "center", color: "rgba(233,233,233,0.7)" }}>
-                Sem dados para exibir.
-              </div>
+              <div style={{ padding: 14, textAlign: "center", color: "rgba(233,233,233,0.7)" }}>Sem dados para exibir.</div>
             ) : null}
 
             {(groups || []).map((g) => {
