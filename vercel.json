@@ -3,8 +3,14 @@
   "buildCommand": null,
   "installCommand": null,
   "outputDirectory": "build",
-  "routes": [
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/index.html" }
+  "rewrites": [
+    {
+      "source": "/health",
+      "destination": "https://palpitacojb.onrender.com/health"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "https://palpitacojb.onrender.com/api/:path*"
+    }
   ]
 }
