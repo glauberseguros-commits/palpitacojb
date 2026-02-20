@@ -717,7 +717,9 @@ app.get("/api/import/manual", async (req, res) => {
   } catch (e) {
     return res.status(500).json({ ok: false, error: e?.message || "erro" });
   }
-});app.get("/api/import/window", async (req, res) => {
+});
+
+app.get("/api/import/window", async (req, res) => {
   try {
     const date = String(req.query.date || "").trim();
     const lk = getLotteryFromReq(req);
@@ -844,4 +846,5 @@ process.on("beforeExit", (code) => {
 process.on("exit", (code) => {
   console.warn("[WARN] exit code=", code);
 });
+
 
