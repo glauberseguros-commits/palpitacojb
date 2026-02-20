@@ -1,4 +1,4 @@
-﻿"use strict";
+"use strict";
 
 /* =========================
    LOTTERY KEY NORMALIZATION
@@ -683,7 +683,15 @@ app.get("/api/import/manual", async (req, res) => {
   try {
     const date = String(req.query.date || "").trim();
     const lk = getLotteryFromReq(req);
-    const closeHour = req.query.close ? String(req.query.close).trim() : null;
+
+    // aceita: closeHour, close, hour
+    const closeHourRaw =
+      req.query.closeHour ??
+      req.query.close ??
+      req.query.hour ??
+      null;
+
+    const closeHour = closeHourRaw ? String(closeHourRaw).trim() : null;
 
     if (!isISODate(date)) {
       return res.status(400).json({ ok: false, error: "date inválido (use YYYY-MM-DD)" });
@@ -698,13 +706,18 @@ app.get("/api/import/manual", async (req, res) => {
       closeHour: closeHour || null,
     });
 
-    return res.json({ ok: true, mode: "manual", ...result });
+    return res.json({
+      ok: true,
+      mode: "manual",
+      lotteryKey: lk,
+      date,
+      closeHour,
+      ...result,
+    });
   } catch (e) {
     return res.status(500).json({ ok: false, error: e?.message || "erro" });
   }
-});
-
-app.get("/api/import/window", async (req, res) => {
+});app.get("/api/import/window", async (req, res) => {
   try {
     const date = String(req.query.date || "").trim();
     const lk = getLotteryFromReq(req);
@@ -831,3 +844,4 @@ process.on("beforeExit", (code) => {
 process.on("exit", (code) => {
   console.warn("[WARN] exit code=", code);
 });
+
