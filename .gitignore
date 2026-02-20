@@ -39,3 +39,9 @@ backend/scripts/smoke-receive.ps1
 # ferramentas locais
 tools/bookmarklets_king.txt
 tools/makeKingBookmarklets.js
+
+# caches/backups locais
+_BACKUPS_OLD/
+node_modules_cache__*
+*.pack.old
+
