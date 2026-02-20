@@ -204,6 +204,14 @@ function isISODate(s) {
   return /^(\d{4})-(\d{2})-(\d{2})$/.test(String(s || ""));
 }
 
+// ✅ ISO puro (sem Date/timezone). Aceita 'YYYY-MM-DD' ou 'YYYY-MM-DDTHH:mm...'
+function normalizeISO10(v) {
+  const s = String(v || "").trim();
+  const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
+  const iso = m ? m[1] : "";
+  return isISODate(iso) ? iso : null;
+}
+
 function normalizeToYMD(input) {
   return normalizeToYMD_SP(input);
 }
@@ -230,15 +238,6 @@ function getDrawCloseHour(d) {
     "";
 
   return String(cand ?? "").trim();
-}
-
-function yearRangeToDates(minYear, maxYear) {
-  const a = Number(minYear);
-  const b = Number(maxYear);
-  if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
-  const y = Math.min(a, b);
-  const z = Math.max(a, b);
-  return { from: `${y}-01-01`, to: `${z}-12-31` };
 }
 
 function extractYearsFromDraws(drawsRaw) {
@@ -466,11 +465,12 @@ function clampRangeToBounds(next, minDate, maxDate) {
 
   if (!isISODate(f) || !isISODate(t)) return null;
   if (!minDate || !maxDate) return null;
+  if (!isISODate(minDate) || !isISODate(maxDate)) return null;
 
-  const from = f < minDate ? minDate : f > maxDate ? maxDate : f;
-  const to = t < minDate ? minDate : t > maxDate ? maxDate : t;
+  let from = f < minDate ? minDate : f;
+  let to = t > maxDate ? maxDate : t;
 
-  if (from > to) return { from: to, to: to };
+  if (from > to) to = from;
   return { from, to };
 }
 
@@ -504,6 +504,36 @@ function normalizeLoteriaKey(v) {
  * - filters: objeto
  * - setFilters: setter
  */
+function yearRangeToDates(minY, maxY, floorISO, ceilISO) {
+  const y1 = Number(minY);
+  const y2 = Number(maxY);
+  if (!Number.isFinite(y1) || !Number.isFinite(y2)) return null;
+
+  const a = Math.min(y1, y2);
+  const b = Math.max(y1, y2);
+
+  // ISO puro (sem Date / timezone)
+  let from = `${a}-01-01`;
+  let to   = `${b}-12-31`;
+
+  if (isISODate(floorISO) && from < floorISO) from = floorISO;
+  if (isISODate(ceilISO) && to > ceilISO) to = ceilISO;
+
+  if (isISODate(from) && isISODate(to) && from > to) to = from;
+  return { from, to };
+}
+
+function buildYearsAvailable(minISO, maxISO) {
+  if (!isISODate(minISO) || !isISODate(maxISO)) return [];
+  const y1 = Number(String(minISO).slice(0, 4));
+  const y2 = Number(String(maxISO).slice(0, 4));
+  if (!Number.isFinite(y1) || !Number.isFinite(y2)) return [];
+  const a = Math.min(y1, y2);
+  const b = Math.max(y1, y2);
+  const out = [];
+  for (let y = a; y <= b; y++) out.push(y);
+  return out;
+}
 export default function Dashboard(props) {
   const externalFilters = props && typeof props === "object" ? props.filters : null;
   const externalSetFilters = props && typeof props === "object" ? props.setFilters : null;
@@ -580,16 +610,7 @@ export default function Dashboard(props) {
 const locationLabel = isFederal
   ? `FEDERAL (Brasil)${fedBucket ? ` — ${fedBucket}` : ""}`
   : `${loteriaKey} — Brasil`;
-  const uf = loteriaKey;
-
-  // DEBUG (temporário): confirma loteria/uf efetivos
-  useEffect(() => {
-    try {
-      console.log('[DASH_LOT]', { loteria: filters?.loteria, lotteryKey: filters?.lotteryKey, loteriaKey, uf, horario: filters?.horario, isFederal, isGuest });
-    } catch {}
-  }, [filters?.loteria, filters?.lotteryKey, loteriaKey, uf, filters?.horario, isFederal, isGuest]);
-
-  // ✅ restaura apenas estado auxiliar (range/anos/grupo) do localStorage
+  const uf = loteriaKey;  // ✅ restaura apenas estado auxiliar (range/anos/grupo) do localStorage
   const savedDashState = useMemo(() => loadDashStateV2(), []);
 
   const [selectedGrupo, setSelectedGrupo] = useState(() => {
@@ -597,14 +618,7 @@ const locationLabel = isFederal
     return Number.isFinite(g) && g >= 1 && g <= 25 ? g : null;
   });
 
-  const [bounds, setBounds] = useState({
-    loading: DATA_MODE === "firestore",
-    minDate: null,
-    maxDate: null,
-    error: null,
-  });
-
-  const didInitRangeFromBoundsRef = useRef(false);
+  const [bounds, setBounds] = useState({ loading: DATA_MODE === "firestore", minDate: null, maxDate: null, error: null });const didInitRangeFromBoundsRef = useRef(false);
 
   // ✅ followMax VOLTOU e é USADO (sem warning e sem travar usuário)
   const [followMax, setFollowMax] = useState(() => savedDashState?.followMax !== false);
@@ -652,6 +666,10 @@ const locationLabel = isFederal
     let alive = true;
 
     (async () => {
+      // ✅ precisa existir também no catch
+      let minYmd = null;
+      let maxYmd = null;
+
       try {
         setBounds((b) => ({ ...b, loading: true, error: null }));
 
@@ -661,28 +679,22 @@ const locationLabel = isFederal
         // ✅ bounds já vêm como YYYY-MM-DD -> NÃO normalizar com timezone
         const rawMin = String(res?.minYmd ?? res?.minDate ?? "").trim();
         const rawMax = String(res?.maxYmd ?? res?.maxDate ?? "").trim();
-
-        let minYmd = isISODate(rawMin) ? rawMin : normalizeToYMD(rawMin) || null;
-        let maxYmd = isISODate(rawMax) ? rawMax : normalizeToYMD(rawMax) || null;
-
+        minYmd = normalizeISO10(rawMin);
+        maxYmd = normalizeISO10(rawMax);
         // ✅ redundância: chão histórico do PT_RIO (evita 08/06 por qualquer motivo)
-        if (String(uf || "").toUpperCase() === "PT_RIO") {
+                // ✅ redundância: chão histórico do RJ/PT_RIO (evita 08/06 por qualquer motivo)
+        const ufU = String(uf || "").trim().toUpperCase();
+        const isRJ = (ufU === "PT_RIO" || ufU === "RJ" || ufU === "RIO" || ufU === "PT-RIO");
+        if (isRJ) {
           const FLOOR = "2022-06-07";
           if (minYmd && isISODate(minYmd) && minYmd > FLOOR) minYmd = FLOOR;
           if (!minYmd) minYmd = FLOOR;
           if (maxYmd && isISODate(maxYmd) && maxYmd < minYmd) maxYmd = minYmd;
-        }
-
-        // DEBUG definitivo (pode remover depois)
-        try {
-          console.log("[DASH_BOUNDS_RAW]", { uf, rawMin, rawMax, svcMin: res?.minYmd, svcMax: res?.maxYmd, minYmd, maxYmd, source: res?.source });
-        } catch {}
-
-        if (!minYmd || !maxYmd) {
+        }        if (!minYmd || !maxYmd) {
           setBounds({
             loading: false,
-            minDate: null,
-            maxDate: null,
+            minDate: minYmd,
+            maxDate: maxYmd,
             error: "Sem bounds confiáveis (min/max não retornados).",
           });
           return;
@@ -745,8 +757,8 @@ const locationLabel = isFederal
 
         setBounds({
           loading: false,
-          minDate: null,
-          maxDate: null,
+          minDate: minYmd,
+          maxDate: maxYmd,
           error: e?.message || String(e),
         });
       }
@@ -899,6 +911,10 @@ const locationLabel = isFederal
     let alive = true;
 
     (async () => {
+      // ✅ precisa existir também no catch
+      let minYmd = null;
+      let maxYmd = null;
+
       try {
         setJsonState((s) => ({ ...s, loading: true, error: null }));
 
@@ -1242,29 +1258,8 @@ const locationLabel = isFederal
   }, [drawsForUi, isFederal]);
 
   const yearsAvailable = useMemo(() => {
-    const fromDraws = extractYearsFromDraws(drawsForUi);
-
-    // ✅ Corrigido: se bounds existem, evita ano fora do intervalo real
-    if (fromDraws.length && MIN_DATE && MAX_DATE) {
-      const yMin = Number(String(MIN_DATE).slice(0, 4));
-      const yMax = Number(String(MAX_DATE).slice(0, 4));
-      if (Number.isFinite(yMin) && Number.isFinite(yMax)) {
-        return fromDraws.filter((y) => y >= Math.min(yMin, yMax) && y <= Math.max(yMin, yMax));
-      }
-    }
-
-    if (fromDraws.length) return fromDraws;
-
-    if (!MIN_DATE || !MAX_DATE) return [];
-
-    const yMin = Number(String(MIN_DATE).slice(0, 4));
-    const yMax = Number(String(MAX_DATE).slice(0, 4));
-    if (!Number.isFinite(yMin) || !Number.isFinite(yMax)) return [];
-
-    const out = [];
-    for (let y = Math.min(yMin, yMax); y <= Math.max(yMin, yMax); y += 1) out.push(y);
-    return out;
-  }, [drawsForUi, MIN_DATE, MAX_DATE]);
+  return buildYearsAvailable(MIN_DATE, MAX_DATE);
+}, [MIN_DATE, MAX_DATE]);
 
   const applyAllYearsFull = useCallback(() => {
     if (!MIN_DATE || !MAX_DATE) return;
@@ -1312,7 +1307,7 @@ const locationLabel = isFederal
 
         const minY = next[0];
         const maxY = next[next.length - 1];
-        const yr = yearRangeToDates(minY, maxY);
+        const yr = yearRangeToDates(minY, maxY, MIN_DATE, MAX_DATE);
         if (yr) {
           setDateRange(yr);
           setDateRangeQuery(yr);
@@ -1684,6 +1679,13 @@ const locationLabel = isFederal
     </div>
   );
 }
+
+
+
+
+
+
+
 
 
 
