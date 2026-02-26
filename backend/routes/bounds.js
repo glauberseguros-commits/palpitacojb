@@ -8,7 +8,7 @@ function normalizeLotteryKey(v) {
   if (s === "RJ" || s === "RIO" || s === "PT-RIO" || s === "PT_RIO") return "PT_RIO";
 
   // FEDERAL
-  if (s === "FED" || s === "FEDERAL") return "FEDERAL";
+  if (s === "FED" || s === "FEDERAL" || s === "BR" || s === "NACIONAL") return "FEDERAL";
 
   // fallback seguro (projeto atual só usa esses 2)
   return "PT_RIO";
@@ -180,7 +180,9 @@ async function fallbackBoundsByDocIdEdges(db, lotteryKey, edgeLimit) {
 }
 
 async function computeBounds(db, lotteryKey, opts = {}) {
-  const lk = String(lotteryKey || "").trim().toUpperCase() || "PT_RIO";
+  // ✅ defensivo: normaliza aqui também
+  const lk = normalizeLotteryKey(lotteryKey);
+
   const scanLimit = Number.isFinite(Number(opts.scanLimit)) ? Math.max(10, Number(opts.scanLimit)) : 50;
   const edgeLimit = Number.isFinite(Number(opts.edgeLimit)) ? Math.max(200, Number(opts.edgeLimit)) : 800;
 
@@ -223,13 +225,18 @@ async function computeBounds(db, lotteryKey, opts = {}) {
  * - ?scanLimit=50
  * - ?edgeLimit=800
  */
-const GLOBAL_MIN_YMD = "2022-06-07";
-function clampMinYmd(v) {
+const BASELINE_MIN_BY_LOTTERY = {
+  PT_RIO: "2022-06-07",
+  FEDERAL: "2022-06-08",
+};
+
+function clampMinYmd(lotteryKey, v) {
   const s = String(v || "").trim();
-  // aceita só YYYY-MM-DD; se inválido, não mexe
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return v;
+  if (!isISODateStrict(s)) return v;
+
+  const baseline = BASELINE_MIN_BY_LOTTERY[normalizeLotteryKey(lotteryKey)] || "2022-06-07";
   // se o min calculado for "mais novo" que o baseline, força baseline
-  return s > GLOBAL_MIN_YMD ? GLOBAL_MIN_YMD : s;
+  return s > baseline ? baseline : s;
 }
 
 router.get("/bounds", async (req, res) => {
@@ -244,7 +251,7 @@ router.get("/bounds", async (req, res) => {
     return res.json({
       ok: true,
       lottery: lk,
-      minYmd: clampMinYmd(result?.minYmd) || null,
+      minYmd: clampMinYmd(lk, result?.minYmd) || null,
       maxYmd: result?.maxYmd || null,
       source: result?.source || "unknown",
       minDocId: result?.minDocId || null,
@@ -252,9 +259,10 @@ router.get("/bounds", async (req, res) => {
       sampleCount: result?.sampleCount || null,
       firstDocId: result?.firstDocId || null,
       lastDocId: result?.lastDocId || null,
-      note: warn && isIndexError(warn)
-        ? "faltou índice composto em uma tentativa (ok, caiu no fallback)"
-        : null,
+      note:
+        warn && isIndexError(warn)
+          ? "faltou índice composto em uma tentativa (ok, caiu no fallback)"
+          : null,
     });
   } catch (e) {
     return res.status(500).json({
@@ -266,5 +274,3 @@ router.get("/bounds", async (req, res) => {
 });
 
 module.exports = router;
-
-

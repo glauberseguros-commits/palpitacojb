@@ -10,8 +10,8 @@ function normalizeLotteryKey(v) {
   // FEDERAL
   if (s === "FED" || s === "FEDERAL") return "FEDERAL";
 
-  // fallback seguro (projeto atual só usa esses 2)
-  return "PT_RIO";
+  // sem fallback: inválido => força 400
+  return "";
 }
 
 const express = require("express");
@@ -74,14 +74,12 @@ function upTrim(v) {
 /**
  * ✅ Harden: fetch do DIA robusto
  * - prioriza ymd (canônico nos teus endpoints de range)
- * - fallback para date quando ymd não existir/estiver inconsistente
+ * - plano B: usa "date" se "ymd" não existir/estiver inconsistente quando ymd não existir/estiver inconsistente
  */
 async function fetchDayDraws(db, ymd) {
-  // tenta por ymd primeiro
   const s1 = await db.collection("draws").where("ymd", "==", ymd).get();
   if (s1 && !s1.empty) return s1;
 
-  // fallback por date
   const s2 = await db.collection("draws").where("date", "==", ymd).get();
   return s2;
 }
@@ -112,9 +110,7 @@ async function mapWithConcurrency(items, limitN, mapper) {
  * Helpers (aliases)
  */
 function parseIncludePrizes(v, defBool) {
-  const raw = String(v ?? (defBool ? "1" : "0"))
-    .trim()
-    .toLowerCase();
+  const raw = String(v ?? (defBool ? "1" : "0")).trim().toLowerCase();
   return raw === "1" || raw === "true" || raw === "yes";
 }
 
@@ -185,8 +181,8 @@ async function loadPrizesForDraws(db, drawsWindow, includePrizes, positionsInfo)
 
     const prizesSnap = await q.get();
     const rows = prizesSnap.docs.map((p) => p.data());
-
     const prizes = posSet ? rows.filter((r) => posSet.has(Number(r.position))) : rows;
+
     return { ...d, prizes };
   });
 
@@ -202,6 +198,17 @@ function redirect308(destPath) {
     const q = req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : "";
     return res.redirect(308, `${req.baseUrl}${destPath}${q}`);
   };
+}
+
+/**
+ * ✅ validação comum de lottery
+ */
+function requireLotteryOr400(lottery, res) {
+  if (!lottery) {
+    res.status(400).json({ ok: false, error: "Parâmetro inválido: lottery (use RJ/PT_RIO ou FED/FEDERAL)" });
+    return false;
+  }
+  return true;
 }
 
 /**
@@ -226,15 +233,11 @@ router.get("/draws", async (req, res) => {
     if (!isISODate(date)) {
       return res.status(400).json({ ok: false, error: "Parâmetro inválido: date (use YYYY-MM-DD)" });
     }
-
-    if (!lottery) {
-      return res.status(400).json({ ok: false, error: "Parâmetro inválido: lottery (ex.: PT_RIO)" });
-    }
+    if (!requireLotteryOr400(lottery, res)) return;
 
     if (fromRaw && !from) {
       return res.status(400).json({ ok: false, error: "Parâmetro inválido: from (use HH:MM, 10h ou 10)" });
     }
-
     if (toRaw && !to) {
       return res.status(400).json({ ok: false, error: "Parâmetro inválido: to (use HH:MM, 10h ou 10)" });
     }
@@ -283,6 +286,8 @@ async function handleDay(req, res) {
 
     const date = String(req.query.date || "").trim();
     const lottery = getLotteryFromQuery(req);
+
+    if (!requireLotteryOr400(lottery, res)) return;
 
     if (!isISODate(date)) {
       return res.status(400).json({ ok: false, error: "Parâmetro inválido: date (use YYYY-MM-DD)" });
@@ -334,6 +339,8 @@ async function handleRange(req, res) {
     const dateFrom = String(req.query.dateFrom || "").trim();
     const dateTo = String(req.query.dateTo || "").trim();
     const lottery = getLotteryFromQuery(req);
+
+    if (!requireLotteryOr400(lottery, res)) return;
 
     if (!isISODate(dateFrom) || !isISODate(dateTo)) {
       return res.status(400).json({ ok: false, error: "Parâmetro inválido: dateFrom/dateTo (use YYYY-MM-DD)" });
@@ -398,5 +405,3 @@ router.get("/draws/day", handleDay);
 router.get("/draws/range", handleRange);
 
 module.exports = router;
-
-

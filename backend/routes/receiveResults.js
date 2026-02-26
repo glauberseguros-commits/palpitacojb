@@ -151,7 +151,3 @@ router.post("/receive_results", async (req, res) => {
 });
 
 module.exports = router;
-
-
-
-

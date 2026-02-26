@@ -66,27 +66,11 @@ const RJ_STATE_CODE = "RJ";
 const RJ_LOTTERY_KEY = "PT_RIO";
 
 // ✅ chão histórico oficial do PT_RIO (NUNCA pode passar disso)
-const PT_RIO_GLOBAL_MIN_YMD = "2022-06-07";
-
 function applyBoundsFloor(scopeKey, boundsLike) {
   const min = String(boundsLike?.minYmd || "").trim();
   const max = String(boundsLike?.maxYmd || "").trim();
-
-  // só aplica regra rígida no PT_RIO
-  if (String(scopeKey || "") !== RJ_LOTTERY_KEY) {
-    return { minYmd: isYMD(min) ? min : null, maxYmd: isYMD(max) ? max : null };
-  }
-
-  let outMin = isYMD(min) ? min : PT_RIO_GLOBAL_MIN_YMD;
-  let outMax = isYMD(max) ? max : null;
-
-  // ✅ se o backend/scan vier com min maior (ex: 2022-06-08), força voltar pra 2022-06-07
-  if (isYMD(outMin) && outMin > PT_RIO_GLOBAL_MIN_YMD) outMin = PT_RIO_GLOBAL_MIN_YMD;
-
-  // ✅ sanidade: se max < min, corrige max => min (evita UI travar)
-  if (isYMD(outMax) && isYMD(outMin) && outMax < outMin) outMax = outMin;
-
-  return { minYmd: outMin, maxYmd: outMax };
+  // ✅ SEM piso rígido (nem RJ nem FEDERAL). Apenas valida.
+  return { minYmd: isYMD(min) ? min : null, maxYmd: isYMD(max) ? max : null };
 }
 // ✅ Escopo canônico para Federal no app
 const FEDERAL_SCOPE_CODE = "FEDERAL";
@@ -1828,6 +1812,8 @@ export async function getKingLateByRange({
   cacheSet(LATE_CACHE, cacheKey, out);
   return out;
 }
+
+
 
 
 

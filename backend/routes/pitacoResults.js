@@ -77,8 +77,8 @@ function normalizeLotteryKey(v) {
   // FEDERAL
   if (s === "FED" || s === "FEDERAL") return "FEDERAL";
 
-  // fallback seguro (projeto atual só usa esses 2)
-  return "PT_RIO";
+  // inválido → força 400 (projeto atual só usa PT_RIO e FEDERAL)
+  return "";
 }
 
 /* =========================
@@ -543,9 +543,8 @@ router.get("/results", async (req, res) => {
   const capToday = !noCapToday;
 
   // aceita ?lottery= ou ?lotteryKey= ou ?uf=
-  const lotteryKey = normalizeLotteryKey(
-    req.query.lotteryKey || req.query.lottery || req.query.uf
-  );
+  const lotteryRaw = String(req.query.lotteryKey || req.query.lottery || req.query.uf || "").trim();
+  const lotteryKey = normalizeLotteryKey(lotteryRaw);
 
   try {
     const date = String(req.query.date || "").trim();
@@ -565,7 +564,8 @@ router.get("/results", async (req, res) => {
         .status(400)
         .json({ ok: false, error: "date inválido (use YYYY-MM-DD)" });
     }
-    if (!lottery) return res.status(400).json({ ok: false, error: "lottery obrigatório" });
+    if (!lotteryRaw) { return res.status(400).json({ ok: false, error: "lottery obrigatório" }); }
+    if (!lottery) { return res.status(400).json({ ok: false, error: "lottery inválida: " + lotteryRaw }); }
 
     // ✅ HARD GUARD: bloqueia datas futuras (fuso Brasil)
     if (isFutureISODate(date)) {
@@ -881,4 +881,8 @@ router.get("/results", async (req, res) => {
 });
 
 module.exports = router;
+
+
+
+
 
