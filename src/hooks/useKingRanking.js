@@ -289,6 +289,7 @@ export function useKingRanking({
   dateTo,
   closeHourBucket = null,
   positions = null,
+  needsPrizes = false,
 }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -576,6 +577,7 @@ const safe = {
 
         if (mode === "range") {
           serviceMode = decideRangeServiceMode(rangeDays);
+          if (needsPrizes) serviceMode = "detailed";
 
           draws = await getKingResultsByRange({
             uf,
@@ -857,14 +859,10 @@ const safe = {
     bounds.maxYmd,
     bounds.source,
     rangeDays,
-  ]);
+    needsPrizes,
+]);
 
   return { loading, error, data, meta, drawsRaw };
 }
-
-
-
-
-
 
 

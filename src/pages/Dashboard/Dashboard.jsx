@@ -534,28 +534,41 @@ function normalizeCloseHourForKpi(raw) {
   return "";
 }
 
-function getDrawUniqKeyForKpi(d, ufKey) {
+function getDrawUniqKeyForKpi(d, ufKey, idx) {
   if (!d) return null;
 
-  // ✅ Para KPI, o "sorteio real" é por SLOT: UF + YMD + CLOSE_HOUR (normalizado)
-  // drawId é instável quando há duplicações/imports e não deve ser prioridade aqui.
-
   const ymd = getDrawDate(d);
-  const chRaw = d.close_hour ?? d.closeHour ?? d.hora ?? d.hour ?? d.close_hour_raw ?? "";
+
+  // tenta hora em mais lugares (inclui buckets)
+  const chRaw =
+    d.close_hour ??
+    d.closeHour ??
+    d.close_hour_raw ??
+    d.closeHourRaw ??
+    d.close_hour_bucket ??
+    d.closeHourBucket ??
+    d.slot ??
+    d.hour ??
+    d.hora ??
+    "";
+
   const ch = normalizeCloseHourForKpi(chRaw);
 
   const uf = String(ufKey ?? d.uf ?? d.lottery_key ?? d.lotteryKey ?? "")
     .trim()
     .toUpperCase() || "UF";
 
+  // 1) Se tem slot completo, dedupe por (UF + YMD + HORA)
   if (ymd && ch) return `UF__${uf}__${ymd}__${ch}`;
 
-  // fallback: se faltar info de slot, tenta drawId
+  // 2) Se não tem hora, mas tem drawId, dedupe por drawId (melhor do que colapsar tudo no dia)
   const drawId = String(d.drawId ?? d.draw_id ?? d.lottery_id ?? d.id ?? "").trim();
   if (drawId) return `UF__${uf}__DRAWID__${drawId}`;
 
-  // último fallback
-  if (ymd) return `UF__${uf}__${ymd}__NA`;
+  // 3) Se só tem data, NÃO pode deduplicar por dia (isso derruba o KPI).
+  // Usa o índice para manter cada item único (sem “colapsar”).
+  if (ymd) return `UF__${uf}__${ymd}__IDX__${Number.isFinite(idx) ? idx : 0}`;
+
   return null;
 }
 
@@ -564,13 +577,16 @@ function dedupeDrawsForKpi(list, ufKey) {
   if (!arr.length) return [];
   const seen = new Set();
   const out = [];
-  for (const d of arr) {
-    const k = getDrawUniqKeyForKpi(d, ufKey);
+
+  for (let i = 0; i < arr.length; i += 1) {
+    const d = arr[i];
+    const k = getDrawUniqKeyForKpi(d, ufKey, i);
     if (!k) continue;
     if (seen.has(k)) continue;
     seen.add(k);
     out.push(d);
   }
+
   return out;
 }
 
@@ -666,11 +682,13 @@ const locationLabel = isFederal
   const savedDashState = useMemo(() => loadDashStateV2(), []);
 
   const [selectedGrupo, setSelectedGrupo] = useState(() => {
-    const g = Number(savedDashState?.selectedGrupo);
-    return Number.isFinite(g) && g >= 1 && g <= 25 ? g : null;
-  });
+  const g = Number(savedDashState?.selectedGrupo);
+  return Number.isFinite(g) && g >= 1 && g <= 25 ? g : null;
+});
 
-  const [bounds, setBounds] = useState({ loading: DATA_MODE === "firestore", minDate: null, maxDate: null, error: null });const didInitRangeFromBoundsRef = useRef(false);
+  const [bounds, setBounds] = useState({ loading: DATA_MODE === "firestore", minDate: null, maxDate: null, error: null });
+
+  const didInitRangeFromBoundsRef = useRef(false);
 
   // ✅ followMax VOLTOU e é USADO (sem warning e sem travar usuário)
   const [followMax, setFollowMax] = useState(() => savedDashState?.followMax !== false);
@@ -940,6 +958,13 @@ const locationLabel = isFederal
 
   const canQueryFirestore = DATA_MODE === "firestore" ? !!(boundsReady && dateRangeQuery) : true;
 
+
+  // ✅ Quando o usuário filtra Posição/Grupo, precisamos de prizes => força modo detailed no hook
+  const needsPrizesLocal = useMemo(() => {
+    const wantsPositionFilter = String(filters?.posicao || "").trim().toLowerCase() !== "todos";
+    const wantsGrupoFilter = !!selectedGrupo;
+    return wantsPositionFilter || wantsGrupoFilter;
+  }, [filters?.posicao, selectedGrupo]);
   const { loading: fsLoading, error: fsError, meta: fsRankingMeta, drawsRaw: fsDrawsRaw } =
     useKingRanking({
       uf,
@@ -948,6 +973,7 @@ const locationLabel = isFederal
       dateTo: canQueryFirestore ? dateTo : null,
       closeHourBucket: null,
       positions: ALL_POSITIONS,
+      needsPrizes: needsPrizesLocal,
     });
 
   const [jsonState, setJsonState] = useState({
@@ -1144,8 +1170,11 @@ const locationLabel = isFederal
       .map((d) => {
         const prizes = Array.isArray(d?.prizes) ? d.prizes : null;
 
-        if (requiresPrizes && !prizes) return null;
-        if (!prizes) return d;
+        // ✅ Durante hydrating, não elimina draws (senão a UI "some")
+        if (!prizes) {
+          if (requiresPrizes && !isHydrating) return null;
+          return d;
+        }
 
         let next = prizes;
 
@@ -1178,6 +1207,7 @@ const locationLabel = isFederal
     closeHourBucketLocal,
     positionsLocal,
     selectedGrupo,
+    isHydrating,
   ]);
 
   const hasAnyDrawsView = drawsForView.length > 0;
@@ -1370,15 +1400,24 @@ const locationLabel = isFederal
   );
 
   const kpiItems = useMemo(() => {
-  if (!dataReady || !hasAnyDrawsView) {
+  // KPIs gerais do período (base = drawsForUi)
+  if (!dataReady) {
     return [
       { key: "dias", title: "Qtde Dias de sorteios", value: null, icon: "calendar" },
       { key: "sorteios", title: "Qtde de sorteios", value: null, icon: "ticket" },
     ];
   }
 
+  const base = Array.isArray(drawsForUi) ? drawsForUi : [];
+  if (!base.length) {
+    return [
+      { key: "dias", title: "Qtde Dias de sorteios", value: 0, icon: "calendar" },
+      { key: "sorteios", title: "Qtde de sorteios", value: 0, icon: "ticket" },
+    ];
+  }
+
   // ✅ KPI deve contar sorteios reais (dedupe por drawId ou ymd+hora+uf)
-  const uniqDraws = dedupeDrawsForKpi(drawsForView, uf);
+  const uniqDraws = dedupeDrawsForKpi(base, uf);
 
   const dias = new Set(uniqDraws.map((d) => getDrawDate(d)).filter(Boolean)).size;
   const sorteios = uniqDraws.length;
@@ -1387,7 +1426,7 @@ const locationLabel = isFederal
     { key: "dias", title: "Qtde Dias de sorteios", value: dias, icon: "calendar" },
     { key: "sorteios", title: "Qtde de sorteios", value: sorteios, icon: "ticket" },
   ];
-}, [drawsForView, dataReady, hasAnyDrawsView, uf]);
+}, [dataReady, drawsForUi, uf]);
 
 const onSelectGrupo = useCallback(
     (grupoNum) => {
@@ -1732,22 +1771,5 @@ const onSelectGrupo = useCallback(
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

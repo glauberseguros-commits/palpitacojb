@@ -50,3 +50,7 @@ node_modules_cache__*
 build_upload.zip
 
 .vercel
+
+# Local scratch (não versionar)
+/_LOCAL/
+
