@@ -54,3 +54,6 @@ build_upload.zip
 # Local scratch (não versionar)
 /_LOCAL/
 
+# local backups / scratch
+# local runtime logs/state
+backend/logs/autoImportState-*.json
