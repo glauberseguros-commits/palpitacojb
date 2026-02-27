@@ -72,14 +72,17 @@ function normalizeLotteryKey(v) {
   const s = String(v ?? "").trim().toUpperCase();
 
   // RJ
-  if (s === "RJ" || s === "RIO" || s === "PT-RIO" || s === "PT_RIO") return "PT_RIO";
+  if (s === "RJ" || s === "RIO" || s === "PT-RIO" || s === "PT_RIO")
+    return "PT_RIO";
 
-  // FEDERAL
-  if (s === "FED" || s === "FEDERAL") return "FEDERAL";
+  // FEDERAL (inclui alias BR)
+  if (s === "FED" || s === "FEDERAL" || s === "BR")
+    return "FEDERAL";
 
   // inválido → força 400 (projeto atual só usa PT_RIO e FEDERAL)
   return "";
 }
+
 
 /* =========================
    HELPERS
@@ -464,15 +467,31 @@ async function mapWithConcurrency(items, limitN, mapper) {
 ========================= */
 
 // GET /api/pitaco/results?date=YYYY-MM-DD&lottery=PT_RIO
-// compat:
-// - aceita também ?uf= e ?lotteryKey=
-// - &strict=1
-// - &reloadDayStatus=1
-// - &reloadGaps=1
-// - &includePrizes=0|1 (default 1)
-// - &limitDocs=120 (min 20 max 500)
-// - &slotGraceMin=25
-// - &noCapToday=1
+// ------------------------------------------------------
+// PARÂMETROS PRINCIPAIS
+// - date=YYYY-MM-DD  (obrigatório)
+// - lottery=PT_RIO|FEDERAL   (recomendado)
+//   - aliases aceitos:
+//     - PT_RIO: RJ | RIO | PT-RIO | PT_RIO
+//     - FEDERAL: FED | FEDERAL | BR
+//
+// COMPAT / LEGADO
+// - lotteryKey=...  (alias de lottery)
+// - uf=...
+//   ⚠️ uf só é tratado como lottery se NÃO vier lottery/lotteryKey.
+//   Exemplos:
+//   - ?uf=RJ  => PT_RIO
+//   - ?uf=BR  => FEDERAL
+//   - ?lottery=FEDERAL&uf=RJ  => uf é ignorado
+//
+// OUTROS
+// - strict=1
+// - reloadDayStatus=1
+// - reloadGaps=1
+// - includePrizes=0|1 (default 1)
+// - limitDocs=120 (min 20 max 500)
+// - slotGraceMin=25
+// - noCapToday=1
 
 function buildSlots(opts) {
   const {
@@ -542,8 +561,33 @@ router.get("/results", async (req, res) => {
   const noCapToday = parseBool01(req.query.noCapToday);
   const capToday = !noCapToday;
 
+  // UF_CONFLICT_GUARD: evita pegadinha de uf junto com lottery explícito
+  // Se veio lottery/lotteryKey, uf NÃO tem efeito (legado). Melhor bloquear e explicar.
+  if ((req.query.lotteryKey != null || req.query.lottery != null) && req.query.uf != null) {
+    return res.status(400).json({
+      ok: false,
+      error:
+        "Parâmetros conflitantes: quando 'lottery' (ou 'lotteryKey') é informado, 'uf' é ignorado. Remova 'uf' ou use apenas 'uf=RJ|BR' (legado).",
+      hint:
+        "Use: ?date=YYYY-MM-DD&lottery=PT_RIO|FEDERAL  (ou)  ?date=YYYY-MM-DD&uf=RJ|BR",
+    });
+  }
   // aceita ?lottery= ou ?lotteryKey= ou ?uf=
-  const lotteryRaw = String(req.query.lotteryKey || req.query.lottery || req.query.uf || "").trim();
+  // 🔥 FIX: separa lottery de UF real
+const lotteryParam =
+  req.query.lotteryKey ??
+  req.query.lottery ??
+  null;
+
+// legado: se NÃO veio lottery explícito, ainda aceita uf como lottery
+const legacyLottery =
+  lotteryParam == null
+    ? req.query.uf
+    : null;
+
+const lotteryRaw = String(
+  lotteryParam ?? legacyLottery ?? ""
+).trim();
   const lotteryKey = normalizeLotteryKey(lotteryRaw);
 
   try {
@@ -565,7 +609,7 @@ router.get("/results", async (req, res) => {
         .json({ ok: false, error: "date inválido (use YYYY-MM-DD)" });
     }
     if (!lotteryRaw) { return res.status(400).json({ ok: false, error: "lottery obrigatório" }); }
-    if (!lottery) { return res.status(400).json({ ok: false, error: "lottery inválida: " + lotteryRaw }); }
+    if (!lottery) { return res.status(400).json({ ok: false, error: "lottery inválida: " + lotteryRaw + " (use lottery=PT_RIO|FEDERAL ou aliases RJ|BR)" }); }
 
     // ✅ HARD GUARD: bloqueia datas futuras (fuso Brasil)
     if (isFutureISODate(date)) {
@@ -881,6 +925,15 @@ router.get("/results", async (req, res) => {
 });
 
 module.exports = router;
+
+
+
+
+
+
+
+
+
 
 
 
