@@ -107,9 +107,10 @@ function printUsage() {
     `
 Uso:
   node backend/scripts/auditDrawSlotsRange.js PT_RIO 2022-06-07 2026-01-21 [--details] [--limit=50]
+  node backend/scripts/auditDrawSlotsRange.js PT_RIO 2022-06-07 [--details] [--limit=50]
     [--soft18WedSat] [--include09From=YYYY-MM-DD] [--scheduleFile=PATH] [--strictSchedule]
     [--gapsFile=PATH] [--noDrawFile=PATH]
-    [--today=YYYY-MM-DD] [--slotGraceMin=MIN] [--noCapToday]
+    [--today=YYYY-MM-DD] [--nowHM=HH:mm] [--slotGraceMin=MIN] [--noCapToday]
 
 Opções:
   --details                 informa que os detalhes completos estão no JSON
@@ -131,10 +132,17 @@ Opções:
                             backend/data/no_draw_days/<LOTTERY>.json
   --today=YYYY-MM-DD
                             força qual "dia atual" considerar (debug/replay). default: hoje (local)
+  --nowHM=HH:mm
+                            força o "agora" (minutos) para o cap do dia atual.
+                            alternativa: variável de ambiente NOW_HM=HH:mm
   --slotGraceMin=MIN
                             tolerância (minutos) após a hora do slot para considerar "já publicado". default: 25
   --noCapToday
                             desativa o cap do dia atual (volta a esperar todos os slots do schedule)
+
+Observação:
+  ✅ endYmd é opcional:
+    - se omitido, usa "today" (ou --today)
 
 Saída:
   backend/logs/auditSlots-PT_RIO-<start>_to_<end>.json
@@ -310,7 +318,7 @@ function buildScheduleDigestFromFileOrNull(scheduleFile) {
     return {
       rangesCount: ranges.length,
       oneOffCount: uniqOneoffs.length,
-      oneOffDays: uniqOneoffs, // se quiser enxugar depois, limitamos a 50
+      oneOffDays: uniqOneoffs,
       hardSlotsTotal,
       softSlotsTotal,
       file: sf,
@@ -450,18 +458,37 @@ function hourToMinutes(h) {
   return Number.isFinite(n) ? n * 60 : NaN;
 }
 
+// ✅ NOVO: parse "HH:mm" -> minutos
+function parseHmToMinutes(hm) {
+  const s = String(hm || "").trim();
+  const m = s.match(/^(\d{1,2}):(\d{2})$/);
+  if (!m) return null;
+  const hh = Number(m[1]);
+  const mm = Number(m[2]);
+  if (!Number.isFinite(hh) || !Number.isFinite(mm)) return null;
+  if (hh < 0 || hh > 23 || mm < 0 || mm > 59) return null;
+  return hh * 60 + mm;
+}
+
 // =====================
 // Main
 // =====================
 async function main() {
   const lotteryKey = String(process.argv[2] || "PT_RIO").trim().toUpperCase() || "PT_RIO";
   const startYmd = String(process.argv[3] || "2022-06-07").trim();
-  const endYmd = String(process.argv[4] || "2026-01-21").trim();
 
   if (hasFlag("help") || hasFlag("h")) {
     printUsage();
     return;
   }
+
+  // ✅ hoje pode ser forçado por --today
+  const todayYmd = String(parseArg("today") || "").trim() || getLocalYmd();
+
+  // ✅ NOVO: permite omitir endYmd
+  const rawEnd = process.argv[4];
+  const endYmd =
+    !rawEnd || String(rawEnd).startsWith("--") ? todayYmd : String(rawEnd).trim();
 
   if (!isISODate(startYmd) || !isISODate(endYmd) || startYmd > endYmd) {
     throw new Error(
@@ -478,10 +505,12 @@ async function main() {
   const strictSchedule = hasFlag("strictSchedule");
 
   // ✅ cap do DIA ATUAL até o último horário que já deveria estar publicado
-  const todayYmd = String(parseArg("today") || "").trim() || getLocalYmd();
   const slotGraceMin = Number(parseArg("slotGraceMin") || 25);
   const capToday = !hasFlag("noCapToday");
-  const nowMinLocal = getLocalNowMinutes();
+
+  // ✅ NOVO: permite forçar o "agora" via --nowHM ou env NOW_HM
+  const forcedNowHM = String(parseArg("nowHM") || process.env.NOW_HM || "").trim();
+  const nowMinLocal = parseHmToMinutes(forcedNowHM) ?? getLocalNowMinutes();
 
   const noDrawFileArg = parseArg("noDrawFile");
   const gapsFileArg = parseArg("gapsFile");
@@ -510,6 +539,9 @@ async function main() {
   console.log(`noDraw: ${noDrawOn ? "ON" : "OFF"} file=${noDrawFile}`);
   console.log(
     `fallbackFlags: soft18WedSat=${soft18WedSat ? "YES" : "NO"} include09From=${include09FromYmd}`
+  );
+  console.log(
+    `todayCap: ${capToday ? "ON" : "OFF"} todayYmd=${todayYmd} now=${forcedNowHM || "(local)"} graceMin=${Number.isFinite(slotGraceMin) ? slotGraceMin : 25}`
   );
   console.log("==================================");
 
@@ -542,7 +574,9 @@ async function main() {
   const missingHardByDay = [];
   const missingSoftByDay = [];
   const dupByDay = [];
-  const unexpectedByDay = [];
+
+  // ✅ FIX: unexpectedByDay vira MAP por YMD
+  const unexpectedByDay = Object.create(null);
 
   const scheduleMissByDay = [];
   const scheduleRangeByDay = [];
@@ -559,12 +593,14 @@ async function main() {
     if (scheduleOn) {
       expected = expectedHoursFromSchedule(schedule, ymd, dow);
 
+      // ✅ PATCH FORENSE: strictSchedule NÃO PULA DIA
       if (!expected) {
         if (strictSchedule) {
-          scheduleMissByDay.push({ ymd, dow });
-          continue;
+          scheduleMissByDay.push({ ymd, dow, reason: "NO_RANGE" });
+          expected = { expectedHard: [], expectedSoft: [], mode: "schedule_strict_no_range" };
+        } else {
+          expected = expectedHoursPT_RIO_FALLBACK(ymd, dow, include09FromYmd, soft18WedSat);
         }
-        expected = expectedHoursPT_RIO_FALLBACK(ymd, dow, include09FromYmd, soft18WedSat);
       } else {
         scheduleRangeByDay.push({ ymd, dow, range: expected.range });
       }
@@ -693,7 +729,9 @@ async function main() {
     if (missingHard.length) missingHardByDay.push({ ymd, dow, missing: missingHard });
     if (missingSoft.length) missingSoftByDay.push({ ymd, dow, missing: missingSoft });
     if (dup.length) dupByDay.push({ ymd, dow, dup });
-    if (unexpected.length) unexpectedByDay.push({ ymd, dow, unexpected });
+
+    // ✅ FIX: salva por chave de data
+    if (unexpected.length) unexpectedByDay[ymd] = { ymd, dow, unexpected };
 
     if (totalDays % progressEvery === 0) {
       console.log(`[PROGRESS] days=${totalDays} scannedDocs=${scannedDocs}`);
@@ -706,6 +744,15 @@ async function main() {
     endYmd,
     scannedDocs,
     totalDays,
+
+    // ✅ compat p/ agregadores antigos (seu node -e mensal)
+    days: totalDays,
+    expectedHard: expectedHardSlotsTotal,
+    expectedSoft: expectedSoftSlotsTotal,
+    foundHard: foundHardSlotsTotal,
+    foundSoft: foundSoftSlotsTotal,
+    missingHardSlots: missingHardSlotsTotal,
+    missingSoftSlots: missingSoftSlotsTotal,
 
     schedule: {
       enabled: scheduleOn,
@@ -844,16 +891,20 @@ async function main() {
     console.log("\n[DUP] nenhuma duplicidade detectada no intervalo.");
   }
 
-  if (unexpectedByDay.length) {
-    console.log(
-      `\n[UNEXPECTED] primeiros ${Math.min(limitPrint, unexpectedByDay.length)} dias:`
-    );
-    for (const r of unexpectedByDay.slice(0, limitPrint)) {
-      const s = r.unexpected.map((x) => `${x.hh}(${x.count})`).join(", ");
-      console.log(`- ${r.ymd} unexpected: ${s}`);
+  // ✅ FIX: print do unexpected agora itera o MAP
+  {
+    const keys = Object.keys(unexpectedByDay);
+    if (keys.length) {
+      keys.sort();
+      console.log(`\n[UNEXPECTED] primeiros ${Math.min(limitPrint, keys.length)} dias:`);
+      for (const k of keys.slice(0, limitPrint)) {
+        const r = unexpectedByDay[k];
+        const s = (r.unexpected || []).map((x) => `${x.hh}(${x.count})`).join(", ");
+        console.log(`- ${r.ymd} unexpected: ${s}`);
+      }
+    } else {
+      console.log("\n[UNEXPECTED] nenhum slot inesperado detectado no intervalo.");
     }
-  } else {
-    console.log("\n[UNEXPECTED] nenhum slot inesperado detectado no intervalo.");
   }
 
   if (details) console.log("\n[DETAILS] detalhes completos estão no JSON.");

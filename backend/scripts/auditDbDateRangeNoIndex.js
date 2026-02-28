@@ -85,11 +85,21 @@ function isIndexError(err) {
  */
 function pickFirstValidYmd(docs, fieldName) {
   for (const doc of docs || []) {
-    const d = doc?.data ? doc.data() : doc || {};
-    const raw = d?.[fieldName] ?? d?.date ?? d?.ymd;
+    const isSnap = doc && typeof doc.data === "function";
+    const d = isSnap ? doc.data() : (doc || {});
+
+    // prioridade: fieldName; depois tenta o "outro" campo como fallback
+    let raw = d?.[fieldName];
+
+    if (raw == null) {
+      if (fieldName === "ymd") raw = d?.date;
+      else if (fieldName === "date") raw = d?.ymd;
+      else raw = d?.date ?? d?.ymd;
+    }
+
     const y = normalizeToYMD(raw);
     if (y && isISODateStrict(y)) {
-      return { ymd: y, docId: doc?.id || null, raw };
+      return { ymd: y, docId: isSnap ? doc.id : (doc?.id || null), raw };
     }
   }
   return { ymd: null, docId: null, raw: null };
@@ -100,11 +110,19 @@ function pickMinMaxFromDocs(docs, fieldName) {
   let maxYmd = null;
 
   for (const doc of docs || []) {
-    const d = doc?.data ? doc.data() : doc || {};
-    const raw = d?.[fieldName] ?? d?.date ?? d?.ymd;
-    const y = normalizeToYMD(raw);
+    const isSnap = doc && typeof doc.data === "function";
+    const d = isSnap ? doc.data() : (doc || {});
 
+    let raw = d?.[fieldName];
+    if (raw == null) {
+      if (fieldName === "ymd") raw = d?.date;
+      else if (fieldName === "date") raw = d?.ymd;
+      else raw = d?.date ?? d?.ymd;
+    }
+
+    const y = normalizeToYMD(raw);
     if (!y || !isISODateStrict(y)) continue;
+
     if (!minYmd || y < minYmd) minYmd = y;
     if (!maxYmd || y > maxYmd) maxYmd = y;
   }
@@ -118,12 +136,20 @@ function pickMinMaxFromDocs(docs, fieldName) {
  *
  * Se lotteryKey for passado, filtra por where(lottery_key == lotteryKey).
  */
-async function tryMinMaxByField(db, fieldName, { lotteryKey = null, scanLimit = 50 } = {}) {
+async function tryMinMaxByField(
+  db,
+  fieldName,
+  { lotteryKey = null, scanLimit = 50 } = {}
+) {
   const DOC_ID = admin.firestore.FieldPath.documentId();
 
   let base = db.collection("draws");
   if (lotteryKey) {
-    base = base.where("lottery_key", "==", String(lotteryKey).trim().toUpperCase());
+    base = base.where(
+      "lottery_key",
+      "==",
+      String(lotteryKey).trim().toUpperCase()
+    );
   }
 
   const ascSnap = await base
@@ -149,8 +175,7 @@ async function tryMinMaxByField(db, fieldName, { lotteryKey = null, scanLimit = 
     maxDocId: maxPick.docId,
     minRaw: minPick.raw ?? null,
     maxRaw: maxPick.raw ?? null,
-    source: `${lotteryKey ? "where(lottery_key)+":""
-      }orderBy(${fieldName})+docId(scan=${scanLimit})`,
+    source: `${lotteryKey ? "where(lottery_key)+" : ""}orderBy(${fieldName})+docId(scan=${scanLimit})`,
   };
 }
 
@@ -159,7 +184,11 @@ async function fallbackBoundsByDocIdEdges(db, edgeLimit, { lotteryKey = null } =
 
   let base = db.collection("draws");
   if (lotteryKey) {
-    base = base.where("lottery_key", "==", String(lotteryKey).trim().toUpperCase());
+    base = base.where(
+      "lottery_key",
+      "==",
+      String(lotteryKey).trim().toUpperCase()
+    );
   }
 
   const ascSnap = await base.orderBy(DOC_ID, "asc").limit(edgeLimit).get();
@@ -273,6 +302,7 @@ async function main() {
     console.log(`lastDocId(sample): ${lastDocId || "N/A"}`);
   }
   console.log("==================================");
+  process.exit(0);
 }
 
 main().catch((e) => {

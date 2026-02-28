@@ -4,6 +4,27 @@ const { admin, getDb } = require("../service/firebaseAdmin");
 
 function pad2(n) { return String(n).padStart(2, "0"); }
 
+/**
+ * Formata Date -> YYYY-MM-DD no timezone informado (padrão: America/Sao_Paulo).
+ * Evita “virada de dia” quando o servidor roda em UTC mas o dado é local (BRT).
+ */
+function formatDateToYMDInTZ(date, timeZone = "America/Sao_Paulo") {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return null;
+
+  // formatToParts => { year, month, day } no TZ pedido
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+
+  const map = Object.fromEntries(parts.map((p) => [p.type, p.value]));
+  const y = map.year, m = map.month, d = map.day;
+  if (!y || !m || !d) return null;
+  return `${y}-${m}-${d}`;
+}
+
 function isISODateStrict(s) {
   const str = String(s || "").trim();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) return false;
@@ -12,35 +33,42 @@ function isISODateStrict(s) {
   return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
 }
 
-function normalizeToYMD(input) {
+function normalizeToYMD(input, timeZone = "America/Sao_Paulo") {
   if (!input) return null;
 
+  // Firestore Timestamp (admin.firestore.Timestamp)
   if (typeof input === "object" && typeof input.toDate === "function") {
     const d = input.toDate();
-    if (!Number.isNaN(d.getTime())) {
-      return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
-    }
+    const ymd = formatDateToYMDInTZ(d, timeZone);
+    if (ymd) return ymd;
   }
 
-  if (typeof input === "object" &&
-      (Number.isFinite(Number(input.seconds)) || Number.isFinite(Number(input._seconds)))) {
+  // objetos {seconds} / {_seconds}
+  if (
+    typeof input === "object" &&
+    (Number.isFinite(Number(input.seconds)) || Number.isFinite(Number(input._seconds)))
+  ) {
     const sec = Number.isFinite(Number(input.seconds)) ? Number(input.seconds) : Number(input._seconds);
     const d = new Date(sec * 1000);
-    if (!Number.isNaN(d.getTime())) {
-      return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
-    }
+    const ymd = formatDateToYMDInTZ(d, timeZone);
+    if (ymd) return ymd;
   }
 
+  // Date
   if (input instanceof Date && !Number.isNaN(input.getTime())) {
-    return `${input.getUTCFullYear()}-${pad2(input.getUTCMonth() + 1)}-${pad2(input.getUTCDate())}`;
+    const ymd = formatDateToYMDInTZ(input, timeZone);
+    if (ymd) return ymd;
   }
 
+  // strings
   const s = String(input || "").trim();
   if (!s) return null;
 
+  // ISO com ou sem hora: pega só YYYY-MM-DD do começo
   const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
 
+  // BR: DD/MM/YYYY
   const br = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
   if (br) return `${br[3]}-${br[2]}-${br[1]}`;
 
@@ -70,8 +98,24 @@ function isIndexError(err) {
 }
 
 function extractYmdAndHour(docData) {
-  const y = docData?.ymd || normalizeToYMD(docData?.date ?? docData?.draw_date ?? docData?.close_date ?? docData?.dt ?? docData?.data);
-  const h = normalizeHourLike(docData?.close_hour ?? docData?.closeHour ?? docData?.close_hour_raw ?? docData?.hour ?? docData?.hora);
+  const y =
+    docData?.ymd ||
+    normalizeToYMD(
+      docData?.date ??
+      docData?.draw_date ??
+      docData?.close_date ??
+      docData?.dt ??
+      docData?.data
+    );
+
+  const h = normalizeHourLike(
+    docData?.close_hour ??
+    docData?.closeHour ??
+    docData?.close_hour_raw ??
+    docData?.hour ??
+    docData?.hora
+  );
+
   const ymd = y && isISODateStrict(y) ? y : null;
   const hour = h || null;
   return { ymd, hour };
@@ -111,14 +155,16 @@ function auditCountsFromDocs(rows) {
 async function fetchRowsForRange(db, { lotteryKey, fromYmd, toYmd, pageSize = 2000, maxPages = 80 } = {}) {
   const lot = lotteryKey ? String(lotteryKey).trim().toUpperCase() : null;
 
-  // 1) tentativa indexada
+  // 1) tentativa indexada (aceita range parcial)
   try {
     let q = db.collection("draws");
     if (lot) q = q.where("lottery_key", "==", lot);
-    if (fromYmd && toYmd) q = q.where("ymd", ">=", fromYmd).where("ymd", "<=", toYmd);
+    if (fromYmd) q = q.where("ymd", ">=", fromYmd);
+    if (toYmd) q = q.where("ymd", "<=", toYmd);
+
     const snap = await q.get();
     const rows = snap.docs.map((d) => ({ id: d.id, ...(d.data() || {}) }));
-    return { rows, source: "query: where(lottery_key)+where(ymd>=<=)", usedFallback: false };
+    return { rows, source: "query: where(lottery_key)+where(ymd>=/<=)", usedFallback: false };
   } catch (e) {
     if (!isIndexError(e)) throw e;
   }

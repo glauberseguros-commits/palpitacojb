@@ -1,4 +1,4 @@
-"use strict";
+﻿"use strict";
 
 /**
  * importKingApostas.js
@@ -146,8 +146,8 @@ const axios = require("axios");
  */
 const { admin, db } = require("../service/firebaseAdmin");
 
+const { getPtRioSlotsByDate } = require("./ptRioCalendar");
 
-const { getPtRioSlotsByDate } = require('./ptRioCalendar');
 /**
  * =========================
  * Config / toggles
@@ -309,6 +309,7 @@ function normalizePrize(raw) {
   const animal = grupo ? GRUPO_TO_ANIMAL[grupo] : null;
   return { raw: String(raw), milhar, centena, dezena, grupo, animal };
 }
+
 function isISODate(s) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
 }
@@ -362,8 +363,7 @@ function normalizeCloseHourForLottery(value, lotteryKey) {
   const raw0 = normalizeHHMM(value);
   if (!raw0 || !isHHMM(raw0)) return { raw: "", slot: "" };
 
-  // ✅ FEDERAL: padroniza o SLOT de negócio (estável) e preserva o raw
-  // A API às vezes retorna 19:53 (horário real do fechamento), mas o sorteio é "20HS".
+  // ✅ FEDERAL: slot de negócio é sempre 20:00, mas preserva o raw
   if (lk === "FEDERAL") {
     return { raw: raw0, slot: "20:00" };
   }
@@ -378,6 +378,34 @@ function normalizeCloseHourForLottery(value, lotteryKey) {
   }
 
   return { raw: raw0, slot: raw0 };
+}
+
+/**
+ * ✅ Normaliza o parâmetro closeHour (do CLI/scheduler) e evita log enganoso.
+ * - Para FEDERAL: qualquer coisa vira slot=20:00, mas mantemos "requested" para log.
+ */
+function normalizeRequestedCloseHour(closeHour, lotteryKey) {
+  const lk = String(lotteryKey || "").trim().toUpperCase();
+  const requested = closeHour ? normalizeHHMM(closeHour) : null;
+  const requestedIsValid = requested ? isHHMM(requested) : false;
+
+  if (!requested) {
+    return { requested: null, slot: null, note: null };
+  }
+  if (!requestedIsValid) {
+    return { requested, slot: null, note: "invalid" };
+  }
+
+  // FEDERAL: slot único 20:00 (não fingir que o usuário pediu 20:00)
+  if (lk === "FEDERAL") {
+    const slot = "20:00";
+    const note = requested !== slot ? `FEDERAL_slot_fixed(${requested}->${slot})` : null;
+    return { requested, slot, note };
+  }
+
+  // outros: normalização normal por lotteryKey (PT_RIO min->00 etc.)
+  const slot = normalizeCloseHourForLottery(requested, lk).slot;
+  return { requested, slot: slot || null, note: null };
 }
 
 /**
@@ -468,7 +496,15 @@ function buildResultsUrl({ date, lotteryKey, lotteryId = null }) {
   const base = "https://app_services.apionline.cloud/api/results";
   const lk = String(lotteryKey || "").trim().toUpperCase();
   const lotteries = LOTTERIES_BY_KEY[lk];
-  if (!lotteries?.length) throw new Error(`lotteryKey inválida: ${lk}`);
+
+  if (!lotteries?.length) {
+    if (lk === "FEDERAL") {
+      throw new Error(
+        `FEDERAL sem lotteryIds. Defina KING_LOTTERIES_FEDERAL="uuid1,uuid2,..." (ex.: o UUID do draw FEDERAL 20HS).`
+      );
+    }
+    throw new Error(`lotteryKey inválida: ${lk}`);
+  }
 
   const params = new URLSearchParams();
   params.append("dates[]", date);
@@ -560,8 +596,10 @@ function buildDetailsUrl({ date, lotteryKey }) {
   const lot = lk === "PT_RIO" ? "PT RIO" : lk.replace(/_/g, " ");
 
   const q =
-    "lottery=" + encodeURIComponent(lot) +
-    "&date=" + encodeURIComponent(String(date || "").trim());
+    "lottery=" +
+    encodeURIComponent(lot) +
+    "&date=" +
+    encodeURIComponent(String(date || "").trim());
 
   return "https://app.kingapostas.com/results/details?" + q;
 }
@@ -733,7 +771,14 @@ function summarizeCloseHours(draws, lotteryKey) {
 async function fetchKingResults({ date, lotteryKey }) {
   const lk = String(lotteryKey || "").trim().toUpperCase();
   const lotteries = LOTTERIES_BY_KEY[lk];
-  if (!lotteries?.length) throw new Error(`lotteryKey inválida: ${lk}`);
+  if (!lotteries?.length) {
+    if (lk === "FEDERAL") {
+      throw new Error(
+        `FEDERAL sem lotteryIds. Defina KING_LOTTERIES_FEDERAL="uuid1,uuid2,..." para habilitar fetch.`
+      );
+    }
+    throw new Error(`lotteryKey inválida: ${lk}`);
+  }
 
   if (!FETCH_PER_LOTTERY) {
     const url = buildResultsUrl({ date, lotteryKey: lk });
@@ -1209,26 +1254,21 @@ async function importFromPayload({
 }
 
 /**
- * Função principal para uso pelo server/scheduler.
- * Retorna um objeto com métricas e flags úteis (captured, savedCount, alreadyComplete).
- *
- * ✅ NOVO:
- * - se normalizedClose NÃO existir nos close_hours do dia, retorna blocked/no_draw_for_slot
- *   (isso NÃO é furo)
- */
-/**
  * ✅ Cleanup automático: remove docs legados (lottery_id null) quando existe doc UUID no mesmo date+slot.
  * - Usa query mínima por date (sem índice composto)
  * - Seguro: só apaga legado se existe UUID no slot
  */
 async function cleanupLegacyDrawsForDate({ date, lotteryKey }) {
   const lk = String(lotteryKey || "").trim().toUpperCase();
-  if (!date || !isISODate(date) || !lk) return { ok: false, deleted: 0, slots: 0, reason: "bad_args" };
+  if (!date || !isISODate(date) || !lk)
+    return { ok: false, deleted: 0, slots: 0, reason: "bad_args" };
 
   const snap = await db.collection("draws").where("date", "==", date).get();
   const rows = snap.docs.map((doc) => ({ ref: doc.ref, id: doc.id, ...doc.data() }));
 
-  const mine = rows.filter((r) => String(r.lottery_key || "").trim().toUpperCase() === lk);
+  const mine = rows.filter(
+    (r) => String(r.lottery_key || "").trim().toUpperCase() === lk
+  );
 
   const bySlot = new Map();
   for (const r of mine) {
@@ -1281,11 +1321,14 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
   // ✅ BLINDAGEM: nunca importar data futura (evita “sujar” FS por engano)
   const todayBR = todayYMDLocal();
   if (!ALLOW_FUTURE_DATE && isFutureISODate(date)) {
+    const norm = normalizeRequestedCloseHour(closeHour, lk);
     return {
       ok: true,
       lotteryKey: lk,
       date,
-      closeHour: closeHour ? normalizeCloseHourForLottery(closeHour, lk).slot : null,
+      closeHour: norm.slot || null,
+
+      requestedCloseHour: norm.requested || null,
 
       blocked: true,
       blockedReason: "future_date",
@@ -1316,7 +1359,7 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
       skippedCloseHour: 0,
       skippedAlreadyComplete: 0,
       proof: {
-        filterClose: closeHour ? normalizeCloseHourForLottery(closeHour, lk).slot : null,
+        filterClose: norm.slot || null,
         apiHasPrizes: false,
         apiReturnedTargetDraws: 0,
         targetDrawIds: [],
@@ -1332,11 +1375,12 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
     };
   }
 
-  // ✅ closeHour do scheduler é slot; normaliza para slot também
-  const normalizedClose = closeHour ? normalizeCloseHourForLottery(closeHour, lk).slot : null;
-  if (normalizedClose && !isHHMM(normalizedClose)) {
+  // ✅ closeHour do scheduler: normaliza SEM log enganoso
+  const norm = normalizeRequestedCloseHour(closeHour, lk);
+  if (norm.note === "invalid") {
     throw new Error('Parâmetro "closeHour" inválido. Use HH:MM.');
   }
+  const normalizedClose = norm.slot || null;
 
   const startedAt = Date.now();
 
@@ -1369,6 +1413,8 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
           lotteryKey: lk,
           date,
           closeHour: normalizedClose,
+          requestedCloseHour: norm.requested || null,
+
           blocked: true,
           blockedReason: "no_draw_for_slot_calendar",
           todayBR,
@@ -1453,9 +1499,7 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
           );
         }
       } catch (e) {
-        console.warn(
-          "[FALLBACK:DETAILS] erro: " + String(e?.message || e || "unknown")
-        );
+        console.warn("[FALLBACK:DETAILS] erro: " + String(e?.message || e || "unknown"));
       }
 
       const ms0 = Date.now() - startedAt;
@@ -1465,6 +1509,7 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
         lotteryKey: lk,
         date,
         closeHour: normalizedClose,
+        requestedCloseHour: norm.requested || null,
 
         blocked: true,
         blockedReason: "api_missing_slot",
@@ -1552,6 +1597,7 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
     lotteryKey: lk,
     date,
     closeHour: normalizedClose || null,
+    requestedCloseHour: norm.requested || null,
 
     blocked: false,
     blockedReason: null,
@@ -1563,13 +1609,9 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
     alreadyCompleteAll: normalizedClose ? alreadyCompleteAll : null,
 
     expectedTargets: normalizedClose ? Number(proof.expectedTargets || 0) : null,
-    alreadyCompleteCount: normalizedClose
-      ? Number(proof.alreadyCompleteCount || 0)
-      : null,
+    alreadyCompleteCount: normalizedClose ? Number(proof.alreadyCompleteCount || 0) : null,
     slotDocsFound: normalizedClose ? Number(proof.slotDocsFound || 0) : null,
-    apiReturnedTargetDraws: normalizedClose
-      ? Number(proof.apiReturnedTargetDraws || 0)
-      : null,
+    apiReturnedTargetDraws: normalizedClose ? Number(proof.apiReturnedTargetDraws || 0) : null,
 
     savedCount: normalizedClose ? savedCount : null,
     writeCount: normalizedClose ? writeCount : null,
@@ -1579,6 +1621,7 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
     ...result,
   };
 }
+
 /**
  * CLI wrapper (mantém compatibilidade)
  */
@@ -1609,16 +1652,28 @@ async function main() {
     process.exit(2);
   }
 
-  const normalizedClose = closeHour ? normalizeCloseHourForLottery(closeHour, lk).slot : null;
-  if (normalizedClose && !isHHMM(normalizedClose)) {
+  const norm = normalizeRequestedCloseHour(closeHour, lk);
+  if (norm.note === "invalid") {
     throw new Error(
       "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL] [HH:MM]"
     );
   }
+  const normalizedClose = norm.slot || null;
 
-  console.log(
-    `STEP 1/3 Buscando API: ${lk} ${date}${normalizedClose ? ` ${normalizedClose}` : ""}`
-  );
+  // ✅ LOG HONESTO (mostra o que foi pedido e o slot efetivo)
+  const closeInfo =
+    norm.requested && normalizedClose
+      ? norm.requested === normalizedClose
+        ? ` ${normalizedClose}`
+        : ` req=${norm.requested} -> slot=${normalizedClose}`
+      : normalizedClose
+      ? ` ${normalizedClose}`
+      : norm.requested
+      ? ` req=${norm.requested}`
+      : "";
+
+  console.log(`STEP 1/3 Buscando API: ${lk} ${date}${closeInfo}`);
+
   let payload = await fetchKingResults({ date, lotteryKey: lk });
 
   // ✅ NOVO (CLI também): se pediram closeHour e ele não existe no dia, avisa e sai 0
@@ -1631,9 +1686,7 @@ async function main() {
 
     if (!hasTarget) {
       console.warn(
-        `[NO_DRAW_FOR_SLOT] ${lk} ${date} slot=${normalizedClose} close_hours=[${closes.join(
-          ", "
-        )}]`
+        `[NO_DRAW_FOR_SLOT] ${lk} ${date} slot=${normalizedClose} close_hours=[${closes.join(", ")}]`
       );
 
       // tenta fallback apenas pra logar
@@ -1655,8 +1708,7 @@ async function main() {
   }
 
   console.log(
-    `STEP 2/3 Processando ${
-      Array.isArray(payload?.data) ? payload.data.length : 0
+    `STEP 2/3 Processando ${Array.isArray(payload?.data) ? payload.data.length : 0
     } draws retornados pela API...`
   );
 
@@ -1666,7 +1718,11 @@ async function main() {
     closeHour: normalizedClose,
     skipIfAlreadyComplete: false, // CLI regrava
   });
-  console.log(`STEP 3/3 OK. Import concluído: ${lk} ${date}${normalizedClose ? ` ${normalizedClose}` : ""}`);
+
+  console.log(
+    `STEP 3/3 OK. Import concluído: ${lk} ${date}${normalizedClose ? ` ${normalizedClose}` : ""
+    }`
+  );
 
   // ✅ cleanup automático de legado (somente quando per-lottery está ON)
   if (FETCH_PER_LOTTERY) {
@@ -1683,7 +1739,6 @@ async function main() {
   }
 }
 
-
 if (require.main === module) {
   main().catch((e) => {
     console.error("ERRO:", e?.message || e);
@@ -1697,11 +1752,3 @@ module.exports = {
   importFromPayload,
   buildResultsUrl,
 };
-
-
-
-
-
-
-
-

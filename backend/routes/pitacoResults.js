@@ -72,17 +72,14 @@ function normalizeLotteryKey(v) {
   const s = String(v ?? "").trim().toUpperCase();
 
   // RJ
-  if (s === "RJ" || s === "RIO" || s === "PT-RIO" || s === "PT_RIO")
-    return "PT_RIO";
+  if (s === "RJ" || s === "RIO" || s === "PT-RIO" || s === "PT_RIO") return "PT_RIO";
 
   // FEDERAL (inclui alias BR)
-  if (s === "FED" || s === "FEDERAL" || s === "BR")
-    return "FEDERAL";
+  if (s === "FED" || s === "FEDERAL" || s === "BR") return "FEDERAL";
 
   // inválido → força 400 (projeto atual só usa PT_RIO e FEDERAL)
   return "";
 }
-
 
 /* =========================
    HELPERS
@@ -150,7 +147,7 @@ function parseBool01(v) {
 
 function parsePosInt(v, def, min, max) {
   const s = String(v ?? "").trim();
-  if (!s) return def; // ✅ evita Number('') => 0 quando v é undefined/empty
+  if (!s) return def; // evita Number('') => 0 quando v é undefined/empty
 
   const n = Number(s);
   if (!Number.isFinite(n)) return def;
@@ -162,9 +159,7 @@ function parsePosInt(v, def, min, max) {
 }
 
 function uniqSorted(arr) {
-  return Array.from(
-    new Set((Array.isArray(arr) ? arr : []).filter(Boolean))
-  ).sort();
+  return Array.from(new Set((Array.isArray(arr) ? arr : []).filter(Boolean))).sort();
 }
 
 function setDiff(a, bSet) {
@@ -222,7 +217,6 @@ function readDayStatusMap(lottery, opts) {
 }
 
 function shouldBlockDayStatus(dayStatus, strict) {
-  // sempre bloqueia
   if (dayStatus === "holiday_no_draw") return true;
   if (dayStatus === "incomplete") return true;
 
@@ -349,7 +343,7 @@ function getExpectedForDate(lotteryKey, ymd, include09FromYmdDefault) {
   const r = pickRangeForDate(ranges, ymd);
 
   if (r) {
-    // ✅ Suporta schedule por dia da semana:
+    // Suporta schedule por dia da semana
     if (r.dow && typeof r.dow === "object") {
       const d = new Date(String(ymd) + "T12:00:00-03:00");
       const dow = String(d.getDay()); // 0=dom
@@ -456,42 +450,13 @@ async function mapWithConcurrency(items, limitN, mapper) {
     }
   }
 
-  await Promise.all(
-    Array.from({ length: Math.min(concurrency, arr.length) }, () => worker())
-  );
+  await Promise.all(Array.from({ length: Math.min(concurrency, arr.length) }, () => worker()));
   return results;
 }
 
 /* =========================
    ROUTE
 ========================= */
-
-// GET /api/pitaco/results?date=YYYY-MM-DD&lottery=PT_RIO
-// ------------------------------------------------------
-// PARÂMETROS PRINCIPAIS
-// - date=YYYY-MM-DD  (obrigatório)
-// - lottery=PT_RIO|FEDERAL   (recomendado)
-//   - aliases aceitos:
-//     - PT_RIO: RJ | RIO | PT-RIO | PT_RIO
-//     - FEDERAL: FED | FEDERAL | BR
-//
-// COMPAT / LEGADO
-// - lotteryKey=...  (alias de lottery)
-// - uf=...
-//   ⚠️ uf só é tratado como lottery se NÃO vier lottery/lotteryKey.
-//   Exemplos:
-//   - ?uf=RJ  => PT_RIO
-//   - ?uf=BR  => FEDERAL
-//   - ?lottery=FEDERAL&uf=RJ  => uf é ignorado
-//
-// OUTROS
-// - strict=1
-// - reloadDayStatus=1
-// - reloadGaps=1
-// - includePrizes=0|1 (default 1)
-// - limitDocs=120 (min 20 max 500)
-// - slotGraceMin=25
-// - noCapToday=1
 
 function buildSlots(opts) {
   const {
@@ -524,22 +489,15 @@ function buildSlots(opts) {
     // válido
     if (draw) return { hour: hh, kind, status: "valid", draw };
 
-    // ✅ HOJE + ainda não publicado → FUTURE
+    // HOJE + ainda não publicado → FUTURE
     if (
       capToday &&
       isToday &&
-      ((expectedHard && expectedHard.includes(hh)) ||
-        (expectedSoft && expectedSoft.includes(hh)))
+      ((expectedHard && expectedHard.includes(hh)) || (expectedSoft && expectedSoft.includes(hh)))
     ) {
       const published = isSlotPublishedToday(hh, nowMinBR, slotGraceMin);
       if (!published) {
-        return {
-          hour: hh,
-          kind,
-          status: "future",
-          reason: "not_yet_published",
-          draw: null,
-        };
+        return { hour: hh, kind, status: "future", reason: "not_yet_published", draw: null };
       }
     }
 
@@ -557,10 +515,6 @@ function buildSlots(opts) {
 }
 
 router.get("/results", async (req, res) => {
-  const slotGraceMin = parsePosInt(req.query.slotGraceMin, 25, 0, 240);
-  const noCapToday = parseBool01(req.query.noCapToday);
-  const capToday = !noCapToday;
-
   // UF_CONFLICT_GUARD: evita pegadinha de uf junto com lottery explícito
   // Se veio lottery/lotteryKey, uf NÃO tem efeito (legado). Melhor bloquear e explicar.
   if ((req.query.lotteryKey != null || req.query.lottery != null) && req.query.uf != null) {
@@ -568,26 +522,21 @@ router.get("/results", async (req, res) => {
       ok: false,
       error:
         "Parâmetros conflitantes: quando 'lottery' (ou 'lotteryKey') é informado, 'uf' é ignorado. Remova 'uf' ou use apenas 'uf=RJ|BR' (legado).",
-      hint:
-        "Use: ?date=YYYY-MM-DD&lottery=PT_RIO|FEDERAL  (ou)  ?date=YYYY-MM-DD&uf=RJ|BR",
+      hint: "Use: ?date=YYYY-MM-DD&lottery=PT_RIO|FEDERAL  (ou)  ?date=YYYY-MM-DD&uf=RJ|BR",
     });
   }
+
+  const slotGraceMin = parsePosInt(req.query.slotGraceMin, 25, 0, 240);
+  const noCapToday = parseBool01(req.query.noCapToday);
+  const capToday = !noCapToday;
+
   // aceita ?lottery= ou ?lotteryKey= ou ?uf=
-  // 🔥 FIX: separa lottery de UF real
-const lotteryParam =
-  req.query.lotteryKey ??
-  req.query.lottery ??
-  null;
+  const lotteryParam = req.query.lotteryKey ?? req.query.lottery ?? null;
 
-// legado: se NÃO veio lottery explícito, ainda aceita uf como lottery
-const legacyLottery =
-  lotteryParam == null
-    ? req.query.uf
-    : null;
+  // legado: se NÃO veio lottery explícito, ainda aceita uf como lottery
+  const legacyLottery = lotteryParam == null ? req.query.uf : null;
 
-const lotteryRaw = String(
-  lotteryParam ?? legacyLottery ?? ""
-).trim();
+  const lotteryRaw = String(lotteryParam ?? legacyLottery ?? "").trim();
   const lotteryKey = normalizeLotteryKey(lotteryRaw);
 
   try {
@@ -597,21 +546,22 @@ const lotteryRaw = String(
     const reloadDayStatus = parseBool01(req.query.reloadDayStatus);
     const reloadGaps = parseBool01(req.query.reloadGaps);
 
-    const includePrizes =
-      req.query.includePrizes == null ? true : parseBool01(req.query.includePrizes);
-
+    const includePrizes = req.query.includePrizes == null ? true : parseBool01(req.query.includePrizes);
     const limitDocs = parsePosInt(req.query.limitDocs, 120, 20, 500);
 
     if (!date) return res.status(400).json({ ok: false, error: "date obrigatório" });
     if (!isISODate(date)) {
-      return res
-        .status(400)
-        .json({ ok: false, error: "date inválido (use YYYY-MM-DD)" });
+      return res.status(400).json({ ok: false, error: "date inválido (use YYYY-MM-DD)" });
     }
-    if (!lotteryRaw) { return res.status(400).json({ ok: false, error: "lottery obrigatório" }); }
-    if (!lottery) { return res.status(400).json({ ok: false, error: "lottery inválida: " + lotteryRaw + " (use lottery=PT_RIO|FEDERAL ou aliases RJ|BR)" }); }
+    if (!lotteryRaw) return res.status(400).json({ ok: false, error: "lottery obrigatório" });
+    if (!lottery) {
+      return res.status(400).json({
+        ok: false,
+        error: "lottery inválida: " + lotteryRaw + " (use lottery=PT_RIO|FEDERAL ou aliases RJ|BR)",
+      });
+    }
 
-    // ✅ HARD GUARD: bloqueia datas futuras (fuso Brasil)
+    // HARD GUARD: bloqueia datas futuras (fuso Brasil)
     if (isFutureISODate(date)) {
       const todayBR = todayYMDInSaoPaulo();
       return res.json({
@@ -679,26 +629,28 @@ const lotteryRaw = String(
     const baseHard = expectedBase?.hard || [];
     const baseSoft = expectedBase?.soft || [];
 
-    // ✅ CAP do dia atual
+    // CAP do dia atual
     const todayBR = todayYMDInSaoPaulo();
     const isToday = date === todayBR;
     const nowMinBR = nowMinutesInSaoPaulo();
 
-    // DEBUG CAP TODAY
-    try {
-      const dbg18 = isSlotPublishedToday("18", nowMinBR, slotGraceMin);
-      const dbg21 = isSlotPublishedToday("21", nowMinBR, slotGraceMin);
-      console.log("[pitaco/results][capToday]", {
-        date,
-        todayBR,
-        isToday,
-        nowMinBR,
-        slotGraceMin,
-        dbg18,
-        dbg21,
-      });
-    } catch (e) {
-      console.log("[pitaco/results][capToday] debug error", e?.message || e);
+    // DEBUG CAP TODAY (somente dev)
+    if (process.env.NODE_ENV === "development") {
+      try {
+        const dbg18 = isSlotPublishedToday("18", nowMinBR, slotGraceMin);
+        const dbg21 = isSlotPublishedToday("21", nowMinBR, slotGraceMin);
+        console.log("[pitaco/results][capToday]", {
+          date,
+          todayBR,
+          isToday,
+          nowMinBR,
+          slotGraceMin,
+          dbg18,
+          dbg21,
+        });
+      } catch (e) {
+        console.log("[pitaco/results][capToday] debug error", e?.message || e);
+      }
     }
 
     // GAPS (source gaps)
@@ -712,7 +664,6 @@ const lotteryRaw = String(
     // esperado "válido" (depois de remover gaps)
     const expectedHard = setDiff(baseHard, removedHardSet);
     const expectedSoft = setDiff(baseSoft, removedSoftSet);
-    const expectedAll = uniqSorted([...expectedHard, ...expectedSoft]);
 
     // somente slots que já deveriam ter sido publicados hoje
     const expectedHardPublished =
@@ -737,8 +688,7 @@ const lotteryRaw = String(
           id: doc.id,
           ...d,
           close_hour: normalizeHHMM(d.close_hour),
-          prizesCount:
-            typeof d.prizesCount !== "undefined" ? d.prizesCount : undefined,
+          prizesCount: typeof d.prizesCount !== "undefined" ? d.prizesCount : undefined,
         };
       });
 
@@ -787,7 +737,6 @@ const lotteryRaw = String(
 
         expectedHard: expectedHard.length,
         expectedSoft: expectedSoft.length,
-        expectedAll: expectedAll.length,
 
         presentHours: presentHours.length,
 
@@ -827,10 +776,7 @@ const lotteryRaw = String(
     const draws = await mapWithConcurrency(docs, 6, async (doc) => {
       const d = doc.data() || {};
 
-      const prizesSnap = await doc.ref
-        .collection("prizes")
-        .orderBy("position", "asc")
-        .get();
+      const prizesSnap = await doc.ref.collection("prizes").orderBy("position", "asc").get();
 
       return {
         id: doc.id,
@@ -885,7 +831,6 @@ const lotteryRaw = String(
 
       expectedHard: expectedHard.length,
       expectedSoft: expectedSoft.length,
-      expectedAll: expectedAll.length,
 
       presentHours: presentHours.length,
 
@@ -925,17 +870,3 @@ const lotteryRaw = String(
 });
 
 module.exports = router;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
