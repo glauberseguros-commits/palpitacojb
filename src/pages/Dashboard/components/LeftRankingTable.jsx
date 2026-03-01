@@ -12,10 +12,9 @@ import {
  * - Ordenável: Grupo | Animal | Apar.
  * - Não ordenável: Imagem | Palpite
  *
- * ✅ CORREÇÃO PRINCIPAL (scroll/corte):
- * - Header "sticky" dentro do painel
- * - Body com overflow auto (scroll interno só no ranking)
- * - Sem depender de <table> (é grid em divs)
+ * ✅ SEM SCROLL (nem vertical nem horizontal) e sem cortar:
+ * - Body sem overflow
+ * - Layout compactado (linha/fonte/imagem) para caber 25 linhas
  *
  * ✅ DEMO safe:
  * - prop `disabled`: bloqueia ordenação e seleção
@@ -356,7 +355,7 @@ export default function LeftRankingTable({
     }
 
     return (
-      <div className="pp_left_body" style={ui.bodyScroll}>
+      <div className="pp_left_body" style={ui.bodyNoScroll}>
         {sortedRows.map((r) => {
           const isSel = Number(selectedGrupo) === Number(r.grupo);
           const dim = hasSelection && !isSel;
@@ -573,10 +572,10 @@ export default function LeftRankingTable({
 }
 
 /**
- * ✅ GRID: um pouco mais largo para não cortar header
+ * ✅ GRID: colunas equilibradas para não forçar scroll horizontal
  */
 const GRID_COLS =
-  "58px minmax(58px, 68px) minmax(130px, 1fr) minmax(58px, 68px) minmax(66px, 78px)";
+  "52px minmax(54px, 64px) minmax(120px, 1fr) minmax(54px, 64px) minmax(64px, 74px)";
 
 const ui = {
   wrap: {
@@ -588,6 +587,7 @@ const ui = {
     minHeight: 0,
     height: "100%",
     boxSizing: "border-box",
+    overflow: "hidden", // ✅ trava qualquer scroll
   },
 
   locationRow: {
@@ -623,6 +623,7 @@ const ui = {
     border: "1px solid rgba(255,255,255,0.24)",
     borderRadius: 18,
     overflow: "hidden",
+    overflowX: "hidden", // ✅ sem horizontal
     background: "rgba(0,0,0,0.55)",
     boxShadow: "0 18px 50px rgba(0,0,0,0.55)",
     display: "flex",
@@ -636,7 +637,7 @@ const ui = {
     display: "grid",
     gridTemplateColumns: GRID_COLS,
     alignItems: "end",
-    padding: "7px 6px 6px 6px",
+    padding: "5px 6px 5px 6px", // ✅ menor
     borderBottom: "2px solid rgba(255,255,255,0.55)",
     background: "rgba(0,0,0,0.35)",
     columnGap: 6,
@@ -726,19 +727,18 @@ const ui = {
   hCenter: { textAlign: "center", justifyContent: "center" },
   hRight: { textAlign: "right", justifyContent: "flex-end" },
 
-  // ✅ AGORA O SCROLL É AQUI
-  bodyScroll: {
-    overflow: "auto",
+  // ✅ SEM SCROLL AQUI
+  bodyNoScroll: {
+    overflow: "hidden",
     minHeight: 0,
     flex: "1 1 auto",
-    WebkitOverflowScrolling: "touch",
   },
 
   row: {
     display: "grid",
     gridTemplateColumns: GRID_COLS,
     alignItems: "center",
-    padding: "3px 6px 3px 6px",
+    padding: "2px 6px 2px 6px", // ✅ menor
     borderTop: "1px solid rgba(255,255,255,0.28)",
     columnGap: 6,
     transition:
@@ -762,8 +762,8 @@ const ui = {
 
   td: {
     fontWeight: 700,
-    fontSize: 12.5,
-    letterSpacing: 0.1,
+    fontSize: 11.6, // ✅ menor
+    letterSpacing: 0.08,
     minWidth: 0,
     lineHeight: 1.0,
   },
@@ -775,11 +775,11 @@ const ui = {
     fontFeatureSettings: '"tnum" 1, "lnum" 1',
   },
 
-  // ✅ coluna ANIMAL menor (sem depender de CSS do dashboard)
+  // ✅ coluna ANIMAL menor
   animalTxt: {
-    fontWeight: 800,
-    fontSize: 10.8,
-    letterSpacing: 0.18,
+    fontWeight: 850,
+    fontSize: 10.2,
+    letterSpacing: 0.14,
     whiteSpace: "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",
@@ -804,13 +804,12 @@ const ui = {
   right: { textAlign: "right" },
 
   palpiteCell: { paddingRight: 6 },
-  palpiteHeader: { paddingRight: 6 },
 
   cellImg: { display: "flex", alignItems: "center" },
 
   imgFrame: {
-    width: 26,
-    height: 26,
+    width: 22, // ✅ menor
+    height: 22, // ✅ menor
     borderRadius: 6,
     border: "2px solid rgba(201,168,62,0.85)",
     background: "rgba(0,0,0,0.40)",
@@ -864,9 +863,7 @@ const ui = {
   emptyHint: { fontSize: 12.5, opacity: 0.75, lineHeight: 1.35 },
 
   _styleTag: `
-    .pp_left_body::-webkit-scrollbar { width: 10px; height: 10px; }
-    .pp_left_body::-webkit-scrollbar-track { background: rgba(255,255,255,0.06); border-radius: 999px; }
-    .pp_left_body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); border-radius: 999px; border: 2px solid rgba(0,0,0,0.45); }
-    .pp_left_body::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.26); }
+    /* Sem scrollbar visível (o componente não rola) */
+    .pp_left_body{ overflow: hidden !important; }
   `,
 };
