@@ -122,10 +122,11 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
   const isGuest = session?.type === "guest";
 
   /* ======================
-     Travar scroll do DOCUMENTO
-     - Dashboard: trava html/body (zera scroll “fantasma” da página principal)
-     - Mobile menu aberto: também trava (overlay)
-     - Outras páginas: libera
+     Travar scroll do DOCUMENTO (html/body)
+     ✅ Regra correta:
+     - Desktop + Dashboard: trava (layout “1 tela”)
+     - Mobile: NÃO trava no Dashboard (senão mata o scroll)
+     - Mobile menu aberto: trava (overlay)
   ====================== */
   useEffect(() => {
     const isDashboard = active === ROUTES.DASHBOARD;
@@ -133,7 +134,9 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
     const prevHtmlOverflow = document?.documentElement?.style?.overflow;
     const prevBodyOverflow = document?.body?.style?.overflow;
 
-    const mustLock = isDashboard || (isMobile && sidebarOpen);
+    const mustLock =
+      (!isMobile && isDashboard) || // desktop: dashboard travado
+      (isMobile && sidebarOpen); // mobile: trava só quando menu aberto
 
     if (mustLock) {
       document.documentElement.style.overflow = "hidden";
@@ -144,7 +147,6 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
     }
 
     return () => {
-      // cleanup sempre restaura o que estava antes
       document.documentElement.style.overflow = prevHtmlOverflow || "";
       document.body.style.overflow = prevBodyOverflow || "";
     };
@@ -197,6 +199,9 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
     const WHITE = "rgba(255,255,255,0.92)";
     const BORDER = "rgba(255,255,255,0.10)";
     const BG = "#050505";
+
+    // ✅ safe-area (iOS notch)
+    const SAFE_TOP = "env(safe-area-inset-top, 0px)";
 
     const sidebarW = isMobile ? 84 : 92;
     const isDashboard = active === ROUTES.DASHBOARD;
@@ -307,32 +312,43 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
       boxShadow: isActive ? "0 14px 36px rgba(0,0,0,0.55)" : "none",
     });
 
-    // ✅ Regra:
-    // - Dashboard: main não rola
-    // - Demais páginas: main pode rolar
+    // ✅ Regra correta:
+    // - Desktop + Dashboard: main NÃO rola (layout travado)
+    // - Mobile: main rola (inclusive Dashboard)
+    // - Outras páginas: main rola
     const main = {
       flex: 1,
       minWidth: 0,
       height: "100%",
-      overflow: isDashboard ? "hidden" : "auto",
+      overflow: !isMobile && isDashboard ? "hidden" : "auto",
       WebkitOverflowScrolling: "touch",
       position: "relative",
       zIndex: 1,
     };
 
-    // ✅ Botão hambúrguer premium no mobile
-    const mobileMenuBtn = isMobile
+    // ✅ Topbar sticky no mobile (deixa o menu “integrado”, não flutuando)
+    const mobileTopBar = isMobile
       ? {
           position: "sticky",
-          top: 10,
-          zIndex: 20,
-          margin: "10px 0 0 10px",
+          top: 0,
+          zIndex: 40,
+          padding: `calc(${SAFE_TOP} + 10px) 0 8px 10px`,
+          background:
+            "linear-gradient(180deg, rgba(0,0,0,0.72), rgba(0,0,0,0.22), rgba(0,0,0,0))",
+          backdropFilter: "blur(10px)",
+          WebkitBackdropFilter: "blur(10px)",
+        }
+      : { display: "none" };
+
+    // ✅ Botão hambúrguer premium no mobile (agora “dentro” do topbar)
+    const mobileMenuBtn = isMobile
+      ? {
           width: 42,
           height: 42,
           borderRadius: 14,
           border: `1px solid ${BORDER}`,
           background:
-            "linear-gradient(180deg, rgba(255,255,255,0.06), rgba(0,0,0,0.35))",
+            "linear-gradient(180deg, rgba(255,255,255,0.08), rgba(0,0,0,0.38))",
           boxShadow: "0 14px 36px rgba(0,0,0,0.55)",
           display: "grid",
           placeItems: "center",
@@ -340,9 +356,13 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
         }
       : { display: "none" };
 
-    const mainInner = isDashboard
-      ? { minWidth: 0, height: "100%", overflow: "hidden" }
-      : { minWidth: 0 };
+    // ✅ Inner:
+    // - Desktop + Dashboard: mantém 100% (a grade interna controla)
+    // - Mobile: deixa crescer (pra rolar no main)
+    const mainInner =
+      !isMobile && isDashboard
+        ? { minWidth: 0, height: "100%", overflow: "hidden" }
+        : { minWidth: 0 };
 
     return {
       shell,
@@ -353,6 +373,7 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
       nav,
       btn,
       main,
+      mobileTopBar,
       mobileMenuBtn,
       mainInner,
     };
@@ -416,16 +437,18 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
       </aside>
 
       <main style={UI.main}>
-        {/* ✅ Botão menu (aparece só no mobile) */}
-        <button
-          type="button"
-          style={UI.mobileMenuBtn}
-          onClick={() => setSidebarOpen(true)}
-          title="Menu"
-          aria-label="Abrir menu"
-        >
-          <Icon name="menu" />
-        </button>
+        {/* ✅ Topbar sticky no mobile (botão fica “integrado”) */}
+        <div style={UI.mobileTopBar}>
+          <button
+            type="button"
+            style={UI.mobileMenuBtn}
+            onClick={() => setSidebarOpen(true)}
+            title="Menu"
+            aria-label="Abrir menu"
+          >
+            <Icon name="menu" />
+          </button>
+        </div>
 
         <div style={UI.mainInner}>{children}</div>
       </main>

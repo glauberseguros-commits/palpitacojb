@@ -15,16 +15,20 @@ function usage() {
   console.log("  node backend/scripts/checkOneDraw.js PT_RIO 2022-06-07 09:09 --prizes");
 }
 
-function isISODate(s) {
-  return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
+
+function isISODateStrict(s) {
+  const str = String(s || "").trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) return false;
+  const [y, m, d] = str.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
 }
 
 function isHHMM(s) {
   return /^\d{2}:\d{2}$/.test(String(s || "").trim());
-}
-
-function pad2(n) {
-  return String(n).padStart(2, "0");
 }
 
 function normalizeHHMM(value) {
@@ -33,15 +37,12 @@ function normalizeHHMM(value) {
 
   if (isHHMM(s)) return s;
 
-  // "10h" => "10:00"
   const m1 = s.match(/^(\d{1,2})h$/i);
   if (m1) return `${pad2(m1[1])}:00`;
 
-  // "10" => "10:00"
   const m2 = s.match(/^(\d{1,2})$/);
   if (m2) return `${pad2(m2[1])}:00`;
 
-  // "10:9" => "10:09"
   const m3 = s.match(/^(\d{1,2}):(\d{1,2})$/);
   if (m3) return `${pad2(m3[1])}:${pad2(m3[2])}`;
 
@@ -55,25 +56,33 @@ function parseArg(name) {
   return String(a).slice(prefix.length);
 }
 
-/**
- * Gera candidatos de close_hour com tolerância (minutos)
- * Ex.: base 09:09 tol=2 => 09:07..09:11
- */
 function closeCandidates(hhmm, tol) {
-  const s = normalizeHHMM(hhmm);
-  if (!isHHMM(s)) return [];
+  const base = normalizeHHMM(hhmm);
+  if (!isHHMM(base)) return [];
 
-  const h = Number(s.slice(0, 2));
-  const m = Number(s.slice(3, 5));
+  const baseH = Number(base.slice(0, 2));
+  const baseM = Number(base.slice(3, 5));
 
   const t = Number.isFinite(Number(tol)) ? Math.max(0, Math.min(15, Number(tol))) : 2;
 
   const out = [];
   for (let d = -t; d <= t; d++) {
-    const mm = m + d;
-    if (mm < 0 || mm > 59) continue;
-    out.push(`${pad2(h)}:${pad2(mm)}`);
+    let h = baseH;
+    let m = baseM + d;
+
+    if (m < 0) {
+      h -= 1;
+      m += 60;
+    } else if (m > 59) {
+      h += 1;
+      m -= 60;
+    }
+
+    if (h < 0 || h > 23) continue;
+
+    out.push(`${pad2(h)}:${pad2(m)}`);
   }
+
   return Array.from(new Set(out));
 }
 
@@ -92,21 +101,20 @@ async function listDay(db, lotteryKey, ymd) {
   const hours = [];
   for (const doc of snap.docs) {
     const d = doc.data() || {};
-    if (d.close_hour) hours.push(normalizeHHMM(d.close_hour) || String(d.close_hour).trim());
+    const raw = d.close_hour ?? "";
+    const norm = normalizeHHMM(raw);
+    hours.push(norm || String(raw).trim());
   }
 
   hours.sort();
-  console.log(
-    `[LIST] ${lotteryKey} ${ymd} close_hours (${hours.length}): ${hours.join(", ")}`
-  );
+  console.log(`[LIST] ${lotteryKey} ${ymd} close_hours (${hours.length}): ${hours.join(", ")}`);
 }
 
 async function countPrizes(docRef) {
   try {
-    // lê só alguns para confirmar que existe (evita custo alto)
     const snap = await docRef.collection("prizes").limit(200).get();
     return snap.size;
-  } catch (e) {
+  } catch {
     return null;
   }
 }
@@ -123,7 +131,7 @@ async function main() {
 
   const closeHour = normalizeHHMM(closeHourRaw);
 
-  if (!lotteryKey || !isISODate(ymd) || !isHHMM(closeHour)) {
+  if (!lotteryKey || !isISODateStrict(ymd) || !isHHMM(closeHour)) {
     usage();
     process.exit(1);
   }
@@ -132,26 +140,25 @@ async function main() {
   const candidates = closeCandidates(closeHour, tol);
 
   console.log(
-    `[CHECK] lottery=${lotteryKey} ymd=${ymd} target=${closeHour} tol=${tol} candidates=${candidates.join(
-      ","
-    )}`
+    `[CHECK] lottery=${lotteryKey} ymd=${ymd} target=${closeHour} tol=${tol} candidates=${candidates.join(",")}`
   );
 
   const foundDocs = [];
 
-  for (const ch of candidates) {
-    const q = db
+  // usa "in" em lotes de 10 (limite Firestore)
+  for (let i = 0; i < candidates.length; i += 10) {
+    const chunk = candidates.slice(i, i + 10);
+
+    const snap = await db
       .collection("draws")
       .where("lottery_key", "==", lotteryKey)
       .where("ymd", "==", ymd)
-      .where("close_hour", "==", ch)
-      .limit(10);
+      .where("close_hour", "in", chunk)
+      .limit(50)
+      .get();
 
-    const snap = await q.get();
-    if (snap.empty) continue;
-
-    for (const doc of snap.docs) {
-      foundDocs.push(doc);
+    if (!snap.empty) {
+      for (const doc of snap.docs) foundDocs.push(doc);
     }
   }
 
@@ -163,13 +170,12 @@ async function main() {
     process.exit(0);
   }
 
-  console.log(
-    `[CHECK] FOUND ${foundDocs.length} doc(s) (candidates match): lottery=${lotteryKey} ymd=${ymd} close_hour≈${closeHour}`
-  );
-
-  // remove duplicados por docId
   const uniq = new Map();
   for (const d of foundDocs) uniq.set(d.id, d);
+
+  console.log(
+    `[CHECK] FOUND ${uniq.size} unique doc(s): lottery=${lotteryKey} ymd=${ymd} close_hour≈${closeHour}`
+  );
 
   for (const doc of uniq.values()) {
     const d = doc.data() || {};

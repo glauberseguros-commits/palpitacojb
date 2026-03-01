@@ -2,7 +2,7 @@
 
 const fs = require("fs");
 const path = require("path");
-const { db } = require("../service/firebaseAdmin");
+const { getDb } = require("../service/firebaseAdmin");
 
 (async () => {
   const lot = "PT_RIO";
@@ -11,31 +11,100 @@ const { db } = require("../service/firebaseAdmin");
   const CORE_MIN = 0.90;
   const OPT_MIN = 0.50;
 
-  // Para não poluir regra com amostra pequena (ex.: 2026 com poucos dias)
+  // Para não poluir regra com amostra pequena (ex.: ano com poucos dias)
   const MIN_DAYS_PER_GROUP = 20;
 
-  // ✅ Ano corrente: permite regra "operacional" (herdada) se tiver pouca amostra
+  // Ano corrente (UTC)
   const CURRENT_YEAR = new Date().getUTCFullYear();
 
-  // ✅ Se quiser permitir "estatística parcial" do ano corrente (sem herança),
-  // ajuste este valor. Eu recomendo manter baixo, mas NÃO 1.
+  // Se quiser permitir "estatística parcial" do ano corrente (sem herança),
+  // ajuste este valor. Recomendo manter baixo, mas NÃO 1.
   const MIN_DAYS_CURRENT_YEAR = 3;
 
-  const snap = await db.collection("draws").where("lottery_key", "==", lot).get();
+  function pad2(n) {
+    return String(n).padStart(2, "0");
+  }
 
-  const byYDowDays = new Map(); // yd -> Set(dates)
-  const byYDowHourDays = new Map(); // yd__HH:MM -> Set(dates)
+  function isISODateStrict(s) {
+    const str = String(s || "").trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) return false;
+    const [y, m, d] = str.split("-").map(Number);
+    const dt = new Date(Date.UTC(y, m - 1, d));
+    return (
+      dt.getUTCFullYear() === y &&
+      dt.getUTCMonth() === m - 1 &&
+      dt.getUTCDate() === d
+    );
+  }
+
+  function isHHMM(s) {
+    return /^\d{2}:\d{2}$/.test(String(s || "").trim());
+  }
+
+  function normalizeHHMM(value) {
+    const s = String(value ?? "").trim();
+    if (!s) return "";
+
+    if (isHHMM(s)) return s;
+
+    // "10h" => "10:00"
+    const m1 = s.match(/^(\d{1,2})h$/i);
+    if (m1) return `${pad2(m1[1])}:00`;
+
+    // "10" => "10:00"
+    const m2 = s.match(/^(\d{1,2})$/);
+    if (m2) return `${pad2(m2[1])}:00`;
+
+    // "10:9" => "10:09"
+    const m3 = s.match(/^(\d{1,2}):(\d{1,2})$/);
+    if (m3) return `${pad2(m3[1])}:${pad2(m3[2])}`;
+
+    return "";
+  }
+
+  function normalizeYMD(v) {
+    const s = String(v ?? "").trim();
+    if (isISODateStrict(s)) return s;
+    return "";
+  }
 
   function dowOf(ymd) {
-    return new Date(String(ymd) + "T00:00:00Z").getUTCDay(); // 0=Dom..6=Sáb
+    // 0=Dom..6=Sáb
+    return new Date(String(ymd) + "T00:00:00Z").getUTCDay();
   }
+
+  const db = getDb();
+
+  // SELECT reduz leitura/custo/memória (traz só o necessário)
+  const snap = await db
+    .collection("draws")
+    .where("lottery_key", "==", lot)
+    .select("ymd", "date", "close_hour")
+    .get();
+
+  const byYDowDays = new Map(); // yd -> Set(ymd)
+  const byYDowHourDays = new Map(); // yd__HH:MM -> Set(ymd)
 
   snap.forEach((doc) => {
     const d = doc.data() || {};
-    const ymd = String(d.date || "").trim();
-    const h = String(d.close_hour || "").trim();
 
-    if (!ymd || ymd.length < 10 || !h) return;
+    // usa ymd preferencialmente, com fallback em date
+    const ymd = normalizeYMD(d.ymd) || normalizeYMD(d.date);
+    const h = normalizeHHMM(d.close_hour);
+
+    if (!ymd || !h) return;
+
+    // filtra apenas horários do calendário
+    if (!HOURS.includes(h)) {
+      // mesmo assim conta o "dia" para o grupo (ano+dow), pois o dia existiu
+      const y = ymd.slice(0, 4);
+      const dow = String(dowOf(ymd));
+      const yd = y + "__" + dow;
+
+      if (!byYDowDays.has(yd)) byYDowDays.set(yd, new Set());
+      byYDowDays.get(yd).add(ymd);
+      return;
+    }
 
     const y = ymd.slice(0, 4);
     const dow = String(dowOf(ymd));
@@ -44,18 +113,16 @@ const { db } = require("../service/firebaseAdmin");
     if (!byYDowDays.has(yd)) byYDowDays.set(yd, new Set());
     byYDowDays.get(yd).add(ymd);
 
-    if (HOURS.includes(h)) {
-      const key = yd + "__" + h;
-      if (!byYDowHourDays.has(key)) byYDowHourDays.set(key, new Set());
-      byYDowHourDays.get(key).add(ymd);
-    }
+    const key = yd + "__" + h;
+    if (!byYDowHourDays.has(key)) byYDowHourDays.set(key, new Set());
+    byYDowHourDays.get(key).add(ymd);
   });
 
   const ydKeys = [...byYDowDays.keys()].sort();
-  const rulesStrong = []; // regras geradas com amostra suficiente
-  const rules = []; // regras finais (fortes + herdadas para ano corrente)
+  const rulesStrong = []; // regras com amostra suficiente
+  const rules = []; // finais (fortes + parcial/herdada pro ano corrente)
 
-  // 1) Gera regras fortes (somente quando days >= MIN_DAYS_PER_GROUP)
+  // 1) Regras fortes (somente quando days >= MIN_DAYS_PER_GROUP)
   for (const yd of ydKeys) {
     const days = (byYDowDays.get(yd) || new Set()).size;
     if (!days || days < MIN_DAYS_PER_GROUP) continue;
@@ -90,29 +157,27 @@ const { db } = require("../service/firebaseAdmin");
     });
   }
 
-  // índice: por dow, últimas regras fortes (ano mais recente)
+  // índice: por dow, última regra forte (ano mais recente)
   const lastStrongByDow = new Map();
   for (const r of rulesStrong) {
     const prev = lastStrongByDow.get(r.dow);
     if (!prev || Number(r.year) > Number(prev.year)) lastStrongByDow.set(r.dow, r);
   }
 
-  // 2) Empilha todas as regras fortes
+  // 2) Empilha regras fortes
   for (const r of rulesStrong) rules.push(r);
 
-  // 3) Gera regras do ano corrente:
-  //    - Se já existir forte para CURRENT_YEAR+dow, ok.
-  //    - Se days do CURRENT_YEAR+dow >= MIN_DAYS_CURRENT_YEAR, pode gerar "parcial" (opcional).
-  //    - Caso contrário, herda do último ano forte do mesmo dow.
+  // 3) Regras do ano corrente (parcial ou herdada)
   for (let dow = 0; dow <= 6; dow++) {
     const yd = `${CURRENT_YEAR}__${dow}`;
     const days = (byYDowDays.get(yd) || new Set()).size;
 
-    const alreadyHas = rules.some((x) => Number(x.year) === CURRENT_YEAR && Number(x.dow) === dow);
+    const alreadyHas = rules.some(
+      (x) => Number(x.year) === CURRENT_YEAR && Number(x.dow) === dow
+    );
     if (alreadyHas) continue;
 
-    // Se tiver dias suficientes para um cálculo parcial (ano corrente), calcula.
-    // Se não tiver, herda de lastStrongByDow.
+    // Se tiver dias suficientes, calcula parcial do ano corrente
     if (days >= MIN_DAYS_CURRENT_YEAR) {
       const core = [];
       const optional = [];
@@ -148,7 +213,7 @@ const { db } = require("../service/firebaseAdmin");
       continue;
     }
 
-    // Herança (recomendado): copia do último ano forte do mesmo dow
+    // Herança do último ano forte do mesmo dow
     const base = lastStrongByDow.get(dow);
     if (base) {
       rules.push({

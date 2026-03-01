@@ -8,7 +8,7 @@ function normalizeLotteryKey(v) {
   if (s === "RJ" || s === "RIO" || s === "PT-RIO" || s === "PT_RIO") return "PT_RIO";
 
   // FEDERAL
-  if (s === "FED" || s === "FEDERAL") return "FEDERAL";
+  if (s === "FED" || s === "FEDERAL" || s === "BR") return "FEDERAL";
 
   // sem fallback: inválido => força 400
   return "";
@@ -116,7 +116,7 @@ function parseIncludePrizes(v, defBool) {
 
 function getLotteryFromQuery(req) {
   // compat: uf=RJ, lottery=PT_RIO etc.
-  return normalizeLotteryKey(req.query.lottery || req.query.uf);
+  return normalizeLotteryKey(req.query.lotteryKey ?? req.query.lottery ?? req.query.uf);
 }
 
 function getWindowFromQuery(req) {

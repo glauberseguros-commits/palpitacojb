@@ -57,3 +57,8 @@ build_upload.zip
 # local backups / scratch
 # local runtime logs/state
 backend/logs/autoImportState-*.json
+
+# artifacts (generated)
+backend/data/source_gaps/*.cleaned_*.json
+backend/data/backfillPlan_*.cleaned*.json
+

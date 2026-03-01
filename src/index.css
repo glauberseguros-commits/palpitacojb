@@ -3,7 +3,7 @@
 /* =========================
    GLOBAL RESET (premium-safe)
    - App com scroll controlado (quem rola é o <main> do AppShell)
-   - Mobile-first: evita “bounce”/travamento e respeita safe-area
+   - Mobile-first: evita travamento iOS
 ========================= */
 
 html, body, #root{
@@ -29,18 +29,25 @@ body{
   background: #050505;
   color: rgba(255,255,255,0.95);
 
-  /* ✅ DESKTOP/TABLET: body NÃO rola. Quem rola é o <main> do AppShell */
-  overflow: hidden;
+  /* ✅ MOBILE: permite scroll (fallback seguro) */
+  overflow-x: hidden;
+  overflow-y: auto;
 
-  /* ✅ iOS/Android: melhora toque e evita “tap highlight” feio */
+  /* ✅ iOS scroll suave */
+  -webkit-overflow-scrolling: touch;
+
   -webkit-tap-highlight-color: rgba(0,0,0,0);
   touch-action: manipulation;
 }
 
-/* ✅ Mobile-first: mantém o padrão "main scroll" e evita scroll duplo.
-   (não liberamos body scroll; o padding-bottom do main já resolve a Bottom Bar) */
+/* ✅ DESKTOP/TABLET: mantém padrão "main scroll only" */
+@media (min-width: 981px){
+  body{
+    overflow: hidden;
+  }
+}
 
-/* Links e botões */
+/* Links */
 a{
   color: inherit;
   text-decoration: none;
@@ -50,7 +57,7 @@ button{
   font-family: inherit;
 }
 
-/* Seleção (premium discreto) */
+/* Seleção */
 ::selection{
   background: rgba(200,178,90,0.26);
 }
@@ -67,7 +74,7 @@ input[type="date"]{
   color-scheme: dark;
 }
 
-/* Autofill (Chrome) */
+/* Autofill */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus{
@@ -75,20 +82,26 @@ input:-webkit-autofill:focus{
   transition: background-color 5000s ease-in-out 0s;
 }
 
-/* ✅ Imagens e mídia: evita overflow e layout quebrado */
+/* Mídia */
 img, video, canvas, svg{
   max-width: 100%;
   height: auto;
 }
 
-/* ✅ Evita quebra/scroll horizontal acidental em telas pequenas */
+/* ✅ Root NÃO pode travar verticalmente no mobile */
 #root{
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: visible;
 }
 
-/* =========================
-   Scrollbar premium (global, discreto)
-========================= */
+/* Desktop pode travar */
+@media (min-width: 981px){
+  #root{
+    overflow: hidden;
+  }
+}
+
+/* Scrollbar */
 *::-webkit-scrollbar{
   width: 10px;
   height: 10px;
@@ -108,13 +121,11 @@ img, video, canvas, svg{
   background: rgba(255,255,255,0.20);
 }
 
-/* Firefox */
 *{
   scrollbar-width: thin;
   scrollbar-color: rgba(255,255,255,0.18) rgba(255,255,255,0.06);
 }
 
-/* Mantém code legível */
 code{
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }

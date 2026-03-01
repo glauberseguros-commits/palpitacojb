@@ -4,7 +4,7 @@
    DASHBOARD (Premium Frame)
    - Layout e estrutura SOMENTE do Dashboard
    - Desktop: dashboard TRAVADO (sem scroll na janela / sem scroll no main)
-   - Ranking: NÃO corta (scroll interno no painel esquerdo)
+   - Ranking: SEM SCROLL (nem vertical nem horizontal) e sem cortar
    - Mobile: deixa crescer (overflow visível) para não cortar conteúdo
 ========================= */
 
@@ -104,7 +104,7 @@
   box-shadow: var(--shadowSoft);
 }
 
-/* ====== Painel esquerdo (tabela) ====== */
+/* ====== Painel esquerdo (ranking) ====== */
 .dashLeft{
   border: 1px solid var(--border);
   background: var(--panel2);
@@ -124,30 +124,28 @@
 
   /* ✅ anti-corte em flex */
   min-width: 0;
-}
 
-/* ✅ CORREÇÃO CERTA (substitui o “FIX” antigo):
-   - Não libera scroll da página
-   - Ranking não corta: rolagem fica dentro do painel esquerdo */
-.dashLeft{
+  /* ✅ SEM SCROLL HORIZONTAL no painel */
+  overflow-x: hidden;
+
+  /* ✅ ocupa a altura do layout travado */
   height: 100%;
 }
 
-/* tenta pegar wrappers comuns (se existirem) */
+/* ✅ Ranking SEM SCROLL (nem vertical nem horizontal) */
 .dashLeft .tableWrap,
 .dashLeft .dashTableWrap,
 .dashLeft .rankingWrap{
   min-height: 0;
-  overflow: auto;
+  overflow: hidden;
   flex: 1 1 auto;
 }
 
-/* fallback seguro: o último filho do painel esquerdo vira área rolável */
+/* ✅ fallback: último filho NÃO rola */
 .dashLeft > *:last-child{
   min-height: 0;
-  overflow: auto;
+  overflow: hidden;
   flex: 1 1 auto;
-  -webkit-overflow-scrolling: touch;
 }
 
 /* ====== Área principal ====== */
