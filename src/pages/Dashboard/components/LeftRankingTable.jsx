@@ -14,7 +14,7 @@ import {
  *
  * ✅ SEM SCROLL (nem vertical nem horizontal) e sem cortar:
  * - Body sem overflow
- * - Layout compactado (linha/fonte/imagem) para caber 25 linhas
+ * - Layout compactado para caber 25 linhas
  *
  * ✅ DEMO safe:
  * - prop `disabled`: bloqueia ordenação e seleção
@@ -78,9 +78,7 @@ function safeStr(v) {
   return String(v ?? "").trim();
 }
 
-/**
- * ✅ Gera candidatos de imagem (robusto)
- */
+/** ✅ Gera candidatos de imagem (robusto) */
 function buildImgCandidates(getImgFromGrupo, grupo) {
   const base96 = safeStr(getImgFromGrupo(grupo, 96));
   const base128 = safeStr(getImgFromGrupo(grupo, 128));
@@ -481,6 +479,7 @@ export default function LeftRankingTable({
                   ...ui.palpiteCell,
                   ...(dim ? ui.tdDim : null),
                 }}
+                title={String(r.palpite || "----")}
               >
                 {String(r.palpite || "----")}
               </div>
@@ -560,7 +559,7 @@ export default function LeftRankingTable({
             </span>
           </button>
 
-          <div style={{ ...ui.th, ...ui.hRight, ...ui.palpiteHeader }} title="Palpite">
+          <div style={{ ...ui.th, ...ui.hRight }} title="Palpite">
             <span style={ui.thLabelNoClip}>Palpite</span>
           </div>
         </div>
@@ -572,10 +571,11 @@ export default function LeftRankingTable({
 }
 
 /**
- * ✅ GRID: colunas equilibradas para não forçar scroll horizontal
+ * ✅ GRID mais “estreito” (não estoura e não corta Palpite)
+ * Soma mínima bem menor + gaps/padding menores.
  */
 const GRID_COLS =
-  "52px minmax(54px, 64px) minmax(120px, 1fr) minmax(54px, 64px) minmax(64px, 74px)";
+  "46px 46px minmax(96px, 1fr) 48px minmax(52px, 60px)";
 
 const ui = {
   wrap: {
@@ -585,9 +585,9 @@ const ui = {
     gap: 8,
     minWidth: 0,
     minHeight: 0,
-    height: "100%",
+    height: "auto", // ✅ evita esticar e sobrar espaço vazio embaixo
     boxSizing: "border-box",
-    overflow: "hidden", // ✅ trava qualquer scroll
+    overflow: "hidden",
   },
 
   locationRow: {
@@ -623,24 +623,24 @@ const ui = {
     border: "1px solid rgba(255,255,255,0.24)",
     borderRadius: 18,
     overflow: "hidden",
-    overflowX: "hidden", // ✅ sem horizontal
+    overflowX: "hidden",
     background: "rgba(0,0,0,0.55)",
     boxShadow: "0 18px 50px rgba(0,0,0,0.55)",
     display: "flex",
     flexDirection: "column",
     boxSizing: "border-box",
     minHeight: 0,
-    flex: "1 1 auto",
+    flex: "0 0 auto", // ✅ não estica => reduz “vazio” no rodapé do card
   },
 
   headerRow: {
     display: "grid",
     gridTemplateColumns: GRID_COLS,
     alignItems: "end",
-    padding: "5px 6px 5px 6px", // ✅ menor
+    padding: "5px 4px",
     borderBottom: "2px solid rgba(255,255,255,0.55)",
     background: "rgba(0,0,0,0.35)",
-    columnGap: 6,
+    columnGap: 4, // ✅ menor
     boxSizing: "border-box",
     flex: "0 0 auto",
     position: "sticky",
@@ -654,15 +654,10 @@ const ui = {
     fontSize: 12,
     letterSpacing: 0.12,
     opacity: 0.95,
-    whiteSpace: "normal",
+    whiteSpace: "nowrap",
     overflow: "hidden",
-    textOverflow: "clip",
+    textOverflow: "ellipsis",
     lineHeight: 1.05,
-    maxHeight: 16,
-    wordBreak: "break-word",
-    display: "-webkit-box",
-    WebkitLineClamp: 1,
-    WebkitBoxOrient: "vertical",
     minWidth: 0,
   },
 
@@ -695,15 +690,9 @@ const ui = {
   },
 
   thLabel: {
-    whiteSpace: "normal",
+    whiteSpace: "nowrap",
     overflow: "hidden",
-    textOverflow: "clip",
-    lineHeight: 1.05,
-    maxHeight: 16,
-    wordBreak: "break-word",
-    display: "-webkit-box",
-    WebkitLineClamp: 1,
-    WebkitBoxOrient: "vertical",
+    textOverflow: "ellipsis",
     minWidth: 0,
   },
 
@@ -727,7 +716,6 @@ const ui = {
   hCenter: { textAlign: "center", justifyContent: "center" },
   hRight: { textAlign: "right", justifyContent: "flex-end" },
 
-  // ✅ SEM SCROLL AQUI
   bodyNoScroll: {
     overflow: "hidden",
     minHeight: 0,
@@ -738,9 +726,9 @@ const ui = {
     display: "grid",
     gridTemplateColumns: GRID_COLS,
     alignItems: "center",
-    padding: "2px 6px 2px 6px", // ✅ menor
+    padding: "2px 4px", // ✅ menor
     borderTop: "1px solid rgba(255,255,255,0.28)",
-    columnGap: 6,
+    columnGap: 4, // ✅ menor
     transition:
       "background 160ms ease, transform 160ms ease, opacity 160ms ease, filter 160ms ease",
     boxSizing: "border-box",
@@ -762,10 +750,13 @@ const ui = {
 
   td: {
     fontWeight: 700,
-    fontSize: 11.6, // ✅ menor
+    fontSize: 11.4,
     letterSpacing: 0.08,
     minWidth: 0,
     lineHeight: 1.0,
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
   },
 
   tdDim: { opacity: 0.78 },
@@ -775,10 +766,9 @@ const ui = {
     fontFeatureSettings: '"tnum" 1, "lnum" 1',
   },
 
-  // ✅ coluna ANIMAL menor
   animalTxt: {
     fontWeight: 850,
-    fontSize: 10.2,
+    fontSize: 10.1,
     letterSpacing: 0.14,
     whiteSpace: "nowrap",
     overflow: "hidden",
@@ -793,7 +783,7 @@ const ui = {
     textShadow: "0 8px 18px rgba(0,0,0,0.55)",
   },
 
-  animalCell: { paddingLeft: 8, boxSizing: "border-box" },
+  animalCell: { paddingLeft: 6, boxSizing: "border-box" },
 
   cellCenter: {
     display: "flex",
@@ -803,13 +793,19 @@ const ui = {
 
   right: { textAlign: "right" },
 
-  palpiteCell: { paddingRight: 6 },
+  palpiteCell: {
+    paddingRight: 4,
+    minWidth: 0,
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+  },
 
   cellImg: { display: "flex", alignItems: "center" },
 
   imgFrame: {
-    width: 22, // ✅ menor
-    height: 22, // ✅ menor
+    width: 22,
+    height: 22,
     borderRadius: 6,
     border: "2px solid rgba(201,168,62,0.85)",
     background: "rgba(0,0,0,0.40)",
@@ -863,7 +859,6 @@ const ui = {
   emptyHint: { fontSize: 12.5, opacity: 0.75, lineHeight: 1.35 },
 
   _styleTag: `
-    /* Sem scrollbar visível (o componente não rola) */
     .pp_left_body{ overflow: hidden !important; }
   `,
 };
