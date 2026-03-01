@@ -200,6 +200,9 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
     const BORDER = "rgba(255,255,255,0.10)";
     const BG = "#050505";
 
+    // ✅ safe-area (iOS notch)
+    const SAFE_TOP = "env(safe-area-inset-top, 0px)";
+
     const sidebarW = isMobile ? 84 : 92;
     const isDashboard = active === ROUTES.DASHBOARD;
 
@@ -323,19 +326,29 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
       zIndex: 1,
     };
 
-    // ✅ Botão hambúrguer premium no mobile
-    const mobileMenuBtn = isMobile
+    // ✅ Topbar sticky no mobile (deixa o menu “integrado”, não flutuando)
+    const mobileTopBar = isMobile
       ? {
           position: "sticky",
-          top: 10,
-          zIndex: 20,
-          margin: "10px 0 0 10px",
+          top: 0,
+          zIndex: 40,
+          padding: `calc(${SAFE_TOP} + 10px) 0 8px 10px`,
+          background:
+            "linear-gradient(180deg, rgba(0,0,0,0.72), rgba(0,0,0,0.22), rgba(0,0,0,0))",
+          backdropFilter: "blur(10px)",
+          WebkitBackdropFilter: "blur(10px)",
+        }
+      : { display: "none" };
+
+    // ✅ Botão hambúrguer premium no mobile (agora “dentro” do topbar)
+    const mobileMenuBtn = isMobile
+      ? {
           width: 42,
           height: 42,
           borderRadius: 14,
           border: `1px solid ${BORDER}`,
           background:
-            "linear-gradient(180deg, rgba(255,255,255,0.06), rgba(0,0,0,0.35))",
+            "linear-gradient(180deg, rgba(255,255,255,0.08), rgba(0,0,0,0.38))",
           boxShadow: "0 14px 36px rgba(0,0,0,0.55)",
           display: "grid",
           placeItems: "center",
@@ -360,6 +373,7 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
       nav,
       btn,
       main,
+      mobileTopBar,
       mobileMenuBtn,
       mainInner,
     };
@@ -423,16 +437,18 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
       </aside>
 
       <main style={UI.main}>
-        {/* ✅ Botão menu (aparece só no mobile) */}
-        <button
-          type="button"
-          style={UI.mobileMenuBtn}
-          onClick={() => setSidebarOpen(true)}
-          title="Menu"
-          aria-label="Abrir menu"
-        >
-          <Icon name="menu" />
-        </button>
+        {/* ✅ Topbar sticky no mobile (botão fica “integrado”) */}
+        <div style={UI.mobileTopBar}>
+          <button
+            type="button"
+            style={UI.mobileMenuBtn}
+            onClick={() => setSidebarOpen(true)}
+            title="Menu"
+            aria-label="Abrir menu"
+          >
+            <Icon name="menu" />
+          </button>
+        </div>
 
         <div style={UI.mainInner}>{children}</div>
       </main>
