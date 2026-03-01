@@ -49,16 +49,29 @@ function isValidYMD(ymd) {
 function dateToYMD_TZ(d, timeZone = TZ) {
   if (!(d instanceof Date) || Number.isNaN(d.getTime())) return null;
 
-  // en-CA => yyyy-mm-dd
   try {
-    const ymd = d.toLocaleDateString("en-CA", { timeZone });
+    const fmt = new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+
+    const parts = fmt.formatToParts(d);
+    const y = parts.find((p) => p.type === "year")?.value;
+    const m = parts.find((p) => p.type === "month")?.value;
+    const da = parts.find((p) => p.type === "day")?.value;
+
+    const ymd = `${y}-${m}-${da}`;
     return isValidYMD(ymd) ? ymd : null;
   } catch {
-    // fallback manual (pior caso)
-    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+    const y = d.getUTCFullYear();
+    const m = String(d.getUTCMonth() + 1).padStart(2,"0");
+    const da = String(d.getUTCDate()).padStart(2,"0");
+    const ymd = `${y}-${m}-${da}`;
+    return isValidYMD(ymd) ? ymd : null;
   }
 }
-
 function normalizeToYMD(input) {
   if (input == null) return null;
 
@@ -280,4 +293,5 @@ main().catch((e) => {
   console.error("[FATAL]", e?.stack || e?.message || e);
   process.exit(1);
 });
+
 

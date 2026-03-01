@@ -340,10 +340,10 @@ async function main() {
         slotRes.last = slotRes.tries[slotRes.tries.length - 1];
 
         // ✅ Critério “feito”
-        const doneNow = captured && (savedCount > 0 || alreadyCompleteAny);
+        const doneNow = (captured && savedCount > 0) || writeCount > 0 || alreadyCompleteAny;
         if (doneNow) {
           slotRes.ok = true;
-          slotRes.doneReason = (Number(savedCount || 0) > 0) ? "CAPTURED" : (Number(writeCount || 0) > 0) ? "UPDATED" : alreadyCompleteAny ? "FS_ALREADY_HAS" : "CAPTURED";
+          if (savedCount > 0) { slotRes.doneReason = "CAPTURED"; } else if (writeCount > 0) { slotRes.doneReason = "UPDATED"; } else if (alreadyCompleteAny) { slotRes.doneReason = "FS_ALREADY_HAS"; } else { slotRes.doneReason = "CAPTURED"; }
           slotDone = true;
 
           if (Number(savedCount || 0) > 0) dayRes.summary.capturedSlots += 1;
@@ -362,7 +362,7 @@ async function main() {
         if (
           matchedClose != null &&
           matchedClose > 0 &&
-          (valid === 0 || valid === null) &&
+          (valid === 0) &&
           apiHasPrizes === false
         ) {
           sawSlotEmpty = true;
@@ -449,5 +449,6 @@ main().catch((e) => {
   console.error("ERRO:", e?.stack || e?.message || e);
   process.exit(1);
 });
+
 
 

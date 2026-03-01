@@ -3,7 +3,11 @@
 const axios = require("axios");
 
 function isISODate(s) {
-  return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
+  const str = String(s || "").trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) return false;
+  const [y, m, d] = str.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return dt.getUTCFullYear() === y && dt.getUTCMonth() === (m - 1) && dt.getUTCDate() === d;
 }
 
 function uniq(arr) {
@@ -27,19 +31,14 @@ if (!ids.length) {
 }
 
 async function main() {
-  const base = "https://app_services.apionline.cloud/api/results";
+  const base = String(process.env.BASE_URL || "http://127.0.0.1:3333").trim().replace(/\/+$/, "");
   for (const id of ids) {
-    const params = new URLSearchParams();
-    params.append("dates[]", DATE);
-    params.append("lotteries[]", id);
-    const url = `${base}?${params.toString()}`;
+  const url = `${base}/api/king/draws/day?date=${encodeURIComponent(DATE)}&lottery=${encodeURIComponent(id)}&includePrizes=0`;
 
-    try {
+  try {
       const resp = await axios.get(url, {
         headers: {
           Accept: "application/json, text/plain, */*",
-          Origin: "https://app.kingapostas.com",
-          Referer: "https://app.kingapostas.com/",
         },
         timeout: 20000,
         validateStatus: () => true,
@@ -56,11 +55,17 @@ async function main() {
         console.log(`[PROBE] id=${id} ERROR=HTTP_${status} body=${hint}`);
         continue;
       }
-const ok = !!data?.success && Array.isArray(data?.data);
-      const n = ok ? data.data.length : -1;
+      const ok = !!data?.ok && Array.isArray(data?.draws);
+      const n = ok ? data.draws.length : -1;
 
       const closes = ok
-        ? Array.from(new Set(data.data.map(d => String(d?.close_hour || "").trim()).filter(Boolean))).sort()
+        ? Array.from(
+            new Set(
+              data.draws
+                .map((d) => String(d?.close_hour || d?.closeHour || "").trim())
+                .filter(Boolean)
+            )
+          ).sort()
         : [];
 
       console.log(`[PROBE] id=${id} ok=${ok} draws=${n} close_hours=[${closes.join(", ")}]`);
@@ -75,3 +80,5 @@ main().catch((e) => {
   console.log("[PROBE] FATAL:", e?.stack || e?.message || e);
   process.exit(1);
 });
+
+

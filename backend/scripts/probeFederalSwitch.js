@@ -3,16 +3,18 @@
 const { getDb } = require("../service/firebaseAdmin");
 
 function hh(v) {
-  const s = String(v || "").trim();
-  if (!s) return "";
-  if (s.includes(":")) return s.slice(0, 5);
-  return s.length === 2 ? `${s}:00` : s;
+  const m = String(v || "").match(/(\d{1,2})/);
+  if (!m) return "";
+  const h = Number(m[1]);
+  if (!Number.isFinite(h) || h < 0 || h > 23) return "";
+  return `${String(h).padStart(2, "0")}:00`;
 }
 
 (async () => {
   const db = getDb();
   const snap = await db.collection("draws")
     .where("lottery_key", "==", "FEDERAL")
+    .select("ymd", "date", "close_hour", "close", "close_hour_raw")
     .get();
 
   let first20 = null;

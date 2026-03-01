@@ -122,22 +122,12 @@ function normalizeHHMM(value) {
   return "";
 }
 
-function hourFromCloseHour(closeHour) {
-  const s0 = String(closeHour ?? "").trim();
-  if (!s0) return null;
-  const m = s0.match(/(\d{1,2})/);
-  if (!m) return null;
-  const hh = Number(m[1]);
-  if (!Number.isFinite(hh) || hh < 0 || hh > 23) return null;
-  return pad2(hh);
+function upTrim(v) {
+  return String(v ?? "").trim().toUpperCase();
 }
 
 function cmpHHMM(a, b) {
   return String(a || "").localeCompare(String(b || ""));
-}
-
-function upTrim(v) {
-  return String(v ?? "").trim().toUpperCase();
 }
 
 function parseBool01(v) {
@@ -182,6 +172,57 @@ function isFutureISODate(ymd) {
   if (!isISODate(ymd)) return false;
   const todayBR = todayYMDInSaoPaulo();
   return String(ymd) > String(todayBR);
+}
+
+/**
+ * Pega o melhor candidato de close_hour em docs legados.
+ */
+function getCloseCandidate(d) {
+  try {
+    const v =
+      d?.close_hour ??
+      d?.close ??
+      d?.close_hour_raw ??
+      d?.closeHour ??
+      d?.horario ??
+      d?.hour ??
+      "";
+    return String(v ?? "").trim();
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Normaliza close_hour para SLOT (compatível com import):
+ * - PT_RIO: HH:09 => slot HH:00
+ * - outros: preserva HH:MM
+ */
+function normalizeCloseHourForLottery(value, lotteryKey) {
+  const lk = upTrim(lotteryKey || "");
+  const raw0 = normalizeHHMM(value);
+  if (!raw0 || !isHHMM(raw0)) return { raw: "", slot: "" };
+
+  if (lk === "PT_RIO") {
+    const hh = raw0.slice(0, 2);
+    const mm = raw0.slice(3, 5);
+    // HH:09 é "marcação" do provider
+    const raw = mm === "09" ? "" : raw0;
+    return { raw, slot: `${hh}:00` };
+  }
+
+  return { raw: raw0, slot: raw0 };
+}
+
+function hourFromCloseHourSlot(closeHour, lotteryKey) {
+  const { slot } = normalizeCloseHourForLottery(closeHour, lotteryKey);
+  const s0 = String(slot ?? "").trim();
+  if (!s0) return null;
+  const m = s0.match(/(\d{1,2})/);
+  if (!m) return null;
+  const hh = Number(m[1]);
+  if (!Number.isFinite(hh) || hh < 0 || hh > 23) return null;
+  return pad2(hh);
 }
 
 /* =========================
@@ -426,7 +467,12 @@ function normalizeGapEntry(entry) {
 
 function getGapsForDate(lotteryKey, ymd, opts) {
   const map = readGapsMap(lotteryKey, opts);
-  const entry = map?.[ymd];
+
+  // SUPORTA:
+  // (A) { "gapsByDay": { "YYYY-MM-DD": {...} } }  <-- formato atual do seu repo
+  // (B) { "YYYY-MM-DD": {...} }                  <-- formato legado
+  const entry = map?.gapsByDay?.[ymd] ?? map?.[ymd];
+
   if (!entry) return { removedHard: [], removedSoft: [] };
   return normalizeGapEntry(entry);
 }
@@ -450,7 +496,9 @@ async function mapWithConcurrency(items, limitN, mapper) {
     }
   }
 
-  await Promise.all(Array.from({ length: Math.min(concurrency, arr.length) }, () => worker()));
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, arr.length) }, () => worker())
+  );
   return results;
 }
 
@@ -516,7 +564,6 @@ function buildSlots(opts) {
 
 router.get("/results", async (req, res) => {
   // UF_CONFLICT_GUARD: evita pegadinha de uf junto com lottery explícito
-  // Se veio lottery/lotteryKey, uf NÃO tem efeito (legado). Melhor bloquear e explicar.
   if ((req.query.lotteryKey != null || req.query.lottery != null) && req.query.uf != null) {
     return res.status(400).json({
       ok: false,
@@ -546,7 +593,8 @@ router.get("/results", async (req, res) => {
     const reloadDayStatus = parseBool01(req.query.reloadDayStatus);
     const reloadGaps = parseBool01(req.query.reloadGaps);
 
-    const includePrizes = req.query.includePrizes == null ? true : parseBool01(req.query.includePrizes);
+    const includePrizes =
+      req.query.includePrizes == null ? true : parseBool01(req.query.includePrizes);
     const limitDocs = parsePosInt(req.query.limitDocs, 120, 20, 500);
 
     if (!date) return res.status(400).json({ ok: false, error: "date obrigatório" });
@@ -590,10 +638,12 @@ router.get("/results", async (req, res) => {
     // Query mínima: SOMENTE date (evita índice composto)
     const snap = await db.collection("draws").where("date", "==", date).get();
 
-    // filtra lottery em memória, sem bater prizes ainda
+    // filtra lottery em memória (aceita snake e camel)
     const docsAll = snap.docs.filter((doc) => {
       const d = doc.data() || {};
-      return upTrim(d.lottery_key) === lotteryKey;
+      const lkSnake = upTrim(d.lottery_key || "");
+      const lkCamel = upTrim(d.lotteryKey || "");
+      return lkSnake === lotteryKey || lkCamel === lotteryKey;
     });
 
     // Se day_status mandar bloquear, confirma:
@@ -684,20 +734,25 @@ router.get("/results", async (req, res) => {
     if (!includePrizes) {
       const drawsNoPrizes = docs.map((doc) => {
         const d = doc.data() || {};
+        const cand = getCloseCandidate(d);
+        const { raw, slot } = normalizeCloseHourForLottery(cand, lotteryKey);
         return {
           id: doc.id,
           ...d,
-          close_hour: normalizeHHMM(d.close_hour),
+          // close_hour sempre no SLOT (compat com front)
+          close_hour: slot || normalizeHHMM(d.close_hour),
+          // opcional: raw só quando fizer sentido (PT_RIO HH:09 vira "")
+          close_hour_raw: raw || d.close_hour_raw || null,
           prizesCount: typeof d.prizesCount !== "undefined" ? d.prizesCount : undefined,
         };
       });
 
       drawsNoPrizes.sort((a, b) => cmpHHMM(a.close_hour, b.close_hour));
 
-      // mapa hour -> draw
+      // mapa hour -> draw (hour vem do SLOT)
       const byHour = new Map();
       for (const dr of drawsNoPrizes) {
-        const hh = hourFromCloseHour(dr?.close_hour);
+        const hh = hourFromCloseHourSlot(dr?.close_hour, lotteryKey);
         if (!hh) continue;
         const prev = byHour.get(hh);
         if (!prev) {
@@ -775,13 +830,16 @@ router.get("/results", async (req, res) => {
     // carrega prizes com concorrência limitada
     const draws = await mapWithConcurrency(docs, 6, async (doc) => {
       const d = doc.data() || {};
+      const cand = getCloseCandidate(d);
+      const { raw, slot } = normalizeCloseHourForLottery(cand, lotteryKey);
 
       const prizesSnap = await doc.ref.collection("prizes").orderBy("position", "asc").get();
 
       return {
         id: doc.id,
         ...d,
-        close_hour: normalizeHHMM(d.close_hour),
+        close_hour: slot || normalizeHHMM(d.close_hour),
+        close_hour_raw: raw || d.close_hour_raw || null,
         prizes: prizesSnap.docs.map((p) => p.data()),
       };
     });
@@ -791,7 +849,7 @@ router.get("/results", async (req, res) => {
     // mapa hour -> draw
     const byHour = new Map();
     for (const dr of draws) {
-      const hh = hourFromCloseHour(dr?.close_hour);
+      const hh = hourFromCloseHourSlot(dr?.close_hour, lotteryKey);
       if (!hh) continue;
       const prev = byHour.get(hh);
       if (!prev) {

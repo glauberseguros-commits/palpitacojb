@@ -2,7 +2,9 @@
 
 const fs = require("fs");
 const path = require("path");
-const admin = require("firebase-admin");
+
+// ✅ usa o bootstrap oficial do seu projeto (service account / config já pronta)
+const { admin, getDb } = require("../service/firebaseAdmin");
 
 function arg(name, def = null) {
   const i = process.argv.indexOf(`--${name}`);
@@ -16,12 +18,13 @@ function isISODateStrict(s) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) return false;
   const [y, m, d] = str.split("-").map(Number);
   const dt = new Date(Date.UTC(y, m - 1, d));
-  return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
+  return (
+    dt.getUTCFullYear() === y &&
+    dt.getUTCMonth() === m - 1 &&
+    dt.getUTCDate() === d
+  );
 }
 
-// Normaliza loteria.
-// - Para argumentos CLI: você pode passar fallback.
-// - Para valores vindos do doc: use fallback="" (não mascara desconhecido como PT_RIO).
 function normalizeLotteryKey(v, fallback = "") {
   const s = String(v ?? "").trim().toUpperCase();
   if (!s) return fallback;
@@ -36,22 +39,21 @@ function pad2(n) {
   return String(n).padStart(2, "0");
 }
 
-// Retorna { close: "HH:MM" | "", status: "OK"|"EMPTY"|"INVALID" }
 function normHourWithStatus(v) {
   const s0 = String(v ?? "").trim();
   if (!s0) return { close: "", status: "EMPTY" };
 
   const s = s0.replace(/\s+/g, "");
 
-  // 11h / 11hs / 11hr / 11hrs
   let m = s.match(/^(\d{1,2})(?:h|hs|hr|hrs)$/i);
   if (m) {
     const hh = Number(m[1]);
-    if (Number.isFinite(hh) && hh >= 0 && hh <= 23) return { close: `${pad2(hh)}:00`, status: "OK" };
+    if (Number.isFinite(hh) && hh >= 0 && hh <= 23) {
+      return { close: `${pad2(hh)}:00`, status: "OK" };
+    }
     return { close: "", status: "INVALID" };
   }
 
-  // 11:30 / 11:30:00
   m = s.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
   if (m) {
     const hh = Number(m[1]);
@@ -69,11 +71,12 @@ function normHourWithStatus(v) {
     return { close: "", status: "INVALID" };
   }
 
-  // "11"
   m = s.match(/^(\d{1,2})$/);
   if (m) {
     const hh = Number(m[1]);
-    if (Number.isFinite(hh) && hh >= 0 && hh <= 23) return { close: `${pad2(hh)}:00`, status: "OK" };
+    if (Number.isFinite(hh) && hh >= 0 && hh <= 23) {
+      return { close: `${pad2(hh)}:00`, status: "OK" };
+    }
     return { close: "", status: "INVALID" };
   }
 
@@ -94,8 +97,6 @@ function safeFilePart(s) {
     .slice(0, 120);
 }
 
-// - Se você rodar dentro de backend/, salva em backend/logs
-// - Se rodar na raiz do repo, salva em backend/logs
 function resolveLogsDir() {
   const cwd = process.cwd();
   const base = path.basename(cwd).toLowerCase();
@@ -109,18 +110,11 @@ function resolveLogsDir() {
     const from = arg("from", null);
     const to = arg("to", null);
 
-    if (from && !isISODateStrict(from)) {
-      throw new Error(`--from inválido (use YYYY-MM-DD): ${from}`);
-    }
-    if (to && !isISODateStrict(to)) {
-      throw new Error(`--to inválido (use YYYY-MM-DD): ${to}`);
-    }
-    if (from && to && from > to) {
-      throw new Error(`intervalo inválido: from (${from}) > to (${to})`);
-    }
+    if (from && !isISODateStrict(from)) throw new Error(`--from inválido (use YYYY-MM-DD): ${from}`);
+    if (to && !isISODateStrict(to)) throw new Error(`--to inválido (use YYYY-MM-DD): ${to}`);
+    if (from && to && from > to) throw new Error(`intervalo inválido: from (${from}) > to (${to})`);
 
-    if (!admin.apps.length) admin.initializeApp();
-    const db = admin.firestore();
+    const db = getDb();
     const col = db.collection("draws");
 
     let scanned = 0;
@@ -135,9 +129,7 @@ function resolveLogsDir() {
         .orderBy(admin.firestore.FieldPath.documentId())
         .limit(500);
 
-      if (lastYmd !== null && lastId !== null) {
-        q = q.startAfter(lastYmd, lastId);
-      }
+      if (lastYmd !== null && lastId !== null) q = q.startAfter(lastYmd, lastId);
 
       const snap = await q.get();
       if (snap.empty) break;

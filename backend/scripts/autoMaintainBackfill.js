@@ -66,7 +66,6 @@ function hmNowSP() {
     minute: "2-digit",
     hour12: false,
   });
-  // en-GB => "21:22"
   return fmt.format(new Date());
 }
 
@@ -112,22 +111,6 @@ function hasFlag(name) {
   return process.argv.includes(`--${name}`);
 }
 
-function lastFile(prefix) {
-  const dir = path.join(__dirname, "..", "logs");
-  if (!fs.existsSync(dir)) return null;
-
-  const files = fs.readdirSync(dir).filter((f) => f.startsWith(prefix));
-  if (!files.length) return null;
-
-  files.sort((a, b) => {
-    const pa = path.join(dir, a);
-    const pb = path.join(dir, b);
-    return fs.statSync(pb).mtimeMs - fs.statSync(pa).mtimeMs;
-  });
-
-  return path.join(dir, files[0]);
-}
-
 function checkHealth(baseUrl, timeoutMs = 2500) {
   return new Promise((resolve) => {
     try {
@@ -171,6 +154,79 @@ function checkHealth(baseUrl, timeoutMs = 2500) {
   });
 }
 
+/**
+ * ✅ NOVO: resolve logs (audit/plan) de forma robusta
+ * - prioriza match exato start->end
+ * - fallback: arquivo mais recente do lottery
+ */
+const LOG_DIR = path.join(__dirname, "..", "logs");
+
+function listFilesSafe(dir) {
+  try {
+    if (!fs.existsSync(dir)) return [];
+    return fs.readdirSync(dir);
+  } catch {
+    return [];
+  }
+}
+
+function statMtimeMsSafe(p) {
+  try {
+    return Number(fs.statSync(p).mtimeMs || 0);
+  } catch {
+    return 0;
+  }
+}
+
+function pickLogFile({ kind, lottery, start, end }) {
+  const lot = String(lottery || "").trim().toUpperCase();
+  const s = String(start || "").trim();
+  const e = String(end || "").trim();
+
+  const dir = LOG_DIR;
+  const files = listFilesSafe(dir);
+  if (!files.length) return null;
+
+  // e.g. auditSlots-PT_RIO-2022-06-07_to_2026-02-28.json
+  const baseRe = new RegExp(
+    `^${kind}-${lot}-\\d{4}-\\d{2}-\\d{2}_to_\\d{4}-\\d{2}-\\d{2}\\.json$`,
+    "i"
+  );
+
+  const candidates = files
+    .filter((f) => baseRe.test(f))
+    .map((f) => {
+      const m = f.match(
+        new RegExp(`^${kind}-${lot}-(\\d{4}-\\d{2}-\\d{2})_to_(\\d{4}-\\d{2}-\\d{2})\\.json$`, "i")
+      );
+      const fStart = m?.[1] || "";
+      const fEnd = m?.[2] || "";
+      const full = path.join(dir, f);
+      return { f, full, fStart, fEnd, mtimeMs: statMtimeMsSafe(full) };
+    });
+
+  if (!candidates.length) return null;
+
+  // 1) match exato
+  const exact = candidates.filter((c) => c.fStart === s && c.fEnd === e);
+  if (exact.length) {
+    exact.sort((a, b) => b.mtimeMs - a.mtimeMs);
+    return exact[0].full;
+  }
+
+  // 2) fallback: mais recente (do lottery)
+  candidates.sort((a, b) => b.mtimeMs - a.mtimeMs);
+  return candidates[0].full;
+}
+
+function pickAuditFile(lottery, start, end) {
+  return pickLogFile({ kind: "auditSlots", lottery, start, end });
+}
+
+function pickPlanFile(lottery, start, end) {
+  return pickLogFile({ kind: "backfillPlan", lottery, start, end });
+}
+
 async function main() {
   const lottery = String(parseArg("lottery", "PT_RIO"))
     .trim()
@@ -196,12 +252,12 @@ async function main() {
   const planScript = path.join(__dirname, "planBackfillFromAudit.js");
   const runScript = path.join(__dirname, "runBackfillFromPlan.js");
 
-  // ✅ NOVO: cap “saudável” pro dia atual (evita cobrar slot que a fonte ainda não publicou)
+  // ✅ cap “saudável” pro dia atual (evita cobrar slot que a fonte ainda não publicou)
   // default 75 (pode ajustar via --slotGraceMin=90, etc.)
   let slotGraceMin = Number(parseArg("slotGraceMin", "75"));
   if (!Number.isFinite(slotGraceMin) || slotGraceMin < 0) slotGraceMin = 75;
 
-  // ✅ NOVO: por padrão, NUNCA rodar backfill para o dia atual (só se forçar)
+  // ✅ por padrão, NUNCA rodar backfill para o dia atual (só se forçar)
   const allowTodayBackfill = hasFlag("allowTodayBackfill");
   const todaySP = ymdNowSP();
   const nowHM = String(parseArg("nowHM", hmNowSP())).trim() || hmNowSP();
@@ -230,8 +286,8 @@ async function main() {
     `--slotGraceMin=${slotGraceMin}`,
   ]);
 
-  const auditPrefix = `auditSlots-${lottery}-${start}_to_${end}`;
-  const auditPicked = lastFile(auditPrefix) || lastFile(`auditSlots-${lottery}-`);
+  // ✅ NOVO: resolve o audit certo (match exato > mais recente do lottery)
+  const auditPicked = pickAuditFile(lottery, start, end);
 
   if (!auditPicked) {
     console.log("[MAINTAIN] Não achei audit log para gerar plan.");
@@ -246,8 +302,8 @@ async function main() {
 
   run("node", [planScript, auditPicked, baseUrl, lottery]);
 
-  const planPrefix = `backfillPlan-${lottery}-${start}_to_${end}`;
-  const planPicked = lastFile(planPrefix) || lastFile(`backfillPlan-${lottery}-`);
+  // ✅ NOVO: resolve o plan certo (match exato > mais recente do lottery)
+  const planPicked = pickPlanFile(lottery, start, end);
 
   if (!planPicked) {
     console.log("[MAINTAIN] Não achei backfillPlan gerado.");
@@ -276,7 +332,6 @@ async function main() {
   });
 
   if (!should.length) {
-    // Se existia algo, mas só era “hoje”, reporta claramente
     const rawShould = rows.filter((r) => r && r.shouldBackfill);
     const hadOnlyToday = rawShould.length > 0 && should.length === 0;
 

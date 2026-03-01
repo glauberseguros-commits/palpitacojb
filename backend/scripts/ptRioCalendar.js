@@ -10,7 +10,11 @@ function safeStr(v) {
 }
 
 function isISODate(ymd) {
-  return /^\d{4}-\d{2}-\d{2}$/.test(String(ymd || "").trim());
+  const str = String(ymd || "").trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) return false;
+  const [y, m, d] = str.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return dt.getUTCFullYear() === y && dt.getUTCMonth() === (m - 1) && dt.getUTCDate() === d;
 }
 
 function ymdDow(ymd) {
@@ -32,21 +36,23 @@ function normalizeHHMM(v) {
   const s = safeStr(v);
   if (!s) return null;
 
-  // já HH:MM
-  const m0 = s.match(/^(\d{1,2}):(\d{2})$/);
-  if (m0) {
-    const hh = Number(m0[1]);
-    const mm = Number(m0[2]);
-    if (!Number.isFinite(hh) || hh < 0 || hh > 23) return null;
-    if (!Number.isFinite(mm) || mm < 0 || mm > 59) return null;
-    return `${pad2(hh)}:${pad2(mm)}`;
-  }
-
-  // HH:MM:SS
+  // HH:MM:SS (aceita mm/ss 1-2 dígitos)
   const m1 = s.match(/^(\d{1,2}):(\d{1,2}):(\d{1,2})$/);
   if (m1) {
     const hh = Number(m1[1]);
     const mm = Number(m1[2]);
+    const ss = Number(m1[3]);
+    if (!Number.isFinite(hh) || hh < 0 || hh > 23) return null;
+    if (!Number.isFinite(mm) || mm < 0 || mm > 59) return null;
+    if (!Number.isFinite(ss) || ss < 0 || ss > 59) return null;
+    return `${pad2(hh)}:${pad2(mm)}`;
+  }
+
+  // HH:MM (aceita minuto 1-2 dígitos, ex: 11:9)
+  const m0 = s.match(/^(\d{1,2}):(\d{1,2})$/);
+  if (m0) {
+    const hh = Number(m0[1]);
+    const mm = Number(m0[2]);
     if (!Number.isFinite(hh) || hh < 0 || hh > 23) return null;
     if (!Number.isFinite(mm) || mm < 0 || mm > 59) return null;
     return `${pad2(hh)}:${pad2(mm)}`;
@@ -235,3 +241,4 @@ if (require.main === module) {
     process.exit(1);
   }
 }
+

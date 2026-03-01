@@ -47,10 +47,15 @@ const fs = require("fs");
  * =========================
  * Configuração de range
  * =========================
+ * IMPORTANTE: minDate é por loteria (não global única)
  */
-const GLOBAL_MIN_DATE = "2022-06-07";
+const MIN_BY_LOTTERY = {
+  PT_RIO: "2022-06-07",
+  FEDERAL: "2022-06-08",
+};
 
 const ENV_GLOBAL_MAX_DATE = String(process.env.GLOBAL_MAX_DATE || "").trim();
+
 const MAX_FUTURE_DAYS = Number.isFinite(Number(process.env.MAX_FUTURE_DAYS))
   ? Number(process.env.MAX_FUTURE_DAYS)
   : 7;
@@ -150,9 +155,24 @@ function todayLocalDate() {
 }
 
 /**
+ * Resolve o min global (por loteria).
+ * Se a loteria for desconhecida, cai no PT_RIO.
+ */
+function resolveGlobalMinDate(lotteryKey) {
+  const key = String(lotteryKey || "").trim().toUpperCase();
+  const minStr = MIN_BY_LOTTERY[key] || MIN_BY_LOTTERY.PT_RIO;
+  const parsed = parseDate(minStr);
+  if (!parsed) {
+    console.error(`ERRO: MIN_BY_LOTTERY inválido para ${key}: "${minStr}"`);
+    process.exit(1);
+  }
+  return parsed;
+}
+
+/**
  * Resolve o max global:
  * - se env GLOBAL_MAX_DATE válida => usa ela
- * - senão => hoje (local)
+ * - senão => hoje (local) + MAX_FUTURE_DAYS
  */
 function resolveGlobalMaxDate() {
   if (ENV_GLOBAL_MAX_DATE) {
@@ -165,7 +185,9 @@ function resolveGlobalMaxDate() {
     }
     return parsed;
   }
-  return todayLocalDate();
+
+  const today = todayLocalDate();
+  return addDays(today, Math.max(0, MAX_FUTURE_DAYS));
 }
 
 function normLotteryKey(v) {
@@ -287,14 +309,12 @@ async function main() {
     process.exit(1);
   }
 
-  const gMin = parseDate(GLOBAL_MIN_DATE);
+  const gMin = resolveGlobalMinDate(lotteryKey);
   const gMax = resolveGlobalMaxDate();
 
   if (d2 < gMin || d1 > gMax) {
     console.error(
-      `[ABORTADO] Intervalo fora do range global (${GLOBAL_MIN_DATE} → ${fmt(
-        gMax
-      )}).`
+      `[ABORTADO] Intervalo fora do range global (${fmt(gMin)} → ${fmt(gMax)}).`
     );
     process.exit(0);
   }
@@ -302,6 +322,7 @@ async function main() {
   if (d1 < gMin) d1 = gMin;
   if (d2 > gMax) d2 = gMax;
 
+  // valida futuro (relevante quando GLOBAL_MAX_DATE foi fixado muito à frente)
   const today = todayLocalDate();
   const futureDays = daysBetweenUTC(today, d2);
   if (futureDays > MAX_FUTURE_DAYS) {
@@ -322,7 +343,7 @@ async function main() {
 
   console.log(
     `[RANGE] ${lotteryKey} de ${fmt(d1)} até ${fmt(d2)} (${totalDays} dias)` +
-      ` | globalMin=${GLOBAL_MIN_DATE}` +
+      ` | globalMin=${fmt(gMin)}` +
       ` | globalMax=${fmt(gMax)}${
         ENV_GLOBAL_MAX_DATE ? " (fixado por ENV)" : " (dinâmico)"
       }` +
