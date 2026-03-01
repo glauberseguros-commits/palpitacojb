@@ -43,7 +43,7 @@ const ALL_POSITIONS = [1, 2, 3, 4, 5, 6, 7];
    - Não inclui filtros (filtros ficam no App.js)
 ========================= */
 const DASH_STATE_KEY_V1 = "pp_dash_state_v1";
-const DASH_STATE_KEY = "pp_dash_state_v2"; // versionado
+const DASH_STATE_KEY_BASE = "pp_dash_state_v2"; // versionado + por UF
 
 /* =========================
    Sessão / Guest (demo)
@@ -108,31 +108,6 @@ function safeWriteJSON(key, obj) {
   } catch {
     // ignore
   }
-}
-
-function loadDashStateV2() {
-  // v2
-  const v2 = safeReadJSON(DASH_STATE_KEY);
-  if (v2 && typeof v2 === "object") return v2;
-
-  // compat v1 -> migra pra v2 “light”
-  const v1 = safeReadJSON(DASH_STATE_KEY_V1);
-  if (v1 && typeof v1 === "object") {
-    const migrated = {
-      v: 2,
-      selectedGrupo: v1.selectedGrupo ?? null,
-      selectedYears: Array.isArray(v1.selectedYears) ? v1.selectedYears : [],
-      dateRange: v1.dateRange ?? null,
-      dateRangeQuery: v1.dateRangeQuery ?? null,
-      followMax: v1.followMax ?? true,
-      lastBoundsMin: v1.lastBoundsMin ?? null,
-      lastBoundsMax: v1.lastBoundsMax ?? null,
-    };
-    safeWriteJSON(DASH_STATE_KEY, migrated);
-    return migrated;
-  }
-
-  return null;
 }
 
 function isValidGrupo(g) {
@@ -239,7 +214,6 @@ function getDrawCloseHour(d) {
 
   return String(cand ?? "").trim();
 }
-
 
 const MONTH_NAME_TO_MM = {
   janeiro: "01",
@@ -366,7 +340,7 @@ function mapRankingJsonToApp(json) {
     dateTo: meta.d2 || null,
     totalDraws: Number(totals.draws || 0),
     totalOcorrencias: Number(totals.ocorrencias || 0),
-    totalDays: Number(totals.days || totals.dias || totals.uniqueDays || totals.unique_days || 0) || 0,
+    totalDays: Number(totals.days || totals.dias || totals.uniqueDays || totals.unique_days || totals.unique_days || 0) || 0,
     generatedAt: meta.generatedAt || null,
     top3,
   };
@@ -488,11 +462,6 @@ function normalizeLoteriaKey(v) {
   return out || "PT_RIO";
 }
 
-/**
- * ✅ Dashboard recebe filtros do App.js
- * - filters: objeto
- * - setFilters: setter
- */
 function yearRangeToDates(minY, maxY, floorISO, ceilISO) {
   const y1 = Number(minY);
   const y2 = Number(maxY);
@@ -503,7 +472,7 @@ function yearRangeToDates(minY, maxY, floorISO, ceilISO) {
 
   // ISO puro (sem Date / timezone)
   let from = `${a}-01-01`;
-  let to   = `${b}-12-31`;
+  let to = `${b}-12-31`;
 
   if (isISODate(floorISO) && from < floorISO) from = floorISO;
   if (isISODate(ceilISO) && to > ceilISO) to = ceilISO;
@@ -601,6 +570,50 @@ function buildYearsAvailable(minISO, maxISO) {
   for (let y = a; y <= b; y++) out.push(y);
   return out;
 }
+
+/* =========================
+   ✅ Persistência por UF
+========================= */
+function makeDashStateKeyV2(ufKey) {
+  const u = String(ufKey || "").trim().toUpperCase() || "PT_RIO";
+  return `${DASH_STATE_KEY_BASE}__${u}`;
+}
+
+function loadDashStateV2(ufKey) {
+  const KEY = makeDashStateKeyV2(ufKey);
+
+  // v2 por UF
+  const v2 = safeReadJSON(KEY);
+  if (v2 && typeof v2 === "object") return v2;
+
+  // compat: v2 antigo global (sem sufixo UF) -> migra pra chave por UF
+  const legacyV2 = safeReadJSON(DASH_STATE_KEY_BASE);
+  if (legacyV2 && typeof legacyV2 === "object") {
+    const migrated = { ...legacyV2 };
+    safeWriteJSON(KEY, migrated);
+    return migrated;
+  }
+
+  // compat v1 -> migra pra v2 “light” (por UF)
+  const v1 = safeReadJSON(DASH_STATE_KEY_V1);
+  if (v1 && typeof v1 === "object") {
+    const migrated = {
+      v: 2,
+      selectedGrupo: v1.selectedGrupo ?? null,
+      selectedYears: Array.isArray(v1.selectedYears) ? v1.selectedYears : [],
+      dateRange: v1.dateRange ?? null,
+      dateRangeQuery: v1.dateRangeQuery ?? null,
+      followMax: v1.followMax ?? true,
+      lastBoundsMin: v1.lastBoundsMin ?? null,
+      lastBoundsMax: v1.lastBoundsMax ?? null,
+    };
+    safeWriteJSON(KEY, migrated);
+    return migrated;
+  }
+
+  return null;
+}
+
 export default function Dashboard(props) {
   const externalFilters = props && typeof props === "object" ? props.filters : null;
   const externalSetFilters = props && typeof props === "object" ? props.setFilters : null;
@@ -668,27 +681,33 @@ export default function Dashboard(props) {
     return typeof externalSetFilters === "function" ? externalSetFilters : noopSetFilters;
   }, [externalSetFilters, noopSetFilters, isGuest]);
 
-  const loteriaKey = useMemo(() => normalizeLoteriaKey(filters?.lotteryKey || filters?.loteria), [filters?.lotteryKey, filters?.loteria]);
+  const loteriaKey = useMemo(
+    () => normalizeLoteriaKey(filters?.lotteryKey || filters?.loteria),
+    [filters?.lotteryKey, filters?.loteria]
+  );
   const isFederal = loteriaKey === "FEDERAL";
 
-  
-
   const fedBucket = isFederal ? normalizeHourBucket(filters?.horario) : null;
-const locationLabel = isFederal
-  ? `FEDERAL (Brasil)${fedBucket ? ` — ${fedBucket}` : ""}`
-  : `${loteriaKey} — Brasil`;
+  const locationLabel = isFederal
+    ? `FEDERAL (Brasil)${fedBucket ? ` — ${fedBucket}` : ""}`
+    : `${loteriaKey} — Brasil`;
+
   const uf = loteriaKey;
-  // ✅ restaura apenas estado auxiliar (range/anos/grupo) do localStorage
-  const savedDashState = useMemo(() => loadDashStateV2(), []);
+
+  // ✅ estado salvo por UF (recarrega quando UF muda)
+  const [savedDashState, setSavedDashState] = useState(() => loadDashStateV2(uf));
+
+  useEffect(() => {
+    setSavedDashState(loadDashStateV2(uf));
+  }, [uf]);
 
   const [selectedGrupo, setSelectedGrupo] = useState(() => {
-  const g = Number(savedDashState?.selectedGrupo);
-  return Number.isFinite(g) && g >= 1 && g <= 25 ? g : null;
-});
-
-  const [bounds, setBounds] = useState({ loading: DATA_MODE === "firestore", minDate: null, maxDate: null, error: null });
+    const g = Number(savedDashState?.selectedGrupo);
+    return Number.isFinite(g) && g >= 1 && g <= 25 ? g : null;
+  });
 
   const didInitRangeFromBoundsRef = useRef(false);
+  const debounceTimerRef = useRef(null);
 
   // ✅ followMax VOLTOU e é USADO (sem warning e sem travar usuário)
   const [followMax, setFollowMax] = useState(() => savedDashState?.followMax !== false);
@@ -709,12 +728,54 @@ const locationLabel = isFederal
     return null;
   });
 
-  const debounceTimerRef = useRef(null);
-
   const [selectedYears, setSelectedYears] = useState(() => {
     const arr = Array.isArray(savedDashState?.selectedYears) ? savedDashState.selectedYears : [];
     return arr.map((y) => Number(y)).filter((y) => Number.isFinite(y));
   });
+
+  // ✅ bounds por UF
+  const [bounds, setBounds] = useState({
+    loading: DATA_MODE === "firestore",
+    minDate: null,
+    maxDate: null,
+    error: null,
+  });
+
+  // ✅ ao trocar UF: rehidrata estado (por UF) e força re-init de bounds/range
+  useEffect(() => {
+    if (isGuest) return;
+
+    const st = loadDashStateV2(uf) || null;
+
+    didInitRangeFromBoundsRef.current = false;
+
+    setSelectedGrupo(() => {
+      const g = Number(st?.selectedGrupo);
+      return Number.isFinite(g) && g >= 1 && g <= 25 ? g : null;
+    });
+
+    setSelectedYears(() => {
+      const arr = Array.isArray(st?.selectedYears) ? st.selectedYears : [];
+      return arr.map((y) => Number(y)).filter((y) => Number.isFinite(y));
+    });
+
+    setFollowMax(() => st?.followMax !== false);
+
+    setDateRange(() => {
+      const dr = st?.dateRange;
+      if (dr?.from && dr?.to && isISODate(dr.from) && isISODate(dr.to)) return { from: dr.from, to: dr.to };
+      return null;
+    });
+
+    setDateRangeQuery(() => {
+      const dr = st?.dateRangeQuery;
+      if (dr?.from && dr?.to && isISODate(dr.from) && isISODate(dr.to)) return { from: dr.from, to: dr.to };
+      return null;
+    });
+
+    // coloca bounds em loading para evitar “flash” de range antigo
+    setBounds((b) => ({ ...b, loading: DATA_MODE === "firestore", error: null, minDate: null, maxDate: null }));
+  }, [uf, isGuest]);
 
   const [bannerSrc, setBannerSrc] = useState(DEFAULT_BANNER_SRC);
   const bannerReqIdRef = useRef(0);
@@ -739,7 +800,8 @@ const locationLabel = isFederal
       // ✅ vars usadas em lógica de range (evita no-undef)
       let minYmd = null;
       let maxYmd = null;
-      void minYmd; void maxYmd;
+      void minYmd;
+      void maxYmd;
 
       try {
         setBounds((b) => ({ ...b, loading: true, error: null }));
@@ -752,16 +814,29 @@ const locationLabel = isFederal
         const rawMax = String(res?.maxYmd ?? res?.maxDate ?? "").trim();
         minYmd = normalizeISO10(rawMin);
         maxYmd = normalizeISO10(rawMax);
-        // ✅ redundância: chão histórico do PT_RIO (evita 08/06 por qualquer motivo)
-                // ✅ redundância: chão histórico do RJ/PT_RIO (evita 08/06 por qualquer motivo)
+
+        // ✅ redundância: chão histórico por UF
         const ufU = String(uf || "").trim().toUpperCase();
-        const isRJ = (ufU === "PT_RIO" || ufU === "RJ" || ufU === "RIO" || ufU === "PT-RIO");
+
+        // RJ / PT_RIO
+        const isRJ = ufU === "PT_RIO" || ufU === "RJ" || ufU === "RIO" || ufU === "PT-RIO";
         if (isRJ) {
           const FLOOR = "2022-06-07";
           if (minYmd && isISODate(minYmd) && minYmd > FLOOR) minYmd = FLOOR;
           if (!minYmd) minYmd = FLOOR;
           if (maxYmd && isISODate(maxYmd) && maxYmd < minYmd) maxYmd = minYmd;
-        }        if (!minYmd || !maxYmd) {
+        }
+
+        // FEDERAL
+        const isFED = ufU === "FEDERAL" || ufU === "FED" || ufU === "BR";
+        if (isFED) {
+          const FLOOR = "2022-02-08";
+          if (minYmd && isISODate(minYmd) && minYmd > FLOOR) minYmd = FLOOR;
+          if (!minYmd) minYmd = FLOOR;
+          if (maxYmd && isISODate(maxYmd) && maxYmd < minYmd) maxYmd = minYmd;
+        }
+
+        if (!minYmd || !maxYmd) {
           setBounds({
             loading: false,
             minDate: minYmd,
@@ -787,9 +862,7 @@ const locationLabel = isFederal
           const hasRestoredRange = rr?.from && rr?.to && isISODate(rr.from) && isISODate(rr.to);
           const hasRestoredQuery = rq?.from && rq?.to && isISODate(rq.from) && isISODate(rq.to);
 
-          const savedYearsRaw = Array.isArray(savedDashState?.selectedYears)
-            ? savedDashState.selectedYears
-            : [];
+          const savedYearsRaw = Array.isArray(savedDashState?.selectedYears) ? savedDashState.selectedYears : [];
           const savedYears = savedYearsRaw.map((y) => Number(y)).filter((y) => Number.isFinite(y));
           const hasSavedYears = savedYears.length > 0;
 
@@ -958,23 +1031,22 @@ const locationLabel = isFederal
 
   const canQueryFirestore = DATA_MODE === "firestore" ? !!(boundsReady && dateRangeQuery) : true;
 
-
   // ✅ Quando o usuário filtra Posição/Grupo, precisamos de prizes => força modo detailed no hook
   const needsPrizesLocal = useMemo(() => {
     const wantsPositionFilter = String(filters?.posicao || "").trim().toLowerCase() !== "todos";
     const wantsGrupoFilter = !!selectedGrupo;
     return wantsPositionFilter || wantsGrupoFilter;
   }, [filters?.posicao, selectedGrupo]);
-  const { loading: fsLoading, error: fsError, meta: fsRankingMeta, drawsRaw: fsDrawsRaw } =
-    useKingRanking({
-      uf,
-      date: canQueryFirestore ? queryDate : null,
-      dateFrom: canQueryFirestore ? dateFrom : null,
-      dateTo: canQueryFirestore ? dateTo : null,
-      closeHourBucket: null,
-      positions: ALL_POSITIONS,
-      needsPrizes: needsPrizesLocal,
-    });
+
+  const { loading: fsLoading, error: fsError, meta: fsRankingMeta, drawsRaw: fsDrawsRaw } = useKingRanking({
+    uf,
+    date: canQueryFirestore ? queryDate : null,
+    dateFrom: canQueryFirestore ? dateFrom : null,
+    dateTo: canQueryFirestore ? dateTo : null,
+    closeHourBucket: null,
+    positions: ALL_POSITIONS,
+    needsPrizes: needsPrizesLocal,
+  });
 
   const [jsonState, setJsonState] = useState({
     loading: DATA_MODE === "json",
@@ -990,7 +1062,6 @@ const locationLabel = isFederal
     let alive = true;
 
     (async () => {
-
       try {
         setJsonState((s) => ({ ...s, loading: true, error: null }));
 
@@ -1097,10 +1168,55 @@ const locationLabel = isFederal
     };
   }, []);
 
+  // ✅ detecta troca de loteria e reseta filtros sensíveis (horário/animal/posição)
+  const lastUfRef = useRef(String(uf || ""));
+  useEffect(() => {
+    const prev = String(lastUfRef.current || "");
+    const next = String(uf || "");
+    if (prev && next && prev !== next) {
+      // reseta seleção local
+      setSelectedGrupo(null);
+      setSelectedYears([]);
+      setFollowMax(true);
+
+      // reseta filtros dependentes (principal: horário)
+      setFilters((p) => ({
+        ...p,
+        horario: "Todos",
+        animal: "Todos",
+        posicao: "Todos",
+      }));
+
+      // deixa bounds re-inicializar o range da UF nova
+      setDateRange(null);
+      setDateRangeQuery(null);
+      didInitRangeFromBoundsRef.current = false;
+    }
+    lastUfRef.current = next;
+  }, [uf, setFilters]);
+
   const handleFilterChange = useCallback(
     (name, value) => {
       if (isGuest) {
         showGuestToast("Modo demonstração: filtros estão bloqueados. Faça login para usar.");
+        return;
+      }
+
+      // ✅ ao trocar loteria, zera horário/animal/posição na mesma transação
+      if (name === "loteria" || name === "lotteryKey" || name === "uf") {
+        setFilters((prev) => ({
+          ...prev,
+          [name]: value,
+          horario: "Todos",
+          animal: "Todos",
+          posicao: "Todos",
+        }));
+        setSelectedGrupo(null);
+        setSelectedYears([]);
+        setFollowMax(true);
+        setDateRange(null);
+        setDateRangeQuery(null);
+        didInitRangeFromBoundsRef.current = false;
         return;
       }
 
@@ -1185,9 +1301,7 @@ const locationLabel = isFederal
         if (grupoTarget) {
           next = next.filter((p) => {
             const g =
-              Number(p?.grupo) ||
-              Number(String(p?.group || p?.grupo2 || "").replace(/^0/, "")) ||
-              null;
+              Number(p?.grupo) || Number(String(p?.group || p?.grupo2 || "").replace(/^0/, "")) || null;
             return Number(g) === Number(grupoTarget);
           });
         }
@@ -1299,9 +1413,9 @@ const locationLabel = isFederal
     }
 
     if (isFederal) {
-  baseBuckets.add("19h");
-  baseBuckets.add("20h");
-}
+      baseBuckets.add("19h");
+      baseBuckets.add("20h");
+    }
 
     const horarios = Array.from(baseBuckets)
       .sort((a, b) => a.localeCompare(b))
@@ -1338,8 +1452,8 @@ const locationLabel = isFederal
   }, [drawsForUi, isFederal]);
 
   const yearsAvailable = useMemo(() => {
-  return buildYearsAvailable(MIN_DATE, MAX_DATE);
-}, [MIN_DATE, MAX_DATE]);
+    return buildYearsAvailable(MIN_DATE, MAX_DATE);
+  }, [MIN_DATE, MAX_DATE]);
 
   const applyAllYearsFull = useCallback(() => {
     if (!MIN_DATE || !MAX_DATE) return;
@@ -1400,35 +1514,35 @@ const locationLabel = isFederal
   );
 
   const kpiItems = useMemo(() => {
-  // KPIs gerais do período (base = drawsForUi)
-  if (!dataReady) {
+    // KPIs gerais do período (base = drawsForUi)
+    if (!dataReady) {
+      return [
+        { key: "dias", title: "Qtde Dias de sorteios", value: null, icon: "calendar" },
+        { key: "sorteios", title: "Qtde de sorteios", value: null, icon: "ticket" },
+      ];
+    }
+
+    const base = Array.isArray(drawsForUi) ? drawsForUi : [];
+    if (!base.length) {
+      return [
+        { key: "dias", title: "Qtde Dias de sorteios", value: 0, icon: "calendar" },
+        { key: "sorteios", title: "Qtde de sorteios", value: 0, icon: "ticket" },
+      ];
+    }
+
+    // ✅ KPI deve contar sorteios reais (dedupe por drawId ou ymd+hora+uf)
+    const uniqDraws = dedupeDrawsForKpi(base, uf);
+
+    const dias = new Set(uniqDraws.map((d) => getDrawDate(d)).filter(Boolean)).size;
+    const sorteios = uniqDraws.length;
+
     return [
-      { key: "dias", title: "Qtde Dias de sorteios", value: null, icon: "calendar" },
-      { key: "sorteios", title: "Qtde de sorteios", value: null, icon: "ticket" },
+      { key: "dias", title: "Qtde Dias de sorteios", value: dias, icon: "calendar" },
+      { key: "sorteios", title: "Qtde de sorteios", value: sorteios, icon: "ticket" },
     ];
-  }
+  }, [dataReady, drawsForUi, uf]);
 
-  const base = Array.isArray(drawsForUi) ? drawsForUi : [];
-  if (!base.length) {
-    return [
-      { key: "dias", title: "Qtde Dias de sorteios", value: 0, icon: "calendar" },
-      { key: "sorteios", title: "Qtde de sorteios", value: 0, icon: "ticket" },
-    ];
-  }
-
-  // ✅ KPI deve contar sorteios reais (dedupe por drawId ou ymd+hora+uf)
-  const uniqDraws = dedupeDrawsForKpi(base, uf);
-
-  const dias = new Set(uniqDraws.map((d) => getDrawDate(d)).filter(Boolean)).size;
-  const sorteios = uniqDraws.length;
-
-  return [
-    { key: "dias", title: "Qtde Dias de sorteios", value: dias, icon: "calendar" },
-    { key: "sorteios", title: "Qtde de sorteios", value: sorteios, icon: "ticket" },
-  ];
-}, [dataReady, drawsForUi, uf]);
-
-const onSelectGrupo = useCallback(
+  const onSelectGrupo = useCallback(
     (grupoNum) => {
       if (isGuest) {
         showGuestToast("Modo demonstração: seleção de bicho está bloqueada. Faça login para usar.");
@@ -1548,10 +1662,13 @@ const onSelectGrupo = useCallback(
     run();
   }, [selectedGrupo]);
 
+  // ✅ salva estado por UF (não vaza)
   useEffect(() => {
     if (isGuest) return;
 
-    safeWriteJSON(DASH_STATE_KEY, {
+    const KEY = makeDashStateKeyV2(uf);
+
+    safeWriteJSON(KEY, {
       v: 2,
       selectedGrupo,
       selectedYears,
@@ -1561,7 +1678,7 @@ const onSelectGrupo = useCallback(
       lastBoundsMax: MAX_DATE || null,
       followMax: followMax !== false,
     });
-  }, [selectedGrupo, selectedYears, dateRange, dateRangeQuery, isGuest, MIN_DATE, MAX_DATE, followMax]);
+  }, [uf, selectedGrupo, selectedYears, dateRange, dateRangeQuery, isGuest, MIN_DATE, MAX_DATE, followMax]);
 
   const hydratingBox = useMemo(() => {
     if (!isHydrating) return null;
@@ -1653,9 +1770,7 @@ const onSelectGrupo = useCallback(
                         <div
                           role="button"
                           aria-label="Período bloqueado no modo demonstração"
-                          onClick={() =>
-                            showGuestToast("Modo demonstração: período está bloqueado. Faça login para usar.")
-                          }
+                          onClick={() => showGuestToast("Modo demonstração: período está bloqueado. Faça login para usar.")}
                           style={{
                             position: "absolute",
                             inset: 0,
@@ -1771,5 +1886,3 @@ const onSelectGrupo = useCallback(
     </div>
   );
 }
-
-

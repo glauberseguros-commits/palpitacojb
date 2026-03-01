@@ -4,11 +4,18 @@ import React, { useMemo, useCallback } from "react";
 /**
  * FiltersBar (Premium)
  *
- * ✅ NOVO: Loteria (RJ / FEDERAL)
- * - filters.loteria: "PT_RIO" | "FEDERAL" (default: "RJ")
- * - Quando FEDERAL:
- *   - força horário = "20h"
- *   - desabilita select de Horário (para não gerar estatística inválida)
+ * ✅ Loteria:
+ * - filters.loteria: "PT_RIO" | "FEDERAL" (default: "PT_RIO")
+ *
+ * ✅ Horário (domínio fixo por loteria):
+ * - PT_RIO: Todos + 09h/11h/14h/16h/18h/21h
+ * - FEDERAL: Todos + 19h/20h
+ *
+ * ✅ Segurança:
+ * - Ao trocar loteria, reseta filtros sensíveis:
+ *   horario -> "Todos"
+ *   animal  -> "Todos"
+ *   posicao -> "Todos"
  *
  * posicaoMode:
  * - "full" (default): Todos + 1º..7º
@@ -17,11 +24,6 @@ import React, { useMemo, useCallback } from "react";
  * posicoesFromOptionsMode:
  * - "ignore" (default): IGNORA options.posicoes (posição é domínio fixo)
  * - "respect": respeita options.posicoes se vier (com fallback seguro)
- *
- * Opção A (Horário):
- * - Horário é DOMÍNIO FIXO
- * - Em RJ: Todos + 09h/11h/14h/16h/18h/21h
- * - Em FEDERAL: trava em 20h
  *
  * Extras (freeze-safe):
  * - disabledAll: trava todos selects (útil para modo DEMO)
@@ -48,8 +50,10 @@ function normalizeLoteriaInput(v) {
     .replace(/\s+/g, " ")
     .trim();
 
-  if (key === "federal" || key === "fed" || key === "br" || key === "brasil") return "FEDERAL";
-  if (key === "rj" || key === "rio" || key === "pt_rio" || key === "pt-rio") return "PT_RIO";
+  if (key === "federal" || key === "fed" || key === "br" || key === "brasil")
+    return "FEDERAL";
+  if (key === "rj" || key === "rio" || key === "pt_rio" || key === "pt-rio")
+    return "PT_RIO";
 
   const out = key
     .toUpperCase()
@@ -176,11 +180,9 @@ const PP = {
   muted: "rgba(255,255,255,0.55)",
   rCard: 18,
   rInner: 14,
-  shadowGlow: "0 0 0 1px rgba(200,178,90,0.10), 0 18px 50px rgba(0,0,0,0.55)",
-
-  // ✅ compactado para reduzir altura e ajudar “sem scroll” no notebook
+  shadowGlow:
+    "0 0 0 1px rgba(200,178,90,0.10), 0 18px 50px rgba(0,0,0,0.55)",
   inputH: 44,
-
   selGoldA: "rgba(200,178,90,0.95)",
   selGoldB: "rgba(184,158,71,0.95)",
   selGoldSoft: "rgba(200,178,90,0.55)",
@@ -200,11 +202,13 @@ export default function FiltersBar({
   options = {},
   posicaoMode = "full",
   posicoesFromOptionsMode = "ignore",
-
   disabledAll = false,
   onBlocked = null,
 }) {
-  const loteria = useMemo(() => normalizeLoteriaInput(filters?.loteria), [filters?.loteria]);
+  const loteria = useMemo(
+    () => normalizeLoteriaInput(filters?.loteria),
+    [filters?.loteria]
+  );
   const isFederal = loteria === "FEDERAL";
 
   const defaultOptions = useMemo(() => {
@@ -240,7 +244,7 @@ export default function FiltersBar({
       { label: "Sábado", value: "Sáb" },
     ];
 
-    // ✅ RJ (domínio fixo)
+    // ✅ PT_RIO (domínio fixo)
     const horariosRJ = [
       { label: "Todos", value: "Todos" },
       { label: "09h", value: "09h" },
@@ -251,12 +255,12 @@ export default function FiltersBar({
       { label: "21h", value: "21h" },
     ];
 
-    // ✅ FEDERAL (tem 19h e 20h — permite escolher)
-const horariosFED = [
-  { label: "Todos", value: "Todos" },
-  { label: "19h", value: "19h" },
-  { label: "20h", value: "20h" },
-];
+    // ✅ FEDERAL (Todos/19h/20h)
+    const horariosFED = [
+      { label: "Todos", value: "Todos" },
+      { label: "19h", value: "19h" },
+      { label: "20h", value: "20h" },
+    ];
 
     const posicoesDefaultFull = [
       { label: "Todos", value: "Todos" },
@@ -275,7 +279,12 @@ const horariosFED = [
       if (!Array.isArray(arr) || !arr.length) return fallback;
       const first = arr[0];
 
-      if (typeof first === "object" && first && "label" in first && "value" in first) {
+      if (
+        typeof first === "object" &&
+        first &&
+        "label" in first &&
+        "value" in first
+      ) {
         return arr
           .map((x) => ({
             label: normalizeValue(x?.label, "Todos"),
@@ -298,7 +307,8 @@ const horariosFED = [
         ? (() => {
             const cleaned = options.animais
               .map((x) => {
-                if (x && typeof x === "object") return String(x.value ?? x.label ?? "").trim();
+                if (x && typeof x === "object")
+                  return String(x.value ?? x.label ?? "").trim();
                 return String(x ?? "").trim();
               })
               .filter(Boolean)
@@ -316,7 +326,8 @@ const horariosFED = [
         ? (() => {
             const cleaned = options.diasMes
               .map((x) => {
-                if (x && typeof x === "object") return String(x.value ?? x.label ?? "").trim();
+                if (x && typeof x === "object")
+                  return String(x.value ?? x.label ?? "").trim();
                 return String(x ?? "").trim();
               })
               .filter(Boolean)
@@ -331,7 +342,7 @@ const horariosFED = [
         ? normalizeLabelValueList(options.diasSemana, diasSemanaDefault)
         : diasSemanaDefault;
 
-    // ✅ horário depende da loteria (RJ x FEDERAL)
+    // ✅ horário depende da loteria (PT_RIO x FEDERAL)
     const horarios = isFederal ? horariosFED : horariosRJ;
 
     const posicoesFromParent =
@@ -342,14 +353,16 @@ const horariosFED = [
         : null;
 
     const posicoes =
-      posicoesFromParent || (posicaoMode === "v1" ? posicoesDefaultV1 : posicoesDefaultFull);
+      posicoesFromParent ||
+      (posicaoMode === "v1" ? posicoesDefaultV1 : posicoesDefaultFull);
 
     const meses =
       Array.isArray(options.meses) && options.meses.length
         ? (() => {
             const cleaned = options.meses
               .map((x) => {
-                if (x && typeof x === "object") return String(x.value ?? x.label ?? "").trim();
+                if (x && typeof x === "object")
+                  return String(x.value ?? x.label ?? "").trim();
                 return String(x ?? "").trim();
               })
               .filter(Boolean)
@@ -380,7 +393,6 @@ const horariosFED = [
       overflow: "hidden",
       minWidth: 0,
     },
-
     grid: {
       display: "grid",
       gridTemplateColumns: "repeat(12, minmax(0, 1fr))",
@@ -388,7 +400,6 @@ const horariosFED = [
       alignItems: "end",
       minWidth: 0,
     },
-
     spanLoteria: { gridColumn: "span 2", minWidth: 0 },
     spanMes: { gridColumn: "span 2", minWidth: 0 },
     spanDiaMes: { gridColumn: "span 2", minWidth: 0 },
@@ -396,9 +407,7 @@ const horariosFED = [
     spanHorario: { gridColumn: "span 1", minWidth: 0 },
     spanAnimal: { gridColumn: "span 1", minWidth: 0 },
     spanPosicao: { gridColumn: "span 1", minWidth: 0 },
-
     item: { display: "grid", gap: 7, minWidth: 0 },
-
     label: {
       fontWeight: 700,
       letterSpacing: 0.12,
@@ -411,9 +420,7 @@ const horariosFED = [
       textOverflow: "ellipsis",
       minWidth: 0,
     },
-
     selectWrap: { position: "relative", width: "100%", minWidth: 0 },
-
     select: {
       height: PP.inputH,
       borderRadius: 12,
@@ -432,17 +439,16 @@ const horariosFED = [
       boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.28)",
       cursor: "pointer",
       minWidth: 0,
-      transition: "border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease",
+      transition:
+        "border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease",
       whiteSpace: "nowrap",
       textOverflow: "clip",
     },
-
     selectDisabled: {
       opacity: 0.62,
       cursor: "not-allowed",
       filter: "grayscale(18%)",
     },
-
     caret: {
       position: "absolute",
       right: 14,
@@ -456,7 +462,6 @@ const horariosFED = [
       pointerEvents: "none",
       opacity: 0.9,
     },
-
     styleTag: `
       .pp_filters_grid * { box-sizing: border-box; }
 
@@ -532,17 +537,18 @@ const horariosFED = [
         return;
       }
 
-      // ✅ Troca loteria: ao ir para FEDERAL não força "20h" (permite Todos/19h/20h)
-if (name === "loteria") {
-  const nextLot = normalizeLoteriaInput(next);
-  onChange("loteria", nextLot);
+      // ✅ Troca loteria: normaliza e reseta filtros sensíveis SEMPRE
+      if (name === "loteria") {
+        const nextLot = normalizeLoteriaInput(next);
+        onChange("loteria", nextLot);
 
-  if (nextLot === "FEDERAL") {
-    // default seguro: Todos
-    onChange("horario", "Todos");
-  }
-  return;
-}
+        // reset para evitar “estatística inválida” por estado anterior
+        onChange("horario", "Todos");
+        onChange("animal", "Todos");
+        onChange("posicao", "Todos");
+
+        return;
+      }
 
       if (lockPosicaoV1 && name === "posicao") {
         onChange("posicao", "1º");
@@ -558,7 +564,8 @@ if (name === "loteria") {
         onChange(name, normalizeDiaSemanaInput(next));
         return;
       }
-onChange(name, next);
+
+      onChange(name, next);
     },
     [disabledAll, onBlocked, lockPosicaoV1, onChange]
   );
@@ -615,11 +622,10 @@ onChange(name, next);
             <select
               value={normalizedValue}
               aria-disabled={finalDisabled ? "true" : "false"}
-              onMouseDownCapture={block} // ✅ impede abrir
+              onMouseDownCapture={block}
               onClickCapture={block}
               onKeyDownCapture={(e) => {
                 if (!finalDisabled) return;
-                // Enter / Space / ArrowDown / ArrowUp / Home / End etc.
                 block(e);
               }}
               onChange={(e) => handleChange(name, e.target.value)}
@@ -648,6 +654,7 @@ onChange(name, next);
     );
   };
 
+  // FEDERAL NÃO trava horário — só troca a lista (Todos/19h/20h)
   const horarioForcedValue = null;
   const horarioDisabled = false;
 
@@ -726,9 +733,3 @@ onChange(name, next);
     </div>
   );
 }
-
-
-
-
-
-
