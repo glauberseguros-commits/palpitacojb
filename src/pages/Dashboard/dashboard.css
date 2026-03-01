@@ -614,3 +614,29 @@
 }
 
 
+@media (min-width: 981px){
+
+  .dashLeft{
+    display: flex;
+    flex-direction: column;
+  }
+
+  .dashLeft table{
+    height: 100%;
+  }
+
+  .dashLeft table tbody{
+    height: 100%;
+  }
+
+  .dashLeft table tbody tr{
+    height: calc((100% - 42px) / 25);
+  }
+
+  .dashLeft table tbody td{
+    vertical-align: middle;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+}
+
