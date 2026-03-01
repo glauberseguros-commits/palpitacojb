@@ -106,6 +106,7 @@
 
 /* ====== Painel esquerdo (ranking) ====== */
 .dashLeft{
+  align-self: start;
   border: 1px solid var(--border);
   background: var(--panel2);
   border-radius: var(--radius-lg);
@@ -117,7 +118,9 @@
 
   /* ✅ sticky confiável */
   max-height: calc(100dvh - (var(--pad) * 2));
-  min-height: 0;
+  
+
+  height: fit-content;min-height: 0;
 
   display: flex;
   flex-direction: column;
@@ -129,7 +132,6 @@
   overflow-x: hidden;
 
   /* ✅ ocupa a altura do layout travado */
-  height: 100%;
 }
 
 /* ✅ Ranking SEM SCROLL (nem vertical nem horizontal) */
@@ -399,6 +401,7 @@
 .dashMain,
 .dashCharts,
 .dashLeft{
+  align-self: start;
   min-height: 0;
 }
 
@@ -489,6 +492,7 @@
   }
 
   .dashLeft{
+  align-self: start;
     position: relative;
     top: auto;
     max-height: none;
@@ -558,3 +562,54 @@
 .dashLeft table tbody td:nth-child(3){
   font-size: 11px;
 }
+
+
+ /* =========================
+    RANKING — Espaçamento Premium
+ ========================= */
+
+ .dashLeft table tbody td{
+   padding-top: 7px;
+   padding-bottom: 7px;
+   line-height: 1.2;
+ }
+
+ .dashLeft table thead th{
+   padding-top: 8px;
+   padding-bottom: 8px;
+ }
+
+ .dashLeft table tbody tr{
+   height: 34px;
+ }
+
+/* =========================
+   RANKING — Vertical Fill (Premium)
+   Objetivo: preencher o painel esquerdo no desktop
+========================= */
+
+@media (min-width: 981px){
+
+  /* aumenta a altura de cada linha (sem mexer no layout horizontal) */
+  .dashLeft table tbody tr{
+    height: 58px;
+  }
+
+  .dashLeft table tbody td{
+    padding-top: 10px;
+    padding-bottom: 10px;
+    line-height: 1.25;
+  }
+
+  .dashLeft table thead th{
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  /* garante que o conteúdo fique bem centralizado na linha */
+  .dashLeft table tbody td,
+  .dashLeft table thead th{
+    vertical-align: middle;
+  }
+}
+

@@ -207,7 +207,8 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
     const isDashboard = active === ROUTES.DASHBOARD;
 
     const shell = {
-      minHeight: "100vh",
+      minheight: "100dvh",
+      maxHeight: "100dvh",
       height: "100dvh",
       background: BG,
       position: "relative",
@@ -455,3 +456,4 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
     </div>
   );
 }
+
