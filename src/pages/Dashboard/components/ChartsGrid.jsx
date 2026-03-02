@@ -1651,9 +1651,7 @@ const ui = {
     minWidth: 0,
   },
 
-  apName: {
-    fontWeight: 900,
-    fontSize: 20,
+  apName: { fontWeight: 900, fontSize: 17,
     letterSpacing: 0.12,
     color: PP.text,
     opacity: 0.95,
@@ -1688,10 +1686,7 @@ const ui = {
     boxShadow: `0 0 0 1px rgba(200,178,90,0.14)`,
   },
 
-  apVal: {
-    textAlign: "right",
-    fontWeight: 950,
-    fontSize: 20,
+  apVal: { textAlign: "right", fontWeight: 950, fontSize: 17,
     letterSpacing: 0.1,
     color: PP.text,
     opacity: 0.95,
@@ -1921,3 +1916,4 @@ const ui = {
   }
   `,
 };
+
