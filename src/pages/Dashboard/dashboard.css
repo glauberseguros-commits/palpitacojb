@@ -466,6 +466,75 @@
   margin: 0 auto;
 }
 
+
+/* =========================
+   RANKING — Fill total (25 linhas, sem scroll, sem cortar)
+   Objetivo: eliminar espaço vazio DENTRO do card interno.
+   - Mantém colunas (inclui Palpite) sem corte horizontal
+========================= */
+:root{
+  --rankRows: 25;
+  --rankHeadH: 36px; /* ajuste fino se seu thead for maior/menor */
+}
+
+@media (min-width: 981px){
+
+  /* painel esquerdo precisa "esticar" */
+  .dashLeft{
+    height: 100%;
+  }
+
+  /* wrapper do ranking ocupa tudo */
+  .dashLeft .tableWrap,
+  .dashLeft .dashTableWrap,
+  .dashLeft .rankingWrap{
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  /* a tabela vira "100% altura" e colunas ficam estáveis */
+  .dashLeft table{
+    width: 100%;
+    height: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+  }
+
+  /* THEAD fixo, TBODY preenche o resto */
+  .dashLeft table thead{
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  .dashLeft table tbody{
+    display: block;
+    height: calc(100% - var(--rankHeadH));
+    width: 100%;
+  }
+
+  /* cada linha vira uma "table" pra manter alinhamento de colunas */
+  .dashLeft table tbody tr{
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+
+    /* 🔥 aqui está o preenchimento vertical real */
+    height: calc(100% / var(--rankRows));
+  }
+
+  /* centraliza verticalmente conteúdo e dá respiro */
+  .dashLeft table tbody td,
+  .dashLeft table thead th{
+    vertical-align: middle;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    line-height: 1.15;
+  }
+}
+
 /* ====== Responsivo ====== */
 @media (max-width: 1400px){
   .dashTop{ grid-template-columns: minmax(0, 1fr) 480px; }
@@ -595,7 +664,7 @@
 
   /* aumenta a altura de cada linha (sem mexer no layout horizontal) */
   .dashLeft table tbody tr{
-    height: 58px;
+    height: 70px;
   }
 
   .dashLeft table tbody td{
@@ -806,3 +875,4 @@
     line-height: 1.15;
   }
 }
+
