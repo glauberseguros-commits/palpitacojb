@@ -762,7 +762,7 @@ function BarChartHorizontalBasic({
   const safeData = Array.isArray(data) ? data : [];
   const rows = Math.max(1, safeData.length);
 
-  const H = compact ? clamp(92 + rows * 34, 240, 360) : clamp(110 + rows * 44, 240, 520);
+  const H = compact ? clamp(120 + rows * 44, 340, 560) : clamp(130 + rows * 48, 360, 640);
 
   const pad = { l: 22, r: 18, t: 16, b: 16 };
 
@@ -785,7 +785,7 @@ function BarChartHorizontalBasic({
 
   return (
     <div style={{ ...ui.svgFill, height: "100%" }}>
-      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="100%" style={{ display: "block" }} preserveAspectRatio="none">
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="100%" style={{ display: "block" }} preserveAspectRatio="xMidYMid meet">
         {safeData.map((d, i) => {
           const v = safeNumber(d.value);
           const pct = max > 0 ? v / max : 0;
@@ -858,8 +858,8 @@ function WaterfallHourChart({ data }) {
   const safe = Array.isArray(data) ? data : [];
   if (!safe.length) return null;
 
-  const H = 320;
-  const pad = { l: 24, r: 18, t: 22, b: 54 };
+  const H = 380;
+  const pad = { l: 24, r: 18, t: 22, b: 62 };
 
   const last = safe[safe.length - 1];
   const hasTotal = String(last?.label || "").toLowerCase() === "total";
@@ -890,7 +890,7 @@ function WaterfallHourChart({ data }) {
 
   return (
     <div style={{ ...ui.svgFill, height: "100%" }}>
-      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="100%" style={{ display: "block" }} preserveAspectRatio="none">
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="100%" style={{ display: "block" }} preserveAspectRatio="xMidYMid meet">
         {[0.25, 0.5, 0.75].map((k) => {
           const y = pad.t + innerH * k;
           return (
@@ -1564,9 +1564,11 @@ const ui = {
     letterSpacing: 0.2,
     fontSize: PP.titleSize,
     color: PP.text,
-    whiteSpace: "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
+    whiteSpace: "normal",
+display: "-webkit-box",
+WebkitLineClamp: 2,
+WebkitBoxOrient: "vertical",
+overflow: "hidden",
     minWidth: 0,
   },
 
@@ -1647,9 +1649,11 @@ const ui = {
     color: PP.text,
     opacity: 0.92,
     lineHeight: 1.05,
-    whiteSpace: "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
+    whiteSpace: "normal",
+display: "-webkit-box",
+WebkitLineClamp: 2,
+WebkitBoxOrient: "vertical",
+overflow: "hidden",
   },
 
   apBarWrap: {
@@ -1719,9 +1723,11 @@ const ui = {
     letterSpacing: 0.18,
     color: PP.text,
     opacity: 0.92,
-    whiteSpace: "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
+    whiteSpace: "normal",
+display: "-webkit-box",
+WebkitLineClamp: 2,
+WebkitBoxOrient: "vertical",
+overflow: "hidden",
   },
 
   posHdrSub: {
@@ -1730,9 +1736,11 @@ const ui = {
     letterSpacing: 0.14,
     color: PP.text2,
     opacity: 0.88,
-    whiteSpace: "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
+    whiteSpace: "normal",
+display: "-webkit-box",
+WebkitLineClamp: 2,
+WebkitBoxOrient: "vertical",
+overflow: "hidden",
   },
 
   posList: {
@@ -1787,9 +1795,11 @@ const ui = {
     letterSpacing: 0.16,
     color: PP.text,
     opacity: 0.92,
-    whiteSpace: "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
+    whiteSpace: "normal",
+display: "-webkit-box",
+WebkitLineClamp: 2,
+WebkitBoxOrient: "vertical",
+overflow: "hidden",
   },
 
   posBarWrap: {
@@ -1911,6 +1921,3 @@ const ui = {
   }
   `,
 };
-
-
-
