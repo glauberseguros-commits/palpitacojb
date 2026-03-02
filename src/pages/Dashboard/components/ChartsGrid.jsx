@@ -1724,9 +1724,7 @@ const ui = {
     minWidth: 0,
   },
 
-  posHdrText: {
-    fontWeight: 950,
-    fontSize: 16,
+  posHdrText: { fontSize: 20,
     letterSpacing: 0.18,
     color: PP.text,
     opacity: 0.94,
@@ -1782,9 +1780,7 @@ const ui = {
     minWidth: 0,
   },
 
-  posLeft: {
-    fontWeight: 950,
-    fontSize: 20,
+  posLeft: { fontSize: 20,
     letterSpacing: 0.2,
     color: PP.text2,
     opacity: 0.95,
@@ -1828,10 +1824,7 @@ const ui = {
     boxShadow: `0 0 0 1px rgba(200,178,90,0.14)`,
   },
 
-  posRight: {
-    textAlign: "right",
-    fontWeight: 950,
-    fontSize: 20,
+  posRight: { fontSize: 20,
     letterSpacing: 0.12,
     color: PP.text,
     opacity: 0.95,
@@ -1921,5 +1914,6 @@ const ui = {
   }
   `,
 };
+
 
 
