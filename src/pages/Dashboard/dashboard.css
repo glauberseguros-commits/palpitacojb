@@ -106,7 +106,7 @@
 
 /* ====== Painel esquerdo (ranking) ====== */
 .dashLeft{
-  align-self: start;
+
   border: 1px solid var(--border);
   background: var(--panel2);
   border-radius: var(--radius-lg);
@@ -402,6 +402,7 @@
 .dashMain,
 .dashCharts,
 .dashLeft{
+  height: 100%;
     min-height: 0;
 }
 
@@ -492,7 +493,9 @@
   }
 
   .dashLeft{
-  align-self: start;
+  min-height: 0;
+  height: 100%;
+
     position: relative;
     top: auto;
     max-height: none;
@@ -617,6 +620,8 @@
 @media (min-width: 981px){
 
   .dashLeft{
+  min-height: 0;
+  height: 100%;
     display: flex;
     flex-direction: column;
   }
@@ -637,6 +642,41 @@
     vertical-align: middle;
     padding-top: 0;
     padding-bottom: 0;
+  }
+}
+
+
+/* =========================
+   RANKING — Premium Fill (FINAL)
+   Objetivo: tabela encostar visualmente no fundo do card (sem scroll)
+========================= */
+
+@media (min-width: 981px){
+
+  /* garante que o wrap não cria "folga" extra */
+  .dashLeft .tableWrap,
+  .dashLeft .dashTableWrap,
+  .dashLeft .rankingWrap{
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* força preenchimento vertical aumentando linhas */
+  .dashLeft table tbody tr{
+    height: 44px !important;
+  }
+
+  .dashLeft table tbody td{
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+    line-height: 1.2 !important;
+    vertical-align: middle !important;
+  }
+
+  .dashLeft table thead th{
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+    vertical-align: middle !important;
   }
 }
 
