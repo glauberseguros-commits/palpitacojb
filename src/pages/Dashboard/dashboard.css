@@ -871,3 +871,77 @@
   }
 }
 
+
+/* =========================
+   RANKING — Premium Fill (CANÔNICO)
+   Objetivo:
+   - Card interno encosta no fundo do painel
+   - 25 linhas ocupam exatamente a altura (sem scroll)
+   - Não mexe no layout horizontal (não corta "Palpite")
+========================= */
+@media (min-width: 981px){
+
+  :root{
+    --rankRows: 25;
+    --rankHeadH: 44px; /* ajuste fino (40–52) se precisar */
+  }
+
+  /* painel e card interno viram "coluna flex" ocupando tudo */
+  .dashLeft{
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .dashLeft .dashCard,
+  .dashLeft .dashCardSoft{
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+
+    /* tira folga interna que cria "vazio" abaixo da tabela */
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  .dashLeft .tableWrap,
+  .dashLeft .dashTableWrap,
+  .dashLeft .rankingWrap{
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* tabela ocupa a altura toda do card */
+  .dashLeft table{
+    flex: 1 1 auto;
+    height: 100%;
+  }
+
+  /* cabeçalho com altura previsível */
+  .dashLeft table thead th{
+    height: var(--rankHeadH);
+    vertical-align: middle;
+  }
+
+  /* 25 linhas dividem exatamente o restante */
+  .dashLeft table tbody tr{
+    height: calc((100% - var(--rankHeadH)) / var(--rankRows));
+  }
+
+  /* respiro mínimo e alinhamento vertical (sem "vazio" abaixo) */
+  .dashLeft table tbody td{
+    vertical-align: middle;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    line-height: 1.15;
+  }
+}
+
+
