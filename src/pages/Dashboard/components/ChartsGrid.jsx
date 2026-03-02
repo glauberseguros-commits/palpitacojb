@@ -817,8 +817,8 @@ function BarChartHorizontalBasic({
   const clickable = typeof onBarClick === "function";
 
   // ✅ FONTE MAIS LEGÍVEL
-  const fontLabel = compact ? 22 : 23;
-  const fontVal = compact ? 22 : 23;
+  const fontLabel = 20;
+  const fontVal = 20;
 
   return (
     <div style={{ ...ui.svgFill, height: "100%" }}>
@@ -1921,4 +1921,5 @@ const ui = {
   }
   `,
 };
+
 
