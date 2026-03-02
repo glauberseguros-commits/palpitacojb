@@ -663,19 +663,14 @@
 @media (min-width: 981px){
 
   /* aumenta a altura de cada linha (sem mexer no layout horizontal) */
-  .dashLeft table tbody tr{
-    height: 70px;
-  }
+.dashLeft table tbody tr{
+  height: calc((100% - 40px) / 25);
+}
 
   .dashLeft table tbody td{
     padding-top: 10px;
     padding-bottom: 10px;
     line-height: 1.25;
-  }
-
-  .dashLeft table thead th{
-    padding-top: 10px;
-    padding-bottom: 10px;
   }
 
   /* garante que o conteúdo fique bem centralizado na linha */
