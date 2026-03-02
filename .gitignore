@@ -62,3 +62,11 @@ backend/logs/autoImportState-*.json
 backend/data/source_gaps/*.cleaned_*.json
 backend/data/backfillPlan_*.cleaned*.json
 
+
+# ignore local artifacts
+.env
+.env.local
+_LOCAL/
+**/*.bak_*
+**/*.bak.*
+
