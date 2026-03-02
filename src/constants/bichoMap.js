@@ -5,13 +5,9 @@
  * - Mapa oficial dos 25 bichos (grupo, nome, slug, dezenas)
  * - Helpers para label, dezenas, imagem e palpite (placeholder)
  *
- * ✅ IMPORTANTE (SEU PADRÃO CONFIRMADO):
- * Suas imagens estão em:
- * public/assets/animals/animais_<size>_png/
- * e o arquivo segue o padrão:
- * "<grupo2>_<slug>.png"
- *
- * Exemplo real:
+ * ✅ PADRÃO CONFIRMADO:
+ * public/assets/animals/animais_<size>_png/<grupo2>_<slug>.png
+ * Exemplo:
  * public/assets/animals/animais_256_png/01_avestruz.png
  */
 
@@ -43,8 +39,14 @@ function pad2(n) {
   return String(Number(n) || 0).padStart(2, "0");
 }
 
-function stripSlashes(s) {
+function stripTrailingSlashes(s) {
   return String(s || "").replace(/\/+$/, "");
+}
+
+function ensureLeadingSlash(s) {
+  const v = String(s || "").trim();
+  if (!v) return "";
+  return v.startsWith("/") ? v : `/${v}`;
 }
 
 /**
@@ -66,14 +68,24 @@ function getPublicBase() {
         : "";
 
     // BASE_URL do Vite normalmente vem como "/" ou "/sub/"
-    if (viteBase && viteBase !== "/") return stripSlashes(viteBase);
+    if (viteBase && viteBase !== "/") {
+      return stripTrailingSlashes(ensureLeadingSlash(viteBase));
+    }
   } catch {
     // noop
   }
 
   // CRA
-  const craBase = (typeof process !== "undefined" && process.env && typeof process.env.PUBLIC_URL === "string") ? String(process.env.PUBLIC_URL).trim() : "";
-  if (craBase && craBase !== "/") return stripSlashes(craBase);
+  const craBase =
+    typeof process !== "undefined" &&
+    process.env &&
+    typeof process.env.PUBLIC_URL === "string"
+      ? String(process.env.PUBLIC_URL).trim()
+      : "";
+
+  if (craBase && craBase !== "/") {
+    return stripTrailingSlashes(ensureLeadingSlash(craBase));
+  }
 
   return "";
 }
@@ -87,6 +99,9 @@ function getPublicBase() {
  * - "GRUPO 18"
  * - "Grupo 04"
  * - "G18"
+ *
+ * Proteção extra:
+ * - evita "GRUPO 1 E 2" virar 12
  */
 function coerceGrupoNumber(input) {
   if (input == null) return null;
@@ -98,10 +113,14 @@ function coerceGrupoNumber(input) {
     return g;
   }
 
-  const dig = onlyDigits(input);
-  if (!dig) return null;
+  const str = String(input || "").trim();
+  if (!str) return null;
 
-  const g = Number(dig);
+  // pega o PRIMEIRO match de 1 ou 2 dígitos
+  const m = str.match(/\d{1,2}/);
+  if (!m) return null;
+
+  const g = Number(m[0]);
   if (!Number.isFinite(g)) return null;
   if (g < 1 || g > 25) return null;
   return g;
@@ -241,6 +260,7 @@ export function guessPalpiteFromGrupo(grupo, ctx = null) {
    Imagens / helpers
 ========================= */
 
+// Mantido como constante: seu padrão é assets/
 const PREFER_ASSETS_FOLDER = true;
 
 function normalizeAllowedSize(size) {
@@ -249,6 +269,7 @@ function normalizeAllowedSize(size) {
   let s = Number(size);
   if (!Number.isFinite(s) || s <= 0) s = 96;
 
+  // arredonda pra cima (se passar 70 -> 96)
   for (const a of allowed) {
     if (s <= a) return a;
   }
@@ -257,14 +278,7 @@ function normalizeAllowedSize(size) {
 
 /**
  * ✅ Retorna a URL correta da imagem para o grupo e tamanho.
- *
- * SEU PADRÃO (confirmado):
  * /assets/animals/animais_<size>_png/<grupo2>_<slug>.png
- *
- * Compat extra (sem inflar projeto):
- * - expõe uma função de fallback com sufixo do tamanho no nome
- *
- * OBS: o React <img> não "tenta" fallback sozinho; ele precisa de onError.
  */
 export function getImgFromGrupo(grupo, size = null) {
   const b = getBichoByGrupo(grupo);
@@ -274,20 +288,17 @@ export function getImgFromGrupo(grupo, size = null) {
   const g2 = pad2(b.grupo);
   const s = normalizeAllowedSize(size);
 
-  // padrão antigo (se algum componente ainda usar /img)
+  // legado (se algum componente antigo ainda usar /img)
   if (!PREFER_ASSETS_FOLDER) {
     return `${base}/img/${b.slug}_${s}.png`;
   }
 
-  // ✅ padrão novo (SEU): sem sufixo do tamanho no nome
   return `${base}/assets/animals/animais_${s}_png/${g2}_${b.slug}.png`;
 }
 
 /**
- * ✅ Fallback opcional: com sufixo do tamanho no nome (caso exista em alguma pasta)
- * Uso (onde você tem onError):
- *   const primary = getImgFromGrupo(g, 64);
- *   const fallback = getImgFromGrupoFallback(g, 64);
+ * ✅ Fallback opcional (LEGADO): com sufixo do tamanho no nome.
+ * Só use se você tiver esse arquivo no disco.
  */
 export function getImgFromGrupoFallback(grupo, size = null) {
   const b = getBichoByGrupo(grupo);
@@ -319,4 +330,3 @@ export function getSlugByGrupo(grupo) {
   const b = getBichoByGrupo(grupo);
   return b?.slug || "";
 }
-

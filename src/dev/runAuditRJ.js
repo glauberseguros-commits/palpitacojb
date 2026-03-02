@@ -5,21 +5,83 @@ import { getKingBoundsByUf } from "../services/kingResultsService";
  * Auditoria inicial RJ
  * - valida limites reais da base
  * - prepara motor estatístico
- * - LOG EXPLÍCITO (debug controlado)
+ * - LOG controlável (debug)
  */
+
+/* =========================
+   Utils
+========================= */
+
+function isYmdStrict(s) {
+  const str = String(s || "").trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) return false;
+
+  const [y, m, d] = str.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+
+  return (
+    dt.getUTCFullYear() === y &&
+    dt.getUTCMonth() === m - 1 &&
+    dt.getUTCDate() === d
+  );
+}
+
+/**
+ * ✅ Leitura segura de Vite env sem referenciar import.meta diretamente.
+ * CRA não suporta import.meta no source.
+ */
+function readViteEnv(key) {
+  try {
+    // eslint-disable-next-line no-new-func
+    const fn = new Function(
+      "k",
+      'try { return (typeof import !== "undefined" && import.meta && import.meta.env) ? import.meta.env[k] : undefined; } catch(e) { return undefined; }'
+    );
+    return fn(key);
+  } catch {
+    return undefined;
+  }
+}
+
+function shouldDebug() {
+  // CRA: REACT_APP_DEBUG_AUDIT=1
+  try {
+    const cra = String(process?.env?.REACT_APP_DEBUG_AUDIT || "").trim();
+    if (cra) return cra === "1" || cra.toLowerCase() === "true";
+  } catch {}
+
+  // Vite: VITE_DEBUG_AUDIT=1 (via acesso dinâmico seguro)
+  try {
+    const vite = String(readViteEnv("VITE_DEBUG_AUDIT") || "").trim();
+    if (vite) return vite === "1" || vite.toLowerCase() === "true";
+  } catch {}
+
+  return false;
+}
+
+/* =========================
+   Main
+========================= */
+
 export async function runAuditRJ() {
   const UF = "RJ";
+  const DEBUG = shouldDebug();
 
   console.log("[AUDIT][RJ] Rodando auditoria (bounds)...");
 
   try {
     const bounds = await getKingBoundsByUf({ uf: UF });
 
-    // 🔍 LOG FORÇADO (evita Object colapsado no DevTools)
-    console.log("[AUDIT][RJ] BOUNDS (raw):", bounds);
-    console.log("[AUDIT][RJ] BOUNDS (json):", JSON.stringify(bounds, null, 2));
+    if (DEBUG) {
+      console.log("[AUDIT][RJ] BOUNDS (raw):", bounds);
+      console.log(
+        "[AUDIT][RJ] BOUNDS (json):",
+        JSON.stringify(bounds, null, 2)
+      );
+    } else {
+      console.log("[AUDIT][RJ] bounds recebido.");
+    }
 
-    // validação mínima (não quebra fluxo; só alerta)
     if (!bounds || typeof bounds !== "object") {
       console.warn("[AUDIT][RJ] bounds inválido (não é objeto):", bounds);
       return bounds;
@@ -31,19 +93,30 @@ export async function runAuditRJ() {
       console.warn("[AUDIT][RJ] UF retornada diferente:", uf);
     }
 
-    // checks “soft” (pra detectar range quebrado sem travar)
     if (!minDate || !maxDate) {
-      console.warn("[AUDIT][RJ] minDate/maxDate ausentes:", { minDate, maxDate });
+      console.warn("[AUDIT][RJ] minDate/maxDate ausentes:", {
+        minDate,
+        maxDate,
+      });
+    } else {
+      if (!isYmdStrict(minDate) || !isYmdStrict(maxDate)) {
+        console.warn(
+          "[AUDIT][RJ] minDate/maxDate não estão em YYYY-MM-DD estrito:",
+          { minDate, maxDate }
+        );
+      }
     }
 
-    if (days != null && (!Number.isFinite(Number(days)) || Number(days) <= 0)) {
-      console.warn("[AUDIT][RJ] days suspeito:", days);
+    if (days != null) {
+      const n = Number(days);
+      if (!Number.isFinite(n) || n <= 0) {
+        console.warn("[AUDIT][RJ] days suspeito:", days);
+      }
     }
 
     return bounds;
   } catch (err) {
     console.error("[AUDIT][RJ] Falha ao buscar bounds:", err);
-    // mantém contrato: retorna null em erro
     return null;
   }
 }

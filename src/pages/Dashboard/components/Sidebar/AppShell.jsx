@@ -207,7 +207,7 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
     const isDashboard = active === ROUTES.DASHBOARD;
 
     const shell = {
-      minheight: "100dvh",
+      minHeight: "100dvh", // ✅ FIX: era "minheight" (ignorado). Agora aplica.
       maxHeight: "100dvh",
       height: "100dvh",
       background: BG,
@@ -344,8 +344,8 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
     // ✅ Botão hambúrguer premium no mobile (agora “dentro” do topbar)
     const mobileMenuBtn = isMobile
       ? {
-          width: 42,
-          height: 42,
+          width: 48,
+          height: 48,
           borderRadius: 14,
           border: `1px solid ${BORDER}`,
           background:
@@ -420,7 +420,7 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
                 aria-label={m.title}
                 type="button"
               >
-                <Icon name={m.icon} />
+                <Icon name={m.icon} size={24} />
               </button>
             );
           })}
@@ -432,7 +432,7 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
             aria-label={isGuest ? "Sair do Preview" : "Sair"}
             type="button"
           >
-            <Icon name="logout" />
+            <Icon name="logout" size={24} />
           </button>
         </nav>
       </aside>
@@ -447,7 +447,7 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
             title="Menu"
             aria-label="Abrir menu"
           >
-            <Icon name="menu" />
+            <Icon name="menu" size={24} />
           </button>
         </div>
 

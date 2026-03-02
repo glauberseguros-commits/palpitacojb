@@ -5,8 +5,25 @@ export function pad2(n) {
   return String(n).padStart(2, "0");
 }
 
+/**
+ * ✅ YYYY-MM-DD estrito (formato + data válida)
+ * - evita aceitar 2026-99-99, 2026-02-31 etc
+ */
 export function isYMD(s) {
-  return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
+  const str = String(s || "").trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) return false;
+
+  const [y, m, d] = str.split("-").map((x) => Number(x));
+  if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return false;
+  if (m < 1 || m > 12) return false;
+  if (d < 1 || d > 31) return false;
+
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return (
+    dt.getUTCFullYear() === y &&
+    dt.getUTCMonth() === m - 1 &&
+    dt.getUTCDate() === d
+  );
 }
 
 export function ymdToBR(ymd) {
@@ -108,7 +125,13 @@ export function pickDrawYmd(draw) {
 }
 
 export function pickDrawHour(draw) {
-  const directCandidates = [draw?.closeHour, draw?.hour, draw?.horario, draw?.close_hour, draw?.close];
+  const directCandidates = [
+    draw?.closeHour,
+    draw?.hour,
+    draw?.horario,
+    draw?.close_hour,
+    draw?.close,
+  ];
   for (const c of directCandidates) {
     const norm = normalizeHourLike(c);
     if (norm) return norm;
@@ -159,7 +182,15 @@ export function getWeekdayPTBRFromYMD(ymd) {
   const dt = ymdToUTCDate(ymd);
   if (!dt) return "";
   const day = dt.getUTCDay();
-  const map = ["Domingo", "Segunda-Feira", "Terça-Feira", "Quarta-Feira", "Quinta-Feira", "Sexta-Feira", "Sábado"];
+  const map = [
+    "Domingo",
+    "Segunda-Feira",
+    "Terça-Feira",
+    "Quarta-Feira",
+    "Quinta-Feira",
+    "Sexta-Feira",
+    "Sábado",
+  ];
   return map[day] || "";
 }
 
@@ -227,7 +258,13 @@ export function pickMilhar4(prize) {
 }
 
 export function pickCentena3(prize) {
-  const direct = [prize?.centena3, prize?.centena, prize?.centena_3, prize?.centena3dig, prize?.c3];
+  const direct = [
+    prize?.centena3,
+    prize?.centena,
+    prize?.centena_3,
+    prize?.centena3dig,
+    prize?.c3,
+  ];
   for (const c of direct) {
     const d = digitsOnly(c);
     if (!d) continue;
@@ -388,16 +425,25 @@ export async function mapWithConcurrency(items, limitN, mapper) {
   const arr = Array.isArray(items) ? items : [];
   const concurrency = Math.max(1, Number(limitN) || 3);
   const results = new Array(arr.length);
+
   let idx = 0;
 
   async function worker() {
-    while (idx < arr.length) {
-      const current = idx++;
+    // ✅ claim seguro do próximo índice
+    // (evita disputa em cenários com yield/microtasks)
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const current = idx;
+      idx += 1;
+      if (current >= arr.length) break;
       results[current] = await mapper(arr[current], current);
     }
   }
 
-  await Promise.all(Array.from({ length: Math.min(concurrency, arr.length) }, worker));
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, arr.length) }, () => worker())
+  );
+
   return results;
 }
 

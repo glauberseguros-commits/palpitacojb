@@ -1494,6 +1494,10 @@ export default function ChartsGrid({
    UI (premium)
 ========================= */
 
+/* =========================
+   UI (premium)
+========================= */
+
 const ui = {
   grid: {
     display: "grid",
@@ -1651,7 +1655,9 @@ const ui = {
     minWidth: 0,
   },
 
-  $114,
+  apName: {
+    fontWeight: 900,
+    fontSize: 20,
     letterSpacing: 0.12,
     color: PP.text,
     opacity: 0.95,
@@ -1667,7 +1673,7 @@ const ui = {
     borderRadius: 12,
     overflow: "hidden",
     minWidth: 0,
-    border: `1px solid rgba(255,255,255,0.10)`,
+    border: "1px solid rgba(255,255,255,0.10)",
     background: "rgba(255,255,255,0.04)",
   },
 
@@ -1686,7 +1692,10 @@ const ui = {
     boxShadow: `0 0 0 1px rgba(200,178,90,0.14)`,
   },
 
-  $114,
+  apVal: {
+    textAlign: "right",
+    fontWeight: 950,
+    fontSize: 20,
     letterSpacing: 0.1,
     color: PP.text,
     opacity: 0.95,
@@ -1719,7 +1728,9 @@ const ui = {
     minWidth: 0,
   },
 
-  $114,
+  posHdrText: {
+    fontWeight: 950,
+    fontSize: 20,
     letterSpacing: 0.18,
     color: PP.text,
     opacity: 0.94,
@@ -1775,7 +1786,9 @@ const ui = {
     minWidth: 0,
   },
 
-  $114,
+  posLeft: {
+    fontWeight: 950,
+    fontSize: 20,
     letterSpacing: 0.2,
     color: PP.text2,
     opacity: 0.95,
@@ -1783,7 +1796,9 @@ const ui = {
 
   posMid: { minWidth: 0, display: "grid", gap: 6 },
 
-  $114,
+  posAnimal: {
+    fontWeight: 900,
+    fontSize: 20,
     letterSpacing: 0.16,
     color: PP.text,
     opacity: 0.95,
@@ -1817,7 +1832,10 @@ const ui = {
     boxShadow: `0 0 0 1px rgba(200,178,90,0.14)`,
   },
 
-  $114,
+  posRight: {
+    textAlign: "right",
+    fontWeight: 950,
+    fontSize: 20,
     letterSpacing: 0.12,
     color: PP.text,
     opacity: 0.95,
@@ -1907,10 +1925,3 @@ const ui = {
   }
   `,
 };
-
-
-
-
-
-
-

@@ -15,7 +15,6 @@ import { normalizeToYMD_SP } from "../utils/ymd";
    Utils
 ========================= */
 
-
 function isIndexErrorMessage(err) {
   const msg = String(err?.message || err || "").toLowerCase();
   const code = String(err?.code || "").toLowerCase();
@@ -249,7 +248,7 @@ function decideRangeServiceMode(rangeDays) {
    ✅ Bounds cache com TTL (CORREÇÃO DO "TRAVOU NA DATA")
 ========================= */
 
-const BOUNDS_TTL_MS = 10 * 60 * 1000; // 10 min (ajuste se quiser)
+const BOUNDS_TTL_MS = 10 * 60 * 1000; // 10 min
 function nowMs() {
   return Date.now();
 }
@@ -343,7 +342,7 @@ export function useKingRanking({
 
       try {
         const b = await getKingBoundsByUf({ uf: key });
-const safe = {
+        const safe = {
           ok: !!b?.ok,
           uf: key,
           minYmd: b?.minYmd || null,
@@ -351,14 +350,14 @@ const safe = {
           source: b?.source || "none",
         };
 
-        // ✅ salva no cache com timestamp (mesmo se ok=false, pra não martelar)
         boundsCacheRef.current.set(key, { ts: nowMs(), data: safe });
 
         if (mounted) setBounds(safe);
 
         // retry controlado (apenas se não ok)
         if (mounted && !safe.ok) {
-          if (boundsRetryTimerRef.current) clearTimeout(boundsRetryTimerRef.current);
+          if (boundsRetryTimerRef.current)
+            clearTimeout(boundsRetryTimerRef.current);
           boundsRetryTimerRef.current = setTimeout(() => {
             if (mounted) setBoundsRetryTick((t) => t + 1);
           }, 10_000);
@@ -449,14 +448,15 @@ const safe = {
 
   const RANGE_FALLBACK_LIMIT_DAYS = 31;
 
+  // ✅ agora é STATE (previsível no render)
+  const [rangeBlocked, setRangeBlocked] = useState(false);
   const rangeBlockedKeyRef = useRef("");
-  const rangeBlockedRef = useRef(false);
 
   useEffect(() => {
     const k = [mode, uf || "", ymdFrom || "", ymdTo || ""].join("|");
     if (rangeBlockedKeyRef.current !== k) {
       rangeBlockedKeyRef.current = k;
-      rangeBlockedRef.current = false;
+      setRangeBlocked(false);
     }
   }, [mode, uf, ymdFrom, ymdTo]);
 
@@ -465,7 +465,7 @@ const safe = {
 
     if (
       mode === "range" &&
-      rangeBlockedRef.current &&
+      rangeBlocked &&
       Number.isFinite(rangeDays) &&
       rangeDays > RANGE_FALLBACK_LIMIT_DAYS
     ) {
@@ -478,7 +478,7 @@ const safe = {
 
     const REFRESH_MAX_DAYS = 45;
     return rangeDays <= REFRESH_MAX_DAYS;
-  }, [mode, rangeDays]);
+  }, [mode, rangeDays, rangeBlocked]);
 
   const AUTO_REFRESH_MS = 60_000;
   const intervalMs = useMemo(() => clampMs(AUTO_REFRESH_MS, 30_000, 300_000), []);
@@ -487,6 +487,12 @@ const safe = {
   const refreshSeqRef = useRef(0);
 
   const hydrateSeqRef = useRef(0);
+
+  // ✅ boundsKey: só muda quando clamp realmente pode mudar
+  const boundsKey = useMemo(
+    () => `${bounds.minYmd || ""}|${bounds.maxYmd || ""}`,
+    [bounds.minYmd, bounds.maxYmd]
+  );
 
   const hardKey = useMemo(() => {
     return [
@@ -497,20 +503,9 @@ const safe = {
       ymdTo || "",
       hourBucketKey || "",
       positionsKey || "",
-      bounds.minYmd || "",
-      bounds.maxYmd || "",
+      boundsKey,
     ].join("|");
-  }, [
-    mode,
-    uf,
-    ymdDate,
-    ymdFrom,
-    ymdTo,
-    hourBucketKey,
-    positionsKey,
-    bounds.minYmd,
-    bounds.maxYmd,
-  ]);
+  }, [mode, uf, ymdDate, ymdFrom, ymdTo, hourBucketKey, positionsKey, boundsKey]);
 
   const lastHardKeyRef = useRef("");
 
@@ -561,7 +556,7 @@ const safe = {
 
         if (
           mode === "range" &&
-          rangeBlockedRef.current &&
+          rangeBlocked &&
           Number.isFinite(rangeDays) &&
           rangeDays > RANGE_FALLBACK_LIMIT_DAYS
         ) {
@@ -585,8 +580,8 @@ const safe = {
             dateTo: ymdTo,
             closeHour: null,
             positions: positionsArrStable,
-            mode: serviceMode,  readPolicy: "server",
-
+            mode: serviceMode,
+            readPolicy: "server",
           });
         } else if (mode === "day") {
           serviceMode = "detailed";
@@ -594,8 +589,8 @@ const safe = {
             uf,
             date: ymdDate,
             closeHour: null,
-            positions: positionsArrStable,  readPolicy: "server",
-
+            positions: positionsArrStable,
+            readPolicy: "server",
           });
         } else {
           draws = [];
@@ -603,7 +598,8 @@ const safe = {
 
         if (!mounted || mySeq !== refreshSeqRef.current) return;
 
-        rangeBlockedRef.current = false;
+        // ✅ sucesso desbloqueia
+        if (rangeBlocked) setRangeBlocked(false);
 
         let unique = dedupeDrawsLogicalPreferBest(draws).map(normalizeDrawForCharts);
 
@@ -810,7 +806,7 @@ const safe = {
           Number.isFinite(rangeDays) &&
           rangeDays > RANGE_FALLBACK_LIMIT_DAYS
         ) {
-          rangeBlockedRef.current = true;
+          setRangeBlocked(true);
         }
 
         setMeta((prev) => ({ ...prev, hydrating: false }));
@@ -853,16 +849,12 @@ const safe = {
     hardKey,
     refreshTick,
     bucketNorm,
-    bounds.ok,
-    bounds.uf,
-    bounds.minYmd,
-    bounds.maxYmd,
-    bounds.source,
+    boundsKey, // ✅ só muda quando min/max mudam
     rangeDays,
     needsPrizes,
-]);
+    rangeBlocked,
+    bounds, // usado dentro do meta bounds snapshot (mantém coerência do snapshot)
+  ]);
 
   return { loading, error, data, meta, drawsRaw };
 }
-
-

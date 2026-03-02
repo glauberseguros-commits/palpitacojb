@@ -55,9 +55,13 @@ function fail(msg) {
   throw new Error(`🔥 Firebase Admin init error:\n${msg}`);
 }
 
+function stripBomAndTrim(s) {
+  return String(s || "").replace(/^\uFEFF/, "").trim();
+}
+
 function safeJsonParse(v) {
   try {
-    const raw = String(v || "").replace(/^\uFEFF/, "").trim();
+    const raw = stripBomAndTrim(v);
     if (!raw) return null;
     const o = JSON.parse(raw);
     return o && typeof o === "object" ? o : null;
@@ -66,11 +70,26 @@ function safeJsonParse(v) {
   }
 }
 
-function normalizePrivateKey(sa) {
-  if (sa && typeof sa.private_toggle === "string") {
-    // (não existe, só por segurança caso alguém colou algo errado)
+function readJsonFileOrFail(filePath, labelForError) {
+  const p = String(filePath || "").trim();
+  try {
+    const raw = stripBomAndTrim(fs.readFileSync(p, "utf8"));
+    const obj = JSON.parse(raw);
+    if (!obj || typeof obj !== "object") {
+      fail(`${labelForError} existe, mas NÃO é um JSON objeto válido:\n${p}`);
+    }
+    return obj;
+  } catch (e) {
+    fail(
+      `${labelForError} inválido (falha ao ler/parsear JSON):\n${p}\n\n` +
+        (e?.message || String(e))
+    );
   }
+}
+
+function normalizePrivateKey(sa) {
   if (sa && typeof sa.private_key === "string") {
+    // render/railway/vercel frequentemente salvam como "\n"
     sa.private_key = sa.private_key.replace(/\\n/g, "\n");
   }
   return sa;
@@ -93,13 +112,14 @@ function isValidServiceAccount(sa) {
  * Procura candidatos comuns quando GOOGLE_APPLICATION_CREDENTIALS está errado.
  * - backend/*.json com "firebase-adminsdk" no nome
  * - backend/serviceAccount*.json
+ * - backend/serviceAccount.json
  * - <repo>/_secrets/palpitaco/firebase-admin.json (se existir)
  */
 function findCredentialCandidates() {
   const candidates = new Set();
 
   const backendDir = path.resolve(__dirname, ".."); // .../backend
-  const repoDir = path.resolve(backendDir, "..");   // .../palpitaco
+  const repoDir = path.resolve(backendDir, ".."); // .../palpitaco
 
   // 1) backend/
   try {
@@ -131,14 +151,19 @@ function findCredentialCandidates() {
     // ignora
   }
 
-  return Array.from(candidates);
+  // determinístico
+  return Array.from(candidates).sort((a, b) => String(a).localeCompare(String(b)));
 }
 
 function resolveCredentialsPath() {
-  const raw = String(process.env.GOOGLE_APPLICATION_CREDENTIALS || "").trim();
-  if (!raw) return null;
+  const rawEnv = String(process.env.GOOGLE_APPLICATION_CREDENTIALS || "").trim();
+  if (!rawEnv) return null;
 
-  let p = raw.replace(/^['"]|['"]$/g, "");
+  // remove aspas externas
+  let p = rawEnv.replace(/^['"]|['"]$/g, "").trim();
+
+  // normaliza separadores
+  p = path.normalize(p);
 
   // Se veio relativo, resolve a partir do repo (palpitaco),
   // mas também aceitamos relativo ao backend.
@@ -159,7 +184,7 @@ function resolveCredentialsPath() {
   if (!fs.existsSync(p)) {
     const found = findCredentialCandidates();
 
-    // Se achou exatamente 1, usa automaticamente (evita ficar travando dev)
+    // Se achou exatamente 1, usa automaticamente (evita travar dev)
     if (found.length === 1) {
       const auto = found[0];
       process.env.GOOGLE_APPLICATION_CREDENTIALS = auto;
@@ -170,7 +195,6 @@ function resolveCredentialsPath() {
       return auto;
     }
 
-    // Se achou 0 ou muitos, falha com diagnóstico bom
     const hint =
       found.length === 0
         ? "Nenhum JSON candidato encontrado em backend/ ou _secrets."
@@ -193,9 +217,8 @@ function resolveCredentialsPath() {
 function readServiceAccountFromEnv() {
   if (process.env.FIREBASE_ADMIN_SA_JSON) {
     const sa = safeJsonParse(process.env.FIREBASE_ADMIN_SA_JSON);
-    if (!sa) {
-      fail("FIREBASE_ADMIN_SA_JSON existe, mas NÃO é JSON válido.");
-    }
+    if (!sa) fail("FIREBASE_ADMIN_SA_JSON existe, mas NÃO é JSON válido.");
+
     normalizePrivateKey(sa);
     if (!isValidServiceAccount(sa)) {
       fail("FIREBASE_ADMIN_SA_JSON é JSON, mas NÃO é um service account válido.");
@@ -215,9 +238,7 @@ function readServiceAccountFromEnv() {
     }
 
     const sa = safeJsonParse(decoded);
-    if (!sa) {
-      fail("FIREBASE_ADMIN_SA_BASE64 decodificou, mas NÃO virou JSON.");
-    }
+    if (!sa) fail("FIREBASE_ADMIN_SA_BASE64 decodificou, mas NÃO virou JSON.");
 
     normalizePrivateKey(sa);
     if (!isValidServiceAccount(sa)) {
@@ -271,7 +292,7 @@ function initAdmin() {
 
   if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
     const p = resolveCredentialsPath();
-    const json = JSON.parse(fs.readFileSync(p, "utf8"));
+    const json = readJsonFileOrFail(p, "Service account file");
     normalizePrivateKey(json);
 
     if (!isValidServiceAccount(json)) {
@@ -334,4 +355,3 @@ Object.defineProperty(exportsObj, "db", {
 });
 
 module.exports = exportsObj;
-

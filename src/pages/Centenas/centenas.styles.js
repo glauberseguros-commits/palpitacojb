@@ -288,9 +288,10 @@ export const centenasCss = `
         color:rgba(233,233,233,0.75);
         font-weight:900;
       }
+      /* ✅ CORREÇÃO: SEM SCROLL / SEM cortar */
       .cx0_scroll{
-        max-height: min(420px, 55vh);
-        overflow:auto;
+        max-height:none;
+        overflow:visible;
       }
       .cx0_row:hover > div{ background:rgba(202,166,75,0.06); }
 
