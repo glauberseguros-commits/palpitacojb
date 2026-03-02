@@ -1779,7 +1779,7 @@ const ui = {
 
   posLeft: {
     fontWeight: 950,
-    fontSize: 20,
+    fontSize: 17,
     letterSpacing: 0.2,
     color: PP.text2,
     opacity: 0.95,
@@ -1789,7 +1789,7 @@ const ui = {
 
   posAnimal: {
     fontWeight: 900,
-    fontSize: 20,
+    fontSize: 17,
     letterSpacing: 0.16,
     color: PP.text,
     opacity: 0.95,
@@ -1826,7 +1826,7 @@ const ui = {
   posRight: {
     textAlign: "right",
     fontWeight: 950,
-    fontSize: 20,
+    fontSize: 17,
     letterSpacing: 0.12,
     color: PP.text,
     opacity: 0.95,
@@ -1916,4 +1916,5 @@ const ui = {
   }
   `,
 };
+
 
