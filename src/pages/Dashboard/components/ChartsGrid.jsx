@@ -1441,7 +1441,7 @@ export default function ChartsGrid({
         </div>
 
         <div className="pp_area_horario" style={ui.areaHorario}>
-          <Card title="Quantidade de Aparições por Horário">
+          <Card title="Qtde de Apar. por Horário">
             {loading || error || !hasDataForView || !stats.hourData.length ? (
               <EmptyState label={emptyLabel} />
             ) : (
@@ -1921,3 +1921,4 @@ overflow: "hidden",
   }
   `,
 };
+
