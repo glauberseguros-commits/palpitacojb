@@ -576,10 +576,13 @@ function buildGlobalAparicoes25(drawsAll) {
 
     items.push({ grupo: g, label, value: map.get(g) || 0 });
   }
-  // ✅ Ordem fixa 01..25 (não muda leitura com empates/variações)
-  items.sort((a, b) => safeNumber(a.grupo) - safeNumber(b.grupo));
-  return items;
-}
+  // ✅ Ordem por aparições (desc). Desempate: grupo (asc)
+  items.sort((a, b) => {
+    const dv = safeNumber(b.value) - safeNumber(a.value);
+    if (dv !== 0) return dv;
+    return safeNumber(a.grupo) - safeNumber(b.grupo);
+  });
+  return items;}
 
 /* =========================
    PREMIUM UI TOKENS
@@ -606,9 +609,9 @@ const PP = {
   shadowCard: "0 14px 40px rgba(0,0,0,0.55)",
   shadowGlow: "0 0 0 1px rgba(200,178,90,0.10), 0 18px 50px rgba(0,0,0,0.55)",
 
-  titleSize: 16,
+  titleSize: 18,
   titleWeight: 800,
-  labelSize: 13,
+  labelSize: 14,
   labelWeight: 650,
 
   gap: 14,
@@ -685,7 +688,7 @@ function BarChartHorizontalMonthPremium({ data }) {
 
   return (
     <div style={{ ...ui.svgFill, height: "100%" }}>
-      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="100%" style={{ display: "block" }}>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="100%" style={{ display: "block" }} preserveAspectRatio="none">
         {safeData.map((d, i) => {
           const v = safeNumber(d.value);
           const pct = max > 0 ? v / max : 0;
@@ -705,8 +708,8 @@ function BarChartHorizontalMonthPremium({ data }) {
                 x={xLabel + 2}
                 y={cy + 5}
                 textAnchor="start"
-                fontSize="14"
-                fontWeight="750"
+                fontSize="16"
+                fontWeight="800"
                 fill={PP.text}
                 opacity="0.92"
               >
@@ -731,8 +734,8 @@ function BarChartHorizontalMonthPremium({ data }) {
                   x={xVal + valueCol - 2}
                   y={cy + 5}
                   textAnchor="end"
-                  fontSize="14"
-                  fontWeight="850"
+                  fontSize="16"
+                fontWeight="900"
                   fill={PP.text}
                 >
                   {fmtIntPT(v)}
@@ -777,12 +780,12 @@ function BarChartHorizontalBasic({
   const max = Math.max(0, ...safeData.map((d) => safeNumber(d.value)));
   const clickable = typeof onBarClick === "function";
 
-  const fontLabel = compact ? 12 : 13;
-  const fontVal = compact ? 12 : 13;
+  const fontLabel = compact ? 14 : 15;
+  const fontVal = compact ? 14 : 15;
 
   return (
     <div style={{ ...ui.svgFill, height: "100%" }}>
-      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="100%" style={{ display: "block" }}>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="100%" style={{ display: "block" }} preserveAspectRatio="none">
         {safeData.map((d, i) => {
           const v = safeNumber(d.value);
           const pct = max > 0 ? v / max : 0;
@@ -887,7 +890,7 @@ function WaterfallHourChart({ data }) {
 
   return (
     <div style={{ ...ui.svgFill, height: "100%" }}>
-      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="100%" style={{ display: "block" }}>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="100%" style={{ display: "block" }} preserveAspectRatio="none">
         {[0.25, 0.5, 0.75].map((k) => {
           const y = pad.t + innerH * k;
           return (
@@ -1132,7 +1135,7 @@ function PosicaoRanking({ model, onPickPos, emptyLabel, disabled = false }) {
         )}
 
         <div style={ui.posHint}>
-          {disabled ? "Interação desativada." : "Clique em uma posição para ver o Top daquela posição no filtro."}
+          {disabled ? "Interação desativada." : ""}
         </div>
       </div>
     );
@@ -1584,7 +1587,7 @@ const ui = {
     background: "rgba(0,0,0,0.35)",
     color: PP.text2,
     fontWeight: 800,
-    fontSize: 12,
+    fontSize: 13,
     letterSpacing: 0.2,
     whiteSpace: "nowrap",
   },
@@ -1631,7 +1634,7 @@ const ui = {
 
   apRow: {
     display: "grid",
-    gridTemplateColumns: "120px 1fr 64px",
+    gridTemplateColumns: "140px 1fr 72px",
     alignItems: "center",
     gap: 10,
     minWidth: 0,
@@ -1639,7 +1642,7 @@ const ui = {
 
   apName: {
     fontWeight: 750,
-    fontSize: 13,
+    fontSize: 15,
     letterSpacing: 0.12,
     color: PP.text,
     opacity: 0.92,
@@ -1651,7 +1654,7 @@ const ui = {
 
   apBarWrap: {
     position: "relative",
-    height: 18,
+    height: 16,
     borderRadius: 10,
     overflow: "hidden",
     minWidth: 0,
@@ -1677,7 +1680,7 @@ const ui = {
   apVal: {
     textAlign: "right",
     fontWeight: 850,
-    fontSize: 13,
+    fontSize: 15,
     letterSpacing: 0.1,
     color: PP.text,
     opacity: 0.92,
@@ -1712,7 +1715,7 @@ const ui = {
 
   posHdrText: {
     fontWeight: 850,
-    fontSize: 13,
+    fontSize: 14,
     letterSpacing: 0.18,
     color: PP.text,
     opacity: 0.92,
@@ -1770,7 +1773,7 @@ const ui = {
 
   posLeft: {
     fontWeight: 900,
-    fontSize: 12,
+    fontSize: 15,
     letterSpacing: 0.2,
     color: PP.text2,
     opacity: 0.9,
@@ -1780,7 +1783,7 @@ const ui = {
 
   posAnimal: {
     fontWeight: 800,
-    fontSize: 12,
+    fontSize: 15,
     letterSpacing: 0.16,
     color: PP.text,
     opacity: 0.92,
@@ -1817,14 +1820,14 @@ const ui = {
   posRight: {
     textAlign: "right",
     fontWeight: 900,
-    fontSize: 12,
+    fontSize: 14,
     letterSpacing: 0.12,
     color: PP.text,
     opacity: 0.92,
   },
 
   posHint: {
-    fontSize: 11,
+    fontSize: 13,
     color: PP.muted,
     letterSpacing: 0.12,
     opacity: 0.9,
@@ -1862,7 +1865,7 @@ const ui = {
     bottom: 10,
     fontWeight: 800,
     opacity: 0.82,
-    fontSize: 12,
+    fontSize: 13,
     letterSpacing: 0.2,
     color: PP.text,
     textShadow: "0 2px 10px rgba(0,0,0,0.55)",
@@ -1908,4 +1911,6 @@ const ui = {
   }
   `,
 };
+
+
 

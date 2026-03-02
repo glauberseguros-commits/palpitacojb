@@ -299,6 +299,8 @@
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+  flex-wrap: wrap;
+  align-content: flex-start;
   min-width: 0;
 }
 
@@ -311,7 +313,7 @@
   padding: 9px 12px;
 
   font-weight: 850;
-  min-width: 72px;
+  min-width: 64px;
   font-size: 13px;
 
   cursor: pointer;
@@ -367,12 +369,11 @@
   scrollbar-gutter: stable both-edges;
 }
 
-/* Anti scroll fantasma em flex/grid (Windows/Chrome) */
-.dashRoot,
+/* Anti scroll fantasma em flex/grid (Windows/Chrome)
+   ✅ NÃO sobrescrever a altura “1 tela” do desktop */
 .dashMain,
 .dashCharts,
 .dashLeft{
-  height: 100%;
   min-height: 0;
 }
 
@@ -434,11 +435,14 @@
 .dashLeft table tbody td:first-child img{
   display: block;
   margin: 0 auto;
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
 }
 
 /* Diminuir fonte SOMENTE da coluna ANIMAL */
 .dashLeft table tbody td:nth-child(3){
-  font-size: 11px;
+  font-size: 13px;
 }
 
 /* =========================
@@ -632,3 +636,14 @@
     padding: 10px;
   }
 }
+
+/* ✅ garante que o ChartsGrid estique e não comprima SVG/fonte */
+.dashCharts{
+  display: flex;
+}
+.dashCharts > *{
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+}
+
