@@ -793,7 +793,7 @@ function BarChartHorizontalBasic({
         width="100%"
         height="100%"
         style={{ display: "block" }}
-        preserveAspectRatio="xMidYMid meet"
+        preserveAspectRatio="none"
       >
         {safeData.map((d, i) => {
           const v = safeNumber(d.value);
@@ -889,7 +889,7 @@ function WaterfallHourChart({ data }) {
 
   return (
     <div style={{ ...ui.svgFill, height: "100%" }}>
-      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="100%" style={{ display: "block" }} preserveAspectRatio="xMidYMid meet">
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="100%" style={{ display: "block" }} preserveAspectRatio="none">
         {safeData.map((d, i) => {
           const v = safeNumber(d.value);
 
@@ -1820,4 +1820,5 @@ textOverflow: "ellipsis",
   }
   `,
 };
+
 
