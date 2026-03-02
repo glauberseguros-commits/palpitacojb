@@ -623,8 +623,8 @@ const PP = {
     "0 0 0 1px rgba(200,178,90,0.10), 0 18px 50px rgba(0,0,0,0.55)",
 
   // ✅ TIPOGRAFIA MAIS LEGÍVEL
-  titleSize: 22,
-  titleWeight: 900,
+  titleSize: 18,
+  titleWeight: 800,
 
   gap: 14,
 
