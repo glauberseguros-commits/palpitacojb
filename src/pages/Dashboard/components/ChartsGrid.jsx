@@ -1721,7 +1721,7 @@ const ui = {
 
   posHdrText: {
     fontWeight: 950,
-    fontSize: 20,
+    fontSize: 17,
     letterSpacing: 0.18,
     color: PP.text,
     opacity: 0.94,
@@ -1916,6 +1916,7 @@ const ui = {
   }
   `,
 };
+
 
 
 
