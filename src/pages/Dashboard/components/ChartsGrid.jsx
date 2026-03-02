@@ -46,14 +46,17 @@ function normalizeToYMD(input) {
     const d = input.toDate();
     if (d instanceof Date && !Number.isNaN(d.getTime())) {
       // ✅ UTC para não "voltar um dia" por timezone
-      return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
+      return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(
+        d.getUTCDate()
+      )}`;
     }
   }
 
   // Timestamp-like { seconds } / { _seconds }
   if (
     typeof input === "object" &&
-    (Number.isFinite(Number(input.seconds)) || Number.isFinite(Number(input._seconds)))
+    (Number.isFinite(Number(input.seconds)) ||
+      Number.isFinite(Number(input._seconds)))
   ) {
     const sec = Number.isFinite(Number(input.seconds))
       ? Number(input.seconds)
@@ -62,14 +65,18 @@ function normalizeToYMD(input) {
     const d = new Date(sec * 1000);
     if (!Number.isNaN(d.getTime())) {
       // ✅ UTC para não "voltar um dia" por timezone
-      return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
+      return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(
+        d.getUTCDate()
+      )}`;
     }
   }
 
   // Date
   if (input instanceof Date && !Number.isNaN(input.getTime())) {
     // ✅ UTC para consistência total
-    return `${input.getUTCFullYear()}-${pad2(input.getUTCMonth() + 1)}-${pad2(input.getUTCDate())}`;
+    return `${input.getUTCFullYear()}-${pad2(input.getUTCMonth() + 1)}-${pad2(
+      input.getUTCDate()
+    )}`;
   }
 
   const s = String(input).trim();
@@ -109,7 +116,9 @@ function getDrawDate(draw) {
  */
 function getDrawCloseHour(draw) {
   if (!draw) return "";
-  return String(draw.close_hour ?? draw.closeHour ?? draw.hour ?? draw.hora ?? "").trim();
+  return String(
+    draw.close_hour ?? draw.closeHour ?? draw.hour ?? draw.hora ?? ""
+  ).trim();
 }
 
 /**
@@ -206,7 +215,9 @@ function safeNumber(n) {
 
 function fmtIntPT(n) {
   try {
-    return new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 }).format(safeNumber(n));
+    return new Intl.NumberFormat("pt-BR", {
+      maximumFractionDigits: 0,
+    }).format(safeNumber(n));
   } catch {
     return String(safeNumber(n));
   }
@@ -229,7 +240,10 @@ function dedupeDraws(drawsRaw) {
       .slice(0, 12)
       .map((pz) => {
         const pos = String(pz?.posicao ?? pz?.position ?? "").trim();
-        const g = String(pz?.grupo ?? pz?.group ?? pz?.g ?? "").replace(/\D/g, "");
+        const g = String(pz?.grupo ?? pz?.group ?? pz?.g ?? "").replace(
+          /\D/g,
+          ""
+        );
         const n = String(
           pz?.milhar ??
             pz?.milhar4 ??
@@ -318,12 +332,7 @@ function normalizePosFilter(filters) {
  */
 function getPrizeGrupo(pz) {
   const g =
-    pz?.grupo ??
-    pz?.group ??
-    pz?.grupo1 ??
-    pz?.grupo_1 ??
-    pz?.g ??
-    null;
+    pz?.grupo ?? pz?.group ?? pz?.grupo1 ?? pz?.grupo_1 ?? pz?.g ?? null;
 
   const digits = String(g ?? "").replace(/\D/g, "");
   const n = Number(digits);
@@ -365,7 +374,9 @@ function countGrupoAparicoes(draws, selectedGrupo, expectedPositions) {
 
   const posList =
     Array.isArray(expectedPositions) && expectedPositions.length
-      ? expectedPositions.map((n) => Number(n)).filter((n) => Number.isFinite(n) && n > 0)
+      ? expectedPositions
+          .map((n) => Number(n))
+          .filter((n) => Number.isFinite(n) && n > 0)
       : [1, 2, 3, 4, 5, 6, 7];
 
   const map = new Map(posList.map((p) => [p, 0]));
@@ -386,14 +397,20 @@ function countGrupoAparicoes(draws, selectedGrupo, expectedPositions) {
     }
   }
 
-  const byPos = posList.map((p) => ({ label: prettyPosLabel(p), value: map.get(p) || 0 }));
+  const byPos = posList.map((p) => ({
+    label: prettyPosLabel(p),
+    value: map.get(p) || 0,
+  }));
   return { total, byPos };
 }
 
 /**
  * ✅ Conta APARIÇÕES no draw com recortes coerentes
  */
-function countAparicoesInDraw(draw, { selectedGrupo, selectedPosOrNull, expectedPositions } = {}) {
+function countAparicoesInDraw(
+  draw,
+  { selectedGrupo, selectedPosOrNull, expectedPositions } = {}
+) {
   const prizes = Array.isArray(draw?.prizes) ? draw.prizes : [];
   if (!prizes.length) return 0;
 
@@ -402,7 +419,11 @@ function countAparicoesInDraw(draw, { selectedGrupo, selectedPosOrNull, expected
 
   const posDomain =
     Array.isArray(expectedPositions) && expectedPositions.length
-      ? new Set(expectedPositions.map((n) => Number(n)).filter((n) => Number.isFinite(n) && n > 0))
+      ? new Set(
+          expectedPositions
+            .map((n) => Number(n))
+            .filter((n) => Number.isFinite(n) && n > 0)
+        )
       : new Set([1, 2, 3, 4, 5, 6, 7]);
 
   const posFilter = Number(selectedPosOrNull);
@@ -432,7 +453,9 @@ function buildPosAnimalRanking(draws, expectedPositions, selectedPosOrNull) {
 
   const posList =
     Array.isArray(expectedPositions) && expectedPositions.length
-      ? expectedPositions.map((n) => Number(n)).filter((n) => Number.isFinite(n) && n > 0)
+      ? expectedPositions
+          .map((n) => Number(n))
+          .filter((n) => Number.isFinite(n) && n > 0)
       : [1, 2, 3, 4, 5, 6, 7];
 
   const map = new Map();
@@ -596,7 +619,8 @@ const PP = {
   rInner: 14,
 
   shadowCard: "0 14px 40px rgba(0,0,0,0.55)",
-  shadowGlow: "0 0 0 1px rgba(200,178,90,0.10), 0 18px 50px rgba(0,0,0,0.55)",
+  shadowGlow:
+    "0 0 0 1px rgba(200,178,90,0.10), 0 18px 50px rgba(0,0,0,0.55)",
 
   // ✅ TIPOGRAFIA MAIS LEGÍVEL
   titleSize: 22,
@@ -764,7 +788,9 @@ function BarChartHorizontalBasic({
   const safeData = Array.isArray(data) ? data : [];
   const rows = Math.max(1, safeData.length);
 
-  const H = compact ? clamp(130 + rows * 52, 380, 600) : clamp(150 + rows * 58, 420, 700);
+  const H = compact
+    ? clamp(130 + rows * 52, 380, 600)
+    : clamp(150 + rows * 58, 420, 700);
 
   const pad = { l: 24, r: 18, t: 18, b: 18 };
 
@@ -776,8 +802,16 @@ function BarChartHorizontalBasic({
   const rowGap = compact ? 10 : 12;
   const rowH = (innerH - rowGap * (rows - 1)) / rows;
 
-  const barHMax = clamp(rowH * (compact ? 0.88 : 0.9), Math.max(14, barHMin - 2), barHCap);
-  const barH = clamp(rowH * (compact ? 0.72 : 0.74), Math.max(14, barHMin - 2), barHMax);
+  const barHMax = clamp(
+    rowH * (compact ? 0.88 : 0.9),
+    Math.max(14, barHMin - 2),
+    barHCap
+  );
+  const barH = clamp(
+    rowH * (compact ? 0.72 : 0.74),
+    Math.max(14, barHMin - 2),
+    barHMax
+  );
 
   const max = Math.max(0, ...safeData.map((d) => safeNumber(d.value)));
   const clickable = typeof onBarClick === "function";
@@ -832,7 +866,14 @@ function BarChartHorizontalBasic({
               </text>
 
               {fillW > 0 ? (
-                <rect x={xBar} y={cy - barH / 2} width={fillW} height={barH} rx="12" fill={PP.gold} />
+                <rect
+                  x={xBar}
+                  y={cy - barH / 2}
+                  width={fillW}
+                  height={barH}
+                  rx="12"
+                  fill={PP.gold}
+                />
               ) : (
                 <rect
                   x={xBar}
@@ -889,7 +930,13 @@ function WaterfallHourChart({ data }) {
 
   return (
     <div style={{ ...ui.svgFill, height: "100%" }}>
-      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="100%" style={{ display: "block" }} preserveAspectRatio="none">
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        width="100%"
+        height="100%"
+        style={{ display: "block" }}
+        preserveAspectRatio="none"
+      >
         {safeData.map((d, i) => {
           const v = safeNumber(d.value);
 
@@ -909,7 +956,9 @@ function WaterfallHourChart({ data }) {
                 fill={PP.gold}
                 stroke="rgba(255,255,255,0.20)"
                 strokeWidth="1"
-                style={{ filter: "drop-shadow(0 12px 26px rgba(0,0,0,0.55))" }}
+                style={{
+                  filter: "drop-shadow(0 12px 26px rgba(0,0,0,0.55))",
+                }}
               />
 
               <text
@@ -1008,7 +1057,9 @@ function PosicaoRanking({ model, onPickPos, emptyLabel, disabled = false }) {
                 <button
                   key={`${x.label}-${idx}`}
                   type="button"
-                  onClick={() => (clickable ? onPickPos(String(x.label || "1º")) : null)}
+                  onClick={() =>
+                    clickable ? onPickPos(String(x.label || "1º")) : null
+                  }
                   style={{
                     ...ui.posRowBtn,
                     cursor: clickable ? "pointer" : "not-allowed",
@@ -1036,7 +1087,9 @@ function PosicaoRanking({ model, onPickPos, emptyLabel, disabled = false }) {
         )}
 
         <div style={ui.posHint}>
-          {disabled ? "Interação desativada." : "Clique em uma posição para aplicar o filtro de posição."}
+          {disabled
+            ? "Interação desativada."
+            : "Clique em uma posição para aplicar o filtro de posição."}
         </div>
       </div>
     );
@@ -1147,7 +1200,9 @@ function computeStats({ drawsRawView, drawsRawGlobal, filters, selectedGrupo }) 
   const expectedPositions = parseExpectedPositionsFromFilters(filters);
   const selectedPosOrNull = normalizePosFilter(filters);
 
-  const draws = hasSelected ? drawsView.filter((d) => drawHasGrupo(d, gSel)) : drawsView;
+  const draws = hasSelected
+    ? drawsView.filter((d) => drawHasGrupo(d, gSel))
+    : drawsView;
 
   const yearsSet = new Set();
   for (const d of draws) {
@@ -1159,8 +1214,18 @@ function computeStats({ drawsRawView, drawsRawGlobal, filters, selectedGrupo }) 
   const isMultiYear = yearsSet.size > 1;
 
   const monthOrder = [
-    "Janeiro","Fevereiro","Março","Abril","Maio","Junho",
-    "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro",
+    "Janeiro",
+    "Fevereiro",
+    "Março",
+    "Abril",
+    "Maio",
+    "Junho",
+    "Julho",
+    "Agosto",
+    "Setembro",
+    "Outubro",
+    "Novembro",
+    "Dezembro",
   ];
 
   let totalAparicoesNoRecorte = 0;
@@ -1265,11 +1330,14 @@ function computeStats({ drawsRawView, drawsRawGlobal, filters, selectedGrupo }) 
 
   if (hasSelected) {
     try {
-      selectedAnimalLabel = String(getAnimalLabel({ grupo: gSel, animal: "" }) || "").trim();
+      selectedAnimalLabel = String(
+        getAnimalLabel({ grupo: gSel, animal: "" }) || ""
+      ).trim();
     } catch {
       selectedAnimalLabel = "";
     }
-    if (!selectedAnimalLabel) selectedAnimalLabel = `Grupo ${String(gSel).padStart(2, "0")}`;
+    if (!selectedAnimalLabel)
+      selectedAnimalLabel = `Grupo ${String(gSel).padStart(2, "0")}`;
 
     const grpCount = countGrupoAparicoes(draws, gSel, expectedPositions);
 
@@ -1280,7 +1348,11 @@ function computeStats({ drawsRawView, drawsRawGlobal, filters, selectedGrupo }) 
       items: grpCount.byPos,
     };
   } else {
-    posRankingModel = buildPosAnimalRanking(drawsView, expectedPositions, selectedPosOrNull);
+    posRankingModel = buildPosAnimalRanking(
+      drawsView,
+      expectedPositions,
+      selectedPosOrNull
+    );
   }
 
   const aparicoesGlobal25 = buildGlobalAparicoes25(drawsGlobal);
@@ -1314,7 +1386,12 @@ export default function ChartsGrid({
 }) {
   const stats = useMemo(() => {
     const global = Array.isArray(drawsRawGlobal) ? drawsRawGlobal : drawsRaw;
-    return computeStats({ drawsRawView: drawsRaw, drawsRawGlobal: global, filters, selectedGrupo });
+    return computeStats({
+      drawsRawView: drawsRaw,
+      drawsRawGlobal: global,
+      filters,
+      selectedGrupo,
+    });
   }, [drawsRaw, drawsRawGlobal, filters, selectedGrupo]);
 
   const emptyLabel = useMemo(() => {
@@ -1329,7 +1406,8 @@ export default function ChartsGrid({
     if (!hasDataForView) return null;
     if (disabledInteractions) return "Interação desativada";
     if (stats.hasSelected) return "Clique para filtrar";
-    if (stats.selectedPosOrNull) return `Filtro: ${prettyPosLabel(stats.selectedPosOrNull)}`;
+    if (stats.selectedPosOrNull)
+      return `Filtro: ${prettyPosLabel(stats.selectedPosOrNull)}`;
     return "Clique para filtrar";
   }, [hasDataForView, disabledInteractions, stats.hasSelected, stats.selectedPosOrNull]);
 
@@ -1352,7 +1430,10 @@ export default function ChartsGrid({
 
         <div className="pp_area_aparicoes" style={ui.areaAparicoes}>
           <Card title="Quantidade de Aparições">
-            {loading || error || !Array.isArray(stats.aparicoesGlobal25) || !stats.aparicoesGlobal25.length ? (
+            {loading ||
+            error ||
+            !Array.isArray(stats.aparicoesGlobal25) ||
+            !stats.aparicoesGlobal25.length ? (
               <EmptyState label={emptyLabel} />
             ) : (
               <AparicoesList items={stats.aparicoesGlobal25} />
@@ -1375,7 +1456,12 @@ export default function ChartsGrid({
             {loading || error || !hasDataForView ? (
               <EmptyState label={emptyLabel} />
             ) : (
-              <BarChartHorizontalBasic data={stats.weekdayData} labelCol={260} valueCol={150} compact />
+              <BarChartHorizontalBasic
+                data={stats.weekdayData}
+                labelCol={260}
+                valueCol={150}
+                compact
+              />
             )}
           </Card>
         </div>
@@ -1392,7 +1478,9 @@ export default function ChartsGrid({
                 model={stats.posRankingModel}
                 emptyLabel={emptyLabel}
                 disabled={!canPickPos}
-                onPickPos={canPickPos ? (posLabel) => onSelectPosicao(String(posLabel || "1º")) : null}
+                onPickPos={
+                  canPickPos ? (posLabel) => onSelectPosicao(String(posLabel || "1º")) : null
+                }
               />
             )}
           </Card>
@@ -1461,7 +1549,8 @@ const ui = {
     height: 180,
     right: -80,
     top: -80,
-    background: "radial-gradient(closest-side, rgba(200,178,90,0.14), transparent 62%)",
+    background:
+      "radial-gradient(closest-side, rgba(200,178,90,0.14), transparent 62%)",
     filter: "blur(2px)",
     opacity: 0.9,
     pointerEvents: "none",
@@ -1479,7 +1568,18 @@ const ui = {
     minWidth: 0,
   },
 
-  ,
+  cardTitle: {
+    fontWeight: PP.titleWeight,
+    fontSize: PP.titleSize,
+    letterSpacing: 0.15,
+    color: PP.text,
+    opacity: 0.96,
+    lineHeight: 1.05,
+    minWidth: 0,
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+  },
 
   cardRight: {
     display: "flex",
@@ -1559,8 +1659,8 @@ const ui = {
     opacity: 0.95,
     lineHeight: 1.06,
     whiteSpace: "nowrap",
-overflow: "hidden",
-textOverflow: "ellipsis",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
   },
 
   apBarWrap: {
@@ -1631,8 +1731,8 @@ textOverflow: "ellipsis",
     color: PP.text,
     opacity: 0.94,
     whiteSpace: "nowrap",
-overflow: "hidden",
-textOverflow: "ellipsis",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
   },
 
   posHdrSub: {
@@ -1642,8 +1742,8 @@ textOverflow: "ellipsis",
     color: PP.text2,
     opacity: 0.92,
     whiteSpace: "nowrap",
-overflow: "hidden",
-textOverflow: "ellipsis",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
   },
 
   posList: {
@@ -1699,8 +1799,8 @@ textOverflow: "ellipsis",
     color: PP.text,
     opacity: 0.95,
     whiteSpace: "nowrap",
-overflow: "hidden",
-textOverflow: "ellipsis",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
   },
 
   posBarWrap: {
@@ -1765,7 +1865,8 @@ textOverflow: "ellipsis",
   emptyShine: {
     position: "absolute",
     inset: 0,
-    background: "radial-gradient(700px 260px at 20% 20%, rgba(200,178,90,0.14), transparent 60%)",
+    background:
+      "radial-gradient(700px 260px at 20% 20%, rgba(200,178,90,0.14), transparent 60%)",
     opacity: 0.55,
     pointerEvents: "none",
   },
@@ -1820,5 +1921,3 @@ textOverflow: "ellipsis",
   }
   `,
 };
-
-
