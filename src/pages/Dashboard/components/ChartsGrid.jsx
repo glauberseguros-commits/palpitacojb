@@ -698,8 +698,8 @@ function BarChartHorizontalMonthPremium({ data }) {
 
   const max = Math.max(0, ...safeData.map((d) => safeNumber(d.value)));
 
-  const fontLabel = 20;
-  const fontVal = 20;
+  const fontLabel = 17;
+  const fontVal = 17;
 
   return (
     <div style={{ ...ui.svgFill, height: "100%" }}>
@@ -817,8 +817,8 @@ function BarChartHorizontalBasic({
   const clickable = typeof onBarClick === "function";
 
   // ✅ FONTE MAIS LEGÍVEL
-  const fontLabel = 20;
-  const fontVal = 20;
+  const fontLabel = 17;
+  const fontVal = 17;
 
   return (
     <div style={{ ...ui.svgFill, height: "100%" }}>
@@ -926,7 +926,7 @@ function WaterfallHourChart({ data }) {
   const scaleMax = max;
 
   const fontValue = 20; // ✅ número bem legível
-  const fontLabel = 20; // ✅ label bem legível
+  const fontLabel = 17; // ✅ label bem legível
 
   return (
     <div style={{ ...ui.svgFill, height: "100%" }}>
@@ -1916,5 +1916,6 @@ const ui = {
   }
   `,
 };
+
 
 
