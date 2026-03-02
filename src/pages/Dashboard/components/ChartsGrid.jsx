@@ -334,7 +334,6 @@ function getPrizePos(pz) {
   const raw = pz?.posicao ?? pz?.position ?? null;
   if (raw == null) return null;
 
-  // aceita number, "1", "1º", "01", etc.
   const digits = String(raw).replace(/\D/g, "");
   const n = Number(digits);
   return Number.isFinite(n) ? n : null;
@@ -392,10 +391,7 @@ function countGrupoAparicoes(draws, selectedGrupo, expectedPositions) {
 }
 
 /**
- * ✅ Conta APARIÇÕES no draw com recortes coerentes:
- * - se selectedGrupo válido: conta só prizes do grupo
- * - se selectedPosOrNull: conta só prizes daquela posição
- * - se expectedPositions: restringe ao domínio permitido (ex.: 1..7)
+ * ✅ Conta APARIÇÕES no draw com recortes coerentes
  */
 function countAparicoesInDraw(draw, { selectedGrupo, selectedPosOrNull, expectedPositions } = {}) {
   const prizes = Array.isArray(draw?.prizes) ? draw.prizes : [];
@@ -429,12 +425,7 @@ function countAparicoesInDraw(draw, { selectedGrupo, selectedPosOrNull, expected
 }
 
 /**
- * ✅ OPÇÃO B (insight) — original (apenas quando NÃO há selectedGrupo):
- * - Se posicao=Todos: mostra Top 1 animal por posição (1º..7º)
- * - Se posicao=1º (ou outro): mostra Top 10 animais daquela posição
- *
- * ✅ IMPORTANTE:
- * - Aqui deve obedecer filtros locais, então recebe drawsForView (não o global).
+ * ✅ OPÇÃO B (insight) — original (apenas quando NÃO há selectedGrupo)
  */
 function buildPosAnimalRanking(draws, expectedPositions, selectedPosOrNull) {
   const safeDraws = Array.isArray(draws) ? draws : [];
@@ -495,7 +486,6 @@ function buildPosAnimalRanking(draws, expectedPositions, selectedPosOrNull) {
     }
   }
 
-  // tie-break estável: value desc, label asc
   const sortStable = (a, b) => {
     const dv = safeNumber(b.value) - safeNumber(a.value);
     if (dv !== 0) return dv;
@@ -540,9 +530,6 @@ function buildPosAnimalRanking(draws, expectedPositions, selectedPosOrNull) {
 
 /**
  * ✅ GLOBAL: aparições por grupo (01..25), IGNORANDO filtros e selectedGrupo
- * - Conta cada prize como 1 aparição
- * - Restringe domínio de posições 1..7 (coerência)
- * - ✅ NÃO REMOVE ZEROS: retorna SEMPRE os 25 bichos (não pode sumir nenhum)
  */
 function buildGlobalAparicoes25(drawsAll) {
   const safeDraws = Array.isArray(drawsAll) ? drawsAll : [];
@@ -576,13 +563,15 @@ function buildGlobalAparicoes25(drawsAll) {
 
     items.push({ grupo: g, label, value: map.get(g) || 0 });
   }
-  // ✅ Ordem por aparições (desc). Desempate: grupo (asc)
+
   items.sort((a, b) => {
     const dv = safeNumber(b.value) - safeNumber(a.value);
     if (dv !== 0) return dv;
     return safeNumber(a.grupo) - safeNumber(b.grupo);
   });
-  return items;}
+
+  return items;
+}
 
 /* =========================
    PREMIUM UI TOKENS
@@ -609,10 +598,9 @@ const PP = {
   shadowCard: "0 14px 40px rgba(0,0,0,0.55)",
   shadowGlow: "0 0 0 1px rgba(200,178,90,0.10), 0 18px 50px rgba(0,0,0,0.55)",
 
-  titleSize: 18,
-  titleWeight: 800,
-  labelSize: 14,
-  labelWeight: 650,
+  // ✅ TIPOGRAFIA MAIS LEGÍVEL
+  titleSize: 22,
+  titleWeight: 900,
 
   gap: 14,
 
@@ -663,7 +651,7 @@ function calcMonthViewH(rows) {
   const base = 110;
   const perRow = 34;
   const H = base + r * perRow;
-  return clamp(H, 340, 620);
+  return clamp(H, 340, 640);
 }
 
 function BarChartHorizontalMonthPremium({ data }) {
@@ -673,8 +661,8 @@ function BarChartHorizontalMonthPremium({ data }) {
   const H = calcMonthViewH(rows);
 
   const pad = { l: 18, r: 18, t: 18, b: 18 };
-  const labelCol = 118;
-  const valueCol = 72;
+  const labelCol = 140;
+  const valueCol = 110;
 
   const innerW = W - pad.l - pad.r;
   const innerH = H - pad.t - pad.b;
@@ -682,13 +670,22 @@ function BarChartHorizontalMonthPremium({ data }) {
   const barAreaW = Math.max(10, innerW - labelCol - valueCol);
   const rowGap = 10;
   const rowH = (innerH - rowGap * (rows - 1)) / rows;
-  const barH = clamp(rowH * 0.76, 16, 30);
+  const barH = clamp(rowH * 0.76, 18, 34);
 
   const max = Math.max(0, ...safeData.map((d) => safeNumber(d.value)));
 
+  const fontLabel = 20;
+  const fontVal = 20;
+
   return (
     <div style={{ ...ui.svgFill, height: "100%" }}>
-      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="100%" style={{ display: "block" }} preserveAspectRatio="none">
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        width="100%"
+        height="100%"
+        style={{ display: "block" }}
+        preserveAspectRatio="none"
+      >
         {safeData.map((d, i) => {
           const v = safeNumber(d.value);
           const pct = max > 0 ? v / max : 0;
@@ -706,41 +703,46 @@ function BarChartHorizontalMonthPremium({ data }) {
             <g key={`${d.label}-${i}`}>
               <text
                 x={xLabel + 2}
-                y={cy + 5}
+                y={cy + 6}
                 textAnchor="start"
-                fontSize="16"
-                fontWeight="800"
+                fontSize={fontLabel}
+                fontWeight="900"
                 fill={PP.text}
-                opacity="0.92"
+                opacity="0.94"
               >
                 {String(d.label)}
               </text>
 
               {fillW > 0 ? (
-                <rect x={xBar} y={cy - barH / 2} width={fillW} height={barH} rx="10" fill={PP.gold} />
+                <rect
+                  x={xBar}
+                  y={cy - barH / 2}
+                  width={fillW}
+                  height={barH}
+                  rx="12"
+                  fill={PP.gold}
+                />
               ) : (
                 <rect
                   x={xBar}
                   y={cy - barH / 2}
-                  width={Math.max(6, barAreaW * 0.03)}
+                  width={Math.max(8, barAreaW * 0.03)}
                   height={barH}
-                  rx="10"
+                  rx="12"
                   fill="rgba(255,255,255,0.10)"
                 />
               )}
 
-              {v > 0 ? (
-                <text
-                  x={xVal + valueCol - 2}
-                  y={cy + 5}
-                  textAnchor="end"
-                  fontSize="16"
-                fontWeight="900"
-                  fill={PP.text}
-                >
-                  {fmtIntPT(v)}
-                </text>
-              ) : null}
+              <text
+                x={xVal + valueCol - 2}
+                y={cy + 6}
+                textAnchor="end"
+                fontSize={fontVal}
+                fontWeight="950"
+                fill={PP.text}
+              >
+                {fmtIntPT(v)}
+              </text>
             </g>
           );
         })}
@@ -751,10 +753,10 @@ function BarChartHorizontalMonthPremium({ data }) {
 
 function BarChartHorizontalBasic({
   data,
-  labelCol = 170,
-  valueCol = 92,
-  barHMin = 16,
-  barHCap = 44,
+  labelCol = 240,
+  valueCol = 130,
+  barHMin = 18,
+  barHCap = 54,
   onBarClick = null,
   compact = false,
 }) {
@@ -762,30 +764,37 @@ function BarChartHorizontalBasic({
   const safeData = Array.isArray(data) ? data : [];
   const rows = Math.max(1, safeData.length);
 
-  const H = compact ? clamp(120 + rows * 44, 340, 560) : clamp(130 + rows * 48, 360, 640);
+  const H = compact ? clamp(130 + rows * 52, 380, 600) : clamp(150 + rows * 58, 420, 700);
 
-  const pad = { l: 22, r: 18, t: 16, b: 16 };
+  const pad = { l: 24, r: 18, t: 18, b: 18 };
 
   const innerW = W - pad.l - pad.r;
   const innerH = H - pad.t - pad.b;
 
   const barAreaW = Math.max(10, innerW - labelCol - valueCol);
 
-  const rowGap = compact ? 8 : 10;
+  const rowGap = compact ? 10 : 12;
   const rowH = (innerH - rowGap * (rows - 1)) / rows;
 
-  const barHMax = clamp(rowH * (compact ? 0.88 : 0.9), Math.max(12, barHMin - 2), barHCap);
-  const barH = clamp(rowH * (compact ? 0.72 : 0.74), Math.max(12, barHMin - 2), barHMax);
+  const barHMax = clamp(rowH * (compact ? 0.88 : 0.9), Math.max(14, barHMin - 2), barHCap);
+  const barH = clamp(rowH * (compact ? 0.72 : 0.74), Math.max(14, barHMin - 2), barHMax);
 
   const max = Math.max(0, ...safeData.map((d) => safeNumber(d.value)));
   const clickable = typeof onBarClick === "function";
 
-  const fontLabel = compact ? 14 : 15;
-  const fontVal = compact ? 14 : 15;
+  // ✅ FONTE MAIS LEGÍVEL
+  const fontLabel = compact ? 22 : 23;
+  const fontVal = compact ? 22 : 23;
 
   return (
     <div style={{ ...ui.svgFill, height: "100%" }}>
-      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="100%" style={{ display: "block" }} preserveAspectRatio="xMidYMid meet">
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        width="100%"
+        height="100%"
+        style={{ display: "block" }}
+        preserveAspectRatio="xMidYMid meet"
+      >
         {safeData.map((d, i) => {
           const v = safeNumber(d.value);
           const pct = max > 0 ? v / max : 0;
@@ -812,35 +821,35 @@ function BarChartHorizontalBasic({
             >
               <text
                 x={xLabel + 2}
-                y={cy + 4}
+                y={cy + 7}
                 textAnchor="start"
                 fontSize={fontLabel}
-                fontWeight="700"
+                fontWeight="900"
                 fill={PP.text}
-                opacity="0.90"
+                opacity="0.94"
               >
                 {String(d.label)}
               </text>
 
               {fillW > 0 ? (
-                <rect x={xBar} y={cy - barH / 2} width={fillW} height={barH} rx="10" fill={PP.gold} />
+                <rect x={xBar} y={cy - barH / 2} width={fillW} height={barH} rx="12" fill={PP.gold} />
               ) : (
                 <rect
                   x={xBar}
                   y={cy - barH / 2}
-                  width={Math.max(6, barAreaW * 0.03)}
+                  width={Math.max(8, barAreaW * 0.03)}
                   height={barH}
-                  rx="10"
+                  rx="12"
                   fill="rgba(255,255,255,0.10)"
                 />
               )}
 
               <text
                 x={xVal + valueCol - 2}
-                y={cy + 4}
+                y={cy + 7}
                 textAnchor="end"
                 fontSize={fontVal}
-                fontWeight="850"
+                fontWeight="950"
                 fill={PP.text}
               >
                 {fmtIntPT(v)}
@@ -853,70 +862,41 @@ function BarChartHorizontalBasic({
   );
 }
 
+/**
+ * ✅ Horário (barras verticais) — com fonte GRANDE
+ * Espera data = [{ label:"14h", value: 192 }, {label:"Total", value: 192}]
+ */
 function WaterfallHourChart({ data }) {
+  const safeData = Array.isArray(data) ? data : [];
+  if (!safeData.length) return <EmptyState label="" />;
+
   const W = 900;
-  const safe = Array.isArray(data) ? data : [];
-  if (!safe.length) return null;
+  const H = 420;
 
-  const H = 380;
-  const pad = { l: 24, r: 18, t: 22, b: 62 };
-
-  const last = safe[safe.length - 1];
-  const hasTotal = String(last?.label || "").toLowerCase() === "total";
-
-  const steps = hasTotal ? safe.slice(0, -1) : safe.slice(0);
-  const totalVal = hasTotal ? safeNumber(last?.value) : steps.reduce((a, x) => a + safeNumber(x.value), 0);
-
-  // ✅ Se só tiver "Total" ou total 0, não desenha
-  if (!steps.length || totalVal <= 0) return null;
-
-  const n = steps.length + (hasTotal ? 1 : 0);
+  const pad = { l: 26, r: 26, t: 28, b: 58 };
   const innerW = W - pad.l - pad.r;
   const innerH = H - pad.t - pad.b;
 
-  const gap = clamp(innerW * 0.02, 12, 22);
-  const barW = (innerW - gap * (n - 1)) / n;
+  const gap = 24;
+  const n = safeData.length;
+  const barW = clamp((innerW - gap * (n - 1)) / n, 90, 240);
 
-  let cum = 0;
-  const cumMax = steps.reduce((max, x) => {
-    cum += safeNumber(x.value);
-    return Math.max(max, cum);
-  }, 0);
+  const max = Math.max(1, ...safeData.map((d) => safeNumber(d.value)));
+  const scaleMax = max;
 
-  const scaleMax = Math.max(1, Math.max(cumMax, totalVal));
-  const yBase = pad.t + innerH;
-
-  let acc = 0;
+  const fontValue = 24; // ✅ número bem legível
+  const fontLabel = 20; // ✅ label bem legível
 
   return (
     <div style={{ ...ui.svgFill, height: "100%" }}>
       <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="100%" style={{ display: "block" }} preserveAspectRatio="xMidYMid meet">
-        {[0.25, 0.5, 0.75].map((k) => {
-          const y = pad.t + innerH * k;
-          return (
-            <line
-              key={k}
-              x1={pad.l}
-              x2={pad.l + innerW}
-              y1={y}
-              y2={y}
-              stroke="rgba(255,255,255,0.07)"
-              strokeWidth="1"
-            />
-          );
-        })}
-
-        {steps.map((d, i) => {
+        {safeData.map((d, i) => {
           const v = safeNumber(d.value);
+
           const x = pad.l + i * (barW + gap);
-
-          const y0 = yBase - (acc / scaleMax) * innerH;
-          const y1 = yBase - ((acc + v) / scaleMax) * innerH;
-
-          const h = Math.max(10, y0 - y1);
-          const y = y1;
-
-          acc += v;
+          const yBase = pad.t + innerH;
+          const y = yBase - (v / scaleMax) * innerH;
+          const h = Math.max(14, yBase - y);
 
           return (
             <g key={`${d.label}-${i}`}>
@@ -925,55 +905,37 @@ function WaterfallHourChart({ data }) {
                 y={y}
                 width={barW}
                 height={h}
-                rx="12"
-                fill={PP.gold}
-                stroke={PP.goldStroke}
-                strokeWidth="1"
-                style={{ filter: "drop-shadow(0 10px 20px rgba(0,0,0,0.45))" }}
-              />
-
-              <text x={x + barW / 2} y={y - 10} textAnchor="middle" fontSize="14" fontWeight="900" fill={PP.text}>
-                {fmtIntPT(v)}
-              </text>
-
-              <text x={x + barW / 2} y={H - 18} textAnchor="middle" fontSize="13" fontWeight="750" fill={PP.text2}>
-                {String(d.label)}
-              </text>
-            </g>
-          );
-        })}
-
-        {hasTotal ? (() => {
-          const i = steps.length;
-          const x = pad.l + i * (barW + gap);
-
-          const y = yBase - (totalVal / scaleMax) * innerH;
-          const h = Math.max(12, yBase - y);
-
-          return (
-            <g key="total">
-              <rect
-                x={x}
-                y={y}
-                width={barW}
-                height={h}
-                rx="12"
+                rx="16"
                 fill={PP.gold}
                 stroke="rgba(255,255,255,0.20)"
                 strokeWidth="1"
                 style={{ filter: "drop-shadow(0 12px 26px rgba(0,0,0,0.55))" }}
               />
 
-              <text x={x + barW / 2} y={y - 10} textAnchor="middle" fontSize="15" fontWeight="950" fill={PP.text}>
-                {fmtIntPT(totalVal)}
+              <text
+                x={x + barW / 2}
+                y={y - 12}
+                textAnchor="middle"
+                fontSize={fontValue}
+                fontWeight="950"
+                fill={PP.text}
+              >
+                {fmtIntPT(v)}
               </text>
 
-              <text x={x + barW / 2} y={H - 18} textAnchor="middle" fontSize="13" fontWeight="900" fill={PP.text2}>
-                Total
+              <text
+                x={x + barW / 2}
+                y={H - 20}
+                textAnchor="middle"
+                fontSize={fontLabel}
+                fontWeight="900"
+                fill={PP.text2}
+              >
+                {String(d.label)}
               </text>
             </g>
           );
-        })() : null}
+        })}
       </svg>
     </div>
   );
@@ -985,8 +947,6 @@ function WaterfallHourChart({ data }) {
 
 function AparicoesList({ items }) {
   const safeItems = Array.isArray(items) ? items : [];
-
-  // ✅ Se tudo for 0, max precisa ser 1 para não gerar NaN/Infinity
   const max = Math.max(1, ...safeItems.map((x) => safeNumber(x.value)));
 
   return (
@@ -1024,7 +984,6 @@ function PosicaoRanking({ model, onPickPos, emptyLabel, disabled = false }) {
 
   const clickable = !disabled && typeof onPickPos === "function";
 
-  // ✅ MODE: distribuição do grupo (lista simples 1º..7º)
   if (model.mode === "dist") {
     const items = Array.isArray(model.items) ? model.items : [];
     const max = Math.max(1, ...items.map((x) => safeNumber(x.value)));
@@ -1083,7 +1042,6 @@ function PosicaoRanking({ model, onPickPos, emptyLabel, disabled = false }) {
     );
   }
 
-  // ✅ MODE original (all/single)
   if (model.mode === "all") {
     const safeItems = Array.isArray(model.items) ? model.items : [];
     const max = Math.max(1, ...safeItems.map((x) => safeNumber(x.value)));
@@ -1134,9 +1092,7 @@ function PosicaoRanking({ model, onPickPos, emptyLabel, disabled = false }) {
           <EmptyState label={emptyLabel || ""} />
         )}
 
-        <div style={ui.posHint}>
-          {disabled ? "Interação desativada." : ""}
-        </div>
+        <div style={ui.posHint}>{disabled ? "Interação desativada." : ""}</div>
       </div>
     );
   }
@@ -1182,23 +1138,17 @@ function PosicaoRanking({ model, onPickPos, emptyLabel, disabled = false }) {
 ========================= */
 
 function computeStats({ drawsRawView, drawsRawGlobal, filters, selectedGrupo }) {
-  // ✅ VIEW: dedupe do recorte visual (obedece filtros locais)
   const drawsView = dedupeDraws(drawsRawView);
-
-  // ✅ GLOBAL: dedupe do dataset global do período (ignora filtros locais)
   const drawsGlobal = dedupeDraws(drawsRawGlobal);
 
   const gSel = Number(selectedGrupo);
   const hasSelected = Number.isFinite(gSel) && gSel >= 1 && gSel <= 25;
 
-  // Domínio de posições esperado (UI) — APENAS para os gráficos filtrados
   const expectedPositions = parseExpectedPositionsFromFilters(filters);
   const selectedPosOrNull = normalizePosFilter(filters);
 
-  // ✅ Se houver seleção: recorta apenas draws VIEW onde o grupo aparece (qualquer posição)
   const draws = hasSelected ? drawsView.filter((d) => drawHasGrupo(d, gSel)) : drawsView;
 
-  // Detecta se há múltiplos anos no recorte (para rotular como "agregado")
   const yearsSet = new Set();
   for (const d of draws) {
     const ymd = getDrawDate(d);
@@ -1209,21 +1159,10 @@ function computeStats({ drawsRawView, drawsRawGlobal, filters, selectedGrupo }) 
   const isMultiYear = yearsSet.size > 1;
 
   const monthOrder = [
-    "Janeiro",
-    "Fevereiro",
-    "Março",
-    "Abril",
-    "Maio",
-    "Junho",
-    "Julho",
-    "Agosto",
-    "Setembro",
-    "Outubro",
-    "Novembro",
-    "Dezembro",
+    "Janeiro","Fevereiro","Março","Abril","Maio","Junho",
+    "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro",
   ];
 
-  // ✅ total de APARIÇÕES no recorte VIEW (para "has data" dos gráficos)
   let totalAparicoesNoRecorte = 0;
   for (const d of draws) {
     totalAparicoesNoRecorte += countAparicoesInDraw(d, {
@@ -1233,7 +1172,6 @@ function computeStats({ drawsRawView, drawsRawGlobal, filters, selectedGrupo }) 
     });
   }
 
-  // ===== meses (APARIÇÕES) =====
   const monthMap = new Map();
   for (const d of draws) {
     const ymd = getDrawDate(d);
@@ -1249,13 +1187,11 @@ function computeStats({ drawsRawView, drawsRawGlobal, filters, selectedGrupo }) 
     monthMap.set(m, (monthMap.get(m) || 0) + apar);
   }
 
-  // ✅ estabilidade visual: sempre 12 meses
   const monthDataDisplay = monthOrder.map((m) => ({
     label: m,
     value: monthMap.get(m) || 0,
   }));
 
-  // ===== dia da semana (APARIÇÕES) =====
   const wdOrder = [
     { key: "Dom", label: "domingo" },
     { key: "Seg", label: "segunda-feira" },
@@ -1295,7 +1231,6 @@ function computeStats({ drawsRawView, drawsRawGlobal, filters, selectedGrupo }) 
     value: wdMap.get(it.key) || 0,
   }));
 
-  // ===== horário (APARIÇÕES por BUCKET) + Total =====
   const ALLOWED_BUCKETS = ["09h", "11h", "14h", "16h", "18h", "21h"];
   const hourMap = new Map(ALLOWED_BUCKETS.map((b) => [b, 0]));
   let aparicoesComHoraTotal = 0;
@@ -1325,7 +1260,6 @@ function computeStats({ drawsRawView, drawsRawGlobal, filters, selectedGrupo }) 
       ? [...hourData, { label: "Total", value: aparicoesComHoraTotal }]
       : [];
 
-  // ===== posições =====
   let posRankingModel = null;
   let selectedAnimalLabel = null;
 
@@ -1346,48 +1280,40 @@ function computeStats({ drawsRawView, drawsRawGlobal, filters, selectedGrupo }) 
       items: grpCount.byPos,
     };
   } else {
-    // ✅ POSIÇÃO deve obedecer filtros locais -> usa drawsView (não o global)
     posRankingModel = buildPosAnimalRanking(drawsView, expectedPositions, selectedPosOrNull);
   }
 
-  // ===== GLOBAL (card) — SEMPRE 25 itens, ignora filtros =====
   const aparicoesGlobal25 = buildGlobalAparicoes25(drawsGlobal);
 
   return {
     totalAparicoesNoRecorte,
     isMultiYear,
-
     monthDataDisplay,
     weekdayData,
     hourData: hourDataWithTotal,
-
     expectedPositions,
     selectedPosOrNull,
     posRankingModel,
-
     hasSelected,
     selectedAnimalLabel,
-
     aparicoesGlobal25,
   };
 }
 
 export default function ChartsGrid({
-  drawsRaw, // ✅ VIEW (filtrado)
-  drawsRawGlobal = null, // ✅ GLOBAL (sem filtros) — novo
-  rankingData, // compat (não usado no card global)
-  rankingMeta, // compat
+  drawsRaw,
+  drawsRawGlobal = null,
+  rankingData,
+  rankingMeta,
   filters,
   loading = false,
   error = null,
   selectedGrupo = null,
   onSelectPosicao,
-
-  // ✅ opcional
   disabledInteractions = false,
 }) {
   const stats = useMemo(() => {
-    const global = Array.isArray(drawsRawGlobal) ? drawsRawGlobal : drawsRaw; // fallback seguro
+    const global = Array.isArray(drawsRawGlobal) ? drawsRawGlobal : drawsRaw;
     return computeStats({ drawsRawView: drawsRaw, drawsRawGlobal: global, filters, selectedGrupo });
   }, [drawsRaw, drawsRawGlobal, filters, selectedGrupo]);
 
@@ -1397,21 +1323,15 @@ export default function ChartsGrid({
     return "Nenhum registro no recorte atual";
   }, [loading, error]);
 
-  // ✅ Presença de dados (gráficos) baseada em APARIÇÕES no recorte (VIEW)
   const hasDataForView = stats.totalAparicoesNoRecorte > 0;
 
   const posBadge = useMemo(() => {
     if (!hasDataForView) return null;
-
     if (disabledInteractions) return "Interação desativada";
     if (stats.hasSelected) return "Clique para filtrar";
     if (stats.selectedPosOrNull) return `Filtro: ${prettyPosLabel(stats.selectedPosOrNull)}`;
     return "Clique para filtrar";
   }, [hasDataForView, disabledInteractions, stats.hasSelected, stats.selectedPosOrNull]);
-
-  const monthTitle = useMemo(() => {
-    return "Quantidade de Aparições por Mês";
-  }, []);
 
   const canPickPos = !disabledInteractions && typeof onSelectPosicao === "function";
 
@@ -1421,7 +1341,7 @@ export default function ChartsGrid({
 
       <div className="pp_charts_grid_model" style={ui.grid}>
         <div className="pp_area_month" style={ui.areaMonth}>
-          <Card title={monthTitle}>
+          <Card title="Quantidade de Aparições por Mês">
             {loading || error || !hasDataForView ? (
               <EmptyState label={emptyLabel} />
             ) : (
@@ -1455,7 +1375,7 @@ export default function ChartsGrid({
             {loading || error || !hasDataForView ? (
               <EmptyState label={emptyLabel} />
             ) : (
-              <BarChartHorizontalBasic data={stats.weekdayData} labelCol={220} valueCol={110} compact />
+              <BarChartHorizontalBasic data={stats.weekdayData} labelCol={260} valueCol={150} compact />
             )}
           </Card>
         </div>
@@ -1565,10 +1485,10 @@ const ui = {
     fontSize: PP.titleSize,
     color: PP.text,
     whiteSpace: "normal",
-display: "-webkit-box",
-WebkitLineClamp: 2,
-WebkitBoxOrient: "vertical",
-overflow: "hidden",
+    display: "-webkit-box",
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: "vertical",
+    overflow: "hidden",
     minWidth: 0,
   },
 
@@ -1582,14 +1502,14 @@ overflow: "hidden",
   badge: {
     display: "inline-flex",
     alignItems: "center",
-    height: 24,
-    padding: "0 10px",
+    height: 26,
+    padding: "0 12px",
     borderRadius: 999,
     border: `1px solid ${PP.stroke}`,
     background: "rgba(0,0,0,0.35)",
     color: PP.text2,
-    fontWeight: 800,
-    fontSize: 13,
+    fontWeight: 900,
+    fontSize: 15,
     letterSpacing: 0.2,
     whiteSpace: "nowrap",
   },
@@ -1632,34 +1552,34 @@ overflow: "hidden",
     padding: 12,
   },
 
-  apList: { display: "grid", gap: 10, minWidth: 0 },
+  apList: { display: "grid", gap: 12, minWidth: 0 },
 
   apRow: {
     display: "grid",
-    gridTemplateColumns: "140px 1fr 72px",
+    gridTemplateColumns: "170px 1fr 92px",
     alignItems: "center",
-    gap: 10,
+    gap: 12,
     minWidth: 0,
   },
 
   apName: {
-    fontWeight: 750,
-    fontSize: 15,
+    fontWeight: 900,
+    fontSize: 18,
     letterSpacing: 0.12,
     color: PP.text,
-    opacity: 0.92,
-    lineHeight: 1.05,
+    opacity: 0.95,
+    lineHeight: 1.06,
     whiteSpace: "normal",
-display: "-webkit-box",
-WebkitLineClamp: 2,
-WebkitBoxOrient: "vertical",
-overflow: "hidden",
+    display: "-webkit-box",
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: "vertical",
+    overflow: "hidden",
   },
 
   apBarWrap: {
     position: "relative",
-    height: 16,
-    borderRadius: 10,
+    height: 18,
+    borderRadius: 12,
     overflow: "hidden",
     minWidth: 0,
     border: `1px solid rgba(255,255,255,0.10)`,
@@ -1683,11 +1603,11 @@ overflow: "hidden",
 
   apVal: {
     textAlign: "right",
-    fontWeight: 850,
-    fontSize: 15,
+    fontWeight: 950,
+    fontSize: 18,
     letterSpacing: 0.1,
     color: PP.text,
-    opacity: 0.92,
+    opacity: 0.95,
     lineHeight: 1.05,
   },
 
@@ -1718,29 +1638,29 @@ overflow: "hidden",
   },
 
   posHdrText: {
-    fontWeight: 850,
-    fontSize: 14,
+    fontWeight: 950,
+    fontSize: 16,
     letterSpacing: 0.18,
     color: PP.text,
-    opacity: 0.92,
+    opacity: 0.94,
     whiteSpace: "normal",
-display: "-webkit-box",
-WebkitLineClamp: 2,
-WebkitBoxOrient: "vertical",
-overflow: "hidden",
+    display: "-webkit-box",
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: "vertical",
+    overflow: "hidden",
   },
 
   posHdrSub: {
-    fontWeight: 850,
-    fontSize: 12,
+    fontWeight: 900,
+    fontSize: 14,
     letterSpacing: 0.14,
     color: PP.text2,
-    opacity: 0.88,
+    opacity: 0.92,
     whiteSpace: "normal",
-display: "-webkit-box",
-WebkitLineClamp: 2,
-WebkitBoxOrient: "vertical",
-overflow: "hidden",
+    display: "-webkit-box",
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: "vertical",
+    overflow: "hidden",
   },
 
   posList: {
@@ -1758,9 +1678,9 @@ overflow: "hidden",
     border: `1px solid rgba(255,255,255,0.12)`,
     background: "rgba(0,0,0,0.30)",
     borderRadius: 12,
-    padding: 10,
+    padding: 12,
     display: "grid",
-    gridTemplateColumns: "56px 1fr 64px",
+    gridTemplateColumns: "64px 1fr 84px",
     alignItems: "center",
     gap: 10,
     cursor: "pointer",
@@ -1771,41 +1691,41 @@ overflow: "hidden",
     border: `1px solid rgba(255,255,255,0.12)`,
     background: "rgba(0,0,0,0.30)",
     borderRadius: 12,
-    padding: 10,
+    padding: 12,
     display: "grid",
-    gridTemplateColumns: "1fr 1fr 64px",
+    gridTemplateColumns: "1fr 1fr 84px",
     alignItems: "center",
     gap: 10,
     minWidth: 0,
   },
 
   posLeft: {
-    fontWeight: 900,
-    fontSize: 15,
+    fontWeight: 950,
+    fontSize: 18,
     letterSpacing: 0.2,
     color: PP.text2,
-    opacity: 0.9,
+    opacity: 0.95,
   },
 
   posMid: { minWidth: 0, display: "grid", gap: 6 },
 
   posAnimal: {
-    fontWeight: 800,
-    fontSize: 15,
+    fontWeight: 900,
+    fontSize: 18,
     letterSpacing: 0.16,
     color: PP.text,
-    opacity: 0.92,
+    opacity: 0.95,
     whiteSpace: "normal",
-display: "-webkit-box",
-WebkitLineClamp: 2,
-WebkitBoxOrient: "vertical",
-overflow: "hidden",
+    display: "-webkit-box",
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: "vertical",
+    overflow: "hidden",
   },
 
   posBarWrap: {
     position: "relative",
-    height: 14,
-    borderRadius: 10,
+    height: 16,
+    borderRadius: 12,
     overflow: "hidden",
     minWidth: 0,
     border: `1px solid rgba(255,255,255,0.10)`,
@@ -1829,18 +1749,18 @@ overflow: "hidden",
 
   posRight: {
     textAlign: "right",
-    fontWeight: 900,
-    fontSize: 14,
+    fontWeight: 950,
+    fontSize: 18,
     letterSpacing: 0.12,
     color: PP.text,
-    opacity: 0.92,
+    opacity: 0.95,
   },
 
   posHint: {
-    fontSize: 13,
+    fontSize: 14,
     color: PP.muted,
     letterSpacing: 0.12,
-    opacity: 0.9,
+    opacity: 0.92,
   },
 
   emptyWrap: {
@@ -1873,9 +1793,9 @@ overflow: "hidden",
     position: "absolute",
     left: 12,
     bottom: 10,
-    fontWeight: 800,
-    opacity: 0.82,
-    fontSize: 13,
+    fontWeight: 900,
+    opacity: 0.86,
+    fontSize: 15,
     letterSpacing: 0.2,
     color: PP.text,
     textShadow: "0 2px 10px rgba(0,0,0,0.55)",
@@ -1885,13 +1805,11 @@ overflow: "hidden",
   _styleTag: `
   .pp_charts_grid_model * { box-sizing: border-box; }
 
-  /* Scroll premium (card Aparições - GLOBAL) */
   .pp_scroll::-webkit-scrollbar { width: 10px; }
   .pp_scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 999px; }
   .pp_scroll::-webkit-scrollbar-thumb { background: rgba(200,178,90,0.35); border-radius: 999px; border: 2px solid rgba(0,0,0,0.35); }
   .pp_scroll::-webkit-scrollbar-thumb:hover { background: rgba(200,178,90,0.48); }
 
-  /* Pos list scroll premium */
   .pp_poslist::-webkit-scrollbar { width: 10px; }
   .pp_poslist::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 999px; }
   .pp_poslist::-webkit-scrollbar-thumb { background: rgba(200,178,90,0.30); border-radius: 999px; border: 2px solid rgba(0,0,0,0.35); }
@@ -1921,4 +1839,3 @@ overflow: "hidden",
   }
   `,
 };
-
