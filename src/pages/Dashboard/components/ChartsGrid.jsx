@@ -1479,16 +1479,7 @@ const ui = {
     minWidth: 0,
   },
 
-  cardTitle: {
-    fontWeight: PP.titleWeight,
-    letterSpacing: 0.2,
-    fontSize: PP.titleSize,
-    color: PP.text,
-    whiteSpace: "nowrap",
-overflow: "hidden",
-textOverflow: "ellipsis",
-    minWidth: 0,
-  },
+  ,
 
   cardRight: {
     display: "flex",
@@ -1829,3 +1820,4 @@ textOverflow: "ellipsis",
   }
   `,
 };
+
