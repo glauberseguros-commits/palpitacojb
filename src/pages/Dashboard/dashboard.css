@@ -42,7 +42,7 @@
   --scrollThumb: rgba(255,255,255,0.18);
   --scrollThumbHover: rgba(255,255,255,0.26);
 
-  /* ✅ altura do topo (banner + coluna direita) no desktop */
+  /* altura do topo (banner + coluna direita) no desktop */
   --topH: 250px;
 
   /* inset opcional (se precisar compensar algo externo) */
@@ -65,7 +65,7 @@
   min-height: 0;
 
   display: grid;
-  grid-template-columns: 380px minmax(0, 1fr); /* ✅ anti-corte */
+  grid-template-columns: 380px minmax(0, 1fr);
   gap: var(--gap-lg);
 
   padding: var(--pad);
@@ -73,7 +73,7 @@
 
   align-items: stretch;
 
-  /* ✅ Desktop: sem scroll do dashboard (nem da window) */
+  /* Desktop: sem scroll do dashboard (nem da window) */
   overflow: hidden;
 
   background:
@@ -81,7 +81,7 @@
     radial-gradient(700px 420px at 18% 10%, rgba(255,255,255,0.035), transparent 55%);
 }
 
-/* ✅ Desktop: trava o Dashboard em “1 tela” */
+/* Desktop: trava o Dashboard em “1 tela” */
 @media (min-width: 981px){
   .dashRoot{
     height: calc(100dvh - (var(--pad) * 2));
@@ -106,36 +106,28 @@
 
 /* ====== Painel esquerdo (ranking) ====== */
 .dashLeft{
-
   border: 1px solid var(--border);
   background: var(--panel2);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
+
   overflow: hidden;
+  overflow-x: hidden;
 
   position: sticky;
   top: var(--pad);
 
-  /* ✅ sticky confiável */
   max-height: calc(100dvh - (var(--pad) * 2));
-  
-
   height: 100%;
   min-height: 0;
 
   display: flex;
   flex-direction: column;
 
-  /* ✅ anti-corte em flex */
   min-width: 0;
-
-  /* ✅ SEM SCROLL HORIZONTAL no painel */
-  overflow-x: hidden;
-
-  /* ✅ ocupa a altura do layout travado */
 }
 
-/* ✅ Ranking SEM SCROLL (nem vertical nem horizontal) */
+/* wrappers do ranking */
 .dashLeft .tableWrap,
 .dashLeft .dashTableWrap,
 .dashLeft .rankingWrap{
@@ -144,7 +136,7 @@
   flex: 1 1 auto;
 }
 
-/* ✅ fallback: último filho NÃO rola */
+/* fallback */
 .dashLeft > *:last-child{
   min-height: 0;
   overflow: hidden;
@@ -161,15 +153,13 @@
   min-height: 0;
 
   height: 100%;
-
-  /* mantém o layout “travado”; quem rola é interno quando necessário */
   overflow: hidden;
 }
 
 /* ====== Topo (Banner + coluna direita) ====== */
 .dashTop{
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 520px; /* ✅ anti-corte */
+  grid-template-columns: minmax(0, 1fr) 520px;
   gap: var(--gap-lg);
 
   align-items: stretch;
@@ -245,11 +235,7 @@
   max-height: var(--topH);
 
   min-width: 0;
-
-  /* ✅ Desktop: NÃO queremos scroll interno aqui */
   overflow: hidden;
-
-  /* evita “pular” layout com scrollbar */
   scrollbar-gutter: stable both-edges;
 }
 
@@ -258,9 +244,7 @@
   min-width: 0;
 }
 
-/* =========================
-   Integração: DateRangeControl (pp_range)
-========================= */
+/* Integração: DateRangeControl (pp_range) */
 .dashTopRight .pp_range{
   min-width: 0;
   width: 100%;
@@ -270,21 +254,10 @@
   box-shadow: var(--shadowTight);
 }
 
-.dashTopRight .pp_range .pp_range_row{
-  min-width: 0;
-}
-
-.dashTopRight .pp_range input[type="date"]{
-  min-width: 0;
-}
-
-.dashTopRight .pp_range input[type="range"]{
-  overflow: visible;
-}
-
-.dashTopRight .pp_range{
-  filter: none;
-}
+.dashTopRight .pp_range .pp_range_row{ min-width: 0; }
+.dashTopRight .pp_range input[type="date"]{ min-width: 0; }
+.dashTopRight .pp_range input[type="range"]{ overflow: visible; }
+.dashTopRight .pp_range{ filter: none; }
 
 /* ====== (Legado / opcional) Linha das datas/anos ====== */
 .dashDateRow{
@@ -351,9 +324,7 @@
   box-shadow: 0 10px 18px rgba(0,0,0,0.35);
 }
 
-.dashYearBtn:active{
-  transform: translateY(0px);
-}
+.dashYearBtn:active{ transform: translateY(0px); }
 
 .dashYearBtn.isActive{
   border-color: rgba(255,255,255,0.42);
@@ -392,18 +363,17 @@
 
   flex: 1 1 auto;
 
-  /* ✅ Desktop: sem scroll interno */
   overflow: hidden;
   scrollbar-gutter: stable both-edges;
 }
 
-/* ✅ Anti scroll fantasma em flex/grid (Windows/Chrome) */
+/* Anti scroll fantasma em flex/grid (Windows/Chrome) */
 .dashRoot,
 .dashMain,
 .dashCharts,
 .dashLeft{
   height: 100%;
-    min-height: 0;
+  min-height: 0;
 }
 
 /* Acessibilidade */
@@ -443,7 +413,7 @@
 }
 
 /* =========================
-   TABELA RANKING — centraliza coluna imagem
+   TABELA RANKING — coluna imagem centralizada
 ========================= */
 .dashLeft table thead th:first-child,
 .dashLeft table tbody td:first-child{
@@ -466,68 +436,108 @@
   margin: 0 auto;
 }
 
-
-/* =========================
-   RANKING — Fill total (25 linhas, sem scroll, sem cortar)
-   Objetivo: eliminar espaço vazio DENTRO do card interno.
-   - Mantém colunas (inclui Palpite) sem corte horizontal
-========================= */
-:root{
-  --rankRows: 25;
-  --rankHeadH: 36px; /* ajuste fino se seu thead for maior/menor */
+/* Diminuir fonte SOMENTE da coluna ANIMAL */
+.dashLeft table tbody td:nth-child(3){
+  font-size: 11px;
 }
 
+/* =========================
+   RANKING — PREMIUM CANÔNICO (ÚNICO)
+   Objetivo:
+   - card interno encosta no fundo (sem “vazio”)
+   - 25 linhas ocupam exatamente a altura (sem scroll)
+   - NÃO corta "Palpite" (colunas com largura fixa)
+========================= */
 @media (min-width: 981px){
 
-  /* painel esquerdo precisa "esticar" */
-  .dashLeft{
-    height: 100%;
+  :root{
+    --rankRows: 25;
+    --rankHeadH: 44px; /* ajuste fino (40–52) se precisar */
   }
 
-  /* wrapper do ranking ocupa tudo */
-  .dashLeft .tableWrap,
-  .dashLeft .dashTableWrap,
-  .dashLeft .rankingWrap{
-    height: 100%;
+  /* Painel esquerdo e conteúdo em coluna */
+  .dashLeft{
     display: flex;
     flex-direction: column;
     min-height: 0;
   }
 
-  /* a tabela vira "100% altura" e colunas ficam estáveis */
+  /* O “card interno” precisa esticar */
+  .dashLeft .dashCard,
+  .dashLeft .dashCardSoft{
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* Wrapper do ranking também estica */
+  .dashLeft .tableWrap,
+  .dashLeft .dashTableWrap,
+  .dashLeft .rankingWrap{
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  /* Tabela ocupa toda a altura do card */
   .dashLeft table{
     width: 100%;
     height: 100%;
-    table-layout: fixed;
+    flex: 1 1 auto;
+
     border-collapse: collapse;
+    table-layout: fixed; /* necessário para alinhamento quando tbody vira block */
   }
 
-  /* THEAD fixo, TBODY preenche o resto */
+  /* ✅ LARGURAS FIXAS (evita cortar "Palpite") */
+  .dashLeft table thead th:nth-child(1),
+  .dashLeft table tbody td:nth-child(1){ width: 44px; }  /* Img */
+  .dashLeft table thead th:nth-child(2),
+  .dashLeft table tbody td:nth-child(2){ width: 56px; }  /* Grupo */
+  .dashLeft table thead th:nth-child(4),
+  .dashLeft table tbody td:nth-child(4){ width: 70px; }  /* Apar. */
+  .dashLeft table thead th:nth-child(5),
+  .dashLeft table tbody td:nth-child(5){ width: 74px; }  /* Palpite */
+  /* Animal (3) fica com o restante */
+
+  /* Thead “fixo” e tbody com altura controlada */
   .dashLeft table thead{
     display: table;
     width: 100%;
     table-layout: fixed;
   }
 
-  .dashLeft table tbody{
-    display: block;
-    height: calc(100% - var(--rankHeadH));
-    width: 100%;
+  .dashLeft table thead th{
+    height: var(--rankHeadH);
+    vertical-align: middle;
+    padding-top: 8px;
+    padding-bottom: 8px;
   }
 
-  /* cada linha vira uma "table" pra manter alinhamento de colunas */
+  .dashLeft table tbody{
+    display: block;
+    width: 100%;
+    height: calc(100% - var(--rankHeadH));
+  }
+
+  /* Cada linha vira table para manter colunas alinhadas */
   .dashLeft table tbody tr{
     display: table;
     width: 100%;
     table-layout: fixed;
 
-    /* 🔥 aqui está o preenchimento vertical real */
     height: calc(100% / var(--rankRows));
   }
 
-  /* centraliza verticalmente conteúdo e dá respiro */
-  .dashLeft table tbody td,
-  .dashLeft table thead th{
+  .dashLeft table tbody td{
     vertical-align: middle;
     padding-top: 6px;
     padding-bottom: 6px;
@@ -546,7 +556,7 @@
   .dashTop{ grid-template-columns: minmax(0, 1fr) 440px; }
 }
 
-/* ✅ breakpoint alinhado com AppShell (vw < 980) */
+/* breakpoint alinhado com AppShell (vw < 980) */
 @media (max-width: 980px){
   :root{ --topH: 200px; }
 
@@ -555,16 +565,12 @@
     padding: 12px;
     padding-left: 12px;
 
-    /* ✅ mobile: deixa crescer para não cortar conteúdo */
     height: auto;
     max-height: none;
     overflow: visible;
   }
 
   .dashLeft{
-  min-height: 0;
-  height: 100%;
-
     position: relative;
     top: auto;
     max-height: none;
@@ -626,322 +632,3 @@
     padding: 10px;
   }
 }
-
-/* =========================
-   ALTERAÇÃO SOLICITADA
-   - Diminuir o tamanho da fonte SOMENTE da coluna ANIMAL
-========================= */
-.dashLeft table tbody td:nth-child(3){
-  font-size: 11px;
-}
-
-
- /* =========================
-    RANKING — Espaçamento Premium
- ========================= */
-
- .dashLeft table tbody td{
-   padding-top: 7px;
-   padding-bottom: 7px;
-   line-height: 1.2;
- }
-
- .dashLeft table thead th{
-   padding-top: 8px;
-   padding-bottom: 8px;
- }
-
- .dashLeft table tbody tr{
-   height: 34px;
- }
-
-/* =========================
-   RANKING — Vertical Fill (Premium)
-   Objetivo: preencher o painel esquerdo no desktop
-========================= */
-
-@media (min-width: 981px){
-
-  /* aumenta a altura de cada linha (sem mexer no layout horizontal) */
-.dashLeft table tbody tr{
-  height: calc((100% - 40px) / 25);
-}
-
-  .dashLeft table tbody td{
-    padding-top: 10px;
-    padding-bottom: 10px;
-    line-height: 1.25;
-  }
-
-  /* garante que o conteúdo fique bem centralizado na linha */
-  .dashLeft table tbody td,
-  .dashLeft table thead th{
-    vertical-align: middle;
-  }
-}
-
-
-@media (min-width: 981px){
-
-  .dashLeft{
-  min-height: 0;
-  height: 100%;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .dashLeft table{
-    height: 100%;
-  }
-
-  .dashLeft table tbody{
-    height: 100%;
-  }
-
-  .dashLeft table tbody tr{
-    height: calc((100% - 42px) / 25);
-  }
-
-  .dashLeft table tbody td{
-    vertical-align: middle;
-    padding-top: 0;
-    padding-bottom: 0;
-  }
-}
-
-
-/* =========================
-   RANKING — Premium Fill (FINAL)
-   Objetivo: tabela encostar visualmente no fundo do card (sem scroll)
-========================= */
-
-@media (min-width: 981px){
-
-  /* garante que o wrap não cria "folga" extra */
-  .dashLeft .tableWrap,
-  .dashLeft .dashTableWrap,
-  .dashLeft .rankingWrap{
-    padding-bottom: 0 !important;
-    margin-bottom: 0 !important;
-  }
-
-  /* força preenchimento vertical aumentando linhas */
-  .dashLeft table tbody tr{
-    height: 44px !important;
-  }
-
-  .dashLeft table tbody td{
-    padding-top: 10px !important;
-    padding-bottom: 10px !important;
-    line-height: 1.2 !important;
-    vertical-align: middle !important;
-  }
-
-  .dashLeft table thead th{
-    padding-top: 10px !important;
-    padding-bottom: 10px !important;
-    vertical-align: middle !important;
-  }
-}
-
-
-
-/* =========================
-   RANKING — Card interno 100% height (Premium)
-   Objetivo: o card da tabela encostar na borda interna do painel
-========================= */
-
-@media (min-width: 981px){
-  .dashLeft{
-    height: 100%;
-  }
-
-  /* o card interno precisa esticar */
-  .dashLeft .dashCard,
-  .dashLeft .dashCardSoft{
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-  }
-
-  /* wrapper da tabela precisa esticar */
-  .dashLeft .tableWrap,
-  .dashLeft .dashTableWrap,
-  .dashLeft .rankingWrap{
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-  }
-
-  /* tabela ocupa todo o espaço do wrapper */
-  .dashLeft table{
-    flex: 1 1 auto;
-    height: 100%;
-  }
-}
-
-
-
-/* =========================
-   RANKING — Card interno 100% height (Premium)
-   Objetivo: o card da tabela encostar na borda interna do painel
-========================= */
-
-@media (min-width: 981px){
-  .dashLeft{
-    height: 100%;
-  }
-
-  /* o card interno precisa esticar */
-  .dashLeft .dashCard,
-  .dashLeft .dashCardSoft{
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-  }
-
-  /* wrapper da tabela precisa esticar */
-  .dashLeft .tableWrap,
-  .dashLeft .dashTableWrap,
-  .dashLeft .rankingWrap{
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-  }
-
-  /* tabela ocupa todo o espaço do wrapper */
-  .dashLeft table{
-    flex: 1 1 auto;
-    height: 100%;
-  }
-}
-
-
-
-
-
-/* =========================
-   RANKING — Fill exato 25 linhas (Premium)
-   Objetivo: tabela encostar no fundo SEM sobrar espaço e SEM cortar colunas
-========================= */
-@media (min-width: 981px){
-
-  /* 25 bichos fixos */
-  :root{
-    --rankRows: 25;
-    --rankHeadH: 44px;  /* ajuste fino se precisar (40–52) */
-  }
-
-  /* card interno + wrappers precisam ocupar 100% da altura do painel */
-  .dashLeft,
-  .dashLeft .dashCard,
-  .dashLeft .dashCardSoft,
-  .dashLeft .tableWrap,
-  .dashLeft .dashTableWrap,
-  .dashLeft .rankingWrap{
-    height: 100%;
-    min-height: 0;
-  }
-
-  /* tabela ocupa toda a altura do card interno */
-  .dashLeft table{
-    height: 100%;
-  }
-
-  /* cabeçalho com altura previsível */
-  .dashLeft table thead th{
-    height: var(--rankHeadH);
-    vertical-align: middle;
-  }
-
-  /* Distribui altura entre as 25 linhas do tbody (preenche perfeito) */
-  .dashLeft table tbody tr{
-    height: calc((100% - var(--rankHeadH)) / var(--rankRows));
-  }
-
-  .dashLeft table tbody td{
-    vertical-align: middle;
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-    line-height: 1.15;
-  }
-}
-
-
-/* =========================
-   RANKING — Premium Fill (CANÔNICO)
-   Objetivo:
-   - Card interno encosta no fundo do painel
-   - 25 linhas ocupam exatamente a altura (sem scroll)
-   - Não mexe no layout horizontal (não corta "Palpite")
-========================= */
-@media (min-width: 981px){
-
-  :root{
-    --rankRows: 25;
-    --rankHeadH: 44px; /* ajuste fino (40–52) se precisar */
-  }
-
-  /* painel e card interno viram "coluna flex" ocupando tudo */
-  .dashLeft{
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-  }
-
-  .dashLeft .dashCard,
-  .dashLeft .dashCardSoft{
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-
-    /* tira folga interna que cria "vazio" abaixo da tabela */
-    padding-bottom: 0 !important;
-    margin-bottom: 0 !important;
-  }
-
-  .dashLeft .tableWrap,
-  .dashLeft .dashTableWrap,
-  .dashLeft .rankingWrap{
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-
-    padding-bottom: 0 !important;
-    margin-bottom: 0 !important;
-  }
-
-  /* tabela ocupa a altura toda do card */
-  .dashLeft table{
-    flex: 1 1 auto;
-    height: 100%;
-  }
-
-  /* cabeçalho com altura previsível */
-  .dashLeft table thead th{
-    height: var(--rankHeadH);
-    vertical-align: middle;
-  }
-
-  /* 25 linhas dividem exatamente o restante */
-  .dashLeft table tbody tr{
-    height: calc((100% - var(--rankHeadH)) / var(--rankRows));
-  }
-
-  /* respiro mínimo e alinhamento vertical (sem "vazio" abaixo) */
-  .dashLeft table tbody td{
-    vertical-align: middle;
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-    line-height: 1.15;
-  }
-}
-
-
