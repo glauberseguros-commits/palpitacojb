@@ -925,7 +925,7 @@ function WaterfallHourChart({ data }) {
   const max = Math.max(1, ...safeData.map((d) => safeNumber(d.value)));
   const scaleMax = max;
 
-  const fontValue = 24; // ✅ número bem legível
+  const fontValue = 20; // ✅ número bem legível
   const fontLabel = 20; // ✅ label bem legível
 
   return (
@@ -1653,7 +1653,7 @@ const ui = {
 
   apName: {
     fontWeight: 900,
-    fontSize: 18,
+    fontSize: 20,
     letterSpacing: 0.12,
     color: PP.text,
     opacity: 0.95,
@@ -1691,7 +1691,7 @@ const ui = {
   apVal: {
     textAlign: "right",
     fontWeight: 950,
-    fontSize: 18,
+    fontSize: 20,
     letterSpacing: 0.1,
     color: PP.text,
     opacity: 0.95,
@@ -1784,7 +1784,7 @@ const ui = {
 
   posLeft: {
     fontWeight: 950,
-    fontSize: 18,
+    fontSize: 20,
     letterSpacing: 0.2,
     color: PP.text2,
     opacity: 0.95,
@@ -1794,7 +1794,7 @@ const ui = {
 
   posAnimal: {
     fontWeight: 900,
-    fontSize: 18,
+    fontSize: 20,
     letterSpacing: 0.16,
     color: PP.text,
     opacity: 0.95,
@@ -1831,7 +1831,7 @@ const ui = {
   posRight: {
     textAlign: "right",
     fontWeight: 950,
-    fontSize: 18,
+    fontSize: 20,
     letterSpacing: 0.12,
     color: PP.text,
     opacity: 0.95,
@@ -1921,3 +1921,4 @@ const ui = {
   }
   `,
 };
+
