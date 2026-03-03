@@ -525,9 +525,9 @@ function computeBaseNextDistribution({
    ✅ Suavização + Probabilidades
 ========================= */
 
-function freqToProbMap(freq, alpha = TOP3_SMOOTH_ALPHA, K = TOP3_GROUPS_K) {
+function freqToProbMap(freq, alpha = TOP3_SMOOTH_ALPHA, groupsK = TOP3_GROUPS_K) {
   const a = safeInt(alpha, 1);
-  const k = safeInt(K, 25);
+  const k = safeInt(groupsK, 25);
 
   let total = 0;
   for (const v of freq.values()) total += Number(v || 0);
@@ -677,7 +677,7 @@ export function computeConditionalNextTop3({
   });
 
   const alpha = TOP3_SMOOTH_ALPHA;
-  const K = TOP3_GROUPS_K;
+  const groupsK = TOP3_GROUPS_K;
 
   const condFreq = chosen?.freq || new Map();
   const condSamples = safeInt(chosen?.samples, 0);
@@ -685,8 +685,8 @@ export function computeConditionalNextTop3({
   const baseFreq = base?.freq || new Map();
   const baseSamples = safeInt(base?.samples, 0);
 
-  const condProb = freqToProbMap(condFreq, alpha, K).prob;
-  const baseProb = freqToProbMap(baseFreq, alpha, K).prob;
+  const condProb = freqToProbMap(condFreq, alpha, groupsK).prob;
+  const baseProb = freqToProbMap(baseFreq, alpha, groupsK).prob;
 
   // w cresce com samples (condicional)
   const M = safeInt(TOP3_SHRINK_M, 40);
@@ -922,5 +922,6 @@ export function buildMilharesForGrupo({
 export function build16MilharesForGrupo(args) {
   return buildMilharesForGrupo({ ...(args || {}), count: 16 });
 }
+
 
 

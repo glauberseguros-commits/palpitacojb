@@ -19,8 +19,6 @@ import {
   PT_RIO_SCHEDULE_NORMAL,
   PT_RIO_SCHEDULE_WED_SAT,
   FEDERAL_SCHEDULE,
-
-  // ✅ novos (para probabilidade != 0.00%)
   TOP3_SMOOTH_ALPHA,
   TOP3_GROUPS_K,
 } from "./top3.constants";
@@ -55,7 +53,6 @@ import { getAnimalLabel, getImgFromGrupo } from "../../constants/bichoMap";
 
 export function useTop3Controller() {
   const DEFAULT_LOTTERY = "PT_RIO";
-
   const requestIdRef = useRef(0);
 
   const [lotteryKey, setLotteryKey] = useState(DEFAULT_LOTTERY);
@@ -176,12 +173,7 @@ export function useTop3Controller() {
       if (requestIdRef.current === currentRequestId) setTargetHourBucket("");
       if (requestIdRef.current === currentRequestId) setTargetYmd("");
       if (requestIdRef.current === currentRequestId)
-        setLastInfo({
-          lastYmd: "",
-          lastHour: "",
-          lastGrupo: null,
-          lastAnimal: "",
-        });
+        setLastInfo({ lastYmd: "", lastHour: "", lastGrupo: null, lastAnimal: "" });
       if (requestIdRef.current === currentRequestId)
         setPrevInfo({
           prevYmd: "",
@@ -190,8 +182,7 @@ export function useTop3Controller() {
           prevAnimal: "",
           source: "none",
         });
-      if (requestIdRef.current === currentRequestId)
-        setRangeInfo({ from: "", to: "" });
+      if (requestIdRef.current === currentRequestId) setRangeInfo({ from: "", to: "" });
 
       if (requestIdRef.current === currentRequestId) setLoading(false);
       if (requestIdRef.current === currentRequestId)
@@ -220,7 +211,6 @@ export function useTop3Controller() {
         // ok
       }
 
-      // hoje: precisamos de prizes para achar o 1º do último draw
       const outToday = await getKingResultsByDate({
         uf: lKey,
         date: ymdSafe,
@@ -232,14 +222,11 @@ export function useTop3Controller() {
 
       const last = findLastDrawInList(today, schedule);
       const lastBucket = last ? toHourBucket(pickDrawHour(last)) : "";
-      if (requestIdRef.current === currentRequestId)
-        setLastHourBucket(lastBucket);
+      if (requestIdRef.current === currentRequestId) setLastHourBucket(lastBucket);
 
       const lastY = last ? pickDrawYMD(last) || ymdSafe : "";
       const lastGrupo = last ? pickPrize1GrupoFromDraw(last) : null;
-      const lastAnimal = lastGrupo
-        ? safeStr(getAnimalLabel?.(lastGrupo) || "")
-        : "";
+      const lastAnimal = lastGrupo ? safeStr(getAnimalLabel?.(lastGrupo) || "") : "";
 
       if (requestIdRef.current === currentRequestId)
         setLastInfo({
@@ -261,16 +248,13 @@ export function useTop3Controller() {
             })
           : { ymd: "", hour: "" };
 
-      if (requestIdRef.current === currentRequestId)
-        setTargetYmd(safeStr(nextSlot?.ymd || ""));
+      if (requestIdRef.current === currentRequestId) setTargetYmd(safeStr(nextSlot?.ymd || ""));
       if (requestIdRef.current === currentRequestId)
         setTargetHourBucket(safeStr(nextSlot?.hour || ""));
 
-      // range
       let rangeTo = ymdSafe;
       let rangeFrom = "";
 
-      // ✅ garante que o range inclui o "próximo slot" quando ele cai no dia seguinte
       if (nextSlot?.ymd && isYMD(nextSlot.ymd)) {
         if (nextSlot.ymd > rangeTo) rangeTo = nextSlot.ymd;
       }
@@ -282,10 +266,8 @@ export function useTop3Controller() {
         rangeFrom = addDaysYMD(ymdSafe, -(days - 1));
       }
 
-      if (requestIdRef.current === currentRequestId)
-        setRangeInfo({ from: rangeFrom, to: rangeTo });
+      if (requestIdRef.current === currentRequestId) setRangeInfo({ from: rangeFrom, to: rangeTo });
 
-      // IMPORTANTE: positions:null para contar aparições
       const outRange = await getKingResultsByRange({
         uf: lKey,
         dateFrom: rangeFrom,
@@ -299,7 +281,6 @@ export function useTop3Controller() {
       const hist = Array.isArray(outRange) ? outRange : [];
       if (requestIdRef.current === currentRequestId) setRangeDraws(hist);
 
-      // camada prev
       const hourForPrev = safeStr(nextSlot?.hour || lastBucket || "");
       if (hourForPrev) {
         const prev = await getPreviousDrawRobust({
@@ -316,9 +297,7 @@ export function useTop3Controller() {
         });
 
         const prevGrupo = prev?.draw ? pickPrize1GrupoFromDraw(prev.draw) : null;
-        const prevAnimal = prevGrupo
-          ? safeStr(getAnimalLabel?.(prevGrupo) || "")
-          : "";
+        const prevAnimal = prevGrupo ? safeStr(getAnimalLabel?.(prevGrupo) || "") : "";
 
         if (requestIdRef.current === currentRequestId)
           setPrevInfo({
@@ -344,12 +323,7 @@ export function useTop3Controller() {
       if (requestIdRef.current === currentRequestId) setTargetHourBucket("");
       if (requestIdRef.current === currentRequestId) setTargetYmd("");
       if (requestIdRef.current === currentRequestId)
-        setLastInfo({
-          lastYmd: "",
-          lastHour: "",
-          lastGrupo: null,
-          lastAnimal: "",
-        });
+        setLastInfo({ lastYmd: "", lastHour: "", lastGrupo: null, lastAnimal: "" });
       if (requestIdRef.current === currentRequestId)
         setPrevInfo({
           prevYmd: "",
@@ -358,8 +332,7 @@ export function useTop3Controller() {
           prevAnimal: "",
           source: "none",
         });
-      if (requestIdRef.current === currentRequestId)
-        setRangeInfo({ from: "", to: "" });
+      if (requestIdRef.current === currentRequestId) setRangeInfo({ from: "", to: "" });
       if (requestIdRef.current === currentRequestId)
         setError(String(e?.message || e || "Falha ao carregar dados do TOP3."));
     } finally {
@@ -396,7 +369,6 @@ export function useTop3Controller() {
       return y === lastY && h === toHourBucket(lastH);
     });
 
-    // ✅ robustez: se o gatilho não vier no range, cria um draw mínimo
     let drawLastSafe = drawLast;
     if (!drawLastSafe) {
       drawLastSafe = {
@@ -422,6 +394,20 @@ export function useTop3Controller() {
     lastInfo?.lastYmd,
     lastInfo?.lastHour,
   ]);
+
+  // ✅ build20 PRECISA ficar acima de qualquer useMemo que use ele
+  const build20 = useCallback(
+    (grupo2) => {
+      return buildMilharesForGrupo({
+        rangeDraws,
+        analysisHourBucket,
+        schedule,
+        grupo2,
+        count: 20,
+      });
+    },
+    [rangeDraws, analysisHourBucket, schedule]
+  );
 
   // meta (DERIVADO)
   const metaNext = useMemo(() => {
@@ -457,23 +443,17 @@ export function useTop3Controller() {
       targetText: `${ymdToBR(m.next.ymd)} ${m.next.hour}`,
       samples: Number(m.samples || 0),
     };
-  }, [analytics, build20]);
+  }, [analytics]);
 
   const top3 = useMemo(() => {
     const arr = Array.isArray(analytics?.top) ? analytics.top : [];
     const samplesMeta = Number(analytics?.meta?.samples || 0);
 
-    // ✅ denom aproximado: cada amostra soma até 7 posições (1º..7º)
-    // + suavização para evitar 0.00%
-    const alpha = Number.isFinite(Number(TOP3_SMOOTH_ALPHA))
-      ? Number(TOP3_SMOOTH_ALPHA)
-      : 1;
-    const K = Number.isFinite(Number(TOP3_GROUPS_K))
-      ? Number(TOP3_GROUPS_K)
-      : 25;
+    const alpha = Number.isFinite(Number(TOP3_SMOOTH_ALPHA)) ? Number(TOP3_SMOOTH_ALPHA) : 1;
+    const groupsK = Number.isFinite(Number(TOP3_GROUPS_K)) ? Number(TOP3_GROUPS_K) : 25;
 
     const denomRaw = Math.max(0, samplesMeta) * 7;
-    const denom = denomRaw + alpha * K;
+    const denom = denomRaw + alpha * groupsK;
 
     return arr.map((x) => {
       const g = Number(x.grupo);
@@ -503,7 +483,7 @@ export function useTop3Controller() {
       const prob = denom > 0 ? (freq + alpha) / denom : 0;
       const probPct = Math.max(0, prob * 100);
 
-      // ✅ 20 milhares para o usuário final (derivado do motor por dezenas/centenas)
+      // ✅ 20 milhares para o usuário final (do motor real)
       let milhares20 = [];
       try {
         const out20 = build20(g);
@@ -521,12 +501,8 @@ export function useTop3Controller() {
         animal,
         imgBg: bgVariants,
         imgIcon: iconVariants,
-
-        // ✅ isso destrava o “Probabilidade: 0.00%”
         prob,
         probPct,
-
-        // ✅ UI user-final
         milhares20,
       };
     });
@@ -552,9 +528,7 @@ export function useTop3Controller() {
       out.push(`Base histórica: ${lookbackLabel}`);
       if (lastLabel !== "—") out.push(`Último sorteio (gatilho): ${lastLabel}`);
       if (safeStr(analysisYmd) && safeStr(analysisHourBucket)) {
-        out.push(
-          `Próximo sorteio (alvo): ${ymdToBR(analysisYmd)} ${analysisHourBucket}`
-        );
+        out.push(`Próximo sorteio (alvo): ${ymdToBR(analysisYmd)} ${analysisHourBucket}`);
       }
 
       for (const line of r) out.push(line);
@@ -573,20 +547,6 @@ export function useTop3Controller() {
         analysisHourBucket,
         schedule,
         grupo2,
-      });
-    },
-    [rangeDraws, analysisHourBucket, schedule]
-  );
-
-  // ✅ NOVO: 20 milhares (primeira fase do produto)
-  const build20 = useCallback(
-    (grupo2) => {
-      return buildMilharesForGrupo({
-        rangeDraws,
-        analysisHourBucket,
-        schedule,
-        grupo2,
-        count: 20,
       });
     },
     [rangeDraws, analysisHourBucket, schedule]
@@ -630,4 +590,3 @@ export function useTop3Controller() {
     normalizeImgSrc,
   };
 }
-
