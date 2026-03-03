@@ -632,6 +632,10 @@ const PP = {
   goldStroke: "rgba(200,178,90,0.38)",
 };
 
+
+// Largura base dos SVG charts (fixo para padronizar tipografia)
+const W = 660;
+
 /* =========================
    Card / Empty
 ========================= */
@@ -679,7 +683,7 @@ function calcMonthViewH(rows) {
 }
 
 function BarChartHorizontalMonthPremium({ data }) {
-  const W = 900;
+
   const safeData = Array.isArray(data) ? data : [];
   const rows = Math.max(1, safeData.length);
   const H = calcMonthViewH(rows);
@@ -708,7 +712,7 @@ function BarChartHorizontalMonthPremium({ data }) {
         width="100%"
         height="100%"
         style={{ display: "block" }}
-        preserveAspectRatio="none"
+        preserveAspectRatio="xMidYMid meet"
       >
         {safeData.map((d, i) => {
           const v = safeNumber(d.value);
@@ -784,13 +788,13 @@ function BarChartHorizontalBasic({
   onBarClick = null,
   compact = false,
 }) {
-  const W = 900;
+
   const safeData = Array.isArray(data) ? data : [];
   const rows = Math.max(1, safeData.length);
 
   const H = compact
-    ? clamp(130 + rows * 52, 380, 600)
-    : clamp(150 + rows * 58, 420, 700);
+    ? clamp(190 + rows * 64, 520, 760)
+    : clamp(210 + rows * 68, 560, 820);
 
   const pad = { l: 24, r: 18, t: 18, b: 18 };
 
@@ -827,7 +831,7 @@ function BarChartHorizontalBasic({
         width="100%"
         height="100%"
         style={{ display: "block" }}
-        preserveAspectRatio="none"
+        preserveAspectRatio="xMidYMid meet"
       >
         {safeData.map((d, i) => {
           const v = safeNumber(d.value);
@@ -911,7 +915,6 @@ function WaterfallHourChart({ data }) {
   const safeData = Array.isArray(data) ? data : [];
   if (!safeData.length) return <EmptyState label="" />;
 
-  const W = 900;
   const H = 420;
 
   const pad = { l: 26, r: 26, t: 28, b: 58 };
@@ -935,7 +938,7 @@ function WaterfallHourChart({ data }) {
         width="100%"
         height="100%"
         style={{ display: "block" }}
-        preserveAspectRatio="none"
+        preserveAspectRatio="xMidYMid meet"
       >
         {safeData.map((d, i) => {
           const v = safeNumber(d.value);

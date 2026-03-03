@@ -4,28 +4,8 @@ function stripTrailingSlashes(u) {
   return String(u || "").trim().replace(/\/+$/, "");
 }
 
-/**
- * ✅ Vite env reader SEM referenciar import.meta diretamente (CRA não reclama).
- * - Em Vite, import.meta.env existe.
- * - Em CRA, isso falha silenciosamente e seguimos com process.env / heurísticas.
- */
-function readViteEnv(key) {
-  try {
-    // import.meta não pode aparecer no código do CRA
-    // então acessamos via Function com string.
-    // eslint-disable-next-line no-new-func
-    const fn = new Function(
-      "k",
-      'try { return (typeof import !== "undefined" && import.meta && import.meta.env) ? import.meta.env[k] : undefined; } catch(e) { return undefined; }'
-    );
-    return fn(key);
-  } catch {
-    return undefined;
-  }
-}
-
 function readEnvApiBase() {
-  // CRA (preferencial)
+  // CRA
   try {
     const v = stripTrailingSlashes(process?.env?.REACT_APP_API_BASE);
     if (v) return v;
@@ -33,9 +13,10 @@ function readEnvApiBase() {
     // ignore
   }
 
-  // Vite (sem import.meta direto)
+  // Vite (sem warning no CRA: acesso direto)
   try {
-    const v = stripTrailingSlashes(readViteEnv("VITE_API_BASE"));
+    // eslint-disable-next-line no-undef
+    const v = stripTrailingSlashes(import.meta.env.VITE_API_BASE);
     if (v) return v;
   } catch {
     // ignore
@@ -75,13 +56,9 @@ export function getApiBase() {
       return "http://127.0.0.1:3333";
     }
 
-    // same-origin (reverse proxy / deploy monorepo)
+    // same-origin
     const sameOrigin = stripTrailingSlashes(origin);
-    if (sameOrigin) {
-      // Se quiser forçar /api no same-origin:
-      // return `${sameOrigin}/api`;
-      return sameOrigin;
-    }
+    if (sameOrigin) return sameOrigin;
 
     // fallback seguro
     const proto = String(protocol || "https:").startsWith("http")
