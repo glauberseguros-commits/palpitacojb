@@ -758,15 +758,19 @@ export function computeConditionalNextTop3({
    16 milhares (por grupo)
 ========================= */
 
-export function build16MilharesForGrupo({
+export function buildMilharesForGrupo({
   rangeDraws,
   analysisHourBucket,
   schedule,
   grupo2,
+  count = 16,
 }) {
   const list = Array.isArray(rangeDraws) ? rangeDraws : [];
   const target = toHourBucket(analysisHourBucket);
   const schSet = scheduleSet(schedule);
+
+  const N = Number.isFinite(Number(count)) ? Math.max(1, Math.trunc(Number(count))) : 16;
+  const dezenasTarget = Math.max(1, Math.ceil(N / 4)); // 20=>5 dezenas, 16=>4, 12=>3, 8=>2
 
   if (!grupo2 || !list.length || !target) {
     return { dezenas: [], slots: [] };
@@ -799,7 +803,8 @@ export function build16MilharesForGrupo({
 
   let prizes = collect("target_only");
 
-  if (prizes.length < 16) {
+  // tenta reforçar pool para ter volume (principalmente quando N=20)
+  if (prizes.length < N) {
     const extra = collect("any_hour");
     const set = new Set(prizes);
     for (const m of extra) {
@@ -811,6 +816,7 @@ export function build16MilharesForGrupo({
 
   if (!prizes.length) return { dezenas: [], slots: [] };
 
+  // conta dezenas
   const dezCounts = new Map();
   for (const m4 of prizes) {
     const dz = getDezena2(m4);
@@ -818,22 +824,24 @@ export function build16MilharesForGrupo({
     dezCounts.set(dz, (dezCounts.get(dz) || 0) + 1);
   }
 
+  // pega top dezenas (dinâmico)
   let topDezenas = Array.from(dezCounts.entries())
     .sort((a, b) => b[1] - a[1] || dezenaCompareAsc(a[0], b[0]))
-    .slice(0, 4)
+    .slice(0, dezenasTarget)
     .map((x) => x[0])
     .sort(dezenaCompareAsc);
 
-  if (topDezenas.length < 4) {
+  // se faltar, completa com as próximas melhores
+  if (topDezenas.length < dezenasTarget) {
     const allDz = Array.from(dezCounts.entries())
       .sort((a, b) => b[1] - a[1] || dezenaCompareAsc(a[0], b[0]))
       .map((x) => x[0]);
 
     for (const dz of allDz) {
-      if (topDezenas.length >= 4) break;
+      if (topDezenas.length >= dezenasTarget) break;
       if (!topDezenas.includes(dz)) topDezenas.push(dz);
     }
-    topDezenas = topDezenas.slice(0, 4).sort(dezenaCompareAsc);
+    topDezenas = topDezenas.slice(0, dezenasTarget).sort(dezenaCompareAsc);
   }
 
   const usedCentenas = new Set();
@@ -851,6 +859,7 @@ export function build16MilharesForGrupo({
 
     const picked = [];
 
+    // 1º passe: evita repetir centena
     for (const m4 of ranked) {
       if (picked.length >= 4) break;
       const cent = getCentena3(m4);
@@ -860,6 +869,7 @@ export function build16MilharesForGrupo({
       picked.push(m4);
     }
 
+    // 2º passe: completa o que faltar
     if (picked.length < 4) {
       for (const m4 of ranked) {
         if (picked.length >= 4) break;
@@ -876,6 +886,7 @@ export function build16MilharesForGrupo({
     return picked.map((m4) => ({ dezena: dz, milhar: m4 }));
   };
 
+  // monta slots por dezena
   const byDezena = new Map();
   for (const dz of topDezenas) {
     byDezena.set(dz, pickForDezena(dz, false));
@@ -887,6 +898,7 @@ export function build16MilharesForGrupo({
     for (let i = 0; i < 4; i += 1) slots.push(arr[i] || { dezena: dz, milhar: "" });
   }
 
+  // fallback: se ficou vazio, permite repetir centena
   const emptyCount = slots.filter((s) => !safeStr(s.milhar)).length;
   if (emptyCount > 0) {
     const byDezena2 = new Map();
@@ -902,7 +914,13 @@ export function build16MilharesForGrupo({
     slots = slots2;
   }
 
-  while (slots.length < 16) slots.push({ dezena: "", milhar: "" });
-  return { dezenas: topDezenas, slots: slots.slice(0, 16) };
+  while (slots.length < N) slots.push({ dezena: "", milhar: "" });
+  return { dezenas: topDezenas, slots: slots.slice(0, N) };
 }
+
+// compat: mantém a API antiga
+export function build16MilharesForGrupo(args) {
+  return buildMilharesForGrupo({ ...(args || {}), count: 16 });
+}
+
 

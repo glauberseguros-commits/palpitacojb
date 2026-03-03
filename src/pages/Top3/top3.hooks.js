@@ -34,6 +34,7 @@ import {
   pickPrize1GrupoFromDraw,
   getPreviousDrawRobust,
   build16MilharesForGrupo,
+  buildMilharesForGrupo,
   getNextSlotForLottery,
   computeConditionalNextTop3,
 } from "./top3.engine";
@@ -456,7 +457,7 @@ export function useTop3Controller() {
       targetText: `${ymdToBR(m.next.ymd)} ${m.next.hour}`,
       samples: Number(m.samples || 0),
     };
-  }, [analytics]);
+  }, [analytics, build20]);
 
   const top3 = useMemo(() => {
     const arr = Array.isArray(analytics?.top) ? analytics.top : [];
@@ -502,6 +503,19 @@ export function useTop3Controller() {
       const prob = denom > 0 ? (freq + alpha) / denom : 0;
       const probPct = Math.max(0, prob * 100);
 
+      // ✅ 20 milhares para o usuário final (derivado do motor por dezenas/centenas)
+      let milhares20 = [];
+      try {
+        const out20 = build20(g);
+        const slots20 = Array.isArray(out20?.slots) ? out20.slots : [];
+        milhares20 = slots20
+          .map((s) => safeStr(s?.milhar))
+          .filter(Boolean)
+          .slice(0, 20);
+      } catch {
+        milhares20 = [];
+      }
+
       return {
         ...x,
         animal,
@@ -511,9 +525,12 @@ export function useTop3Controller() {
         // ✅ isso destrava o “Probabilidade: 0.00%”
         prob,
         probPct,
+
+        // ✅ UI user-final
+        milhares20,
       };
     });
-  }, [analytics]);
+  }, [analytics, build20]);
 
   const layerMetaText = useMemo(() => {
     const t = safeStr(metaNext?.triggerText);
@@ -561,6 +578,20 @@ export function useTop3Controller() {
     [rangeDraws, analysisHourBucket, schedule]
   );
 
+  // ✅ NOVO: 20 milhares (primeira fase do produto)
+  const build20 = useCallback(
+    (grupo2) => {
+      return buildMilharesForGrupo({
+        rangeDraws,
+        analysisHourBucket,
+        schedule,
+        grupo2,
+        count: 20,
+      });
+    },
+    [rangeDraws, analysisHourBucket, schedule]
+  );
+
   return {
     LOOKBACK_ALL,
     LOOKBACK_OPTIONS,
@@ -594,7 +625,9 @@ export function useTop3Controller() {
     lotteryLabel,
     buildWhyFromReasons,
     build16,
+    build20,
     getCentena3,
     normalizeImgSrc,
   };
 }
+
