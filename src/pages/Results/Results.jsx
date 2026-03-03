@@ -1,6 +1,6 @@
 // src/pages/Results/Results.jsx
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { getKingResultsByDate } from "../../services/kingResultsService";
+import { getKingBoundsByUf, getKingResultsByDate } from "../../services/kingResultsService";
 import { getAnimalLabel, getImgFromGrupo, getSlugByGrupo } from "../../constants/bichoMap";
 
 /* =========================
@@ -107,6 +107,45 @@ function unwrapDraws(maybe) {
     if (maybe.result && Array.isArray(maybe.result)) return maybe.result;
   }
   return [];
+}
+
+/* =========================
+   ✅ Bounds (PATCH como no Late)
+========================= */
+
+function normalizeBoundsResponse(b) {
+  const minRaw = safeStr(b?.minYmd || b?.minDate || b?.min || "");
+  const maxRaw = safeStr(b?.maxYmd || b?.maxDate || b?.max || "");
+  const minYmd = isYMD(minRaw) ? minRaw : null;
+  const maxYmd = isYMD(maxRaw) ? maxRaw : null;
+  return { minYmd, maxYmd, source: safeStr(b?.source || "") };
+}
+
+function clampYmd(ymd, minYmd, maxYmd) {
+  const d = safeStr(ymd);
+  if (!isYMD(d)) return null;
+
+  let out = d;
+  const min = safeStr(minYmd);
+  const max = safeStr(maxYmd);
+
+  if (isYMD(min) && out < min) out = min;
+  if (isYMD(max) && out > max) out = max;
+
+  return out;
+}
+
+function normalizeSingleDateWithBounds(dateIn, minYmd, maxYmd) {
+  const d = clampYmd(dateIn, minYmd, maxYmd);
+  if (d) return d;
+
+  const fallback =
+    clampYmd(todayYMDLocal(), minYmd, maxYmd) ||
+    (isYMD(maxYmd) ? maxYmd : null) ||
+    (isYMD(minYmd) ? minYmd : null) ||
+    todayYMDLocal();
+
+  return fallback;
 }
 
 /* =========================
@@ -482,6 +521,9 @@ export default function Results() {
   const [error, setError] = useState("");
   const [draws, setDraws] = useState([]);
 
+  // ✅ Bounds por escopo (RJ/Federal)
+  const [bounds, setBounds] = useState({ minYmd: null, maxYmd: null, source: "" });
+
   // ✅ Agora: Resultados mostra TUDO por padrão
   const [showAll, setShowAll] = useState(true);
   const [needsToggle, setNeedsToggle] = useState(false);
@@ -493,21 +535,51 @@ export default function Results() {
 
   const label = useMemo(() => scopeDisplayName(scopeKey), [scopeKey]);
 
+  // ✅ ymdSafe só garante formato
   const ymdSafe = useMemo(() => {
     const s = safeStr(ymd);
     return isYMD(s) ? s : todayYMDLocal();
   }, [ymd]);
 
-  const dateBR = useMemo(() => ymdToBR(ymdSafe), [ymdSafe]);
+  // ✅ ymdClamped garante range quando bounds existe
+  const ymdClamped = useMemo(() => {
+    const minYmd = bounds?.minYmd;
+    const maxYmd = bounds?.maxYmd;
+    if (!isYMD(minYmd) || !isYMD(maxYmd)) return ymdSafe;
+    return normalizeSingleDateWithBounds(ymdSafe, minYmd, maxYmd);
+  }, [ymdSafe, bounds?.minYmd, bounds?.maxYmd]);
 
-  const federalScheduleOk = useMemo(() => {
-    if (!isFederal) return true;
-    return isWedOrSat(ymdSafe);
-  }, [isFederal, ymdSafe]);
+  // ✅ quando bounds chega, ajusta o input se estiver fora
+  useEffect(() => {
+    if (ymdClamped && ymdClamped !== ymdSafe) {
+      setYmd(ymdClamped);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ymdClamped]);
+
+  const dateBR = useMemo(() => ymdToBR(ymdClamped), [ymdClamped]);
+// ✅ fetch bounds quando muda escopo
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const b = await getKingBoundsByUf({ uf: scopeKey });
+        if (!alive) return;
+        const nb = normalizeBoundsResponse(b);
+        setBounds(nb);
+      } catch {
+        if (!alive) return;
+        setBounds({ minYmd: null, maxYmd: null, source: "" });
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [scopeKey]);
 
   const load = useCallback(async () => {
     const sKey = safeStr(scopeKey);
-    const d = safeStr(ymdSafe);
+    const d = safeStr(ymdClamped);
 
     if (!sKey || !isYMD(d)) {
       setDraws([]);
@@ -555,7 +627,7 @@ export default function Results() {
     } finally {
       setLoading(false);
     }
-  }, [scopeKey, ymdSafe, isFederal]);
+  }, [scopeKey, ymdClamped, isFederal]);
 
   useEffect(() => {
     load();
@@ -564,7 +636,7 @@ export default function Results() {
   useEffect(() => {
     // quando troca escopo/data, mantemos "mostrar tudo"
     setShowAll(true);
-  }, [scopeKey, ymdSafe]);
+  }, [scopeKey, ymdClamped]);
 
   const drawsOrdered = useMemo(() => {
     const list = Array.isArray(draws) ? draws : [];
@@ -748,18 +820,7 @@ export default function Results() {
         font-weight: 850;
         color: rgba(255,255,255,0.92);
       }
-
-      .pp_warn{
-        border: 1px solid rgba(201,168,62,0.26);
-        background: rgba(201,168,62,0.10);
-        color: rgba(255,255,255,0.92);
-        border-radius: 14px;
-        padding: 10px 12px;
-        font-weight: 950;
-        line-height: 1.25;
-      }
-
-      .pp_topbar{
+.pp_topbar{
         display:flex;
         align-items:center;
         justify-content:flex-end;
@@ -996,16 +1057,7 @@ export default function Results() {
       }
     `;
   }, []);
-
-  const federalInfoText = useMemo(() => {
-    if (!isFederal) return "";
-    if (federalScheduleOk) {
-      return "Federal: resultado às 20h (quarta e sábado). Se a data for antiga, o sistema tenta 19h automaticamente.";
-    }
-    return "Federal só tem sorteio quarta e sábado. O sistema busca 20h (e tenta 19h em datas antigas). Clique em “Último Federal” para ir para a última data válida.";
-  }, [isFederal, federalScheduleOk]);
-
-  return (
+return (
     <div className="pp_wrap">
       <style>{styles}</style>
 
@@ -1040,7 +1092,9 @@ export default function Results() {
             <input
               className="pp_input"
               type="date"
-              value={ymdSafe}
+              value={ymdClamped}
+              min={bounds?.minYmd || undefined}
+              max={bounds?.maxYmd || undefined}
               onChange={(e) => setYmd(e.target.value)}
               aria-label="Data"
               title="Calendário"
@@ -1066,7 +1120,7 @@ export default function Results() {
 
         <div className="pp_body">
           <div className="pp_center" ref={centerRef}>
-            {isFederal ? <div className="pp_warn">{federalInfoText}</div> : null}
+            
 
             {loading ? (
               <div className="pp_state">Carregando…</div>
@@ -1079,11 +1133,7 @@ export default function Results() {
               <div className="pp_state">
                 Nenhum resultado para <span className="pp_gold">{label || DEFAULT_SCOPE}</span> em{" "}
                 <span className="pp_gold">{dateBR}</span>
-                {isFederal && !federalScheduleOk ? (
-                  <div style={{ marginTop: 8, opacity: 0.9 }}>
-                    Dica: Federal é <b>quarta</b> e <b>sábado</b>.
-                  </div>
-                ) : null}
+                
                 .
               </div>
             ) : (
@@ -1105,9 +1155,7 @@ export default function Results() {
 
                 <div className="pp_grid2">
                   {drawsForView.map((d, idx) => {
-                    const hour = normalizeHourLike(
-                      d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
-                    );
+                    const hour = normalizeHourLike(d?.close_hour || d?.closeHour || d?.hour || d?.hora || "");
                     const id = safeStr(d?.drawId || d?.id || `idx_${idx}`);
                     const prizesRaw = Array.isArray(d?.prizes) ? d.prizes : [];
 
@@ -1158,9 +1206,7 @@ export default function Results() {
 
                               return (
                                 <div key={`${id}_pos_${r.pos}`} className="pp_row">
-                                  <div className={`pp_posBadge ${prizeRankClass(r.pos)}`}>
-                                    {`${r.pos}º`}
-                                  </div>
+                                  <div className={`pp_posBadge ${prizeRankClass(r.pos)}`}>{`${r.pos}º`}</div>
 
                                   <div className="pp_mid">
                                     <div className="pp_imgFrame" aria-hidden="true">
@@ -1210,3 +1256,5 @@ export default function Results() {
     </div>
   );
 }
+
+
