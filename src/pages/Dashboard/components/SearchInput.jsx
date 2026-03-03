@@ -83,6 +83,12 @@ export default function SearchInput({
     return lbl ? lbl : "—";
   }, [queryInfo]);
 
+  // ✅ box “ativo” coerente com DD / DDD / DDDD: sempre o último quando >=2 dígitos
+  const activeIndex = useMemo(() => {
+    if (!focused) return -1;
+    return digits.length >= 2 ? 3 : 0;
+  }, [focused, digits.length]);
+
   return (
     <div className="ppSearchInput">
       <style>{`
@@ -96,10 +102,9 @@ export default function SearchInput({
           flex-direction:column;
           gap:10px;
           min-height:120px;
-          min-width:0; /* ✅ permite encolher sem cortar */
+          min-width:0;
         }
 
-        /* ✅ TÍTULO CENTRALIZADO */
         .ppSearchInput .ttl{
           font-size:12px;
           font-weight:900;
@@ -109,7 +114,6 @@ export default function SearchInput({
           text-align:center;
         }
 
-        /* ✅ LINHA: quadradinhos + actions (dentro da borda) */
         .ppInputTopRow{
           display:flex;
           align-items:center;
@@ -213,7 +217,6 @@ export default function SearchInput({
           font-weight:900;
         }
 
-        /* ✅ mini KPIs dentro do card do input */
         .ppInputMiniKpis{
           display:flex;
           align-items:baseline;
@@ -227,7 +230,7 @@ export default function SearchInput({
           flex-direction:column;
           gap:2px;
           min-width:0;
-          flex:1 1 0; /* ✅ divide o espaço e permite shrink */
+          flex:1 1 0;
         }
         .ppMiniT{
           font-size:10px;
@@ -242,11 +245,10 @@ export default function SearchInput({
           white-space:nowrap;
           overflow:hidden;
           text-overflow:ellipsis;
-          max-width:100%; /* ✅ remove teto fixo (520px) */
+          max-width:100%;
         }
         .ppMiniV b{ color:#caa64b; }
 
-        /* ✅ RESPONSIVO: ações descem abaixo */
         @media (max-width: 900px){
           .ppInputTopRow{
             flex-direction:column;
@@ -277,22 +279,10 @@ export default function SearchInput({
             className={["ppBoxesWrap", focused ? "isFocused" : ""].join(" ")}
             onClick={focusInput}
             role="button"
-            tabIndex={loading ? -1 : 0}
+            // ✅ IMPORTANTE: não deixa o wrapper virar foco via TAB (senão digitar não entra)
+            tabIndex={-1}
             aria-disabled={loading ? "true" : "false"}
             aria-label="Digite a dezena, centena ou milhar"
-            onKeyDown={(e) => {
-              if (loading) return;
-
-              if (e.key === "Enter") {
-                e.preventDefault();
-                if (focused) trySubmit();
-                else focusInput();
-              }
-              if (e.key === " ") {
-                e.preventDefault();
-                focusInput();
-              }
-            }}
           >
             <input
               ref={inputRef}
@@ -318,9 +308,7 @@ export default function SearchInput({
 
             <div className="ppBoxes">
               {slots.map((ch, idx) => {
-                const activeIndex = Math.min(digits.length, 3);
-                const isActive = focused && idx === activeIndex;
-
+                const isActive = activeIndex === idx;
                 const isMuted = ch === "";
                 const display = ch === "" ? "•" : ch;
 
@@ -341,11 +329,9 @@ export default function SearchInput({
           </div>
         </div>
 
-        {/* ✅ BOTÕES DENTRO DO CARD */}
         {actions ? <div className="ppInputActionsIn">{actions}</div> : null}
       </div>
 
-      {/* ✅ Ocorrências + Consulta DENTRO do card do input */}
       <div className="ppInputMiniKpis">
         <div className="ppMiniCol">
           <div className="ppMiniT">Ocorrências</div>

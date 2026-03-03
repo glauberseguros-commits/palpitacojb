@@ -682,10 +682,10 @@ export default function Dashboard(props) {
   }, [externalSetFilters, noopSetFilters, isGuest]);
 
   const loteriaKey = useMemo(
-    () => normalizeLoteriaKey(filters?.lotteryKey || filters?.loteria),
-    [filters?.lotteryKey, filters?.loteria]
+    () => normalizeLoteriaKey(filters?.lotteryKey || filters?.loteria || filters?.uf),
+    [filters?.lotteryKey, filters?.loteria, filters?.uf]
   );
-  const isFederal = loteriaKey === "FEDERAL";
+const isFederal = loteriaKey === "FEDERAL";
 
   const fedBucket = isFederal ? normalizeHourBucket(filters?.horario) : null;
   const locationLabel = isFederal
@@ -1171,9 +1171,13 @@ export default function Dashboard(props) {
   // ✅ detecta troca de loteria e reseta filtros sensíveis (horário/animal/posição)
   const lastUfRef = useRef(String(uf || ""));
   useEffect(() => {
+    if (isGuest) {
+      lastUfRef.current = String(uf || "");
+      return;
+    }
     const prev = String(lastUfRef.current || "");
     const next = String(uf || "");
-    if (prev && next && prev !== next) {
+if (prev && next && prev !== next) {
       // reseta seleção local
       setSelectedGrupo(null);
       setSelectedYears([]);
@@ -1193,7 +1197,7 @@ export default function Dashboard(props) {
       didInitRangeFromBoundsRef.current = false;
     }
     lastUfRef.current = next;
-  }, [uf, setFilters]);
+  }, [uf, setFilters, isGuest]);
 
   const handleFilterChange = useCallback(
     (name, value) => {
@@ -1457,10 +1461,9 @@ export default function Dashboard(props) {
 
   const applyAllYearsFull = useCallback(() => {
     if (!MIN_DATE || !MAX_DATE) return;
-    setSelectedYears([]);
     if (isGuest) return;
-
-    const full = { from: MIN_DATE, to: MAX_DATE };
+    setSelectedYears([]);
+const full = { from: MIN_DATE, to: MAX_DATE };
     setDateRange(full);
     setDateRangeQuery(full);
 
@@ -1886,3 +1889,4 @@ export default function Dashboard(props) {
     </div>
   );
 }
+

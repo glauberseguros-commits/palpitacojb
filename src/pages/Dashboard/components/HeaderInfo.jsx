@@ -31,9 +31,7 @@ export default function HeaderInformational({
   return (
     <section
       className="pp_header"
-     
       aria-label="Resumo informacional do painel"
-     
       style={{
         opacity: disabled ? 0.72 : 1,
         filter: disabled ? "grayscale(18%)" : "none",
@@ -44,9 +42,9 @@ export default function HeaderInformational({
         <h1 className="pp_header_title">{safeTitle}</h1>
 
         {safeSubtitle ? (
-          <span className="pp_header_subtitle" title={safeSubtitle}>
+          <p className="pp_header_subtitle" title={safeSubtitle}>
             {safeSubtitle}
-          </span>
+          </p>
         ) : null}
       </div>
 
@@ -59,10 +57,11 @@ export default function HeaderInformational({
       {safeBadges.length > 0 ? (
         <div className="pp_header_badges">
           {safeBadges.map((b, idx) => {
-            const keySafe = b.replace(/\s+/g, "_").slice(0, 40);
+            const keySafe = b.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_]/g, "").slice(0, 40);
+            const keyFinal = keySafe || `badge_${idx}`; // ✅ nunca vazio
             return (
               <span
-                key={`${keySafe}_${idx}`}
+                key={`${keyFinal}_${idx}`}
                 className="pp_header_badge"
                 aria-label={`Selo ${b}`}
               >
@@ -75,4 +74,3 @@ export default function HeaderInformational({
     </section>
   );
 }
-

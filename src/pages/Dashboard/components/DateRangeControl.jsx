@@ -321,10 +321,6 @@ export default function DateRangeControl({
   const lPct = boundsReady ? (fromOffset / totalDays) * 100 : 0;
   const rPct = boundsReady ? (toOffset / totalDays) * 100 : 0;
 
-  // ✅ highlight sem width negativa
-  const diffPct = Math.max(0, rPct - lPct);
-  const highlightWidth = diffPct <= 0 ? "0px" : `calc(${diffPct}% - 16px)`;
-
   // ✅ z-index inteligente (thumb ativo por cima)
   const zFrom = activeThumb === "from" ? 5 : 3;
   const zTo = activeThumb === "to" ? 5 : 2;
@@ -355,7 +351,6 @@ export default function DateRangeControl({
       gridAutoColumns: "minmax(76px, 1fr)",
       gap: 10,
       alignItems: "center",
-      // ❌ NÃO usar pointerEvents:none aqui (senão não chama onBlocked)
     },
 
     chip: {
@@ -456,8 +451,8 @@ export default function DateRangeControl({
       height: 28,
       minWidth: 0,
       zIndex: 1,
+      isolation: "isolate", // ✅ stacking context consistente pro z-index
       opacity: boundsReady && !disabled ? 1 : 0.35,
-      // ❌ NÃO usar pointerEvents:none (senão não chama onBlocked)
     },
 
     track: {
@@ -472,10 +467,11 @@ export default function DateRangeControl({
       boxShadow: "inset 0 0 0 1px rgba(0,0,0,0.45)",
     },
 
+    // ✅ Highlight robusto (sem width negativa)
     highlight: {
       position: "absolute",
       left: `calc(${lPct}% + 8px)`,
-      width: highlightWidth,
+      right: `calc(${100 - rPct}% + 8px)`,
       top: "50%",
       transform: "translateY(-50%)",
       height: 6,
@@ -619,7 +615,9 @@ export default function DateRangeControl({
             <button
               type="button"
               className="pp_yearchip"
-              tabIndex={disabled ? -1 : 0} aria-disabled={disabled} onMouseDown={(e) => e.preventDefault()}
+              tabIndex={disabled ? -1 : 0}
+              aria-disabled={disabled}
+              onMouseDown={(e) => e.preventDefault()}
               onClick={handleClearYears}
               style={{ ...ui.chip, ...(isAllYears ? ui.chipActive : null) }}
               title={disabled ? "Bloqueado no modo demonstração" : "Todos os anos"}
@@ -634,6 +632,8 @@ export default function DateRangeControl({
                   key={y}
                   type="button"
                   className="pp_yearchip"
+                  tabIndex={disabled ? -1 : 0} // ✅ FIX
+                  aria-disabled={disabled}     // ✅ FIX
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={(e) => handleToggleYear(y, e)}
                   style={{ ...ui.chip, ...(isActive ? ui.chipActive : null) }}
@@ -692,7 +692,9 @@ export default function DateRangeControl({
           <button
             type="button"
             className="pp_calbtn"
-            tabIndex={disabled ? -1 : 0} aria-disabled={disabled} style={ui.iconBtn}
+            tabIndex={disabled ? -1 : 0}
+            aria-disabled={disabled}
+            style={ui.iconBtn}
             aria-label="Abrir calendário (data inicial)"
             onMouseDown={(e) => e.preventDefault()}
             onClick={(e) => {
@@ -731,7 +733,9 @@ export default function DateRangeControl({
           <button
             type="button"
             className="pp_calbtn"
-            tabIndex={disabled ? -1 : 0} aria-disabled={disabled} style={ui.iconBtn}
+            tabIndex={disabled ? -1 : 0}
+            aria-disabled={disabled}
+            style={ui.iconBtn}
             aria-label="Abrir calendário (data final)"
             onMouseDown={(e) => e.preventDefault()}
             onClick={(e) => {
@@ -813,5 +817,3 @@ export default function DateRangeControl({
     </div>
   );
 }
-
-

@@ -18,6 +18,11 @@ import {
  *
  * ✅ DEMO safe:
  * - prop `disabled`: bloqueia ordenação e seleção
+ *
+ * ✅ Ajuste desta versão:
+ * - Aumenta um pouco a legibilidade (textos/números)
+ * - Aumenta um pouco as imagens
+ * - Mantém 25 linhas sem scroll
  */
 
 function digitsOnly(v) {
@@ -572,10 +577,9 @@ export default function LeftRankingTable({
 
 /**
  * ✅ GRID mais “estreito” (não estoura e não corta Palpite)
- * Soma mínima bem menor + gaps/padding menores.
+ * ✅ Ajuste: coluna de imagem um pouco maior (pra 26px)
  */
-const GRID_COLS =
-  "46px 46px minmax(96px, 1fr) 48px minmax(52px, 60px)";
+const GRID_COLS = "54px 48px minmax(110px, 1fr) 54px minmax(58px, 66px)";
 
 const ui = {
   wrap: {
@@ -585,7 +589,7 @@ const ui = {
     gap: 8,
     minWidth: 0,
     minHeight: 0,
-    height: "auto", // ✅ evita esticar e sobrar espaço vazio embaixo
+    height: "auto",
     boxSizing: "border-box",
     overflow: "hidden",
   },
@@ -630,7 +634,7 @@ const ui = {
     flexDirection: "column",
     boxSizing: "border-box",
     minHeight: 0,
-    flex: "0 0 auto", // ✅ não estica => reduz “vazio” no rodapé do card
+    flex: "0 0 auto",
   },
 
   headerRow: {
@@ -640,7 +644,7 @@ const ui = {
     padding: "5px 4px",
     borderBottom: "2px solid rgba(255,255,255,0.55)",
     background: "rgba(0,0,0,0.35)",
-    columnGap: 4, // ✅ menor
+    columnGap: 4,
     boxSizing: "border-box",
     flex: "0 0 auto",
     position: "sticky",
@@ -650,8 +654,8 @@ const ui = {
   },
 
   th: {
-    fontWeight: 800,
-    fontSize: 12,
+    fontWeight: 850,
+    fontSize: 12.5,
     letterSpacing: 0.12,
     opacity: 0.95,
     whiteSpace: "nowrap",
@@ -673,8 +677,8 @@ const ui = {
     display: "flex",
     alignItems: "center",
     gap: 3,
-    fontWeight: 800,
-    fontSize: 12,
+    fontWeight: 850,
+    fontSize: 12.5,
     letterSpacing: 0.12,
     opacity: 0.95,
     whiteSpace: "nowrap",
@@ -708,7 +712,7 @@ const ui = {
     width: 9,
     flex: "0 0 9px",
     textAlign: "center",
-    fontSize: 11.5,
+    fontSize: 12,
     transform: "translateY(-0.5px)",
   },
 
@@ -726,9 +730,9 @@ const ui = {
     display: "grid",
     gridTemplateColumns: GRID_COLS,
     alignItems: "center",
-    padding: "2px 4px", // ✅ menor
+    padding: "2px 4px",
     borderTop: "1px solid rgba(255,255,255,0.28)",
-    columnGap: 4, // ✅ menor
+    columnGap: 4,
     transition:
       "background 160ms ease, transform 160ms ease, opacity 160ms ease, filter 160ms ease",
     boxSizing: "border-box",
@@ -749,11 +753,11 @@ const ui = {
   },
 
   td: {
-    fontWeight: 700,
-    fontSize: 11.4,
+    fontWeight: 750,
+    fontSize: 12.4,
     letterSpacing: 0.08,
     minWidth: 0,
-    lineHeight: 1.0,
+    lineHeight: 1.05,
     whiteSpace: "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",
@@ -767,8 +771,8 @@ const ui = {
   },
 
   animalTxt: {
-    fontWeight: 850,
-    fontSize: 10.1,
+    fontWeight: 900,
+    fontSize: 11.2,
     letterSpacing: 0.14,
     whiteSpace: "nowrap",
     overflow: "hidden",
@@ -803,10 +807,11 @@ const ui = {
 
   cellImg: { display: "flex", alignItems: "center" },
 
+  // ✅ 22 -> 26 (mais legível)
   imgFrame: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
+    width: 26,
+    height: 26,
+    borderRadius: 7,
     border: "2px solid rgba(201,168,62,0.85)",
     background: "rgba(0,0,0,0.40)",
     overflow: "hidden",
@@ -837,7 +842,7 @@ const ui = {
     display: "block",
     position: "relative",
     zIndex: 2,
-    borderRadius: 4,
+    borderRadius: 5,
   },
 
   imgPlaceholder: {
@@ -846,7 +851,7 @@ const ui = {
     display: "grid",
     placeItems: "center",
     fontWeight: 950,
-    fontSize: 10,
+    fontSize: 10.5,
     letterSpacing: 0.2,
     color: "rgba(201,168,62,0.85)",
     background: "rgba(0,0,0,0.20)",

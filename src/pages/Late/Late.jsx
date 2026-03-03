@@ -259,8 +259,24 @@ function normalizeSingleDateWithBounds(dateIn, minYmd, maxYmd) {
   const d = clampYmd(dateIn, minYmd, maxYmd);
   if (d) return d;
 
-  const fallback = clampYmd(todayYMDLocal(), minYmd, maxYmd) || (isYMD(maxYmd) ? maxYmd : null) || (isYMD(minYmd) ? minYmd : null) || todayYMDLocal();
+  const fallback =
+    clampYmd(todayYMDLocal(), minYmd, maxYmd) ||
+    (isYMD(maxYmd) ? maxYmd : null) ||
+    (isYMD(minYmd) ? minYmd : null) ||
+    todayYMDLocal();
+
   return fallback;
+}
+
+/* =========================
+   ✅ Bounds normalize (PATCH)
+========================= */
+function normalizeBoundsResponse(b) {
+  const minRaw = safeStr(b?.minYmd || b?.minDate || b?.min || "");
+  const maxRaw = safeStr(b?.maxYmd || b?.maxDate || b?.max || "");
+  const minYmd = isYMD(minRaw) ? minRaw : null;
+  const maxYmd = isYMD(maxRaw) ? maxRaw : null;
+  return { minYmd, maxYmd, source: safeStr(b?.source || "") };
 }
 
 export default function Late() {
@@ -397,10 +413,13 @@ export default function Late() {
 
   async function refreshBoundsAndLastDraw() {
     const b = await getKingBoundsByUf({ uf: UF_CODE });
-    const minYmd = b?.minYmd || null;
-    const maxYmd = b?.maxYmd || null;
 
-    setBounds({ minYmd, maxYmd, source: b?.source || "" });
+    // ✅ PATCH: aceita minDate/maxDate também
+    const nb = normalizeBoundsResponse(b);
+    const minYmd = nb.minYmd;
+    const maxYmd = nb.maxYmd;
+
+    setBounds({ minYmd, maxYmd, source: nb.source });
 
     if (maxYmd) {
       const li = await fetchLastImportedFromMaxYmd(maxYmd);
@@ -581,7 +600,8 @@ export default function Late() {
         const prev = lastImportedRef.current;
 
         const b = await getKingBoundsByUf({ uf: UF_CODE });
-        const maxYmd = b?.maxYmd || "";
+        const nb = normalizeBoundsResponse(b);
+        const maxYmd = nb.maxYmd || "";
         if (!maxYmd) return;
 
         const next = await fetchLastImportedFromMaxYmd(maxYmd);
@@ -594,9 +614,9 @@ export default function Late() {
           setLastImported(next);
 
           setBounds((old) => ({
-            minYmd: old?.minYmd ?? b?.minYmd ?? null,
-            maxYmd: b?.maxYmd ?? old?.maxYmd ?? null,
-            source: b?.source || old?.source || "",
+            minYmd: old?.minYmd ?? nb.minYmd ?? null,
+            maxYmd: nb.maxYmd ?? old?.maxYmd ?? null,
+            source: nb.source || old?.source || "",
           }));
 
           await refresh({ silent: true });

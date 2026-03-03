@@ -267,6 +267,8 @@ async function exportExcelXlsx({
 
   const ws = XLSX.utils.aoa_to_sheet(aoa);
 
+  // linhas acima dos dados:
+  // title(1) + meta(n) + blank(1) + header(1) => firstDataRowAoa = n + 3 (0-based)
   const headerRowNumber = 1 + (metaLines?.length || 0) + 1 + 1;
   ws["!freeze"] = { xSplit: 0, ySplit: headerRowNumber };
 
@@ -565,8 +567,9 @@ export default function Downloads() {
   const didInitRangeFromBoundsRef = useRef(false);
 
   useEffect(() => {
-    // UF mudou -> reseta guard (novo bounds vai reger o range)
+    // ✅ UF mudou -> reseta guard e zera bounds imediatamente (evita normalizar com bounds velho)
     didInitRangeFromBoundsRef.current = false;
+    setBounds({ minDate: "", maxDate: "" });
 
     let alive = true;
 
@@ -599,7 +602,7 @@ export default function Downloads() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ufQueryKey]);
 
-  // ✅ Quando bounds chega, normaliza o range 1 vez (sem stale closure)
+  // ✅ Quando bounds chega, normaliza o range 1 vez
   useEffect(() => {
     const minDate = safeStr(bounds?.minDate);
     const maxDate = safeStr(bounds?.maxDate);
@@ -720,7 +723,11 @@ export default function Downloads() {
   const buildMetaLines = useCallback(() => {
     const { from, to } = normalizeRange();
     const lines = [];
-    lines.push(`UF: ${safeStr(ufUi).toUpperCase()} • ${label}`);
+
+    // ✅ mais “humano”: RJ • RIO
+    const ufLabel = safeStr(ufUi).toUpperCase() === "PT_RIO" ? "RJ" : safeStr(ufUi).toUpperCase();
+    lines.push(`UF: ${ufLabel} • ${label}`);
+
     lines.push(`Período: ${ymdToBR(from)} → ${ymdToBR(to)}`);
 
     const f = [];

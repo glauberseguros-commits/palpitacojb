@@ -162,7 +162,7 @@ function RowImg({ variants, alt, fallbackText }) {
     setFailed(false);
   }, [primary]); // muda o "principal" => reseta
 
-  if (!variants.length || failed) {
+  if (!Array.isArray(variants) || !variants.length || failed) {
     return <div className="imgFallback">{fallbackText || "—"}</div>;
   }
 
@@ -229,7 +229,7 @@ function pickYmd(r) {
     safeStr(r?.date) ||
     safeStr(r?.data) ||
     "";
-  return isYMD(y) ? y : safeStr(r?.ymd) || "";
+  return isYMD(y) ? y : "";
 }
 
 function pickMilhar4(r) {
@@ -574,6 +574,7 @@ export default function SearchResultsTable({
     </div>
   );
 }
+
 
 
 

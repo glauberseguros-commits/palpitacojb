@@ -25,16 +25,26 @@ function pad2(n) {
   return String(n).padStart(2, "0");
 }
 
+/**
+ * ✅ FIX (UTC-safe):
+ * Gera YMD usando getters UTC para evitar "virar o dia" por timezone (-03).
+ */
+function ymdFromDateUTC(d) {
+  return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
+}
+
 function normalizeToYMD(input) {
   if (!input) return null;
 
+  // Firestore Timestamp-like: { toDate() }
   if (typeof input === "object" && typeof input.toDate === "function") {
     const d = input.toDate();
     if (d instanceof Date && !Number.isNaN(d.getTime())) {
-      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+      return ymdFromDateUTC(d);
     }
   }
 
+  // Timestamp-like: { seconds } / { _seconds }
   if (
     typeof input === "object" &&
     (Number.isFinite(Number(input.seconds)) || Number.isFinite(Number(input._seconds)))
@@ -45,12 +55,12 @@ function normalizeToYMD(input) {
 
     const d = new Date(sec * 1000);
     if (!Number.isNaN(d.getTime())) {
-      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+      return ymdFromDateUTC(d);
     }
   }
 
   if (input instanceof Date && !Number.isNaN(input.getTime())) {
-    return `${input.getFullYear()}-${pad2(input.getMonth() + 1)}-${pad2(input.getDate())}`;
+    return ymdFromDateUTC(input);
   }
 
   const s = String(input).trim();
@@ -522,7 +532,6 @@ export default function KpiCards({
 
       <div className="pp_kpis_wrap" style={ui.wrap}>
         {data.map((kpi, idx) => {
-          // ✅ key estável (prioriza kpi.key)
           const key = String(kpi?.key || kpi?.title || `kpi_${idx}`);
 
           return (

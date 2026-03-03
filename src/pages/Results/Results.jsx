@@ -1133,8 +1133,6 @@ return (
               <div className="pp_state">
                 Nenhum resultado para <span className="pp_gold">{label || DEFAULT_SCOPE}</span> em{" "}
                 <span className="pp_gold">{dateBR}</span>
-                
-                .
               </div>
             ) : (
               <>
@@ -1256,5 +1254,3 @@ return (
     </div>
   );
 }
-
-

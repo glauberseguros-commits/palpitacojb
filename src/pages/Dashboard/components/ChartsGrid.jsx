@@ -1002,7 +1002,7 @@ function AparicoesList({ items }) {
   const max = Math.max(1, ...safeItems.map((x) => safeNumber(x.value)));
 
   return (
-    <div style={ui.scrollWrap} className="pp_scroll">
+    <div style={ui.scrollWrap} className="ppChartsGrid pp_scroll">
       <div style={ui.apList}>
         {safeItems.map((x, idx) => {
           const pct = (safeNumber(x.value) / max) * 100;
@@ -1605,7 +1605,7 @@ const ui = {
     background: "rgba(0,0,0,0.35)",
     color: PP.text2,
     fontWeight: 900,
-    fontSize: 15,
+    fontSize: 18,
     letterSpacing: 0.2,
     whiteSpace: "nowrap",
   },
@@ -1744,7 +1744,7 @@ const ui = {
 
   posHdrSub: {
     fontWeight: 900,
-    fontSize: 14,
+    fontSize: 17,
     letterSpacing: 0.14,
     color: PP.text2,
     opacity: 0.92,
@@ -1845,7 +1845,7 @@ const ui = {
   },
 
   posHint: {
-    fontSize: 14,
+    fontSize: 17,
     color: PP.muted,
     letterSpacing: 0.12,
     opacity: 0.92,
@@ -1884,7 +1884,7 @@ const ui = {
     bottom: 10,
     fontWeight: 900,
     opacity: 0.86,
-    fontSize: 15,
+    fontSize: 18,
     letterSpacing: 0.2,
     color: PP.text,
     textShadow: "0 2px 10px rgba(0,0,0,0.55)",
@@ -1926,5 +1926,30 @@ const ui = {
         "posicao";
     }
   }
-  `,
+  
+/* ✅ FIX LEGIBILIDADE RECHARTS (ticks/labels/tooltip/legend) */
+.ppChartsGrid .recharts-cartesian-axis-tick-value,
+.ppChartsGrid .recharts-cartesian-axis-tick text,
+.ppChartsGrid .recharts-cartesian-axis text,
+.ppChartsGrid .recharts-label,
+.ppChartsGrid .recharts-legend-item-text,
+.ppChartsGrid .recharts-tooltip-wrapper,
+.ppChartsGrid .recharts-tooltip-label,
+.ppChartsGrid .recharts-tooltip-item,
+.ppChartsGrid .recharts-text{
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.2px !important;
+}
+
+/* ✅ se ainda ficar pequeno, sobe só o eixo X (dias da semana) */
+.ppChartsGrid .recharts-xAxis .recharts-cartesian-axis-tick-value,
+.ppChartsGrid .recharts-xAxis .recharts-cartesian-axis-tick text{
+  font-size: 15px !important;
+  font-weight: 850 !important;
+}
+`,
 };
+
+
+

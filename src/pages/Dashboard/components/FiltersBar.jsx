@@ -622,6 +622,8 @@ export default function FiltersBar({
             <select
               value={normalizedValue}
               aria-disabled={finalDisabled ? "true" : "false"}
+              tabIndex={finalDisabled ? -1 : 0}   // ✅ FIX: evita foco via TAB quando bloqueado
+              onWheelCapture={block}              // ✅ FIX: bloqueia troca por roda do mouse
               onMouseDownCapture={block}
               onClickCapture={block}
               onKeyDownCapture={(e) => {

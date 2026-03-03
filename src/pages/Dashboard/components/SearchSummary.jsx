@@ -2,14 +2,15 @@
 import React, { useMemo } from "react";
 
 function ymdToBR(ymd) {
-  const m = String(ymd || "").trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const m = String(ymd || "").trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (!m) return "";
   return `${m[3]}/${m[2]}/${m[1]}`;
 }
 
 function safeInt(v) {
   const n = Number(v);
-  return Number.isFinite(n) ? Math.trunc(n) : 0;
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.trunc(n));
 }
 
 function fmtIntPT(v) {
@@ -175,4 +176,5 @@ export default function SearchSummary({ queryInfo, totalMatches, meta, filters }
     </div>
   );
 }
+
 
