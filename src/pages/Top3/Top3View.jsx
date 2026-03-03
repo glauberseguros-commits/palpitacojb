@@ -1,11 +1,4 @@
 import React, { useMemo } from "react";
-import { useTop3Controller } from "./top3.hooks";
-
-function pad2(v) {
-  const n = Number(v);
-  if (!Number.isFinite(n)) return "—";
-  return String(n).padStart(2, "0");
-}
 
 function toPercent(score) {
   const n = Number(score);
@@ -16,225 +9,174 @@ function toPercent(score) {
   return Math.max(0, Math.min(100, pct));
 }
 
-function getIconSrc(item) {
-  const v = item?.imgIcon;
-  if (!v) return "";
-  if (Array.isArray(v)) return String(v[0] || "");
-  return String(v || "");
+function formatGrupo(grupo) {
+  const g = Number(grupo);
+  if (!Number.isFinite(g) || g <= 0) return "—";
+  return String(Math.trunc(g)).padStart(2, "0");
 }
 
-function rankTheme(idx) {
-  // idx: 0,1,2
-  if (idx === 0) {
-    return {
-      label: "1º",
-      accent: "#FFD700",
-      bg: "rgba(255,215,0,0.12)",
-      border: "rgba(255,215,0,0.35)",
-      glow: "rgba(255,215,0,0.20)",
-    };
-  }
-  if (idx === 1) {
-    return {
-      label: "2º",
-      accent: "#C0C0C0",
-      bg: "rgba(192,192,192,0.10)",
-      border: "rgba(192,192,192,0.30)",
-      glow: "rgba(192,192,192,0.16)",
-    };
-  }
-  return {
-    label: "3º",
-    accent: "#CD7F32",
-    bg: "rgba(205,127,50,0.10)",
-    border: "rgba(205,127,50,0.30)",
-    glow: "rgba(205,127,50,0.16)",
-  };
-}
-
-export default function Top3View() {
-  const { loading, error, top3, layerMetaText, lastLabel, prevLabel } =
-    useTop3Controller();
+export default function Top3View(props) {
+  const {
+    loading,
+    error,
+    top3,
+    layerMetaText,
+    lastLabel,
+    prevLabel,
+    theme,
+  } = props || {};
 
   const list = Array.isArray(top3) ? top3.slice(0, 3) : [];
 
   const meta = useMemo(() => {
     const last = lastLabel || "—";
     const prev = prevLabel || "—";
-    const layer = layerMetaText || "";
+    const layer = layerMetaText || "—";
     return { last, prev, layer };
   }, [lastLabel, prevLabel, layerMetaText]);
 
+  const t = theme || {
+    bg: "#050505",
+    panel: "rgba(0,0,0,0.55)",
+    border: "rgba(255,255,255,0.18)",
+    text: "rgba(255,255,255,0.92)",
+    muted: "rgba(255,255,255,0.72)",
+    accent: "rgba(201,168,62,0.92)",
+  };
+
   return (
-    <div style={{ padding: 16, color: "#fff" }}>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-        <h2 style={{ margin: "0 0 12px" }}>Top 3</h2>
-        {!loading && !error && (
-          <span style={{ opacity: 0.7, fontSize: 12 }}>
-            (ranking do filtro atual)
-          </span>
-        )}
+    <div style={{ padding: 16, color: t.text }}>
+      <div
+        style={{
+          background: t.panel,
+          border: `1px solid ${t.border}`,
+          borderRadius: 14,
+          padding: 14,
+          marginBottom: 12,
+        }}
+      >
+        <div style={{ fontWeight: 900, fontSize: 18, marginBottom: 6 }}>
+          TOP3 (Próximo sorteio)
+        </div>
+        <div style={{ color: t.muted, fontSize: 13, lineHeight: 1.25 }}>
+          <div>
+            <b>Último:</b> {meta.last}
+          </div>
+          <div>
+            <b>Anterior:</b> {meta.prev}
+          </div>
+          <div>
+            <b>Condição:</b> {meta.layer}
+          </div>
+        </div>
       </div>
 
-      {loading && <div>Carregando…</div>}
-
-      {!loading && error && (
-        <div style={{ marginTop: 12, color: "#ff6b6b" }}>
-          <b>Erro:</b> {String(error)}
+      {loading ? (
+        <div style={{ color: t.muted }}>Carregando…</div>
+      ) : error ? (
+        <div style={{ color: "#ff6b6b", fontWeight: 700 }}>
+          {String(error)}
         </div>
-      )}
+      ) : !list.length ? (
+        <div style={{ color: t.muted }}>Sem dados para calcular TOP3.</div>
+      ) : (
+        <div style={{ display: "grid", gap: 12 }}>
+          {list.map((item, idx) => {
+            const grupoTxt = formatGrupo(item?.grupo);
+            const animal = String(item?.animal || "").trim();
 
-      {!loading && !error && list.length === 0 && (
-        <div style={{ opacity: 0.8 }}>
-          Nenhum Top 3 disponível para os critérios atuais.
-        </div>
-      )}
+            // ✅ PROBABILIDADE: se não vier score pronto, deriva de freq / (samples * 7)
+            const samplesRaw = Number(item?.meta?.samples ?? item?.samples ?? 0);
+            const samples = Number.isFinite(samplesRaw) ? Math.max(0, Math.trunc(samplesRaw)) : 0;
 
-      {!loading && !error && list.length > 0 && (
-        <>
-          {/* Meta */}
-          <div style={{ marginBottom: 12, opacity: 0.85 }}>
-            <div>
-              <b>Último:</b> {meta.last}
-            </div>
-            <div>
-              <b>Anterior:</b> {meta.prev}
-            </div>
-            {!!meta.layer && (
-              <div style={{ marginTop: 4, fontSize: 13 }}>{meta.layer}</div>
-            )}
-          </div>
+            const freqRaw = Number(item?.freq ?? 0);
+            const freq = Number.isFinite(freqRaw) ? Math.max(0, Math.trunc(freqRaw)) : 0;
 
-          {/* Cards Top 3 */}
-          <div style={{ display: "grid", gap: 12 }}>
-            {list.map((item, idx) => {
-              const theme = rankTheme(idx);
-              const iconSrc = getIconSrc(item);
+            const denom = samples > 0 ? samples * 7 : 0; // 7 posições (1º..7º)
+            const derivedScore = denom > 0 ? freq / denom : 0;
 
-              const grupoTxt = pad2(item?.grupo);
-              const animalTxt = String(item?.animal || "—");
-              const pct = toPercent(item?.score);
+            // ✅ Prioriza o que o hook calculou (probPct)
+            const pct = toPercent(item?.probPct ?? item?.score ?? derivedScore);
 
-              return (
+            const key = `${String(item?.grupo ?? "g")}__${animal || "x"}__${idx}`;
+
+            return (
+              <div
+                key={key}
+                style={{
+                  background: t.panel,
+                  border: `1px solid ${t.border}`,
+                  borderRadius: 14,
+                  padding: 14,
+                  display: "grid",
+                  gap: 10,
+                }}
+              >
                 <div
-                  key={`${String(item?.grupo ?? "g")}__${String(
-                    item?.animal ?? "a"
-                  )}__${idx}`}
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: 12,
-                    padding: 14,
-                    borderRadius: 16,
-                    background: theme.bg,
-                    border: `1px solid ${theme.border}`,
-                    boxShadow: `0 0 0 1px rgba(0,0,0,0.25), 0 10px 24px ${theme.glow}`,
+                    justifyContent: "space-between",
+                    gap: 10,
                   }}
                 >
-                  {/* Rank */}
-                  <div
-                    style={{
-                      display: "grid",
-                      placeItems: "center",
-                      width: 44,
-                      height: 44,
-                      borderRadius: 14,
-                      background: "rgba(0,0,0,0.35)",
-                      border: `1px solid ${theme.border}`,
-                      color: theme.accent,
-                      fontWeight: 900,
-                      letterSpacing: 0.2,
-                      flex: "0 0 auto",
-                    }}
-                    title={theme.label}
-                  >
-                    {theme.label}
+                  <div style={{ fontWeight: 900, fontSize: 16 }}>
+                    #{idx + 1} • G{grupoTxt}
+                    {animal ? " • " + animal.toUpperCase() : ""}
                   </div>
-
-                  {/* Ícone */}
-                  {iconSrc ? (
-                    <img
-                      src={iconSrc}
-                      alt={animalTxt}
-                      style={{
-                        width: 56,
-                        height: 56,
-                        borderRadius: 12,
-                        objectFit: "cover",
-                        border: `1px solid ${theme.border}`,
-                        background: "rgba(0,0,0,0.25)",
-                        flex: "0 0 auto",
-                      }}
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div
-                      style={{
-                        width: 56,
-                        height: 56,
-                        borderRadius: 12,
-                        border: `1px dashed ${theme.border}`,
-                        background: "rgba(0,0,0,0.20)",
-                        display: "grid",
-                        placeItems: "center",
-                        color: "rgba(255,255,255,0.65)",
-                        fontSize: 11,
-                        flex: "0 0 auto",
-                      }}
-                      title="Sem ícone"
-                    >
-                      sem foto
-                    </div>
-                  )}
-
-                  {/* Texto */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div
-                      style={{
-                        fontWeight: 800,
-                        fontSize: 16,
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                      }}
-                      title={`G${grupoTxt} • ${animalTxt}`}
-                    >
-                      G{grupoTxt} • {animalTxt}
-                    </div>
-
-                    <div style={{ fontSize: 13, opacity: 0.85, marginTop: 2 }}>
-                      Probabilidade:{" "}
-                      <span style={{ color: theme.accent, fontWeight: 800 }}>
-                        {pct.toFixed(2)}%
-                      </span>
-                    </div>
-
-                    {/* barra leve (opcional, ajuda visualmente) */}
-                    <div
-                      style={{
-                        marginTop: 8,
-                        height: 6,
-                        borderRadius: 999,
-                        background: "rgba(255,255,255,0.10)",
-                        overflow: "hidden",
-                      }}
-                      aria-hidden="true"
-                    >
-                      <div
-                        style={{
-                          height: "100%",
-                          width: `${pct}%`,
-                          background: theme.accent,
-                          opacity: 0.65,
-                        }}
-                      />
-                    </div>
+                  <div style={{ color: t.muted, fontSize: 12 }}>
+                    Amostras: <b style={{ color: t.text }}>{samples}</b>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </>
+
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 10,
+                  }}
+                >
+                  <div style={{ color: t.muted, fontSize: 13 }}>
+                    Probabilidade:{" "}
+                    <span style={{ color: t.accent, fontWeight: 900 }}>
+                      {pct.toFixed(2)}%
+                    </span>
+                  </div>
+                  <div style={{ color: t.muted, fontSize: 12 }}>
+                    Freq: <b style={{ color: t.text }}>{freq}</b>
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    height: 8,
+                    borderRadius: 999,
+                    background: "rgba(255,255,255,0.10)",
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      height: "100%",
+                      width: `${pct}%`,
+                      background: t.accent,
+                      opacity: 0.7,
+                    }}
+                  />
+                </div>
+
+                {Array.isArray(item?.reasons) && item.reasons.length ? (
+                  <div style={{ color: t.muted, fontSize: 12, lineHeight: 1.25 }}>
+                    {item.reasons.slice(0, 6).map((r, i) => (
+                      <div key={i}>• {String(r)}</div>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );

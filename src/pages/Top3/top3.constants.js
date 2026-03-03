@@ -1,3 +1,5 @@
+// top3.constants.js
+
 export const LOOKBACK_ALL = "ALL";
 
 export const LOOKBACK_OPTIONS = [
@@ -19,17 +21,30 @@ export const LOTTERY_OPTIONS = [
 ];
 
 // Grades
-export const PT_RIO_SCHEDULE_NORMAL = [
-  "09:00",
-  "11:00",
-  "14:00",
-  "16:00",
-  "18:00",
-  "21:00",
-];
+export const PT_RIO_SCHEDULE_NORMAL = ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
 
 // (mantendo como você tinha, mas blindando contra mutação acidental)
 export const PT_RIO_SCHEDULE_WED_SAT = [...PT_RIO_SCHEDULE_NORMAL];
 
-// Federal: histórico 19h + atual 20h (blindagem)
-export const FEDERAL_SCHEDULE = ["19:00", "20:00"];
+// Federal: travado em 20h (consistente com UX e regra do app)
+export const FEDERAL_SCHEDULE = ["20:00"];
+
+/* =========================
+   ✅ Parâmetros do motor TOP3
+   (controle central)
+========================= */
+
+// Suavização Laplace/Dirichlet: evita 0.00% e estabiliza
+export const TOP3_SMOOTH_ALPHA = 1; // 0.5 ou 1 é ótimo
+
+// Mistura (shrinkage) Condicional vs Base do horário
+// w = samples / (samples + M)
+export const TOP3_SHRINK_M = 40;
+
+// Busca do "próximo sorteio real" quando o slot da grade não existe na base
+// varre próximos slots/dias até achar um draw existente
+export const TOP3_NEXTDRAW_SCAN_MAX_STEPS = 12; // suficiente para atravessar 1-2 dias PT_RIO
+export const TOP3_NEXTDRAW_SCAN_MAX_DAYS = 7; // limite de segurança
+
+// Quantos grupos existem (Jogo do Bicho = 25)
+export const TOP3_GROUPS_K = 25;

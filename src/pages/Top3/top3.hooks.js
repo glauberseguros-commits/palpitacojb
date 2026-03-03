@@ -1,3 +1,4 @@
+// src/pages/Top3/top3.hooks.js
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import {
   safeStr,
@@ -18,6 +19,10 @@ import {
   PT_RIO_SCHEDULE_NORMAL,
   PT_RIO_SCHEDULE_WED_SAT,
   FEDERAL_SCHEDULE,
+
+  // ✅ novos (para probabilidade != 0.00%)
+  TOP3_SMOOTH_ALPHA,
+  TOP3_GROUPS_K,
 } from "./top3.constants";
 
 import {
@@ -138,9 +143,9 @@ export function useTop3Controller() {
       prevInfo?.prevYmd && prevInfo?.prevHour
         ? `${ymdToBR(prevInfo.prevYmd)} ${prevInfo.prevHour}`
         : "";
-    return `G${String(g).padStart(2, "0")}${animal ? " • " + animal.toUpperCase() : ""}${
-      when ? " • " + when : ""
-    }`;
+    return `G${String(g).padStart(2, "0")}${
+      animal ? " • " + animal.toUpperCase() : ""
+    }${when ? " • " + when : ""}`;
   }, [prevInfo]);
 
   const lastLabel = useMemo(() => {
@@ -151,9 +156,9 @@ export function useTop3Controller() {
       lastInfo?.lastYmd && lastInfo?.lastHour
         ? `${ymdToBR(lastInfo.lastYmd)} ${lastInfo.lastHour}`
         : "";
-    return `G${String(g).padStart(2, "0")}${animal ? " • " + animal.toUpperCase() : ""}${
-      when ? " • " + when : ""
-    }`;
+    return `G${String(g).padStart(2, "0")}${
+      animal ? " • " + animal.toUpperCase() : ""
+    }${when ? " • " + when : ""}`;
   }, [lastInfo]);
 
   const load = useCallback(async () => {
@@ -168,15 +173,30 @@ export function useTop3Controller() {
       if (requestIdRef.current === currentRequestId) setRangeDraws([]);
       if (requestIdRef.current === currentRequestId) setLastHourBucket("");
       if (requestIdRef.current === currentRequestId) setTargetHourBucket("");
-if (requestIdRef.current === currentRequestId) setTargetYmd("");
-      if (requestIdRef.current === currentRequestId) setLastInfo({ lastYmd: "", lastHour: "", lastGrupo: null, lastAnimal: "" });
-      if (requestIdRef.current === currentRequestId) setPrevInfo({ prevYmd: "", prevHour: "", prevGrupo: null, prevAnimal: "", source: "none" });
-      if (requestIdRef.current === currentRequestId) setRangeInfo({ from: "", to: "" });
+      if (requestIdRef.current === currentRequestId) setTargetYmd("");
+      if (requestIdRef.current === currentRequestId)
+        setLastInfo({
+          lastYmd: "",
+          lastHour: "",
+          lastGrupo: null,
+          lastAnimal: "",
+        });
+      if (requestIdRef.current === currentRequestId)
+        setPrevInfo({
+          prevYmd: "",
+          prevHour: "",
+          prevGrupo: null,
+          prevAnimal: "",
+          source: "none",
+        });
+      if (requestIdRef.current === currentRequestId)
+        setRangeInfo({ from: "", to: "" });
 
       if (requestIdRef.current === currentRequestId) setLoading(false);
-      if (requestIdRef.current === currentRequestId) setError(
-        `Loteria Federal só tem resultado às 20h nas quartas e sábados. (${dateBR} não é dia de concurso)`
-      );
+      if (requestIdRef.current === currentRequestId)
+        setError(
+          `Loteria Federal só tem resultado às 20h nas quartas e sábados. (${dateBR} não é dia de concurso)`
+        );
       return;
     }
 
@@ -192,34 +212,41 @@ if (requestIdRef.current === currentRequestId) setTargetYmd("");
         if (isYMD(bMax)) maxDate = bMax;
 
         if (isYMD(minDate) || isYMD(maxDate)) {
-          if (requestIdRef.current === currentRequestId) setBounds({ minDate: minDate || "", maxDate: maxDate || "" });
+          if (requestIdRef.current === currentRequestId)
+            setBounds({ minDate: minDate || "", maxDate: maxDate || "" });
         }
       } catch {
         // ok
       }
 
       // hoje: precisamos de prizes para achar o 1º do último draw
-      const outToday = await getKingResultsByDate({ uf: lKey,
+      const outToday = await getKingResultsByDate({
+        uf: lKey,
         date: ymdSafe,
         closeHour: null,
         positions: null,
-      readPolicy: "server" });
+        readPolicy: "server",
+      });
       const today = Array.isArray(outToday) ? outToday : [];
 
       const last = findLastDrawInList(today, schedule);
       const lastBucket = last ? toHourBucket(pickDrawHour(last)) : "";
-      if (requestIdRef.current === currentRequestId) setLastHourBucket(lastBucket);
+      if (requestIdRef.current === currentRequestId)
+        setLastHourBucket(lastBucket);
 
-      const lastY = last ? (pickDrawYMD(last) || ymdSafe) : "";
+      const lastY = last ? pickDrawYMD(last) || ymdSafe : "";
       const lastGrupo = last ? pickPrize1GrupoFromDraw(last) : null;
-      const lastAnimal = lastGrupo ? safeStr(getAnimalLabel?.(lastGrupo) || "") : "";
+      const lastAnimal = lastGrupo
+        ? safeStr(getAnimalLabel?.(lastGrupo) || "")
+        : "";
 
-      if (requestIdRef.current === currentRequestId) setLastInfo({
-        lastYmd: safeStr(lastY || ""),
-        lastHour: safeStr(lastBucket || ""),
-        lastGrupo: Number.isFinite(Number(lastGrupo)) ? Number(lastGrupo) : null,
-        lastAnimal,
-      });
+      if (requestIdRef.current === currentRequestId)
+        setLastInfo({
+          lastYmd: safeStr(lastY || ""),
+          lastHour: safeStr(lastBucket || ""),
+          lastGrupo: Number.isFinite(Number(lastGrupo)) ? Number(lastGrupo) : null,
+          lastAnimal,
+        });
 
       const nextSlot =
         last && lastY && lastBucket
@@ -233,39 +260,45 @@ if (requestIdRef.current === currentRequestId) setTargetYmd("");
             })
           : { ymd: "", hour: "" };
 
-      if (requestIdRef.current === currentRequestId) setTargetYmd(safeStr(nextSlot?.ymd || ""));
-      if (requestIdRef.current === currentRequestId) setTargetHourBucket(safeStr(nextSlot?.hour || ""));
+      if (requestIdRef.current === currentRequestId)
+        setTargetYmd(safeStr(nextSlot?.ymd || ""));
+      if (requestIdRef.current === currentRequestId)
+        setTargetHourBucket(safeStr(nextSlot?.hour || ""));
 
       // range
       let rangeTo = ymdSafe;
-let rangeFrom = "";
+      let rangeFrom = "";
 
-// ✅ garante que o range inclui o "próximo slot" quando ele cai no dia seguinte
-if (nextSlot?.ymd && isYMD(nextSlot.ymd)) {
-  if (nextSlot.ymd > rangeTo) rangeTo = nextSlot.ymd;
-}
-if (lookback === LOOKBACK_ALL) {
+      // ✅ garante que o range inclui o "próximo slot" quando ele cai no dia seguinte
+      if (nextSlot?.ymd && isYMD(nextSlot.ymd)) {
+        if (nextSlot.ymd > rangeTo) rangeTo = nextSlot.ymd;
+      }
+
+      if (lookback === LOOKBACK_ALL) {
         rangeFrom = isYMD(minDate) ? minDate : addDaysYMD(ymdSafe, -180);
       } else {
         const days = Math.max(1, Number(lookback || 30));
         rangeFrom = addDaysYMD(ymdSafe, -(days - 1));
       }
 
-      if (requestIdRef.current === currentRequestId) setRangeInfo({ from: rangeFrom, to: rangeTo });
+      if (requestIdRef.current === currentRequestId)
+        setRangeInfo({ from: rangeFrom, to: rangeTo });
 
       // IMPORTANTE: positions:null para contar aparições
-      const outRange = await getKingResultsByRange({ uf: lKey,
+      const outRange = await getKingResultsByRange({
+        uf: lKey,
         dateFrom: rangeFrom,
         dateTo: addDaysYMD(rangeTo, 1),
         closeHour: null,
         positions: null,
         mode: "detailed",
-      readPolicy: "server" });
+        readPolicy: "server",
+      });
 
       const hist = Array.isArray(outRange) ? outRange : [];
       if (requestIdRef.current === currentRequestId) setRangeDraws(hist);
 
-      // camada prev (mantém seu comportamento)
+      // camada prev
       const hourForPrev = safeStr(nextSlot?.hour || lastBucket || "");
       if (hourForPrev) {
         const prev = await getPreviousDrawRobust({
@@ -282,27 +315,52 @@ if (lookback === LOOKBACK_ALL) {
         });
 
         const prevGrupo = prev?.draw ? pickPrize1GrupoFromDraw(prev.draw) : null;
-        const prevAnimal = prevGrupo ? safeStr(getAnimalLabel?.(prevGrupo) || "") : "";
+        const prevAnimal = prevGrupo
+          ? safeStr(getAnimalLabel?.(prevGrupo) || "")
+          : "";
 
-        if (requestIdRef.current === currentRequestId) setPrevInfo({
-          prevYmd: safeStr(prev?.ymd || ""),
-          prevHour: safeStr(prev?.hour || ""),
-          prevGrupo: Number.isFinite(Number(prevGrupo)) ? Number(prevGrupo) : null,
-          prevAnimal,
-          source: safeStr(prev?.source || "none"),
-        });
+        if (requestIdRef.current === currentRequestId)
+          setPrevInfo({
+            prevYmd: safeStr(prev?.ymd || ""),
+            prevHour: safeStr(prev?.hour || ""),
+            prevGrupo: Number.isFinite(Number(prevGrupo)) ? Number(prevGrupo) : null,
+            prevAnimal,
+            source: safeStr(prev?.source || "none"),
+          });
       } else {
-        if (requestIdRef.current === currentRequestId) setPrevInfo({ prevYmd: "", prevHour: "", prevGrupo: null, prevAnimal: "", source: "none" });
+        if (requestIdRef.current === currentRequestId)
+          setPrevInfo({
+            prevYmd: "",
+            prevHour: "",
+            prevGrupo: null,
+            prevAnimal: "",
+            source: "none",
+          });
       }
     } catch (e) {
       if (requestIdRef.current === currentRequestId) setRangeDraws([]);
       if (requestIdRef.current === currentRequestId) setLastHourBucket("");
       if (requestIdRef.current === currentRequestId) setTargetHourBucket("");
       if (requestIdRef.current === currentRequestId) setTargetYmd("");
-      if (requestIdRef.current === currentRequestId) setLastInfo({ lastYmd: "", lastHour: "", lastGrupo: null, lastAnimal: "" });
-      if (requestIdRef.current === currentRequestId) setPrevInfo({ prevYmd: "", prevHour: "", prevGrupo: null, prevAnimal: "", source: "none" });
-      if (requestIdRef.current === currentRequestId) setRangeInfo({ from: "", to: "" });
-      if (requestIdRef.current === currentRequestId) setError(String(e?.message || e || "Falha ao carregar dados do TOP3."));
+      if (requestIdRef.current === currentRequestId)
+        setLastInfo({
+          lastYmd: "",
+          lastHour: "",
+          lastGrupo: null,
+          lastAnimal: "",
+        });
+      if (requestIdRef.current === currentRequestId)
+        setPrevInfo({
+          prevYmd: "",
+          prevHour: "",
+          prevGrupo: null,
+          prevAnimal: "",
+          source: "none",
+        });
+      if (requestIdRef.current === currentRequestId)
+        setRangeInfo({ from: "", to: "" });
+      if (requestIdRef.current === currentRequestId)
+        setError(String(e?.message || e || "Falha ao carregar dados do TOP3."));
     } finally {
       if (requestIdRef.current === currentRequestId) setLoading(false);
     }
@@ -327,7 +385,9 @@ if (lookback === LOOKBACK_ALL) {
     const lastY = safeStr(lastInfo?.lastYmd);
     const lastH = safeStr(lastInfo?.lastHour);
 
-    if (!list.length || !lastG || !isYMD(lastY) || !safeStr(lastH)) return { top: [], meta: null };
+    if (!list.length || !lastG || !isYMD(lastY) || !safeStr(lastH)) {
+      return { top: [], meta: null };
+    }
 
     const drawLast = list.find((d) => {
       const y = pickDrawYMD(d);
@@ -335,7 +395,7 @@ if (lookback === LOOKBACK_ALL) {
       return y === lastY && h === toHourBucket(lastH);
     });
 
-        // ✅ robustez: se o gatilho não vier no range, cria um draw mínimo
+    // ✅ robustez: se o gatilho não vier no range, cria um draw mínimo
     let drawLastSafe = drawLast;
     if (!drawLastSafe) {
       drawLastSafe = {
@@ -353,30 +413,46 @@ if (lookback === LOOKBACK_ALL) {
       PT_RIO_SCHEDULE_WED_SAT,
       FEDERAL_SCHEDULE,
       topN: 3,
-    });}, [rangeDraws, lotteryKeySafe, lastInfo?.lastGrupo, lastInfo?.lastYmd, lastInfo?.lastHour]);
+    });
+  }, [
+    rangeDraws,
+    lotteryKeySafe,
+    lastInfo?.lastGrupo,
+    lastInfo?.lastYmd,
+    lastInfo?.lastHour,
+  ]);
 
-  // meta (DERIVADO, sem setState)
+  // meta (DERIVADO)
   const metaNext = useMemo(() => {
     const m = analytics?.meta;
     if (!(m?.trigger?.grupo && m?.next?.ymd && m?.next?.hour)) {
-  
-  return { triggerText: "", targetText: "", samples: 0 };
+      return { triggerText: "", targetText: "", samples: 0 };
     }
 
     const g = Number(m.trigger.grupo);
     const animal = safeStr(getAnimalLabel?.(g) || "");
     const dow = getDowKey(m.trigger.ymd);
     const dowLabel =
-      dow === 0 ? "DOM" :
-      dow === 1 ? "SEG" :
-      dow === 2 ? "TER" :
-      dow === 3 ? "QUA" :
-      dow === 4 ? "QUI" :
-      dow === 5 ? "SEX" :
-      dow === 6 ? "SÁB" : "—";
-  
-  return {
-      triggerText: `G${String(g).padStart(2, "0")}${animal ? " • " + animal.toUpperCase() : ""} • ${dowLabel} ${m.trigger.hour}`,
+      dow === 0
+        ? "DOM"
+        : dow === 1
+        ? "SEG"
+        : dow === 2
+        ? "TER"
+        : dow === 3
+        ? "QUA"
+        : dow === 4
+        ? "QUI"
+        : dow === 5
+        ? "SEX"
+        : dow === 6
+        ? "SÁB"
+        : "—";
+
+    return {
+      triggerText: `G${String(g).padStart(2, "0")}${
+        animal ? " • " + animal.toUpperCase() : ""
+      } • ${dowLabel} ${m.trigger.hour}`,
       targetText: `${ymdToBR(m.next.ymd)} ${m.next.hour}`,
       samples: Number(m.samples || 0),
     };
@@ -384,6 +460,19 @@ if (lookback === LOOKBACK_ALL) {
 
   const top3 = useMemo(() => {
     const arr = Array.isArray(analytics?.top) ? analytics.top : [];
+    const samplesMeta = Number(analytics?.meta?.samples || 0);
+
+    // ✅ denom aproximado: cada amostra soma até 7 posições (1º..7º)
+    // + suavização para evitar 0.00%
+    const alpha = Number.isFinite(Number(TOP3_SMOOTH_ALPHA))
+      ? Number(TOP3_SMOOTH_ALPHA)
+      : 1;
+    const K = Number.isFinite(Number(TOP3_GROUPS_K))
+      ? Number(TOP3_GROUPS_K)
+      : 25;
+
+    const denomRaw = Math.max(0, samplesMeta) * 7;
+    const denom = denomRaw + alpha * K;
 
     return arr.map((x) => {
       const g = Number(x.grupo);
@@ -408,8 +497,21 @@ if (lookback === LOOKBACK_ALL) {
             getImgFromGrupo,
             getAnimalLabel,
           });
-  
-  return { ...x, animal, imgBg: bgVariants, imgIcon: iconVariants };
+
+      const freq = Number(x.freq || 0);
+      const prob = denom > 0 ? (freq + alpha) / denom : 0;
+      const probPct = Math.max(0, prob * 100);
+
+      return {
+        ...x,
+        animal,
+        imgBg: bgVariants,
+        imgIcon: iconVariants,
+
+        // ✅ isso destrava o “Probabilidade: 0.00%”
+        prob,
+        probPct,
+      };
     });
   }, [analytics]);
 
@@ -432,8 +534,11 @@ if (lookback === LOOKBACK_ALL) {
 
       out.push(`Base histórica: ${lookbackLabel}`);
       if (lastLabel !== "—") out.push(`Último sorteio (gatilho): ${lastLabel}`);
-      if (safeStr(analysisYmd) && safeStr(analysisHourBucket))
-        out.push(`Próximo sorteio (alvo): ${ymdToBR(analysisYmd)} ${analysisHourBucket}`);
+      if (safeStr(analysisYmd) && safeStr(analysisHourBucket)) {
+        out.push(
+          `Próximo sorteio (alvo): ${ymdToBR(analysisYmd)} ${analysisHourBucket}`
+        );
+      }
 
       for (const line of r) out.push(line);
 
@@ -455,7 +560,7 @@ if (lookback === LOOKBACK_ALL) {
     },
     [rangeDraws, analysisHourBucket, schedule]
   );
-  
+
   return {
     LOOKBACK_ALL,
     LOOKBACK_OPTIONS,
@@ -493,17 +598,3 @@ if (lookback === LOOKBACK_ALL) {
     normalizeImgSrc,
   };
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
