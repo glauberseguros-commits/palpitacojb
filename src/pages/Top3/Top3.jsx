@@ -6,3 +6,4 @@ export default function Top3() {
   const c = useTop3Controller();
   return <Top3View {...c} />;
 }
+

@@ -218,7 +218,9 @@ export default function Top3View(props) {
               : 0;
 
             const freqRaw = Number(item?.freq ?? 0);
-            const freq = Number.isFinite(freqRaw) ? Math.max(0, Math.trunc(freqRaw)) : 0;
+            const freq = Number.isFinite(freqRaw)
+              ? Math.max(0, Math.trunc(freqRaw))
+              : 0;
 
             const denom = samples > 0 ? samples * 7 : 0;
             const derivedScore = denom > 0 ? freq / denom : 0;
@@ -233,19 +235,18 @@ export default function Top3View(props) {
               : [];
 
             // ========= Milhares (20) =========
-            // 1) item.milhares / item.milhares20 (array de strings)
+            // 1) prioriza item.milhares20 / item.milhares (já vindo do hook)
             let milhares = [];
-            const m1 = Array.isArray(item?.milhares) ? item.milhares : null;
-            const m2 = Array.isArray(item?.milhares20) ? item.milhares20 : null;
+            const m20 = Array.isArray(item?.milhares20) ? item.milhares20 : null;
+            const mAny = Array.isArray(item?.milhares) ? item.milhares : null;
 
-            if (m1 && m1.length) milhares = m1.slice(0);
-            else if (m2 && m2.length) milhares = m2.slice(0);
+            if (m20 && m20.length) milhares = m20.slice(0);
+            else if (mAny && mAny.length) milhares = mAny.slice(0);
 
-            // 2) props.buildMilhares(grupo, 20) ou props.build16(grupo)
+            // 2) fallback: props.buildMilhares(grupo, 20) ou props.build16(grupo)
             if (!milhares.length) {
               const g = Number(item?.grupo);
               if (Number.isFinite(g) && g > 0) {
-                // buildMilhares pode retornar array ou {slots}
                 if (typeof buildMilhares === "function") {
                   const out = buildMilhares(g, 20);
                   if (Array.isArray(out)) {
@@ -261,19 +262,26 @@ export default function Top3View(props) {
               }
             }
 
-            // normaliza e limita para 20 (pad com vazio se quiser grid estável)
+            // normaliza (4 dígitos) + remove vazios + dedup
+            const seen = new Set();
             const milharesNorm = milhares
               .map(normalizeMilharStr)
-              .filter(Boolean);
+              .filter(Boolean)
+              .filter((m) => {
+                if (seen.has(m)) return false;
+                seen.add(m);
+                return true;
+              });
 
             const targetCount = 20;
-            const milhares20 = milharesNorm.slice(0, targetCount);
-            while (milhares20.length < Math.min(targetCount, 20)) {
-              // não inventa número; só mantém grid ok se não tiver dados suficientes
-              milhares20.push("");
-            }
 
+            // sempre trabalha com array de 20 posições (placeholder visual)
+            const milhares20 = milharesNorm.slice(0, targetCount);
+            while (milhares20.length < targetCount) milhares20.push("");
+
+            // somente válidos para copiar
             const milharesValid = milhares20.filter(Boolean);
+
             const copyAll = () => {
               if (!milharesValid.length) return;
               copyText(milharesValid.join(" "));
@@ -288,7 +296,7 @@ export default function Top3View(props) {
                 ? "2º MAIS FORTE"
                 : "3º MAIS FORTE";
 
-            const gridRows = chunk(milhares20, 5); // 20 => 4 linhas de 5
+            const gridRows = chunk(milhares20, 4); // 20 => 5 linhas de 4
 
             return (
               <div
@@ -431,9 +439,7 @@ export default function Top3View(props) {
                       gap: 10,
                     }}
                   >
-                    <div style={{ fontWeight: 900 }}>
-                      📌 20 MILHARES RECOMENDADAS
-                    </div>
+                    <div style={{ fontWeight: 900 }}>📌 20 MILHARES RECOMENDADAS</div>
 
                     <button
                       type="button"
@@ -452,7 +458,7 @@ export default function Top3View(props) {
                         opacity: milharesValid.length ? 1 : 0.6,
                         whiteSpace: "nowrap",
                       }}
-                      title="Copiar todas as milhares"
+                      title="Copiar todas as milhares válidas"
                     >
                       Copiar 20
                     </button>
@@ -474,7 +480,7 @@ export default function Top3View(props) {
                           key={rIdx}
                           style={{
                             display: "grid",
-                            gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
+                            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
                             gap: 10,
                           }}
                         >
@@ -509,7 +515,7 @@ export default function Top3View(props) {
                   ) : (
                     <div style={{ color: t.muted, fontSize: 13 }}>
                       Ainda não há milhares geradas para este grupo. (precisa o controller
-                      passar build16/buildMilhares ou o item trazer milhares20)
+                      passar buildMilhares/build16 ou o item trazer milhares20)
                     </div>
                   )}
                 </div>
@@ -527,9 +533,7 @@ export default function Top3View(props) {
                       gap: 6,
                     }}
                   >
-                    <div style={{ fontWeight: 900, color: t.text }}>
-                      Detalhes técnicos
-                    </div>
+                    <div style={{ fontWeight: 900, color: t.text }}>Detalhes técnicos</div>
                     {item.reasons.slice(0, 10).map((r, i) => (
                       <div key={i}>• {String(r)}</div>
                     ))}

@@ -173,7 +173,12 @@ export function useTop3Controller() {
       if (requestIdRef.current === currentRequestId) setTargetHourBucket("");
       if (requestIdRef.current === currentRequestId) setTargetYmd("");
       if (requestIdRef.current === currentRequestId)
-        setLastInfo({ lastYmd: "", lastHour: "", lastGrupo: null, lastAnimal: "" });
+        setLastInfo({
+          lastYmd: "",
+          lastHour: "",
+          lastGrupo: null,
+          lastAnimal: "",
+        });
       if (requestIdRef.current === currentRequestId)
         setPrevInfo({
           prevYmd: "",
@@ -182,7 +187,8 @@ export function useTop3Controller() {
           prevAnimal: "",
           source: "none",
         });
-      if (requestIdRef.current === currentRequestId) setRangeInfo({ from: "", to: "" });
+      if (requestIdRef.current === currentRequestId)
+        setRangeInfo({ from: "", to: "" });
 
       if (requestIdRef.current === currentRequestId) setLoading(false);
       if (requestIdRef.current === currentRequestId)
@@ -222,11 +228,14 @@ export function useTop3Controller() {
 
       const last = findLastDrawInList(today, schedule);
       const lastBucket = last ? toHourBucket(pickDrawHour(last)) : "";
-      if (requestIdRef.current === currentRequestId) setLastHourBucket(lastBucket);
+      if (requestIdRef.current === currentRequestId)
+        setLastHourBucket(lastBucket);
 
       const lastY = last ? pickDrawYMD(last) || ymdSafe : "";
       const lastGrupo = last ? pickPrize1GrupoFromDraw(last) : null;
-      const lastAnimal = lastGrupo ? safeStr(getAnimalLabel?.(lastGrupo) || "") : "";
+      const lastAnimal = lastGrupo
+        ? safeStr(getAnimalLabel?.(lastGrupo) || "")
+        : "";
 
       if (requestIdRef.current === currentRequestId)
         setLastInfo({
@@ -248,7 +257,8 @@ export function useTop3Controller() {
             })
           : { ymd: "", hour: "" };
 
-      if (requestIdRef.current === currentRequestId) setTargetYmd(safeStr(nextSlot?.ymd || ""));
+      if (requestIdRef.current === currentRequestId)
+        setTargetYmd(safeStr(nextSlot?.ymd || ""));
       if (requestIdRef.current === currentRequestId)
         setTargetHourBucket(safeStr(nextSlot?.hour || ""));
 
@@ -266,7 +276,8 @@ export function useTop3Controller() {
         rangeFrom = addDaysYMD(ymdSafe, -(days - 1));
       }
 
-      if (requestIdRef.current === currentRequestId) setRangeInfo({ from: rangeFrom, to: rangeTo });
+      if (requestIdRef.current === currentRequestId)
+        setRangeInfo({ from: rangeFrom, to: rangeTo });
 
       const outRange = await getKingResultsByRange({
         uf: lKey,
@@ -296,8 +307,12 @@ export function useTop3Controller() {
           FEDERAL_SCHEDULE,
         });
 
-        const prevGrupo = prev?.draw ? pickPrize1GrupoFromDraw(prev.draw) : null;
-        const prevAnimal = prevGrupo ? safeStr(getAnimalLabel?.(prevGrupo) || "") : "";
+        const prevGrupo = prev?.draw
+          ? pickPrize1GrupoFromDraw(prev.draw)
+          : null;
+        const prevAnimal = prevGrupo
+          ? safeStr(getAnimalLabel?.(prevGrupo) || "")
+          : "";
 
         if (requestIdRef.current === currentRequestId)
           setPrevInfo({
@@ -323,7 +338,12 @@ export function useTop3Controller() {
       if (requestIdRef.current === currentRequestId) setTargetHourBucket("");
       if (requestIdRef.current === currentRequestId) setTargetYmd("");
       if (requestIdRef.current === currentRequestId)
-        setLastInfo({ lastYmd: "", lastHour: "", lastGrupo: null, lastAnimal: "" });
+        setLastInfo({
+          lastYmd: "",
+          lastHour: "",
+          lastGrupo: null,
+          lastAnimal: "",
+        });
       if (requestIdRef.current === currentRequestId)
         setPrevInfo({
           prevYmd: "",
@@ -332,7 +352,8 @@ export function useTop3Controller() {
           prevAnimal: "",
           source: "none",
         });
-      if (requestIdRef.current === currentRequestId) setRangeInfo({ from: "", to: "" });
+      if (requestIdRef.current === currentRequestId)
+        setRangeInfo({ from: "", to: "" });
       if (requestIdRef.current === currentRequestId)
         setError(String(e?.message || e || "Falha ao carregar dados do TOP3."));
     } finally {
@@ -395,7 +416,7 @@ export function useTop3Controller() {
     lastInfo?.lastHour,
   ]);
 
-  // ✅ build20 PRECISA ficar acima de qualquer useMemo que use ele
+  // ✅ build20 acima de qualquer useMemo que use ele
   const build20 = useCallback(
     (grupo2) => {
       return buildMilharesForGrupo({
@@ -449,8 +470,12 @@ export function useTop3Controller() {
     const arr = Array.isArray(analytics?.top) ? analytics.top : [];
     const samplesMeta = Number(analytics?.meta?.samples || 0);
 
-    const alpha = Number.isFinite(Number(TOP3_SMOOTH_ALPHA)) ? Number(TOP3_SMOOTH_ALPHA) : 1;
-    const groupsK = Number.isFinite(Number(TOP3_GROUPS_K)) ? Number(TOP3_GROUPS_K) : 25;
+    const alpha = Number.isFinite(Number(TOP3_SMOOTH_ALPHA))
+      ? Number(TOP3_SMOOTH_ALPHA)
+      : 1;
+    const groupsK = Number.isFinite(Number(TOP3_GROUPS_K))
+      ? Number(TOP3_GROUPS_K)
+      : 25;
 
     const denomRaw = Math.max(0, samplesMeta) * 7;
     const denom = denomRaw + alpha * groupsK;
@@ -487,11 +512,22 @@ export function useTop3Controller() {
       let milhares20 = [];
       try {
         const out20 = build20(g);
-        const slots20 = Array.isArray(out20?.slots) ? out20.slots : [];
-        milhares20 = slots20
-          .map((s) => safeStr(s?.milhar))
-          .filter(Boolean)
-          .slice(0, 20);
+
+        // build20 pode retornar:
+        // - array ["0001","0002",...]
+        // - ou { slots:[{milhar:"0001"}, ...] }
+        if (Array.isArray(out20)) {
+          milhares20 = out20
+            .map((m) => safeStr(m))
+            .filter(Boolean)
+            .slice(0, 20);
+        } else {
+          const slots20 = Array.isArray(out20?.slots) ? out20.slots : [];
+          milhares20 = slots20
+            .map((s) => safeStr(s?.milhar))
+            .filter(Boolean)
+            .slice(0, 20);
+        }
       } catch {
         milhares20 = [];
       }
@@ -528,7 +564,9 @@ export function useTop3Controller() {
       out.push(`Base histórica: ${lookbackLabel}`);
       if (lastLabel !== "—") out.push(`Último sorteio (gatilho): ${lastLabel}`);
       if (safeStr(analysisYmd) && safeStr(analysisHourBucket)) {
-        out.push(`Próximo sorteio (alvo): ${ymdToBR(analysisYmd)} ${analysisHourBucket}`);
+        out.push(
+          `Próximo sorteio (alvo): ${ymdToBR(analysisYmd)} ${analysisHourBucket}`
+        );
       }
 
       for (const line of r) out.push(line);
