@@ -1,7 +1,10 @@
 // src/pages/Search/Search.jsx
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getKingBoundsByUf, getKingResultsByRange } from "../../services/kingResultsService";
-import { getAnimalLabel as getAnimalLabelFn, getImgFromGrupo as getImgFromGrupoFn } from "../../constants/bichoMap";
+import {
+  getAnimalLabel as getAnimalLabelFn,
+  getImgFromGrupo as getImgFromGrupoFn,
+} from "../../constants/bichoMap";
 import SearchResultsTable from "../Dashboard/components/SearchResultsTable";
 
 /**
@@ -32,6 +35,32 @@ function safeStr(v) {
 
 function isYMD(s) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
+}
+
+/* =========================
+   Bounds helpers (robusto)
+========================= */
+
+function normalizeBoundsResponse(b) {
+  const minRaw = safeStr(b?.minYmd || b?.minDate || b?.min || "");
+  const maxRaw = safeStr(b?.maxYmd || b?.maxDate || b?.max || "");
+  const minYmd = isYMD(minRaw) ? minRaw : null;
+  const maxYmd = isYMD(maxRaw) ? maxRaw : null;
+  return { minYmd, maxYmd, source: safeStr(b?.source || "") };
+}
+
+function clampYmd(ymd, minYmd, maxYmd) {
+  const d = safeStr(ymd);
+  if (!isYMD(d)) return "";
+  let out = d;
+
+  const min = safeStr(minYmd);
+  const max = safeStr(maxYmd);
+
+  if (isYMD(min) && out < min) out = min;
+  if (isYMD(max) && out > max) out = max;
+
+  return out;
 }
 
 function normalizeDigitsOnly(v) {
@@ -220,7 +249,6 @@ function pickPrizeDigits(draw, pos) {
   if (lDirect) return lDirect;
 
   const arrays = [draw?.p, draw?.ps, draw?.premios, draw?.resultados, draw?.numbers, draw?.numeros, draw?.milhares];
-
   for (const a of arrays) {
     const v = pickFromArrayLike(a, i);
     const l = extractLastNDigits(v, wantLen);
@@ -376,15 +404,7 @@ function buildSlots(digits) {
   return slots;
 }
 
-function SearchDigitsInput({
-  value,
-  onChange,
-  loading,
-  onBuscar,
-  onLimpar,
-  canSearch,
-  showLimpar,
-}) {
+function SearchDigitsInput({ value, onChange, loading, onBuscar, onLimpar, canSearch, showLimpar }) {
   const digits = normalizeDigitsOnly(value).slice(0, 4);
   const slots = useMemo(() => buildSlots(digits), [digits]);
   const inputRef = useRef(null);
@@ -532,15 +552,20 @@ export default function Search() {
         const b = await getKingBoundsByUf({ uf: LOTTERY_KEY });
         if (!alive) return;
 
-        const minYmd = b?.minYmd || null;
-        const maxYmd = b?.maxYmd || null;
+        const nb = normalizeBoundsResponse(b);
+        const minYmd = nb.minYmd;
+        const maxYmd = nb.maxYmd;
 
-        setBounds({ minYmd, maxYmd, source: b?.source || "" });
+        setBounds({ minYmd, maxYmd, source: nb.source || "" });
 
         if (minYmd && maxYmd) {
-          setRange({ from: minYmd, to: maxYmd });
+          // mantém o range atual, mas clamp dentro do bounds
+          setRange((r) => ({
+            from: clampYmd(r?.from || minYmd, minYmd, maxYmd) || minYmd,
+            to: clampYmd(r?.to || maxYmd, minYmd, maxYmd) || maxYmd,
+          }));
         } else {
-          setError(`Bounds não encontrados para "${LOTTERY_KEY}". Fonte: ${String(b?.source || "")}`);
+          setError(`Bounds não encontrados para "${LOTTERY_KEY}". Fonte: ${String(nb.source || "")}`);
         }
       } catch (e) {
         if (!alive) return;
@@ -752,15 +777,18 @@ export default function Search() {
       await runPool(chunks, worker, 3);
 
       if (!safeOk()) return;
+
       // ordena no final
       const hourRank = (h) => {
         const m = String(h || "").match(/^(\d{2})/);
         return m ? Number(m[1]) : 99;
       };
+
       allHits.sort((a, b) => {
         const ya = String(a.ymd || "");
         const yb = String(b.ymd || "");
         if (ya !== yb) return yb.localeCompare(ya);
+
         const ha = hourRank(a.close_hour);
         const hb = hourRank(b.close_hour);
         if (ha !== hb) return hb - ha;
