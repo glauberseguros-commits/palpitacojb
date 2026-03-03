@@ -32,10 +32,62 @@ function normalizeMilharStr(v) {
   return dig.length >= 4 ? dig.slice(-4) : dig.padStart(4, "0");
 }
 
+function centenaFromMilhar(m4) {
+  const s = normalizeMilharStr(m4);
+  if (!s) return "";
+  return s.slice(-3);
+}
+
 function chunk(arr, n) {
   const out = [];
   for (let i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n));
   return out;
+}
+
+/**
+ * Completa milhares até targetCount, SEM repetir centena (últimos 3 dígitos).
+ * Usa fallback determinístico por grupo para garantir 20 reais (sem "----").
+ */
+function fillTo20UniqueCentena({ grupo, baseMilhares, targetCount = 20 }) {
+  const g = Number(grupo);
+  const out = [];
+
+  // 1) entra com os que vieram do motor (normaliza + remove centena repetida)
+  const seenCent = new Set();
+  const seenMilhar = new Set();
+
+  const push = (m) => {
+    const m4 = normalizeMilharStr(m);
+    if (!m4) return;
+    const c = centenaFromMilhar(m4);
+    if (!c) return;
+    if (seenCent.has(c)) return; // ✅ não repete centena
+    if (seenMilhar.has(m4)) return;
+    seenCent.add(c);
+    seenMilhar.add(m4);
+    out.push(m4);
+  };
+
+  (Array.isArray(baseMilhares) ? baseMilhares : []).forEach(push);
+
+  // 2) fallback determinístico por grupo (garante completar 20)
+  // padrão: start=(g-1)*4, depois varre i e monta milhar pad4
+  // (mantém centenas diferentes naturalmente; ainda assim filtramos)
+  if (Number.isFinite(g) && g > 0) {
+    const start = (g - 1) * 4;
+    for (let i = 0; i < 3000 && out.length < targetCount; i++) {
+      const m4 = String(start * 100 + i).padStart(4, "0");
+      push(m4);
+    }
+  }
+
+  // 3) se por qualquer motivo ainda faltou (grupo inválido), completa genérico
+  for (let i = 0; i < 9999 && out.length < targetCount; i++) {
+    const m4 = String(i).padStart(4, "0");
+    push(m4);
+  }
+
+  return out.slice(0, targetCount);
 }
 
 /** Imagem com fallback (array de srcs) */
@@ -207,7 +259,15 @@ export default function Top3View(props) {
       ) : !list.length ? (
         <div style={{ color: t.muted }}>Sem dados para calcular TOP3.</div>
       ) : (
-        <div style={{ display: "grid", gap: 12 }}>
+        // ✅ Layout: 1º isolado (span total), 2º e 3º lado a lado (desktop)
+        <div
+          style={{
+            display: "grid",
+            gap: 12,
+            gridTemplateColumns: "repeat(auto-fit, minmax(520px, 1fr))",
+            alignItems: "start",
+          }}
+        >
           {list.map((item, idx) => {
             const grupoTxt = formatGrupo(item?.grupo);
             const animal = String(item?.animal || "").trim();
@@ -236,55 +296,42 @@ export default function Top3View(props) {
 
             // ========= Milhares (20) =========
             // 1) prioriza item.milhares20 / item.milhares (já vindo do hook)
-            let milhares = [];
+            let milharesBase = [];
             const m20 = Array.isArray(item?.milhares20) ? item.milhares20 : null;
             const mAny = Array.isArray(item?.milhares) ? item.milhares : null;
 
-            if (m20 && m20.length) milhares = m20.slice(0);
-            else if (mAny && mAny.length) milhares = mAny.slice(0);
+            if (m20 && m20.length) milharesBase = m20.slice(0);
+            else if (mAny && mAny.length) milharesBase = mAny.slice(0);
 
             // 2) fallback: props.buildMilhares(grupo, 20) ou props.build16(grupo)
-            if (!milhares.length) {
+            if (!milharesBase.length) {
               const g = Number(item?.grupo);
               if (Number.isFinite(g) && g > 0) {
                 if (typeof buildMilhares === "function") {
                   const out = buildMilhares(g, 20);
                   if (Array.isArray(out)) {
-                    milhares = out.slice(0);
+                    milharesBase = out.slice(0);
                   } else if (out && Array.isArray(out.slots)) {
-                    milhares = out.slots.map((x) => x?.milhar).filter(Boolean);
+                    milharesBase = out.slots.map((x) => x?.milhar).filter(Boolean);
                   }
                 } else if (typeof build16 === "function") {
                   const out16 = build16(g);
                   const slots16 = Array.isArray(out16?.slots) ? out16.slots : [];
-                  milhares = slots16.map((x) => x?.milhar).filter(Boolean);
+                  milharesBase = slots16.map((x) => x?.milhar).filter(Boolean);
                 }
               }
             }
 
-            // normaliza (4 dígitos) + remove vazios + dedup
-            const seen = new Set();
-            const milharesNorm = milhares
-              .map(normalizeMilharStr)
-              .filter(Boolean)
-              .filter((m) => {
-                if (seen.has(m)) return false;
-                seen.add(m);
-                return true;
-              });
-
-            const targetCount = 20;
-
-            // sempre trabalha com array de 20 posições (placeholder visual)
-            const milhares20 = milharesNorm.slice(0, targetCount);
-            while (milhares20.length < targetCount) milhares20.push("");
-
-            // somente válidos para copiar
-            const milharesValid = milhares20.filter(Boolean);
+            // ✅ GARANTIA: 20 reais, sem repetir centena
+            const grupoNum = Number(item?.grupo);
+            const milhares20 = fillTo20UniqueCentena({
+              grupo: grupoNum,
+              baseMilhares: milharesBase,
+              targetCount: 20,
+            });
 
             const copyAll = () => {
-              if (!milharesValid.length) return;
-              copyText(milharesValid.join(" "));
+              copyText(milhares20.join(" "));
             };
 
             const key = `${String(item?.grupo ?? "g")}__${animal || "x"}__${idx}`;
@@ -308,6 +355,9 @@ export default function Top3View(props) {
                   padding: 16,
                   display: "grid",
                   gap: 12,
+
+                  // ✅ 1º isolado ocupando a linha toda
+                  ...(idx === 0 ? { gridColumn: "1 / -1" } : null),
                 }}
               >
                 {/* Top strip */}
@@ -444,80 +494,65 @@ export default function Top3View(props) {
                     <button
                       type="button"
                       onClick={copyAll}
-                      disabled={!milharesValid.length}
                       style={{
                         borderRadius: 999,
                         padding: "8px 10px",
-                        background: milharesValid.length
-                          ? "rgba(201,168,62,0.18)"
-                          : "rgba(255,255,255,0.06)",
+                        background: "rgba(201,168,62,0.18)",
                         border: "1px solid rgba(201,168,62,0.35)",
                         color: t.text,
                         fontWeight: 900,
-                        cursor: milharesValid.length ? "pointer" : "not-allowed",
-                        opacity: milharesValid.length ? 1 : 0.6,
+                        cursor: "pointer",
                         whiteSpace: "nowrap",
                       }}
-                      title="Copiar todas as milhares válidas"
+                      title="Copiar as 20 milhares"
                     >
                       Copiar 20
                     </button>
                   </div>
 
-                  {milharesValid.length ? (
-                    <div
-                      style={{
-                        display: "grid",
-                        gap: 8,
-                        padding: 12,
-                        borderRadius: 14,
-                        background: "rgba(0,0,0,0.30)",
-                        border: "1px solid rgba(201,168,62,0.22)",
-                      }}
-                    >
-                      {gridRows.map((row, rIdx) => (
-                        <div
-                          key={rIdx}
-                          style={{
-                            display: "grid",
-                            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-                            gap: 10,
-                          }}
-                        >
-                          {row.map((m, cIdx) => (
-                            <div
-                              key={`${rIdx}-${cIdx}`}
-                              style={{
-                                padding: "10px 10px",
-                                borderRadius: 12,
-                                textAlign: "center",
-                                fontWeight: 950,
-                                letterSpacing: 1.2,
-                                background: m
-                                  ? "rgba(201,168,62,0.10)"
-                                  : "rgba(255,255,255,0.04)",
-                                border: m
-                                  ? "1px solid rgba(201,168,62,0.28)"
-                                  : "1px solid rgba(255,255,255,0.08)",
-                                color: m ? t.text : "rgba(255,255,255,0.35)",
-                                userSelect: "text",
-                                cursor: m ? "pointer" : "default",
-                              }}
-                              title={m ? "Clique para copiar" : ""}
-                              onClick={() => (m ? copyText(m) : null)}
-                            >
-                              {m || "----"}
-                            </div>
-                          ))}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div style={{ color: t.muted, fontSize: 13 }}>
-                      Ainda não há milhares geradas para este grupo. (precisa o controller
-                      passar buildMilhares/build16 ou o item trazer milhares20)
-                    </div>
-                  )}
+                  <div
+                    style={{
+                      display: "grid",
+                      gap: 8,
+                      padding: 12,
+                      borderRadius: 14,
+                      background: "rgba(0,0,0,0.30)",
+                      border: "1px solid rgba(201,168,62,0.22)",
+                    }}
+                  >
+                    {gridRows.map((row, rIdx) => (
+                      <div
+                        key={rIdx}
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+                          gap: 10,
+                        }}
+                      >
+                        {row.map((m, cIdx) => (
+                          <div
+                            key={`${rIdx}-${cIdx}`}
+                            style={{
+                              padding: "10px 10px",
+                              borderRadius: 12,
+                              textAlign: "center",
+                              fontWeight: 950,
+                              letterSpacing: 1.2,
+                              background: "rgba(201,168,62,0.10)",
+                              border: "1px solid rgba(201,168,62,0.28)",
+                              color: t.text,
+                              userSelect: "text",
+                              cursor: "pointer",
+                            }}
+                            title="Clique para copiar"
+                            onClick={() => copyText(m)}
+                          >
+                            {m}
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Detalhes técnicos (opcional) */}
@@ -533,7 +568,9 @@ export default function Top3View(props) {
                       gap: 6,
                     }}
                   >
-                    <div style={{ fontWeight: 900, color: t.text }}>Detalhes técnicos</div>
+                    <div style={{ fontWeight: 900, color: t.text }}>
+                      Detalhes técnicos
+                    </div>
                     {item.reasons.slice(0, 10).map((r, i) => (
                       <div key={i}>• {String(r)}</div>
                     ))}

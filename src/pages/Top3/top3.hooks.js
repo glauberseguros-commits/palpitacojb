@@ -51,6 +51,58 @@ import {
 
 import { getAnimalLabel, getImgFromGrupo } from "../../constants/bichoMap";
 
+/** normaliza milhar para 4 dígitos */
+function normalizeMilhar4(v) {
+  const s = String(v || "").trim();
+  if (!s) return "";
+  const dig = s.replace(/\D+/g, "");
+  if (!dig) return "";
+  return dig.length >= 4 ? dig.slice(-4) : dig.padStart(4, "0");
+}
+
+/** centena = últimos 3 dígitos do milhar (preserva 0 à esquerda) */
+function centenaFromMilhar4(m4) {
+  const s = normalizeMilhar4(m4);
+  if (!s) return "";
+  return s.slice(-3);
+}
+
+/** remove repetição por centena mantendo a ordem */
+function uniqueByCentena(milhares4) {
+  const out = [];
+  const seen = new Set();
+  for (const m of milhares4) {
+    const m4 = normalizeMilhar4(m);
+    if (!m4) continue;
+    const c = centenaFromMilhar4(m4);
+    if (!c) continue;
+    if (seen.has(c)) continue;
+    seen.add(c);
+    out.push(m4);
+  }
+  return out;
+}
+
+/** fallback determinístico do grupo: gera milhares sem repetir centena */
+function fallbackGroupMilhares20(grupo, denySet) {
+  const out = [];
+  const g = Number(grupo);
+  if (!Number.isFinite(g) || g <= 0) return out;
+
+  const seen = denySet instanceof Set ? denySet : new Set();
+
+  // mesmo padrão que você já tinha antes: base = (g-1)*4 => centenas únicas 000..019 etc
+  const start = (g - 1) * 4;
+  for (let i = 0; i < 200 && out.length < 20; i++) {
+    const m4 = String(start * 100 + i).padStart(4, "0");
+    const c = m4.slice(-3);
+    if (seen.has(c)) continue;
+    seen.add(c);
+    out.push(m4);
+  }
+  return out;
+}
+
 export function useTop3Controller() {
   const DEFAULT_LOTTERY = "PT_RIO";
   const requestIdRef = useRef(0);
@@ -173,12 +225,7 @@ export function useTop3Controller() {
       if (requestIdRef.current === currentRequestId) setTargetHourBucket("");
       if (requestIdRef.current === currentRequestId) setTargetYmd("");
       if (requestIdRef.current === currentRequestId)
-        setLastInfo({
-          lastYmd: "",
-          lastHour: "",
-          lastGrupo: null,
-          lastAnimal: "",
-        });
+        setLastInfo({ lastYmd: "", lastHour: "", lastGrupo: null, lastAnimal: "" });
       if (requestIdRef.current === currentRequestId)
         setPrevInfo({
           prevYmd: "",
@@ -228,14 +275,11 @@ export function useTop3Controller() {
 
       const last = findLastDrawInList(today, schedule);
       const lastBucket = last ? toHourBucket(pickDrawHour(last)) : "";
-      if (requestIdRef.current === currentRequestId)
-        setLastHourBucket(lastBucket);
+      if (requestIdRef.current === currentRequestId) setLastHourBucket(lastBucket);
 
       const lastY = last ? pickDrawYMD(last) || ymdSafe : "";
       const lastGrupo = last ? pickPrize1GrupoFromDraw(last) : null;
-      const lastAnimal = lastGrupo
-        ? safeStr(getAnimalLabel?.(lastGrupo) || "")
-        : "";
+      const lastAnimal = lastGrupo ? safeStr(getAnimalLabel?.(lastGrupo) || "") : "";
 
       if (requestIdRef.current === currentRequestId)
         setLastInfo({
@@ -257,8 +301,7 @@ export function useTop3Controller() {
             })
           : { ymd: "", hour: "" };
 
-      if (requestIdRef.current === currentRequestId)
-        setTargetYmd(safeStr(nextSlot?.ymd || ""));
+      if (requestIdRef.current === currentRequestId) setTargetYmd(safeStr(nextSlot?.ymd || ""));
       if (requestIdRef.current === currentRequestId)
         setTargetHourBucket(safeStr(nextSlot?.hour || ""));
 
@@ -307,12 +350,8 @@ export function useTop3Controller() {
           FEDERAL_SCHEDULE,
         });
 
-        const prevGrupo = prev?.draw
-          ? pickPrize1GrupoFromDraw(prev.draw)
-          : null;
-        const prevAnimal = prevGrupo
-          ? safeStr(getAnimalLabel?.(prevGrupo) || "")
-          : "";
+        const prevGrupo = prev?.draw ? pickPrize1GrupoFromDraw(prev.draw) : null;
+        const prevAnimal = prevGrupo ? safeStr(getAnimalLabel?.(prevGrupo) || "") : "";
 
         if (requestIdRef.current === currentRequestId)
           setPrevInfo({
@@ -338,12 +377,7 @@ export function useTop3Controller() {
       if (requestIdRef.current === currentRequestId) setTargetHourBucket("");
       if (requestIdRef.current === currentRequestId) setTargetYmd("");
       if (requestIdRef.current === currentRequestId)
-        setLastInfo({
-          lastYmd: "",
-          lastHour: "",
-          lastGrupo: null,
-          lastAnimal: "",
-        });
+        setLastInfo({ lastYmd: "", lastHour: "", lastGrupo: null, lastAnimal: "" });
       if (requestIdRef.current === currentRequestId)
         setPrevInfo({
           prevYmd: "",
@@ -352,8 +386,7 @@ export function useTop3Controller() {
           prevAnimal: "",
           source: "none",
         });
-      if (requestIdRef.current === currentRequestId)
-        setRangeInfo({ from: "", to: "" });
+      if (requestIdRef.current === currentRequestId) setRangeInfo({ from: "", to: "" });
       if (requestIdRef.current === currentRequestId)
         setError(String(e?.message || e || "Falha ao carregar dados do TOP3."));
     } finally {
@@ -417,6 +450,7 @@ export function useTop3Controller() {
   ]);
 
   // ✅ build20 acima de qualquer useMemo que use ele
+  // ✅ pede MAIS candidatos para garantir 20 após remover centena repetida
   const build20 = useCallback(
     (grupo2) => {
       return buildMilharesForGrupo({
@@ -424,7 +458,7 @@ export function useTop3Controller() {
         analysisHourBucket,
         schedule,
         grupo2,
-        count: 20,
+        count: 80, // <<<<< importante
       });
     },
     [rangeDraws, analysisHourBucket, schedule]
@@ -473,6 +507,7 @@ export function useTop3Controller() {
     const alpha = Number.isFinite(Number(TOP3_SMOOTH_ALPHA))
       ? Number(TOP3_SMOOTH_ALPHA)
       : 1;
+
     const groupsK = Number.isFinite(Number(TOP3_GROUPS_K))
       ? Number(TOP3_GROUPS_K)
       : 25;
@@ -508,28 +543,37 @@ export function useTop3Controller() {
       const prob = denom > 0 ? (freq + alpha) / denom : 0;
       const probPct = Math.max(0, prob * 100);
 
-      // ✅ 20 milhares para o usuário final (do motor real)
+      // ✅ 20 milhares para o usuário final (SEM repetir centena)
       let milhares20 = [];
       try {
-        const out20 = build20(g);
+        const out = build20(g);
 
-        // build20 pode retornar:
-        // - array ["0001","0002",...]
-        // - ou { slots:[{milhar:"0001"}, ...] }
-        if (Array.isArray(out20)) {
-          milhares20 = out20
-            .map((m) => safeStr(m))
-            .filter(Boolean)
-            .slice(0, 20);
+        let candidates = [];
+        if (Array.isArray(out)) {
+          candidates = out.map((m) => normalizeMilhar4(m)).filter(Boolean);
         } else {
-          const slots20 = Array.isArray(out20?.slots) ? out20.slots : [];
-          milhares20 = slots20
-            .map((s) => safeStr(s?.milhar))
-            .filter(Boolean)
-            .slice(0, 20);
+          const slots = Array.isArray(out?.slots) ? out.slots : [];
+          candidates = slots
+            .map((s) => normalizeMilhar4(s?.milhar))
+            .filter(Boolean);
+        }
+
+        // 1) remove repetição por centena
+        const uniques = uniqueByCentena(candidates);
+
+        // 2) pega 20
+        milhares20 = uniques.slice(0, 20);
+
+        // 3) se não deu 20, completa com fallback do grupo (sem repetir centena)
+        if (milhares20.length < 20) {
+          const deny = new Set(milhares20.map((m) => m.slice(-3)));
+          const fill = fallbackGroupMilhares20(g, deny);
+          milhares20 = milhares20.concat(fill).slice(0, 20);
         }
       } catch {
-        milhares20 = [];
+        // fallback total
+        const deny = new Set();
+        milhares20 = fallbackGroupMilhares20(g, deny).slice(0, 20);
       }
 
       return {
@@ -539,7 +583,7 @@ export function useTop3Controller() {
         imgIcon: iconVariants,
         prob,
         probPct,
-        milhares20,
+        milhares20, // sempre 20 strings (e sem repetir centena)
       };
     });
   }, [analytics, build20]);
@@ -564,9 +608,7 @@ export function useTop3Controller() {
       out.push(`Base histórica: ${lookbackLabel}`);
       if (lastLabel !== "—") out.push(`Último sorteio (gatilho): ${lastLabel}`);
       if (safeStr(analysisYmd) && safeStr(analysisHourBucket)) {
-        out.push(
-          `Próximo sorteio (alvo): ${ymdToBR(analysisYmd)} ${analysisHourBucket}`
-        );
+        out.push(`Próximo sorteio (alvo): ${ymdToBR(analysisYmd)} ${analysisHourBucket}`);
       }
 
       for (const line of r) out.push(line);
@@ -623,7 +665,7 @@ export function useTop3Controller() {
     lotteryLabel,
     buildWhyFromReasons,
     build16,
-    build20,
+    build20, // (grupo) -> motor com count 80 (interno), UI usa item.milhares20 final
     getCentena3,
     normalizeImgSrc,
   };
