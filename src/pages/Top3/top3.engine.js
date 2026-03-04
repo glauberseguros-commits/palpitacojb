@@ -845,9 +845,7 @@ export function buildMilharesForGrupo({
   const target = toHourBucket(analysisHourBucket);
   const schSet = scheduleSet(schedule);
 
-  const N = Number.isFinite(Number(count))
-    ? Math.max(4, Math.trunc(Number(count)))
-    : 16;
+  const N = Number.isFinite(Number(count)) ? Math.max(4, Math.trunc(Number(count))) : 16;
 
   if (!grupo2 || !list.length || !target) {
     return { dezenas: [], slots: [] };
@@ -856,8 +854,12 @@ export function buildMilharesForGrupo({
   const dezenasFixas = getDezenasFixasFromGrupo(grupo2);
   if (!dezenasFixas.length) return { dezenas: [], slots: [] };
 
-  const collect = (mode) => {
-    const prizes = [];
+  // ✅ Coleta milhares reais (4 dígitos) do histórico, mas SEM inventar:
+  // - considera apenas prêmios 1º ao 5º (ignora 6º e 7º)
+  // - aplica peso 80/20: 1º tem peso 4, 2º–5º peso 1
+  // - respeita a grade e, no modo target_only, só no horário-alvo
+  const collectWeightedMilhares = (mode) => {
+    const out = [];
     for (const d of list) {
       const h = toHourBucket(pickDrawHour(d));
       if (!h) continue;
@@ -867,52 +869,81 @@ export function buildMilharesForGrupo({
       const ps = Array.isArray(d?.prizes) ? d.prizes : [];
       if (!ps.length) continue;
 
-      const p1 = ps.find((p) => guessPrizePos(p) === 1) || null;
-      if (!p1) continue;
+      for (const p of ps) {
+        const pos = guessPrizePos(p);
+        if (!Number.isFinite(Number(pos)) || Number(pos) < 1 || Number(pos) > 5) continue;
 
-      const g = guessPrizeGrupo(p1);
-      if (!Number.isFinite(Number(g)) || Number(g) !== Number(grupo2)) continue;
+        const g = guessPrizeGrupo(p);
+        if (!Number.isFinite(Number(g)) || Number(g) !== Number(grupo2)) continue;
 
-      const m4 = pickPrizeMilhar4(p1);
-      if (!m4) continue;
+        const m4 = pickPrizeMilhar4(p);
+        if (!m4) continue;
 
-      const dz = getDezena2(m4);
-      if (!dz || !dezenasFixas.includes(dz)) continue;
+        const dz = getDezena2(m4);
+        if (!dz || !dezenasFixas.includes(dz)) continue;
 
-      prizes.push(m4);
+        const w = Number(pos) === 1 ? 4 : 1; // 80/20 (aprox)
+        out.push({ m4, w });
+      }
     }
-    return prizes;
+    return out;
   };
 
-  let prizes = collect("target_only");
-  if (prizes.length < N) prizes = prizes.concat(collect("any_hour"));
-  if (!prizes.length) return { dezenas: dezenasFixas, slots: [] };
+  let weighted = collectWeightedMilhares("target_only");
+  if (weighted.length < N) weighted = weighted.concat(collectWeightedMilhares("any_hour"));
+  if (!weighted.length) return { dezenas: dezenasFixas, slots: [] };
 
+  // helper: escolhe prefixo (1 dígito) APENAS do que existe na base para aquela centena
+  function pickPrefixFromBaseForCentena(weightedList, centena3) {
+    const pref = new Map(); // digit -> score
+    for (const it of weightedList) {
+      const m4 = it?.m4;
+      const w = Number(it?.w || 1);
+      if (!m4 || !/^\d{4}$/.test(m4)) continue;
+      if (getCentena3(m4) !== centena3) continue;
+      const d = m4.slice(0, 1);
+      pref.set(d, (pref.get(d) || 0) + w);
+    }
+    if (!pref.size) return "";
+    return Array.from(pref.entries())
+      .sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))
+      .map((x) => x[0])[0];
+  }
+
+  // ✅ Agora o correto:
+  // Para cada dezena fixa do grupo:
+  // - contar CENTENAS (3 dígitos) que terminam nessa dezena
+  // - pegar TOP 5 (ou perDezena) por frequência (peso)
+  // - montar milhar como prefixoDaBase + centena (SEM inventar)
   const perDezena = Math.max(1, Math.ceil(N / dezenasFixas.length)); // 16=>4, 20=>5
   const slots = [];
 
   for (const dz of dezenasFixas) {
-    const centCounts = new Map();
+    const centCounts = new Map(); // c3 -> score
 
-    for (const m4 of prizes) {
+    for (const it of weighted) {
+      const m4 = it?.m4;
+      const w = Number(it?.w || 1);
+      if (!m4 || !/^\d{4}$/.test(m4)) continue;
+
+      // ✅ trava por coluna: só entra se a dezena do m4 for a dezena fixa (dz)
       if (getDezena2(m4) !== dz) continue;
+
       const c3 = getCentena3(m4);
       if (!c3) continue;
-      centCounts.set(c3, (centCounts.get(c3) || 0) + 1);
+
+      centCounts.set(c3, (centCounts.get(c3) || 0) + w);
     }
 
     const rankedCentenas = Array.from(centCounts.entries())
-      .sort(
-        (a, b) =>
-          b[1] - a[1] ||
-          (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0)
-      )
+      .sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))
       .map((x) => x[0])
       .slice(0, perDezena);
 
     for (const c3 of rankedCentenas) {
-      const m4 = pickRepresentativeMilharForCentena(prizes, c3);
-      slots.push({ dezena: dz, milhar: m4 || "" });
+      const prefix = pickPrefixFromBaseForCentena(weighted, c3);
+      const milhar = prefix ? `${prefix}${c3}` : ""; // se não achar prefixo na base, deixa vazio (SEM inventar)
+      slots.push({ dezena: dz, milhar });
     }
 
     while (slots.filter((s) => s.dezena === dz).length < perDezena) {
@@ -934,3 +965,6 @@ export function build16MilharesForGrupo(args) {
 export function build20MilharesForGrupo(args) {
   return buildMilharesForGrupo({ ...(args || {}), count: 20 });
 }
+
+
+
