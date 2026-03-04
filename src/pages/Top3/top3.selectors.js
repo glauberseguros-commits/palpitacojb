@@ -43,6 +43,20 @@ function slugifyLabel(label) {
     .replace(/^_+|_+$/g, "");
 }
 
+function stripQuery(url) {
+  const s = safeStr(url);
+  if (!s) return "";
+  // remove só querystring (mantém path)
+  const q = s.indexOf("?");
+  return q >= 0 ? s.slice(0, q) : s;
+}
+
+function addCacheBust(url, token = "v=1") {
+  const s = safeStr(url);
+  if (!s) return "";
+  return s.includes("?") ? `${s}&${token}` : `${s}?${token}`;
+}
+
 /**
  * tenta múltiplas variações de imagem por grupo/tamanho
  * ✅ prioridade: getImgFromGrupo (map oficial)
@@ -89,24 +103,38 @@ export function makeImgVariantsFromGrupo({
   ].filter(Boolean);
 
   const out = [];
+  const push = (v) => {
+    const x = safeStr(v);
+    if (x) out.push(x);
+  };
+
   for (const seed of seeds) {
-    const clean = String(seed).split("?")[0];
+    const original = safeStr(seed);
+    if (!original) continue;
+
+    // ✅ 1) mantém o seed original (inclui query real, se tiver)
+    push(original);
+
+    // ✅ 2) gera também a versão "clean" (sem query) para variações
+    const clean = stripQuery(original);
     if (!clean) continue;
 
-    out.push(clean);
+    // mantém também o clean (sem query)
+    push(clean);
 
     // variações de case
-    if (clean.endsWith(".png")) out.push(clean.slice(0, -4) + ".PNG");
-    if (clean.endsWith(".PNG")) out.push(clean.slice(0, -4) + ".png");
+    if (clean.endsWith(".png")) push(clean.slice(0, -4) + ".PNG");
+    if (clean.endsWith(".PNG")) push(clean.slice(0, -4) + ".png");
 
-    // variações de extensão
+    // variações de extensão (a partir do clean)
     if (/\.(png|PNG|jpg|jpeg)$/i.test(clean)) {
-      out.push(clean.replace(/\.(png|PNG)$/i, ".jpg"));
-      out.push(clean.replace(/\.(png|PNG|jpg|jpeg)$/i, ".jpeg"));
+      push(clean.replace(/\.(png|PNG)$/i, ".jpg"));
+      push(clean.replace(/\.(png|PNG|jpg|jpeg)$/i, ".jpeg"));
     }
 
-    // cache bust
-    out.push(`${clean}?v=1`);
+    // ✅ cache-bust: aplica no clean e também no original (sem perder query real)
+    push(addCacheBust(clean, "v=1"));
+    push(addCacheBust(original, "v=1"));
   }
 
   return Array.from(new Set(out.filter(Boolean)));
