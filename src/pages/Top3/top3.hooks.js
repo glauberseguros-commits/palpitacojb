@@ -95,11 +95,21 @@ export function useTop3Controller() {
   const DEFAULT_LOTTERY = "PT_RIO";
   const requestIdRef = useRef(0);
 
+  // cache de bounds por UF (evita refetch em todo load)
+  const boundsCacheRef = useRef(new Map()); // uf -> {minDate,maxDate}
+
+  // cache do analytics pesado (evita recomputar toda hora)
+  const analyticsCacheRef = useRef({ key: "", value: { top: [], meta: null } });
+
   const [lotteryKey, setLotteryKey] = useState(DEFAULT_LOTTERY);
   const [ymd, setYmd] = useState(() => todayYMDLocal());
   const [lookback, setLookback] = useState(LOOKBACK_ALL);
 
   const [loading, setLoading] = useState(false);
+  const [loadingStage, setLoadingStage] = useState({
+    today: false,
+    range: false,
+  });
   const [error, setError] = useState("");
 
   const [rangeDraws, setRangeDraws] = useState([]);
@@ -149,7 +159,7 @@ export function useTop3Controller() {
 
   const isFederalNonDrawDay = useMemo(() => {
     return lotteryKeySafe === "FEDERAL" && !schedule.length;
-  }, [lotteryKeySafe, schedule.length]);
+  }, [lotteryKeySafe, schedule]);
 
   const analysisHourBucket = useMemo(() => {
     return safeStr(targetHourBucket) || "";
@@ -204,54 +214,65 @@ export function useTop3Controller() {
     if (!lKey || !isYMD(ymdSafe)) return;
 
     setLoading(true);
+    setLoadingStage({ today: true, range: false });
     setError("");
     const currentRequestId = ++requestIdRef.current;
 
+    // FEDERAL: trava cedo e sai rápido
     if (lKey === "FEDERAL" && !isFederalDrawDay(ymdSafe)) {
-      if (requestIdRef.current === currentRequestId) setRangeDraws([]);
-      if (requestIdRef.current === currentRequestId) setLastHourBucket("");
-      if (requestIdRef.current === currentRequestId) setTargetHourBucket("");
-      if (requestIdRef.current === currentRequestId) setTargetYmd("");
-      if (requestIdRef.current === currentRequestId)
+      if (requestIdRef.current === currentRequestId) {
+        setLastHourBucket("");
+        setTargetHourBucket("");
+        setTargetYmd("");
         setLastInfo({ lastYmd: "", lastHour: "", lastGrupo: null, lastAnimal: "" });
-      if (requestIdRef.current === currentRequestId)
-        setPrevInfo({
-          prevYmd: "",
-          prevHour: "",
-          prevGrupo: null,
-          prevAnimal: "",
-          source: "none",
-        });
-      if (requestIdRef.current === currentRequestId)
+        setPrevInfo({ prevYmd: "", prevHour: "", prevGrupo: null, prevAnimal: "", source: "none" });
         setRangeInfo({ from: "", to: "" });
-
-      if (requestIdRef.current === currentRequestId) setLoading(false);
-      if (requestIdRef.current === currentRequestId)
+        // não precisa limpar rangeDraws aqui (mantém UI viva), mas pode:
+        // setRangeDraws([]);
+        setLoadingStage({ today: false, range: false });
+        setLoading(false);
         setError(
           `Loteria Federal só tem resultado às 20h nas quartas e sábados. (${dateBR} não é dia de concurso)`
         );
+      }
       return;
     }
 
     try {
+      // ========= 1) Bounds (cacheado) =========
       let minDate = safeStr(bounds?.minDate);
       let maxDate = safeStr(bounds?.maxDate);
 
-      try {
-        const b = await getKingBoundsByUf({ uf: lKey });
-        const bMin = safeStr(b?.minYmd || b?.minDate || b?.min || "");
-        const bMax = safeStr(b?.maxYmd || b?.maxDate || b?.max || "");
-        if (isYMD(bMin)) minDate = bMin;
-        if (isYMD(bMax)) maxDate = bMax;
-
-        if (isYMD(minDate) || isYMD(maxDate)) {
-          if (requestIdRef.current === currentRequestId)
-            setBounds({ minDate: minDate || "", maxDate: maxDate || "" });
+      const cached = boundsCacheRef.current.get(lKey);
+      if (cached?.minDate || cached?.maxDate) {
+        minDate = cached.minDate || minDate;
+        maxDate = cached.maxDate || maxDate;
+        if (requestIdRef.current === currentRequestId) {
+          setBounds({ minDate: minDate || "", maxDate: maxDate || "" });
         }
-      } catch {
-        // ok
+      } else {
+        // busca bounds sem travar a UX (mas aqui ainda é barato)
+        try {
+          const b = await getKingBoundsByUf({ uf: lKey });
+          const bMin = safeStr(b?.minYmd || b?.minDate || b?.min || "");
+          const bMax = safeStr(b?.maxYmd || b?.maxDate || b?.max || "");
+          if (isYMD(bMin)) minDate = bMin;
+          if (isYMD(bMax)) maxDate = bMax;
+
+          boundsCacheRef.current.set(lKey, {
+            minDate: isYMD(minDate) ? minDate : "",
+            maxDate: isYMD(maxDate) ? maxDate : "",
+          });
+
+          if (requestIdRef.current === currentRequestId) {
+            setBounds({ minDate: minDate || "", maxDate: maxDate || "" });
+          }
+        } catch {
+          // ok
+        }
       }
 
+      // ========= 2) HOJE (rápido) — atualiza UI imediatamente =========
       const outToday = await getKingResultsByDate({
         uf: lKey,
         date: ymdSafe,
@@ -269,13 +290,14 @@ export function useTop3Controller() {
       const lastGrupo = last ? pickPrize1GrupoFromDraw(last) : null;
       const lastAnimal = lastGrupo ? safeStr(getAnimalLabel?.(lastGrupo) || "") : "";
 
-      if (requestIdRef.current === currentRequestId)
+      if (requestIdRef.current === currentRequestId) {
         setLastInfo({
           lastYmd: safeStr(lastY || ""),
           lastHour: safeStr(lastBucket || ""),
           lastGrupo: Number.isFinite(Number(lastGrupo)) ? Number(lastGrupo) : null,
           lastAnimal,
         });
+      }
 
       const nextSlot =
         last && lastY && lastBucket
@@ -289,41 +311,12 @@ export function useTop3Controller() {
             })
           : { ymd: "", hour: "" };
 
-      if (requestIdRef.current === currentRequestId)
+      if (requestIdRef.current === currentRequestId) {
         setTargetYmd(safeStr(nextSlot?.ymd || ""));
-      if (requestIdRef.current === currentRequestId)
         setTargetHourBucket(safeStr(nextSlot?.hour || ""));
-
-      let rangeTo = ymdSafe;
-      let rangeFrom = "";
-
-      if (nextSlot?.ymd && isYMD(nextSlot.ymd)) {
-        if (nextSlot.ymd > rangeTo) rangeTo = nextSlot.ymd;
       }
 
-      if (lookback === LOOKBACK_ALL) {
-        rangeFrom = isYMD(minDate) ? minDate : addDaysYMD(ymdSafe, -180);
-      } else {
-        const days = Math.max(1, Number(lookback || 30));
-        rangeFrom = addDaysYMD(ymdSafe, -(days - 1));
-      }
-
-      if (requestIdRef.current === currentRequestId)
-        setRangeInfo({ from: rangeFrom, to: rangeTo });
-
-      const outRange = await getKingResultsByRange({
-        uf: lKey,
-        dateFrom: rangeFrom,
-        dateTo: addDaysYMD(rangeTo, 1),
-        closeHour: null,
-        positions: null,
-        mode: "detailed",
-        readPolicy: "server",
-      });
-
-      const hist = Array.isArray(outRange) ? outRange : [];
-      if (requestIdRef.current === currentRequestId) setRangeDraws(hist);
-
+      // prev robusto (barato o suficiente)
       const hourForPrev = safeStr(nextSlot?.hour || lastBucket || "");
       if (hourForPrev) {
         const prev = await getPreviousDrawRobust({
@@ -342,7 +335,7 @@ export function useTop3Controller() {
         const prevGrupo = prev?.draw ? pickPrize1GrupoFromDraw(prev.draw) : null;
         const prevAnimal = prevGrupo ? safeStr(getAnimalLabel?.(prevGrupo) || "") : "";
 
-        if (requestIdRef.current === currentRequestId)
+        if (requestIdRef.current === currentRequestId) {
           setPrevInfo({
             prevYmd: safeStr(prev?.ymd || ""),
             prevHour: safeStr(prev?.hour || ""),
@@ -350,8 +343,9 @@ export function useTop3Controller() {
             prevAnimal,
             source: safeStr(prev?.source || "none"),
           });
+        }
       } else {
-        if (requestIdRef.current === currentRequestId)
+        if (requestIdRef.current === currentRequestId) {
           setPrevInfo({
             prevYmd: "",
             prevHour: "",
@@ -359,27 +353,57 @@ export function useTop3Controller() {
             prevAnimal: "",
             source: "none",
           });
+        }
+      }
+
+      // marca fim da fase 1
+      if (requestIdRef.current === currentRequestId) {
+        setLoadingStage({ today: false, range: true });
+      }
+
+      // ========= 3) RANGE (pesado) — NÃO derruba a tela =========
+      let rangeTo = ymdSafe;
+      let rangeFrom = "";
+
+      if (nextSlot?.ymd && isYMD(nextSlot.ymd)) {
+        if (nextSlot.ymd > rangeTo) rangeTo = nextSlot.ymd;
+      }
+
+      if (lookback === LOOKBACK_ALL) {
+        rangeFrom = isYMD(minDate) ? minDate : addDaysYMD(ymdSafe, -180);
+      } else {
+        const days = Math.max(1, Number(lookback || 30));
+        rangeFrom = addDaysYMD(ymdSafe, -(days - 1));
+      }
+
+      if (requestIdRef.current === currentRequestId) {
+        setRangeInfo({ from: rangeFrom, to: rangeTo });
+      }
+
+      const outRange = await getKingResultsByRange({
+        uf: lKey,
+        dateFrom: rangeFrom,
+        dateTo: addDaysYMD(rangeTo, 1),
+        closeHour: null,
+        positions: null,
+        mode: "detailed",
+        readPolicy: "server",
+      });
+
+      const hist = Array.isArray(outRange) ? outRange : [];
+      if (requestIdRef.current === currentRequestId) {
+        setRangeDraws(hist);
       }
     } catch (e) {
-      if (requestIdRef.current === currentRequestId) setRangeDraws([]);
-      if (requestIdRef.current === currentRequestId) setLastHourBucket("");
-      if (requestIdRef.current === currentRequestId) setTargetHourBucket("");
-      if (requestIdRef.current === currentRequestId) setTargetYmd("");
-      if (requestIdRef.current === currentRequestId)
-        setLastInfo({ lastYmd: "", lastHour: "", lastGrupo: null, lastAnimal: "" });
-      if (requestIdRef.current === currentRequestId)
-        setPrevInfo({
-          prevYmd: "",
-          prevHour: "",
-          prevGrupo: null,
-          prevAnimal: "",
-          source: "none",
-        });
-      if (requestIdRef.current === currentRequestId) setRangeInfo({ from: "", to: "" });
-      if (requestIdRef.current === currentRequestId)
+      if (requestIdRef.current === currentRequestId) {
+        // não zera rangeDraws aqui (mantém tela), só mostra erro
         setError(String(e?.message || e || "Falha ao carregar dados do TOP3."));
+      }
     } finally {
-      if (requestIdRef.current === currentRequestId) setLoading(false);
+      if (requestIdRef.current === currentRequestId) {
+        setLoadingStage({ today: false, range: false });
+        setLoading(false);
+      }
     }
   }, [
     lotteryKeySafe,
@@ -395,17 +419,31 @@ export function useTop3Controller() {
     load();
   }, [load]);
 
-  // TOP3 (condicionado)
-  const analyticsCacheRef = useRef({ key:"", value:{ top:[], meta:null } });
-
-const analytics = useMemo(() => {
+  // TOP3 (condicionado) — com cache
+  const analytics = useMemo(() => {
     const list = Array.isArray(rangeDraws) ? rangeDraws : [];
     const lastG = lastInfo?.lastGrupo;
     const lastY = safeStr(lastInfo?.lastYmd);
     const lastH = safeStr(lastInfo?.lastHour);
 
     if (!list.length || !lastG || !isYMD(lastY) || !safeStr(lastH)) {
-      return { top: [], meta: null };
+      const empty = { top: [], meta: null };
+      analyticsCacheRef.current = { key: "", value: empty };
+      return empty;
+    }
+
+    // chave de cache (barata e suficiente)
+    const cacheKey = [
+      lotteryKeySafe,
+      lookback,
+      list.length,
+      lastY,
+      toHourBucket(lastH),
+      Number(lastG),
+    ].join("|");
+
+    if (analyticsCacheRef.current.key === cacheKey) {
+      return analyticsCacheRef.current.value;
     }
 
     const drawLast = list.find((d) => {
@@ -423,7 +461,7 @@ const analytics = useMemo(() => {
       };
     }
 
-    return computeConditionalNextTop3({
+    const computed = computeConditionalNextTop3({
       lotteryKey: lotteryKeySafe,
       drawsRange: list,
       drawLast: drawLastSafe,
@@ -432,15 +470,20 @@ const analytics = useMemo(() => {
       FEDERAL_SCHEDULE,
       topN: 3,
     });
+
+    analyticsCacheRef.current = { key: cacheKey, value: computed };
+    return computed;
   }, [
     rangeDraws,
     lotteryKeySafe,
+    lookback,
     lastInfo?.lastGrupo,
     lastInfo?.lastYmd,
     lastInfo?.lastHour,
   ]);
 
   // ✅ motor 20 milhares (EXATOS) -> 4 colunas x 5 (por terminação/dezena fixa)
+  // Obs: esse é pesado por natureza (varre histórico). Mas só roda pros 3 cards.
   const build20 = useCallback(
     (grupo2) => {
       return buildMilharesForGrupo({
@@ -548,7 +591,6 @@ const analytics = useMemo(() => {
         // mantém vazio (SEM inventar)
       }
 
-      // mantém também um "flat" de 20 (ordem: col1..col4, 5 itens cada)
       const milhares20 = milharesCols.flatMap((c) => c.items).slice(0, 20);
 
       return {
@@ -558,12 +600,8 @@ const analytics = useMemo(() => {
         imgIcon: iconVariants,
         prob,
         probPct,
-
-        // ✅ novo (recomendado para UI)
-        milharesCols, // [{dezena:"53", items:[...5]}, ... x4]
-
-        // ✅ compat (se algo ainda usa lista flat)
-        milhares20, // 20 strings, podendo ter ""
+        milharesCols,
+        milhares20,
       };
     });
   }, [analytics, build20]);
@@ -621,6 +659,7 @@ const analytics = useMemo(() => {
     ymdSafe,
     lookback,
     loading,
+    loadingStage, // ✅ novo (opcional pro UI premium)
     error,
     dateBR,
     schedule,
@@ -645,7 +684,7 @@ const analytics = useMemo(() => {
     lotteryLabel,
     buildWhyFromReasons,
     build16,
-    build20, // (grupo) -> motor 20 exatos (sem inventar)
+    build20,
     getCentena3,
     normalizeImgSrc,
   };
