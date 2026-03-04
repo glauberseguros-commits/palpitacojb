@@ -531,7 +531,10 @@ function computeBaseNextDistribution({
     for (const [gg, n] of c.entries()) {
       const prev = Number(freq.get(gg) || 0);
       const add = Number(n || 0);
-      freq.set(gg, (Number.isFinite(prev) ? prev : 0) + (Number.isFinite(add) ? add : 0));
+      freq.set(
+        gg,
+        (Number.isFinite(prev) ? prev : 0) + (Number.isFinite(add) ? add : 0)
+      );
     }
   }
 
@@ -669,7 +672,10 @@ export function computeConditionalNextTop3({
       for (const [gg, n] of c.entries()) {
         const prev = Number(freq.get(gg) || 0);
         const add = Number(n || 0);
-        freq.set(gg, (Number.isFinite(prev) ? prev : 0) + (Number.isFinite(add) ? add : 0));
+        freq.set(
+          gg,
+          (Number.isFinite(prev) ? prev : 0) + (Number.isFinite(add) ? add : 0)
+        );
       }
     }
 
@@ -718,20 +724,45 @@ export function computeConditionalNextTop3({
 
   const finalProb = mixProbMaps(condProb, baseProb, w);
 
+  // ✅ referência temporal do universo analisado (o "agora" do motor)
+  const nowTs = ymdHourToTs(lastY, lastH);
+
+  // ✅ bônus pequeno e controlado (prob manda; atraso só ajusta fino)
+  const LATE_BONUS_MAX = 0.02; // até +0.02 no score (seguro)
+  const LATE_CAP_DAYS = 30; // normaliza até 30 dias
+
   const ranked = Array.from(finalProb.entries())
     .map(([grupo, p]) => {
-      const ls = lastSeen.get(Number(grupo));
+      const g = Number(grupo);
+      const prob = Number(p || 0);
+
+      const ls = lastSeen.get(g);
+      const lastSeenTs = Number.isFinite(ls) ? ls : Number.POSITIVE_INFINITY;
+
+      const gapMs =
+        Number.isFinite(nowTs) &&
+        Number.isFinite(lastSeenTs) &&
+        lastSeenTs !== Number.POSITIVE_INFINITY
+          ? Math.max(0, nowTs - lastSeenTs)
+          : 0;
+
+      const gapDays = gapMs / (24 * 60 * 60 * 1000);
+      const gapNorm = Math.max(0, Math.min(1, gapDays / LATE_CAP_DAYS));
+      const lateBonus = gapNorm * LATE_BONUS_MAX;
+
       return {
-        grupo: Number(grupo),
-        prob: Number(p || 0),
-        freq: Number(condFreq.get(Number(grupo)) || 0),
-        lastSeenTs: Number.isFinite(ls) ? ls : Number.POSITIVE_INFINITY,
+        grupo: g,
+        prob,
+        score: prob + lateBonus,
+        lateBonus,
+        freq: Number(condFreq.get(g) || 0),
+        lastSeenTs,
       };
     })
     .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
       if (b.prob !== a.prob) return b.prob - a.prob;
-      if (a.lastSeenTs !== b.lastSeenTs) return a.lastSeenTs - b.lastSeenTs;
-      return a.grupo - b.grupo;
+      return a.grupo - b.grupo; // determinístico
     })
     .slice(0, Math.max(1, Number(topN || 3)));
 
@@ -845,7 +876,9 @@ export function buildMilharesForGrupo({
   const target = toHourBucket(analysisHourBucket);
   const schSet = scheduleSet(schedule);
 
-  const N = Number.isFinite(Number(count)) ? Math.max(4, Math.trunc(Number(count))) : 16;
+  const N = Number.isFinite(Number(count))
+    ? Math.max(4, Math.trunc(Number(count)))
+    : 16;
 
   if (!grupo2 || !list.length || !target) {
     return { dezenas: [], slots: [] };
@@ -871,7 +904,8 @@ export function buildMilharesForGrupo({
 
       for (const p of ps) {
         const pos = guessPrizePos(p);
-        if (!Number.isFinite(Number(pos)) || Number(pos) < 1 || Number(pos) > 5) continue;
+        if (!Number.isFinite(Number(pos)) || Number(pos) < 1 || Number(pos) > 5)
+          continue;
 
         const g = guessPrizeGrupo(p);
         if (!Number.isFinite(Number(g)) || Number(g) !== Number(grupo2)) continue;
@@ -891,13 +925,8 @@ export function buildMilharesForGrupo({
   let prizes = collectMilhares("target_only");
 
   // ✅ REGRA: não mistura horários. Se a amostra do horário-alvo for pequena, mantém a validade do recorte.
-
   if (!prizes.length) return { dezenas: dezenasFixas, slots: [] };
-  // ✅ Regra final:
-  // Para cada dezena fixa (coluna):
-  // - conta CENTENAS (3 dígitos) cuja dezena final = dz
-  // - pega TOP 5 (ou perDezena) por frequência (SEM peso)
-  // - monta milhar = prefixoDaBase + centena (SEM inventar centena)
+
   const perDezena = Math.max(1, Math.ceil(N / dezenasFixas.length)); // 16=>4, 20=>5
   const slots = [];
 
@@ -945,4 +974,3 @@ export function build16MilharesForGrupo(args) {
 export function build20MilharesForGrupo(args) {
   return buildMilharesForGrupo({ ...(args || {}), count: 20 });
 }
-
