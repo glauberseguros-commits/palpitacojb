@@ -38,10 +38,10 @@ function centenaFromMilhar(m4) {
   return s.slice(-3);
 }
 
-function chunk(arr, n) {
-  const out = [];
-  for (let i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n));
-  return out;
+function dezenaFromMilhar(m4) {
+  const s = normalizeMilharStr(m4);
+  if (!s) return "";
+  return s.slice(-2);
 }
 
 function getDezenasFixasFromGrupo(grupo) {
@@ -54,54 +54,118 @@ function getDezenasFixasFromGrupo(grupo) {
 }
 
 /**
- * Completa milhares até targetCount, SEM repetir centena (últimos 3 dígitos).
- * ✅ Fallback respeita as dezenas do grupo (01-04, 05-08, ...).
+ * ✅ MONTA 20 MILHARES EM 4 COLUNAS (5 POR DEZENA FIXA)
+ * - cada grupo tem 4 dezenas fixas
+ * - cada coluna = 1 dezena fixa
+ * - cada coluna precisa ter 5 milhares
+ * - mantém "sem repetir centena" GLOBAL (últimos 3 dígitos)
+ *
+ * Retorna:
+ * - dezenas: ["53","54","55","56"]
+ * - cols: { "53":[...5], "54":[...5], ... }
+ * - rows: [[c53_1,c54_1,c55_1,c56_1], ... x5]
+ * - flat20: rows.flat() (ordem igual ao grid)
  */
-function fillTo20UniqueCentena({ grupo, baseMilhares, targetCount = 20 }) {
+function build20ByDezena({ grupo, baseMilhares, perCol = 5 }) {
   const g = Number(grupo);
-  const out = [];
+  const dezenas = getDezenasFixasFromGrupo(g);
+  if (!dezenas.length) {
+    return { dezenas: [], cols: {}, rows: [], flat20: [] };
+  }
 
+  const input = Array.isArray(baseMilhares) ? baseMilhares : [];
+  const normalized = input.map(normalizeMilharStr).filter(Boolean);
+
+  // buckets por dezena (somente das dezenas fixas)
+  const byDz = new Map(); // dz -> [m4...]
+  for (const dz of dezenas) byDz.set(dz, []);
+  for (const m4 of normalized) {
+    const dz = dezenaFromMilhar(m4);
+    if (byDz.has(dz)) byDz.get(dz).push(m4);
+  }
+
+  // seletores com restrição global de centena
   const seenCent = new Set();
   const seenMilhar = new Set();
 
-  const push = (m) => {
-    const m4 = normalizeMilharStr(m);
-    if (!m4) return;
-    const c = centenaFromMilhar(m4);
-    if (!c) return;
-    if (seenCent.has(c)) return; // ✅ não repete centena
-    if (seenMilhar.has(m4)) return;
-    seenCent.add(c);
-    seenMilhar.add(m4);
-    out.push(m4);
+  const cols = {};
+  for (const dz of dezenas) cols[dz] = [];
+
+  const tryPush = (dz, m4) => {
+    const mm = normalizeMilharStr(m4);
+    if (!mm) return false;
+    const c3 = centenaFromMilhar(mm);
+    if (!c3) return false;
+
+    if (seenCent.has(c3)) return false; // ✅ não repete centena (global)
+    if (seenMilhar.has(mm)) return false;
+
+    cols[dz].push(mm);
+    seenCent.add(c3);
+    seenMilhar.add(mm);
+    return true;
   };
 
-  // 1) entra com os que vieram do motor (normaliza + remove centena repetida)
-  (Array.isArray(baseMilhares) ? baseMilhares : []).forEach(push);
-
-  // 2) fallback determinístico POR GRUPO respeitando dezenas fixas
-  // gera milhares do tipo: <prefixo><dezenaFix><unidade>
-  // exemplo dezena 53 => 0 53 0..9, depois 1 53 0..9, etc.
-  const dezenasFixas = getDezenasFixasFromGrupo(g);
-  if (dezenasFixas.length) {
-    // 25 * 4 dezenas => garante coerência JB
-    for (let prefix = 0; prefix <= 9 && out.length < targetCount; prefix += 1) {
-      for (const dz of dezenasFixas) {
-        for (let u = 0; u <= 9 && out.length < targetCount; u += 1) {
-          const m4 = `${prefix}${dz}${u}`; // 4 dígitos
-          push(m4);
-        }
-      }
+  // 1) primeiro: aproveita o que veio do motor, por dezena, na ordem em que chegou
+  for (const dz of dezenas) {
+    const arr = byDz.get(dz) || [];
+    for (const m4 of arr) {
+      if (cols[dz].length >= perCol) break;
+      tryPush(dz, m4);
     }
   }
 
-  // 3) se por qualquer motivo ainda faltou (grupo inválido), completa genérico
-  for (let i = 0; i < 9999 && out.length < targetCount; i++) {
-    const m4 = String(i).padStart(4, "0");
-    push(m4);
+  // 2) fallback determinístico por dezena fixa (respeitando dezenas)
+  // gera: <prefix><dz><u> (4 dígitos)
+  for (let prefix = 0; prefix <= 9; prefix += 1) {
+    let doneAll = true;
+
+    for (const dz of dezenas) {
+      if (cols[dz].length >= perCol) continue;
+
+      doneAll = false;
+      for (let u = 0; u <= 9 && cols[dz].length < perCol; u += 1) {
+        const m4 = `${prefix}${dz}${u}`;
+        tryPush(dz, m4);
+      }
+    }
+
+    if (doneAll) break;
   }
 
-  return out.slice(0, targetCount);
+  // 3) último recurso (não deveria precisar): completa com varredura geral,
+  // mas ainda tentando manter a dezena correta de cada coluna.
+  for (let i = 0; i < 9999; i += 1) {
+    let allOk = true;
+
+    for (const dz of dezenas) {
+      if (cols[dz].length >= perCol) continue;
+      allOk = false;
+
+      const m4 = String(i).padStart(4, "0");
+      if (dezenaFromMilhar(m4) !== dz) continue;
+      tryPush(dz, m4);
+    }
+
+    if (allOk) break;
+  }
+
+  // garante tamanho exato por coluna (sem undefined)
+  for (const dz of dezenas) {
+    while (cols[dz].length < perCol) cols[dz].push("");
+    if (cols[dz].length > perCol) cols[dz] = cols[dz].slice(0, perCol);
+  }
+
+  // monta 5 linhas x 4 colunas
+  const rows = [];
+  for (let r = 0; r < perCol; r += 1) {
+    rows.push(dezenas.map((dz) => cols[dz][r] || ""));
+  }
+
+  // ordem do grid (linha a linha)
+  const flat20 = rows.flat().filter(Boolean);
+
+  return { dezenas, cols, rows, flat20 };
 }
 
 /** Imagem com fallback (array de srcs) */
@@ -281,7 +345,6 @@ export default function Top3View(props) {
       ) : !list.length ? (
         <div style={{ color: t.muted }}>Sem dados para calcular TOP3.</div>
       ) : (
-        // ✅ Layout: 1º isolado (span total), 2º e 3º lado a lado (desktop)
         <div
           style={{
             display: "grid",
@@ -317,7 +380,6 @@ export default function Top3View(props) {
               : [];
 
             // ========= Milhares (20) =========
-            // 1) prioriza item.milhares20 / item.milhares (já vindo do hook)
             let milharesBase = [];
             const m20 = Array.isArray(item?.milhares20) ? item.milhares20 : null;
             const mAny = Array.isArray(item?.milhares) ? item.milhares : null;
@@ -325,7 +387,7 @@ export default function Top3View(props) {
             if (m20 && m20.length) milharesBase = m20.slice(0);
             else if (mAny && mAny.length) milharesBase = mAny.slice(0);
 
-            // 2) fallback: props.buildMilhares(grupo, 20) ou props.build16(grupo)
+            // fallback: props.buildMilhares(grupo, 20) ou props.build16(grupo)
             if (!milharesBase.length) {
               const g = Number(item?.grupo);
               if (Number.isFinite(g) && g > 0) {
@@ -344,17 +406,17 @@ export default function Top3View(props) {
               }
             }
 
-            // ✅ GARANTIA: 20 reais, sem repetir centena, respeitando dezenas do grupo
+            // ✅ aqui é a correção: 4 colunas (dezena fixa) x 5 linhas
             const grupoNum = Number(item?.grupo);
-            const milhares20 = fillTo20UniqueCentena({
+            const grid = build20ByDezena({
               grupo: grupoNum,
               baseMilhares: milharesBase,
-              targetCount: 20,
+              perCol: 5,
             });
 
-            const copyAll = () => {
-              copyText(milhares20.join(" "));
-            };
+            const dezenasHeader = grid.dezenas; // ["53","54","55","56"]
+            const gridRows = grid.rows; // 5x4
+            const copyAll = () => copyText(grid.flat20.join(" "));
 
             const key = `${String(item?.grupo ?? "g")}__${animal || "x"}__${idx}`;
 
@@ -364,8 +426,6 @@ export default function Top3View(props) {
                 : idx === 1
                 ? "2º MAIS FORTE"
                 : "3º MAIS FORTE";
-
-            const gridRows = chunk(milhares20, 4); // 20 => 5 linhas de 4
 
             return (
               <div
@@ -530,6 +590,28 @@ export default function Top3View(props) {
                     </button>
                   </div>
 
+                  {/* ✅ headers das dezenas (opcional, mas ajuda demais) */}
+                  {dezenasHeader.length ? (
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+                        gap: 10,
+                        padding: "0 12px",
+                        color: t.muted,
+                        fontSize: 12,
+                        fontWeight: 900,
+                        letterSpacing: 1,
+                      }}
+                    >
+                      {dezenasHeader.map((dz) => (
+                        <div key={dz} style={{ textAlign: "center" }}>
+                          {dz}
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+
                   <div
                     style={{
                       display: "grid",
@@ -562,12 +644,13 @@ export default function Top3View(props) {
                               border: "1px solid rgba(201,168,62,0.28)",
                               color: t.text,
                               userSelect: "text",
-                              cursor: "pointer",
+                              cursor: m ? "pointer" : "default",
+                              opacity: m ? 1 : 0.35,
                             }}
-                            title="Clique para copiar"
-                            onClick={() => copyText(m)}
+                            title={m ? "Clique para copiar" : ""}
+                            onClick={() => (m ? copyText(m) : null)}
                           >
-                            {m}
+                            {m || "—"}
                           </div>
                         ))}
                       </div>
