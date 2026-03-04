@@ -892,21 +892,6 @@ export function buildMilharesForGrupo({
 // ✅ REGRA: não mistura horários. Se a amostra do horário-alvo for pequena, mantém a validade do recorte.
 if (!prizes.length) return { dezenas: dezenasFixas, slots: [] };
 
-  // ✅ prefixo (1 dígito) escolhido APENAS da base, para a centena (3 dígitos)
-  function pickPrefixFromBaseForCentena(prizesList, centena3) {
-    const pref = new Map(); // digit -> count
-    for (const m4 of prizesList) {
-      if (!m4 || !/^\d{4}$/.test(m4)) continue;
-      if (getCentena3(m4) !== centena3) continue;
-      const d = m4.slice(0, 1);
-      pref.set(d, (pref.get(d) || 0) + 1);
-    }
-    if (!pref.size) return "";
-    return Array.from(pref.entries())
-      .sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1))
-      .map((x) => x[0])[0];
-  }
-
   // ✅ Regra final:
   // Para cada dezena fixa (coluna):
   // - conta CENTENAS (3 dígitos) cuja dezena final = dz
