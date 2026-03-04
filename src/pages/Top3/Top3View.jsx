@@ -25,23 +25,19 @@ function pickSeal(pct) {
 function normalizeMilharStr(v) {
   const s = String(v || "").trim();
   if (!s) return "";
-  // mantém somente dígitos
   const dig = s.replace(/\D+/g, "");
   if (!dig) return "";
-  // milhar = 4 dígitos (preserva zero à esquerda)
   return dig.length >= 4 ? dig.slice(-4) : dig.padStart(4, "0");
 }
 
 function centenaFromMilhar(m4) {
   const s = normalizeMilharStr(m4);
-  if (!s) return "";
-  return s.slice(-3);
+  return s ? s.slice(-3) : "";
 }
 
 function dezenaFromMilhar(m4) {
   const s = normalizeMilharStr(m4);
-  if (!s) return "";
-  return s.slice(-2);
+  return s ? s.slice(-2) : "";
 }
 
 function getDezenasFixasFromGrupo(grupo) {
@@ -53,38 +49,63 @@ function getDezenasFixasFromGrupo(grupo) {
   return out;
 }
 
+function clampColsFromItemMilharesCols(milharesCols, expectedCols = 4, perCol = 5) {
+  const colsArr = Array.isArray(milharesCols) ? milharesCols : [];
+  const out = [];
+
+  for (let i = 0; i < Math.min(expectedCols, colsArr.length); i += 1) {
+    const dz = String(colsArr[i]?.dezena || "").trim();
+    const items0 = Array.isArray(colsArr[i]?.items) ? colsArr[i].items : [];
+
+    const items = items0
+      .map(normalizeMilharStr)
+      .map((m) => (m && /^\d{4}$/.test(m) ? m : ""))
+      .slice(0, perCol);
+
+    while (items.length < perCol) items.push("");
+    out.push({ dezena: dz, items });
+  }
+
+  while (out.length < expectedCols) {
+    out.push({ dezena: "", items: Array(perCol).fill("") });
+  }
+
+  return out.slice(0, expectedCols);
+}
+
 /**
  * ✅ MONTA 20 MILHARES EM 4 COLUNAS (5 POR DEZENA FIXA)
- * - cada grupo tem 4 dezenas fixas
- * - cada coluna = 1 dezena fixa
- * - cada coluna precisa ter 5 milhares
+ * - NÃO INVENTA NÚMEROS
+ * - se faltar, completa com "" (vazio)
+ * - respeita dezenas fixas do grupo
  * - mantém "sem repetir centena" GLOBAL (últimos 3 dígitos)
  *
  * Retorna:
  * - dezenas: ["53","54","55","56"]
- * - cols: { "53":[...5], "54":[...5], ... }
- * - rows: [[c53_1,c54_1,c55_1,c56_1], ... x5]
- * - flat20: rows.flat() (ordem igual ao grid)
+ * - rows: 5x4
+ * - flat20: (ordem do grid) sem vazios
  */
 function build20ByDezena({ grupo, baseMilhares, perCol = 5 }) {
   const g = Number(grupo);
   const dezenas = getDezenasFixasFromGrupo(g);
+
   if (!dezenas.length) {
-    return { dezenas: [], cols: {}, rows: [], flat20: [] };
+    return { dezenas: [], rows: [], flat20: [] };
   }
 
   const input = Array.isArray(baseMilhares) ? baseMilhares : [];
-  const normalized = input.map(normalizeMilharStr).filter(Boolean);
+  const normalized = input.map(normalizeMilharStr).filter((x) => /^\d{4}$/.test(x));
 
   // buckets por dezena (somente das dezenas fixas)
-  const byDz = new Map(); // dz -> [m4...]
+  const byDz = new Map();
   for (const dz of dezenas) byDz.set(dz, []);
+
   for (const m4 of normalized) {
     const dz = dezenaFromMilhar(m4);
     if (byDz.has(dz)) byDz.get(dz).push(m4);
   }
 
-  // seletores com restrição global de centena
+  // seletores com restrição global de centena + não repetir milhar
   const seenCent = new Set();
   const seenMilhar = new Set();
 
@@ -94,6 +115,7 @@ function build20ByDezena({ grupo, baseMilhares, perCol = 5 }) {
   const tryPush = (dz, m4) => {
     const mm = normalizeMilharStr(m4);
     if (!mm) return false;
+
     const c3 = centenaFromMilhar(mm);
     if (!c3) return false;
 
@@ -106,7 +128,7 @@ function build20ByDezena({ grupo, baseMilhares, perCol = 5 }) {
     return true;
   };
 
-  // 1) primeiro: aproveita o que veio do motor, por dezena, na ordem em que chegou
+  // 1) aproveita o que veio do motor, por dezena, na ordem em que chegou
   for (const dz of dezenas) {
     const arr = byDz.get(dz) || [];
     for (const m4 of arr) {
@@ -115,42 +137,7 @@ function build20ByDezena({ grupo, baseMilhares, perCol = 5 }) {
     }
   }
 
-  // 2) fallback determinístico por dezena fixa (respeitando dezenas)
-  // gera: <prefix><dz><u> (4 dígitos)
-  for (let prefix = 0; prefix <= 9; prefix += 1) {
-    let doneAll = true;
-
-    for (const dz of dezenas) {
-      if (cols[dz].length >= perCol) continue;
-
-      doneAll = false;
-      for (let u = 0; u <= 9 && cols[dz].length < perCol; u += 1) {
-        const m4 = `${prefix}${dz}${u}`;
-        tryPush(dz, m4);
-      }
-    }
-
-    if (doneAll) break;
-  }
-
-  // 3) último recurso (não deveria precisar): completa com varredura geral,
-  // mas ainda tentando manter a dezena correta de cada coluna.
-  for (let i = 0; i < 9999; i += 1) {
-    let allOk = true;
-
-    for (const dz of dezenas) {
-      if (cols[dz].length >= perCol) continue;
-      allOk = false;
-
-      const m4 = String(i).padStart(4, "0");
-      if (dezenaFromMilhar(m4) !== dz) continue;
-      tryPush(dz, m4);
-    }
-
-    if (allOk) break;
-  }
-
-  // garante tamanho exato por coluna (sem undefined)
+  // ✅ SEM fallback inventado. Só completa com vazio.
   for (const dz of dezenas) {
     while (cols[dz].length < perCol) cols[dz].push("");
     if (cols[dz].length > perCol) cols[dz] = cols[dz].slice(0, perCol);
@@ -162,10 +149,10 @@ function build20ByDezena({ grupo, baseMilhares, perCol = 5 }) {
     rows.push(dezenas.map((dz) => cols[dz][r] || ""));
   }
 
-  // ordem do grid (linha a linha)
+  // ordem do grid (linha a linha) — só números
   const flat20 = rows.flat().filter(Boolean);
 
-  return { dezenas, cols, rows, flat20 };
+  return { dezenas, rows, flat20 };
 }
 
 /** Imagem com fallback (array de srcs) */
@@ -275,11 +262,8 @@ export default function Top3View(props) {
         await navigator.clipboard.writeText(s);
         return true;
       }
-    } catch {
-      // cai no fallback abaixo
-    }
+    } catch {}
 
-    // fallback antigo
     try {
       const ta = document.createElement("textarea");
       ta.value = s;
@@ -301,15 +285,8 @@ export default function Top3View(props) {
     <div style={{ padding: 16, color: t.text }}>
       {/* CSS local (hover/active/shine) */}
       <style>{`
-        .pp-m20wrap{
-          position: relative;
-        }
-        .pp-m20hdr{
-          display:flex;
-          align-items:center;
-          justify-content:space-between;
-          gap:10px;
-        }
+        .pp-m20wrap{ position: relative; }
+        .pp-m20hdr{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
         .pp-btn{
           border-radius: 999px;
           padding: 9px 12px;
@@ -328,9 +305,7 @@ export default function Top3View(props) {
           border-color: rgba(201,168,62,0.48);
           box-shadow: 0 10px 24px rgba(0,0,0,0.35), 0 0 0 1px rgba(201,168,62,0.10);
         }
-        .pp-btn:active{
-          transform: translateY(0px);
-        }
+        .pp-btn:active{ transform: translateY(0px); }
 
         .pp-chipRow{
           display:grid;
@@ -399,18 +374,14 @@ export default function Top3View(props) {
           cursor: default;
           box-shadow: none;
         }
-        .pp-pill:not([data-empty="1"]){
-          cursor:pointer;
-        }
+        .pp-pill:not([data-empty="1"]){ cursor:pointer; }
         .pp-pill:not([data-empty="1"]):hover{
           transform: translateY(-1px);
           border-color: rgba(201,168,62,0.52);
           background: linear-gradient(180deg, rgba(201,168,62,0.22), rgba(201,168,62,0.10));
           box-shadow: 0 16px 34px rgba(0,0,0,0.42), 0 0 0 1px rgba(201,168,62,0.10);
         }
-        .pp-pill:not([data-empty="1"]):active{
-          transform: translateY(0px);
-        }
+        .pp-pill:not([data-empty="1"]):active{ transform: translateY(0px); }
         .pp-copiedBadge{
           position:absolute;
           right: 10px;
@@ -466,7 +437,6 @@ export default function Top3View(props) {
             </div>
           </div>
 
-          {/* Toggle técnico */}
           <button
             type="button"
             onClick={() => setShowTech((v) => !v)}
@@ -490,9 +460,7 @@ export default function Top3View(props) {
       {loading ? (
         <div style={{ color: t.muted }}>Carregando…</div>
       ) : error ? (
-        <div style={{ color: "#ff6b6b", fontWeight: 700 }}>
-          {String(error)}
-        </div>
+        <div style={{ color: "#ff6b6b", fontWeight: 700 }}>{String(error)}</div>
       ) : !list.length ? (
         <div style={{ color: t.muted }}>Sem dados para calcular TOP3.</div>
       ) : (
@@ -509,14 +477,10 @@ export default function Top3View(props) {
             const animal = String(item?.animal || "").trim();
 
             const samplesRaw = Number(item?.meta?.samples ?? item?.samples ?? 0);
-            const samples = Number.isFinite(samplesRaw)
-              ? Math.max(0, Math.trunc(samplesRaw))
-              : 0;
+            const samples = Number.isFinite(samplesRaw) ? Math.max(0, Math.trunc(samplesRaw)) : 0;
 
             const freqRaw = Number(item?.freq ?? 0);
-            const freq = Number.isFinite(freqRaw)
-              ? Math.max(0, Math.trunc(freqRaw))
-              : 0;
+            const freq = Number.isFinite(freqRaw) ? Math.max(0, Math.trunc(freqRaw)) : 0;
 
             const denom = samples > 0 ? samples * 7 : 0;
             const derivedScore = denom > 0 ? freq / denom : 0;
@@ -531,53 +495,59 @@ export default function Top3View(props) {
               : [];
 
             // ========= Milhares (20) =========
-            let milharesBase = [];
-            const m20 = Array.isArray(item?.milhares20) ? item.milhares20 : null;
-            const mAny = Array.isArray(item?.milhares) ? item.milhares : null;
+            // ✅ prioridade: usar a estrutura pronta do hook (milharesCols)
+            const hasCols =
+              Array.isArray(item?.milharesCols) &&
+              item.milharesCols.length >= 4 &&
+              Array.isArray(item.milharesCols[0]?.items);
 
-            if (m20 && m20.length) milharesBase = m20.slice(0);
-            else if (mAny && mAny.length) milharesBase = mAny.slice(0);
+            let dezenasHeader = [];
+            let gridRows = Array(5).fill(0).map(() => Array(4).fill(""));
+            let flat20 = [];
 
-            // fallback: props.buildMilhares(grupo, 20) ou props.build16(grupo)
-            if (!milharesBase.length) {
-              const g = Number(item?.grupo);
-              if (Number.isFinite(g) && g > 0) {
-                if (typeof buildMilhares === "function") {
-                  const out = buildMilhares(g, 20);
-                  if (Array.isArray(out)) {
-                    milharesBase = out.slice(0);
-                  } else if (out && Array.isArray(out.slots)) {
-                    milharesBase = out.slots.map((x) => x?.milhar).filter(Boolean);
+            if (hasCols) {
+              const cols4 = clampColsFromItemMilharesCols(item.milharesCols, 4, 5);
+              dezenasHeader = cols4.map((c) => String(c.dezena || ""));
+              gridRows = Array.from({ length: 5 }, (_, r) => cols4.map((c) => c.items[r] || ""));
+              flat20 = gridRows.flat().filter(Boolean);
+            } else {
+              let milharesBase = [];
+              const m20 = Array.isArray(item?.milhares20) ? item.milhares20 : null;
+              const mAny = Array.isArray(item?.milhares) ? item.milhares : null;
+
+              if (m20 && m20.length) milharesBase = m20.slice(0);
+              else if (mAny && mAny.length) milharesBase = mAny.slice(0);
+
+              // fallback: props.buildMilhares(grupo, 20) ou props.build16(grupo)
+              if (!milharesBase.length) {
+                const g = Number(item?.grupo);
+                if (Number.isFinite(g) && g > 0) {
+                  if (typeof buildMilhares === "function") {
+                    const out = buildMilhares(g, 20);
+                    if (Array.isArray(out)) milharesBase = out.slice(0);
+                    else if (out && Array.isArray(out.slots)) {
+                      milharesBase = out.slots.map((x) => x?.milhar).filter(Boolean);
+                    }
+                  } else if (typeof build16 === "function") {
+                    const out16 = build16(g);
+                    const slots16 = Array.isArray(out16?.slots) ? out16.slots : [];
+                    milharesBase = slots16.map((x) => x?.milhar).filter(Boolean);
                   }
-                } else if (typeof build16 === "function") {
-                  const out16 = build16(g);
-                  const slots16 = Array.isArray(out16?.slots) ? out16.slots : [];
-                  milharesBase = slots16.map((x) => x?.milhar).filter(Boolean);
                 }
               }
+
+              const grupoNum = Number(item?.grupo);
+              const grid = build20ByDezena({ grupo: grupoNum, baseMilhares: milharesBase, perCol: 5 });
+              dezenasHeader = grid.dezenas;
+              gridRows = grid.rows;
+              flat20 = grid.flat20;
             }
 
-            // ✅ aqui é a correção: 4 colunas (dezena fixa) x 5 linhas
-            const grupoNum = Number(item?.grupo);
-            const grid = build20ByDezena({
-              grupo: grupoNum,
-              baseMilhares: milharesBase,
-              perCol: 5,
-            });
-
-            const dezenasHeader = grid.dezenas; // ["53","54","55","56"]
-            const gridRows = grid.rows; // 5x4
-
             const key = `${String(item?.grupo ?? "g")}__${animal || "x"}__${idx}`;
-            const title =
-              idx === 0
-                ? "1º MAIS FORTE"
-                : idx === 1
-                ? "2º MAIS FORTE"
-                : "3º MAIS FORTE";
+            const title = idx === 0 ? "1º MAIS FORTE" : idx === 1 ? "2º MAIS FORTE" : "3º MAIS FORTE";
 
             const doCopyAll = async () => {
-              const ok = await copyText(grid.flat20.join(" "));
+              const ok = await copyText(flat20.join(" "));
               if (ok) setCopiedAllKey(key);
             };
 
@@ -602,14 +572,7 @@ export default function Top3View(props) {
                 }}
               >
                 {/* Top strip */}
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: 12,
-                  }}
-                >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <div
                       style={{
@@ -628,9 +591,7 @@ export default function Top3View(props) {
                     </div>
 
                     <div style={{ display: "grid", gap: 2 }}>
-                      <div style={{ fontWeight: 900, letterSpacing: 0.4 }}>
-                        🏅 {title}
-                      </div>
+                      <div style={{ fontWeight: 900, letterSpacing: 0.4 }}>🏅 {title}</div>
                       <div style={{ color: t.muted, fontSize: 12 }}>
                         {seal.emoji} {seal.label}
                       </div>
@@ -645,51 +606,20 @@ export default function Top3View(props) {
                 </div>
 
                 {/* Main header */}
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "96px 1fr 180px",
-                    gap: 14,
-                    alignItems: "center",
-                  }}
-                >
-                  <ImgWithFallback
-                    srcs={iconSrcs}
-                    alt={animal ? `${animal}` : `G${grupoTxt}`}
-                    size={96}
-                  />
+                <div style={{ display: "grid", gridTemplateColumns: "96px 1fr 180px", gap: 14, alignItems: "center" }}>
+                  <ImgWithFallback srcs={iconSrcs} alt={animal ? `${animal}` : `G${grupoTxt}`} size={96} />
 
                   <div style={{ display: "grid", gap: 6 }}>
-                    <div style={{ fontSize: 12, color: t.muted, fontWeight: 800 }}>
-                      GRUPO {grupoTxt}
-                    </div>
+                    <div style={{ fontSize: 12, color: t.muted, fontWeight: 800 }}>GRUPO {grupoTxt}</div>
                     <div style={{ fontSize: 22, fontWeight: 950, letterSpacing: 0.6 }}>
                       {animal ? animal.toUpperCase() : "—"}
                     </div>
-                    <div style={{ color: t.muted, fontSize: 12 }}>
-                      Próximo sorteio (TOP3)
-                    </div>
+                    <div style={{ color: t.muted, fontSize: 12 }}>Próximo sorteio (TOP3)</div>
                   </div>
 
-                  <div
-                    style={{
-                      justifySelf: "end",
-                      textAlign: "right",
-                      display: "grid",
-                      gap: 6,
-                    }}
-                  >
-                    <div style={{ color: t.muted, fontSize: 12, fontWeight: 800 }}>
-                      CONFIANÇA
-                    </div>
-                    <div
-                      style={{
-                        fontSize: 34,
-                        fontWeight: 950,
-                        color: t.accent,
-                        lineHeight: 1,
-                      }}
-                    >
+                  <div style={{ justifySelf: "end", textAlign: "right", display: "grid", gap: 6 }}>
+                    <div style={{ color: t.muted, fontSize: 12, fontWeight: 800 }}>CONFIANÇA</div>
+                    <div style={{ fontSize: 34, fontWeight: 950, color: t.accent, lineHeight: 1 }}>
                       {pct.toFixed(2)}%
                     </div>
 
@@ -701,14 +631,7 @@ export default function Top3View(props) {
                         overflow: "hidden",
                       }}
                     >
-                      <div
-                        style={{
-                          height: "100%",
-                          width: `${pct}%`,
-                          background: t.accent,
-                          opacity: 0.75,
-                        }}
-                      />
+                      <div style={{ height: "100%", width: `${pct}%`, background: t.accent, opacity: 0.75 }} />
                     </div>
                   </div>
                 </div>
@@ -726,17 +649,10 @@ export default function Top3View(props) {
                   <div className="pp-m20hdr">
                     <div style={{ display: "grid", gap: 2 }}>
                       <div style={{ fontWeight: 950 }}>📌 20 MILHARES RECOMENDADAS</div>
-                      <div className="pp-miniNote">
-                        Clique em uma milhar para copiar • Grade por dezena fixa
-                      </div>
+                      <div className="pp-miniNote">Clique em uma milhar para copiar • Grade por dezena fixa</div>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={doCopyAll}
-                      className="pp-btn"
-                      title="Copiar as 20 milhares"
-                    >
+                    <button type="button" onClick={doCopyAll} className="pp-btn" title="Copiar as 20 milhares">
                       {copiedAllKey === key ? "✅ Copiado" : "Copiar 20"}
                     </button>
                   </div>
@@ -744,9 +660,9 @@ export default function Top3View(props) {
                   {/* Chips das dezenas */}
                   {dezenasHeader.length ? (
                     <div className="pp-chipRow">
-                      {dezenasHeader.map((dz) => (
-                        <div key={dz} className="pp-chip">
-                          {dz}
+                      {dezenasHeader.map((dz, i) => (
+                        <div key={`${dz}-${i}`} className="pp-chip">
+                          {dz || "—"}
                         </div>
                       ))}
                     </div>
@@ -770,9 +686,7 @@ export default function Top3View(props) {
                               onClick={() => doCopyOne(mm, rIdx, cIdx)}
                             >
                               {mm || "—"}
-                              {isCopied ? (
-                                <div className="pp-copiedBadge">COPIADO</div>
-                              ) : null}
+                              {isCopied ? <div className="pp-copiedBadge">COPIADO</div> : null}
                             </div>
                           );
                         })}
@@ -794,9 +708,7 @@ export default function Top3View(props) {
                       gap: 6,
                     }}
                   >
-                    <div style={{ fontWeight: 900, color: t.text }}>
-                      Detalhes técnicos
-                    </div>
+                    <div style={{ fontWeight: 900, color: t.text }}>Detalhes técnicos</div>
                     {item.reasons.slice(0, 10).map((r, i) => (
                       <div key={i}>• {String(r)}</div>
                     ))}
