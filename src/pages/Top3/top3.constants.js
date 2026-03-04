@@ -15,9 +15,15 @@ export const LOOKBACK_OPTIONS = [
   { value: 7, label: "7 dias" },
 ];
 
+/**
+ * LOTTERY_OPTIONS (compat)
+ * - Alguns UIs esperam { value, label }
+ * - Outros esperam { key, label }
+ * => entregamos os dois campos para evitar "sumir aba"
+ */
 export const LOTTERY_OPTIONS = [
-  { value: "PT_RIO", label: "PT_RIO (RJ)" },
-  { value: "FEDERAL", label: "FEDERAL" },
+  { key: "PT_RIO", value: "PT_RIO", label: "RJ (PT_RIO)" },
+  { key: "FEDERAL", value: "FEDERAL", label: "Federal" },
 ];
 
 // Grades

@@ -564,7 +564,7 @@ function freqToProbMap(
     p.set(g, (n + a) / denom);
   }
 
-  return { prob: p, total, denom };
+  return { prob: p, total, denom, alpha: a, k };
 }
 
 function mixProbMaps(pCond, pBase, w) {
@@ -582,6 +582,13 @@ function mixProbMaps(pCond, pBase, w) {
     out.set(Number(k), ww * pc + (1 - ww) * pb);
   }
   return out;
+}
+
+function driverFromMixW(w) {
+  const ww = Math.max(0, Math.min(1, Number(w || 0)));
+  if (ww >= 0.65) return { key: "COND", label: "Condicional (gatilho + recorte)" };
+  if (ww <= 0.35) return { key: "BASE", label: "Base (horário/DOW, sem gatilho)" };
+  return { key: "MIXED", label: "Mistura equilibrada" };
 }
 
 /* =========================
@@ -716,13 +723,27 @@ export function computeConditionalNextTop3({
   const baseFreq = base?.freq || new Map();
   const baseSamples = safeInt(base?.samples, 0);
 
-  const condProb = freqToProbMap(condFreq, alpha, groupsK).prob;
-  const baseProb = freqToProbMap(baseFreq, alpha, groupsK).prob;
+  const condStats = freqToProbMap(condFreq, alpha, groupsK);
+  const baseStats = freqToProbMap(baseFreq, alpha, groupsK);
+
+  const condProb = condStats.prob;
+  const baseProb = baseStats.prob;
 
   const M = safeInt(TOP3_SHRINK_M, 40);
   const w = condSamples / (condSamples + M);
 
   const finalProb = mixProbMaps(condProb, baseProb, w);
+
+  const driver = driverFromMixW(w);
+
+  const dominantReason =
+    driver.key === "BASE"
+      ? `Puxou mais para BASE porque a janela condicional foi curta (amostras cond=${condSamples}) e o shrink M=${M} reduziu o peso do gatilho.`
+      : driver.key === "COND"
+      ? `Puxou mais para CONDICIONAL porque houve evidência suficiente no recorte (amostras cond=${condSamples}), aumentando o peso do gatilho.`
+      : `Puxou para uma mistura (condicional e base) porque o peso w=${w.toFixed(
+          2
+        )} ficou intermediário (amostras cond=${condSamples}, M=${M}).`;
 
   // ✅ referência temporal do universo analisado (o "agora" do motor)
   const nowTs = ymdHourToTs(lastY, lastH);
@@ -734,7 +755,13 @@ export function computeConditionalNextTop3({
   const ranked = Array.from(finalProb.entries())
     .map(([grupo, p]) => {
       const g = Number(grupo);
-      const prob = Number(p || 0);
+      const probFinal = Number(p || 0);
+
+      const probCond = Number(condProb.get(g) || 0);
+      const probBase = Number(baseProb.get(g) || 0);
+
+      const freqCond = Number(condFreq.get(g) || 0);
+      const freqBase = Number(baseFreq.get(g) || 0);
 
       const ls = lastSeen.get(g);
       const lastSeenTs = Number.isFinite(ls) ? ls : Number.POSITIVE_INFINITY;
@@ -750,12 +777,28 @@ export function computeConditionalNextTop3({
       const gapNorm = Math.max(0, Math.min(1, gapDays / LATE_CAP_DAYS));
       const lateBonus = gapNorm * LATE_BONUS_MAX;
 
+      // explica "freq=0 entrou por quê?"
+      let freqZeroWhy = "";
+      if (freqCond <= 0) {
+        if (freqBase > 0) {
+          freqZeroWhy = `freq condicional=0, mas entrou via BASE (horário/DOW) + mistura (w=${w.toFixed(
+            2
+          )}).`;
+        } else {
+          freqZeroWhy = `freq condicional=0 e freq base=0: entrou por suavização (alpha=${condStats.alpha}) e/ou ajuste de atraso (lateBonus).`;
+        }
+      }
+
       return {
         grupo: g,
-        prob,
-        score: prob + lateBonus,
+        probCond,
+        probBase,
+        prob: probFinal,
+        score: probFinal + lateBonus,
         lateBonus,
-        freq: Number(condFreq.get(g) || 0),
+        freqCond,
+        freqBase,
+        freqZeroWhy,
         lastSeenTs,
       };
     })
@@ -768,49 +811,99 @@ export function computeConditionalNextTop3({
 
   const scenarioLabel = chosen?.label || "NONE";
 
-  const top = ranked.map((x, idx) => ({
-    rank: idx + 1,
-    title:
-      idx === 0
-        ? "Mais provável"
-        : idx === 1
-        ? "2º mais provável"
-        : "3º mais provável",
-    grupo: x.grupo,
-    prob: x.prob,
-    freq: x.freq,
-    reasons: [
-      `Gatilho: 1º lugar = G${String(triggerGrupo).padStart(
-        2,
-        "0"
-      )} (último sorteio)`,
-      `Cenário (fallback): ${scenarioLabel}`,
-      `Próximo slot (grade): ${nextSlot?.ymd ? nextSlot.ymd : "—"} ${
-        nextSlot?.hour ? toHourBucket(nextSlot.hour) : ""
-      }`,
-      `Amostras condicional: ${condSamples} | Base horário: ${baseSamples}`,
-      `Mistura: w=${w.toFixed(2)} (condicional) / ${(1 - w).toFixed(
-        2
-      )} (base)`,
-      `Suavização: alpha=${alpha}`,
-    ],
-    meta: {
-      trigger: {
-        ymd: lastY,
-        hour: lastH,
-        dow: lastDow,
-        grupo: Number(triggerGrupo),
+  const top = ranked.map((x, idx) => {
+    const g2 = String(x.grupo).padStart(2, "0");
+    const trig2 = String(triggerGrupo).padStart(2, "0");
+
+    const whyLine =
+      x.freqZeroWhy ||
+      (driver.key === "BASE"
+        ? "Base (horário/DOW) dominou nesta rodada."
+        : driver.key === "COND"
+        ? "Condicional (gatilho) dominou nesta rodada."
+        : "Mistura entre condicional e base nesta rodada.");
+
+    return {
+      rank: idx + 1,
+      title:
+        idx === 0
+          ? "Mais provável"
+          : idx === 1
+          ? "2º mais provável"
+          : "3º mais provável",
+      grupo: x.grupo,
+
+      // ✅ mantém compat com UI atual (prob)
+      prob: x.prob,
+
+      // ✅ agora o UI pode mostrar isso se quiser
+      probCond: x.probCond,
+      probBase: x.probBase,
+      lateBonus: x.lateBonus,
+      freq: x.freqCond, // compat: o UI atual usa item.freq (cond)
+      freqCond: x.freqCond,
+      freqBase: x.freqBase,
+      freqZeroWhy: x.freqZeroWhy,
+
+      reasons: [
+        `Gatilho: 1º lugar = G${trig2} (último sorteio)`,
+        `Cenário (fallback): ${scenarioLabel}`,
+        `Dominante: ${driver.label} (w=${w.toFixed(2)})`,
+        dominantReason,
+        `Grupo G${g2}: probFinal=${(x.prob * 100).toFixed(2)}% (cond=${(
+          x.probCond * 100
+        ).toFixed(2)}%, base=${(x.probBase * 100).toFixed(2)}%)`,
+        x.lateBonus > 0
+          ? `Ajuste atraso: +${(x.lateBonus * 100).toFixed(
+              2
+            )}% no score (cap ${(
+              LATE_BONUS_MAX * 100
+            ).toFixed(2)}%)`
+          : `Ajuste atraso: 0 (sem impacto relevante)`,
+        `Amostras: cond=${condSamples} | base=${baseSamples} | shrink M=${M}`,
+        `Suavização: alpha=${condStats.alpha} | K=${condStats.k}`,
+        whyLine,
+        `Próximo slot (grade): ${nextSlot?.ymd ? nextSlot.ymd : "—"} ${
+          nextSlot?.hour ? toHourBucket(nextSlot.hour) : ""
+        }`,
+      ],
+      meta: {
+        trigger: {
+          ymd: lastY,
+          hour: lastH,
+          dow: lastDow,
+          grupo: Number(triggerGrupo),
+        },
+        next: {
+          ymd: safeStr(nextSlot?.ymd),
+          hour: safeStr(toHourBucket(nextSlot?.hour)),
+        },
+        samples: condSamples,
+        baseSamples,
+        scenario: scenarioLabel,
+        shrinkW: w,
+
+        // ✅ pacote premium para o front explicar
+        explain: {
+          dominantDriver: driver.key,
+          dominantLabel: driver.label,
+          dominantReason,
+          scenario: scenarioLabel,
+          wCond: w,
+          wBase: 1 - w,
+          condSamples,
+          baseSamples,
+          shrinkM: M,
+          condTotal: condStats.total,
+          baseTotal: baseStats.total,
+          condDenom: condStats.denom,
+          baseDenom: baseStats.denom,
+          alpha: condStats.alpha,
+          k: condStats.k,
+        },
       },
-      next: {
-        ymd: safeStr(nextSlot?.ymd),
-        hour: safeStr(toHourBucket(nextSlot?.hour)),
-      },
-      samples: condSamples,
-      baseSamples,
-      scenario: scenarioLabel,
-      shrinkW: w,
-    },
-  }));
+    };
+  });
 
   return {
     top,
@@ -830,6 +923,25 @@ export function computeConditionalNextTop3({
       scenario: scenarioLabel,
       shrinkW: w,
       alpha,
+
+      // ✅ explicação premium global
+      explain: {
+        dominantDriver: driver.key,
+        dominantLabel: driver.label,
+        dominantReason,
+        scenario: scenarioLabel,
+        wCond: w,
+        wBase: 1 - w,
+        condSamples,
+        baseSamples,
+        shrinkM: M,
+        condTotal: condStats.total,
+        baseTotal: baseStats.total,
+        condDenom: condStats.denom,
+        baseDenom: baseStats.denom,
+        alpha: condStats.alpha,
+        k: condStats.k,
+      },
     },
   };
 }

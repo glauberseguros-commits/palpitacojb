@@ -4,7 +4,6 @@ import React, { useMemo, useState, useCallback, useEffect } from "react";
 function toPercent(score) {
   const n = Number(score);
   if (!Number.isFinite(n)) return 0;
-  // Heurística: se vier 0..1, converte para 0..100
   const pct = n <= 1 ? n * 100 : n;
   return Math.max(0, Math.min(100, pct));
 }
@@ -43,7 +42,7 @@ function dezenaFromMilhar(m4) {
 function getDezenasFixasFromGrupo(grupo) {
   const g = Number(grupo);
   if (!Number.isFinite(g) || g < 1 || g > 25) return [];
-  const start = (g - 1) * 4 + 1; // 01,05,09,...,53
+  const start = (g - 1) * 4 + 1;
   const out = [];
   for (let i = 0; i < 4; i += 1) out.push(String(start + i).padStart(2, "0"));
   return out;
@@ -79,11 +78,6 @@ function clampColsFromItemMilharesCols(milharesCols, expectedCols = 4, perCol = 
  * - se faltar, completa com "" (vazio)
  * - respeita dezenas fixas do grupo
  * - mantém "sem repetir centena" GLOBAL (últimos 3 dígitos)
- *
- * Retorna:
- * - dezenas: ["53","54","55","56"]
- * - rows: 5x4
- * - flat20: (ordem do grid) sem vazios
  */
 function build20ByDezena({ grupo, baseMilhares, perCol = 5 }) {
   const g = Number(grupo);
@@ -96,7 +90,6 @@ function build20ByDezena({ grupo, baseMilhares, perCol = 5 }) {
   const input = Array.isArray(baseMilhares) ? baseMilhares : [];
   const normalized = input.map(normalizeMilharStr).filter((x) => /^\d{4}$/.test(x));
 
-  // buckets por dezena (somente das dezenas fixas)
   const byDz = new Map();
   for (const dz of dezenas) byDz.set(dz, []);
 
@@ -105,7 +98,6 @@ function build20ByDezena({ grupo, baseMilhares, perCol = 5 }) {
     if (byDz.has(dz)) byDz.get(dz).push(m4);
   }
 
-  // seletores com restrição global de centena + não repetir milhar
   const seenCent = new Set();
   const seenMilhar = new Set();
 
@@ -119,7 +111,7 @@ function build20ByDezena({ grupo, baseMilhares, perCol = 5 }) {
     const c3 = centenaFromMilhar(mm);
     if (!c3) return false;
 
-    if (seenCent.has(c3)) return false; // ✅ não repete centena (global)
+    if (seenCent.has(c3)) return false;
     if (seenMilhar.has(mm)) return false;
 
     cols[dz].push(mm);
@@ -128,7 +120,6 @@ function build20ByDezena({ grupo, baseMilhares, perCol = 5 }) {
     return true;
   };
 
-  // 1) aproveita o que veio do motor, por dezena, na ordem em que chegou
   for (const dz of dezenas) {
     const arr = byDz.get(dz) || [];
     for (const m4 of arr) {
@@ -137,21 +128,17 @@ function build20ByDezena({ grupo, baseMilhares, perCol = 5 }) {
     }
   }
 
-  // ✅ SEM fallback inventado. Só completa com vazio.
   for (const dz of dezenas) {
     while (cols[dz].length < perCol) cols[dz].push("");
     if (cols[dz].length > perCol) cols[dz] = cols[dz].slice(0, perCol);
   }
 
-  // monta 5 linhas x 4 colunas
   const rows = [];
   for (let r = 0; r < perCol; r += 1) {
     rows.push(dezenas.map((dz) => cols[dz][r] || ""));
   }
 
-  // ordem do grid (linha a linha) — só números
   const flat20 = rows.flat().filter(Boolean);
-
   return { dezenas, rows, flat20 };
 }
 
@@ -204,6 +191,7 @@ function ImgWithFallback({ srcs, alt, size = 84, style }) {
 
 export default function Top3View(props) {
   const {
+    // dados
     loading,
     error,
     top3,
@@ -212,9 +200,16 @@ export default function Top3View(props) {
     prevLabel,
     theme,
 
-    // ✅ opcionais (se o controller passar)
-    build16, // (grupo2) => { dezenas, slots:[{dezena,milhar}] }
-    buildMilhares, // (grupo2, count) => { slots:[...]} ou array
+    // ✅ NOVO: seletor de loteria (vem do controller/hook)
+    LOTTERY_OPTIONS,
+    lotteryKeySafe,
+    setLotteryKey,
+
+    // ✅ milhares
+    build16,
+    buildMilhares, // (grupo2, count) => ...
+    build20, // ✅ (grupo2) => { dezenas, slots } — vindo do controller
+
   } = props || {};
 
   const list = Array.isArray(top3) ? top3.slice(0, 3) : [];
@@ -237,7 +232,6 @@ export default function Top3View(props) {
 
   const [showTech, setShowTech] = useState(false);
 
-  // ✅ feedback premium de copiar (por card / por célula)
   const [copiedAllKey, setCopiedAllKey] = useState("");
   const [copiedCellKey, setCopiedCellKey] = useState("");
 
@@ -281,12 +275,21 @@ export default function Top3View(props) {
     }
   }, []);
 
+  const lotOptions = Array.isArray(LOTTERY_OPTIONS)
+    ? LOTTERY_OPTIONS
+    : [
+        { value: "PT_RIO", label: "PT_RIO (RJ)" },
+        { value: "FEDERAL", label: "FEDERAL" },
+      ];
+
+  const curLot = String(lotteryKeySafe || "PT_RIO").toUpperCase();
+
   return (
     <div style={{ padding: 16, color: t.text }}>
-      {/* CSS local (hover/active/shine) */}
       <style>{`
         .pp-m20wrap{ position: relative; }
         .pp-m20hdr{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+
         .pp-btn{
           border-radius: 999px;
           padding: 9px 12px;
@@ -306,6 +309,34 @@ export default function Top3View(props) {
           box-shadow: 0 10px 24px rgba(0,0,0,0.35), 0 0 0 1px rgba(201,168,62,0.10);
         }
         .pp-btn:active{ transform: translateY(0px); }
+
+        .pp-tabs{
+          display:flex;
+          gap:8px;
+          flex-wrap:wrap;
+          margin-top:10px;
+        }
+        .pp-tab{
+          border-radius: 999px;
+          padding: 8px 12px;
+          background: rgba(0,0,0,0.35);
+          border: 1px solid rgba(255,255,255,0.12);
+          color: rgba(255,255,255,0.88);
+          font-weight: 900;
+          cursor: pointer;
+          transition: transform .12s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
+          white-space: nowrap;
+        }
+        .pp-tab:hover{
+          transform: translateY(-1px);
+          border-color: rgba(201,168,62,0.40);
+          box-shadow: 0 10px 24px rgba(0,0,0,0.35);
+        }
+        .pp-tab[data-active="1"]{
+          background: rgba(201,168,62,0.16);
+          border: 1px solid rgba(201,168,62,0.45);
+          color: rgba(255,255,255,0.94);
+        }
 
         .pp-chipRow{
           display:grid;
@@ -420,11 +451,38 @@ export default function Top3View(props) {
             gap: 12,
           }}
         >
-          <div>
+          <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 900, fontSize: 18, marginBottom: 6 }}>
               TOP3 (Próximo sorteio)
             </div>
-            <div style={{ color: t.muted, fontSize: 13, lineHeight: 1.25 }}>
+
+            {/* ✅ Abas (Loteria) */}
+            <div className="pp-tabs">
+              {lotOptions.map((op) => {
+                const k = String(op?.value || "").toUpperCase();
+                const active = k === curLot ? "1" : "0";
+                const canSet = typeof setLotteryKey === "function";
+                return (
+                  <button
+                    key={k || op?.label}
+                    type="button"
+                    className="pp-tab"
+                    data-active={active}
+                    onClick={() => {
+                      if (!canSet) return;
+                      if (!k) return;
+                      setLotteryKey(k);
+                    }}
+                    title={op?.label || k}
+                    style={{ opacity: canSet ? 1 : 0.55, cursor: canSet ? "pointer" : "default" }}
+                  >
+                    {op?.label || k}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div style={{ color: t.muted, fontSize: 13, lineHeight: 1.25, marginTop: 10 }}>
               <div>
                 <b>Último:</b> {meta.last}
               </div>
@@ -495,7 +553,6 @@ export default function Top3View(props) {
               : [];
 
             // ========= Milhares (20) =========
-            // ✅ prioridade: usar a estrutura pronta do hook (milharesCols)
             const hasCols =
               Array.isArray(item?.milharesCols) &&
               item.milharesCols.length >= 4 &&
@@ -518,11 +575,15 @@ export default function Top3View(props) {
               if (m20 && m20.length) milharesBase = m20.slice(0);
               else if (mAny && mAny.length) milharesBase = mAny.slice(0);
 
-              // fallback: props.buildMilhares(grupo, 20) ou props.build16(grupo)
+              // fallback: build20(grupo) -> {slots} (controller), ou buildMilhares(grupo,20), ou build16(grupo)
               if (!milharesBase.length) {
                 const g = Number(item?.grupo);
                 if (Number.isFinite(g) && g > 0) {
-                  if (typeof buildMilhares === "function") {
+                  if (typeof build20 === "function") {
+                    const out20 = build20(g);
+                    const slots20 = Array.isArray(out20?.slots) ? out20.slots : [];
+                    milharesBase = slots20.map((x) => x?.milhar).filter(Boolean);
+                  } else if (typeof buildMilhares === "function") {
                     const out = buildMilhares(g, 20);
                     if (Array.isArray(out)) milharesBase = out.slice(0);
                     else if (out && Array.isArray(out.slots)) {
@@ -571,7 +632,6 @@ export default function Top3View(props) {
                   ...(idx === 0 ? { gridColumn: "1 / -1" } : null),
                 }}
               >
-                {/* Top strip */}
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <div
@@ -605,7 +665,6 @@ export default function Top3View(props) {
                   </div>
                 </div>
 
-                {/* Main header */}
                 <div style={{ display: "grid", gridTemplateColumns: "96px 1fr 180px", gap: 14, alignItems: "center" }}>
                   <ImgWithFallback srcs={iconSrcs} alt={animal ? `${animal}` : `G${grupoTxt}`} size={96} />
 
@@ -636,7 +695,6 @@ export default function Top3View(props) {
                   </div>
                 </div>
 
-                {/* Milhares (Premium) */}
                 <div
                   className="pp-m20wrap"
                   style={{
@@ -657,7 +715,6 @@ export default function Top3View(props) {
                     </button>
                   </div>
 
-                  {/* Chips das dezenas */}
                   {dezenasHeader.length ? (
                     <div className="pp-chipRow">
                       {dezenasHeader.map((dz, i) => (
@@ -695,7 +752,6 @@ export default function Top3View(props) {
                   </div>
                 </div>
 
-                {/* Detalhes técnicos (opcional) */}
                 {showTech && Array.isArray(item?.reasons) && item.reasons.length ? (
                   <div
                     style={{
