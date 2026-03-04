@@ -44,15 +44,23 @@ function chunk(arr, n) {
   return out;
 }
 
+function getDezenasFixasFromGrupo(grupo) {
+  const g = Number(grupo);
+  if (!Number.isFinite(g) || g < 1 || g > 25) return [];
+  const start = (g - 1) * 4 + 1; // 01,05,09,...,53
+  const out = [];
+  for (let i = 0; i < 4; i += 1) out.push(String(start + i).padStart(2, "0"));
+  return out;
+}
+
 /**
  * Completa milhares até targetCount, SEM repetir centena (últimos 3 dígitos).
- * Usa fallback determinístico por grupo para garantir 20 reais (sem "----").
+ * ✅ Fallback respeita as dezenas do grupo (01-04, 05-08, ...).
  */
 function fillTo20UniqueCentena({ grupo, baseMilhares, targetCount = 20 }) {
   const g = Number(grupo);
   const out = [];
 
-  // 1) entra com os que vieram do motor (normaliza + remove centena repetida)
   const seenCent = new Set();
   const seenMilhar = new Set();
 
@@ -68,16 +76,22 @@ function fillTo20UniqueCentena({ grupo, baseMilhares, targetCount = 20 }) {
     out.push(m4);
   };
 
+  // 1) entra com os que vieram do motor (normaliza + remove centena repetida)
   (Array.isArray(baseMilhares) ? baseMilhares : []).forEach(push);
 
-  // 2) fallback determinístico por grupo (garante completar 20)
-  // padrão: start=(g-1)*4, depois varre i e monta milhar pad4
-  // (mantém centenas diferentes naturalmente; ainda assim filtramos)
-  if (Number.isFinite(g) && g > 0) {
-    const start = (g - 1) * 4;
-    for (let i = 0; i < 3000 && out.length < targetCount; i++) {
-      const m4 = String(start * 100 + i).padStart(4, "0");
-      push(m4);
+  // 2) fallback determinístico POR GRUPO respeitando dezenas fixas
+  // gera milhares do tipo: <prefixo><dezenaFix><unidade>
+  // exemplo dezena 53 => 0 53 0..9, depois 1 53 0..9, etc.
+  const dezenasFixas = getDezenasFixasFromGrupo(g);
+  if (dezenasFixas.length) {
+    // 25 * 4 dezenas => garante coerência JB
+    for (let prefix = 0; prefix <= 9 && out.length < targetCount; prefix += 1) {
+      for (const dz of dezenasFixas) {
+        for (let u = 0; u <= 9 && out.length < targetCount; u += 1) {
+          const m4 = `${prefix}${dz}${u}`; // 4 dígitos
+          push(m4);
+        }
+      }
     }
   }
 
@@ -175,21 +189,29 @@ export default function Top3View(props) {
   const copyText = useCallback(async (txt) => {
     const s = String(txt || "").trim();
     if (!s) return;
+
     try {
-      await navigator.clipboard.writeText(s);
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(s);
+        return;
+      }
     } catch {
-      // fallback antigo
+      // cai no fallback abaixo
+    }
+
+    // fallback antigo
+    try {
       const ta = document.createElement("textarea");
       ta.value = s;
       ta.style.position = "fixed";
       ta.style.left = "-9999px";
+      ta.style.top = "0";
       document.body.appendChild(ta);
+      ta.focus();
       ta.select();
-      try {
-        document.execCommand("copy");
-      } catch {}
+      document.execCommand("copy");
       document.body.removeChild(ta);
-    }
+    } catch {}
   }, []);
 
   return (
@@ -264,7 +286,7 @@ export default function Top3View(props) {
           style={{
             display: "grid",
             gap: 12,
-            gridTemplateColumns: "repeat(auto-fit, minmax(520px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(420px, 1fr))",
             alignItems: "start",
           }}
         >
@@ -322,7 +344,7 @@ export default function Top3View(props) {
               }
             }
 
-            // ✅ GARANTIA: 20 reais, sem repetir centena
+            // ✅ GARANTIA: 20 reais, sem repetir centena, respeitando dezenas do grupo
             const grupoNum = Number(item?.grupo);
             const milhares20 = fillTo20UniqueCentena({
               grupo: grupoNum,
@@ -355,8 +377,6 @@ export default function Top3View(props) {
                   padding: 16,
                   display: "grid",
                   gap: 12,
-
-                  // ✅ 1º isolado ocupando a linha toda
                   ...(idx === 0 ? { gridColumn: "1 / -1" } : null),
                 }}
               >

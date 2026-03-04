@@ -60,47 +60,35 @@ function normalizeMilhar4(v) {
   return dig.length >= 4 ? dig.slice(-4) : dig.padStart(4, "0");
 }
 
-/** centena = últimos 3 dígitos do milhar (preserva 0 à esquerda) */
-function centenaFromMilhar4(m4) {
-  const s = normalizeMilhar4(m4);
-  if (!s) return "";
-  return s.slice(-3);
-}
+/**
+ * Monta 4 colunas (uma por dezena fixa do grupo), com 5 milhares cada.
+ * - NÃO inventa sequência
+ * - se faltar, completa com "" (vazio)
+ */
+function build4ColsFromEngineOut(out, expectedCols = 4, perCol = 5) {
+  const dezenas = Array.isArray(out?.dezenas) ? out.dezenas : [];
+  const slots = Array.isArray(out?.slots) ? out.slots : [];
 
-/** remove repetição por centena mantendo a ordem */
-function uniqueByCentena(milhares4) {
-  const out = [];
-  const seen = new Set();
-  for (const m of milhares4) {
-    const m4 = normalizeMilhar4(m);
-    if (!m4) continue;
-    const c = centenaFromMilhar4(m4);
-    if (!c) continue;
-    if (seen.has(c)) continue;
-    seen.add(c);
-    out.push(m4);
+  const cols = [];
+  const dzList = dezenas.slice(0, expectedCols);
+
+  for (const dz of dzList) {
+    const items = slots
+      .filter((s) => String(s?.dezena || "") === String(dz))
+      .map((s) => normalizeMilhar4(s?.milhar))
+      .map((m) => (m && /^\d{4}$/.test(m) ? m : ""))
+      .slice(0, perCol);
+
+    while (items.length < perCol) items.push("");
+    cols.push({ dezena: dz, items });
   }
-  return out;
-}
 
-/** fallback determinístico do grupo: gera milhares sem repetir centena */
-function fallbackGroupMilhares20(grupo, denySet) {
-  const out = [];
-  const g = Number(grupo);
-  if (!Number.isFinite(g) || g <= 0) return out;
-
-  const seen = denySet instanceof Set ? denySet : new Set();
-
-  // mesmo padrão que você já tinha antes: base = (g-1)*4 => centenas únicas 000..019 etc
-  const start = (g - 1) * 4;
-  for (let i = 0; i < 200 && out.length < 20; i++) {
-    const m4 = String(start * 100 + i).padStart(4, "0");
-    const c = m4.slice(-3);
-    if (seen.has(c)) continue;
-    seen.add(c);
-    out.push(m4);
+  // blindagem: se por algum motivo vier menos de 4 dezenas
+  while (cols.length < expectedCols) {
+    cols.push({ dezena: "", items: Array(perCol).fill("") });
   }
-  return out;
+
+  return cols.slice(0, expectedCols);
 }
 
 export function useTop3Controller() {
@@ -301,7 +289,8 @@ export function useTop3Controller() {
             })
           : { ymd: "", hour: "" };
 
-      if (requestIdRef.current === currentRequestId) setTargetYmd(safeStr(nextSlot?.ymd || ""));
+      if (requestIdRef.current === currentRequestId)
+        setTargetYmd(safeStr(nextSlot?.ymd || ""));
       if (requestIdRef.current === currentRequestId)
         setTargetHourBucket(safeStr(nextSlot?.hour || ""));
 
@@ -449,8 +438,7 @@ export function useTop3Controller() {
     lastInfo?.lastHour,
   ]);
 
-  // ✅ build20 acima de qualquer useMemo que use ele
-  // ✅ pede MAIS candidatos para garantir 20 após remover centena repetida
+  // ✅ motor 20 milhares (EXATOS) -> 4 colunas x 5 (por terminação/dezena fixa)
   const build20 = useCallback(
     (grupo2) => {
       return buildMilharesForGrupo({
@@ -458,7 +446,7 @@ export function useTop3Controller() {
         analysisHourBucket,
         schedule,
         grupo2,
-        count: 80, // <<<<< importante
+        count: 20, // ✅ EXATO
       });
     },
     [rangeDraws, analysisHourBucket, schedule]
@@ -543,38 +531,23 @@ export function useTop3Controller() {
       const prob = denom > 0 ? (freq + alpha) / denom : 0;
       const probPct = Math.max(0, prob * 100);
 
-      // ✅ 20 milhares para o usuário final (SEM repetir centena)
-      let milhares20 = [];
+      // ✅ 20 milhares em 4 colunas (5 por terminação/dezena fixa)
+      let milharesCols = [
+        { dezena: "", items: ["", "", "", "", ""] },
+        { dezena: "", items: ["", "", "", "", ""] },
+        { dezena: "", items: ["", "", "", "", ""] },
+        { dezena: "", items: ["", "", "", "", ""] },
+      ];
+
       try {
         const out = build20(g);
-
-        let candidates = [];
-        if (Array.isArray(out)) {
-          candidates = out.map((m) => normalizeMilhar4(m)).filter(Boolean);
-        } else {
-          const slots = Array.isArray(out?.slots) ? out.slots : [];
-          candidates = slots
-            .map((s) => normalizeMilhar4(s?.milhar))
-            .filter(Boolean);
-        }
-
-        // 1) remove repetição por centena
-        const uniques = uniqueByCentena(candidates);
-
-        // 2) pega 20
-        milhares20 = uniques.slice(0, 20);
-
-        // 3) se não deu 20, completa com fallback do grupo (sem repetir centena)
-        if (milhares20.length < 20) {
-          const deny = new Set(milhares20.map((m) => m.slice(-3)));
-          const fill = fallbackGroupMilhares20(g, deny);
-          milhares20 = milhares20.concat(fill).slice(0, 20);
-        }
+        milharesCols = build4ColsFromEngineOut(out, 4, 5);
       } catch {
-        // fallback total
-        const deny = new Set();
-        milhares20 = fallbackGroupMilhares20(g, deny).slice(0, 20);
+        // mantém vazio (SEM inventar)
       }
+
+      // mantém também um "flat" de 20 (ordem: col1..col4, 5 itens cada)
+      const milhares20 = milharesCols.flatMap((c) => c.items).slice(0, 20);
 
       return {
         ...x,
@@ -583,7 +556,12 @@ export function useTop3Controller() {
         imgIcon: iconVariants,
         prob,
         probPct,
-        milhares20, // sempre 20 strings (e sem repetir centena)
+
+        // ✅ novo (recomendado para UI)
+        milharesCols, // [{dezena:"53", items:[...5]}, ... x4]
+
+        // ✅ compat (se algo ainda usa lista flat)
+        milhares20, // 20 strings, podendo ter ""
       };
     });
   }, [analytics, build20]);
@@ -665,7 +643,7 @@ export function useTop3Controller() {
     lotteryLabel,
     buildWhyFromReasons,
     build16,
-    build20, // (grupo) -> motor com count 80 (interno), UI usa item.milhares20 final
+    build20, // (grupo) -> motor 20 exatos (sem inventar)
     getCentena3,
     normalizeImgSrc,
   };

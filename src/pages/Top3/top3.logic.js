@@ -1,4 +1,3 @@
-// src/pages/Top3/top3.engine.js
 import {
   safeStr,
   isYMD,
@@ -12,6 +11,8 @@ import {
   getDezena2,
   getCentena3,
   milharCompareAsc,
+  dezenaCompareAsc,
+  milharCompareByCentenaAsc,
 } from "./top3.formatters";
 
 import {
@@ -156,22 +157,15 @@ export function findLastDrawInList(draws, schedule) {
   const sorted = [...list]
     .filter((d) => isHourInSchedule(schedule, pickDrawHour(d)))
     .sort((a, b) => {
-      // ✅ robustez: hour inválido não quebra sort
-      const ha0 = hourToInt(pickDrawHour(a));
-      const hb0 = hourToInt(pickDrawHour(b));
-      const ha = Number.isFinite(ha0) && ha0 >= 0 ? ha0 : -1;
-      const hb = Number.isFinite(hb0) && hb0 >= 0 ? hb0 : -1;
+      const ha = hourToInt(pickDrawHour(a));
+      const hb = hourToInt(pickDrawHour(b));
       return hb - ha;
     });
 
   return sorted[0] || null;
 }
 
-export function findPrevDrawBeforeTargetInSameDay(
-  draws,
-  targetHourBucket,
-  schedule
-) {
+export function findPrevDrawBeforeTargetInSameDay(draws, targetHourBucket, schedule) {
   const list = Array.isArray(draws) ? draws : [];
   if (!list.length) return null;
 
@@ -224,11 +218,7 @@ export async function getPreviousDrawRobust({
       FEDERAL_SCHEDULE,
     });
 
-    if (
-      safeStr(lotteryKey).toUpperCase() === "FEDERAL" &&
-      !daySchedule.length
-    )
-      continue;
+    if (safeStr(lotteryKey).toUpperCase() === "FEDERAL" && !daySchedule.length) continue;
 
     const out = await getKingResultsByDate({
       uf: lotteryKey,
@@ -290,8 +280,7 @@ export function getNextSlotForLottery({
         PT_RIO_SCHEDULE_WED_SAT,
         FEDERAL_SCHEDULE,
       });
-      if (Array.isArray(sch) && sch.length)
-        return { ymd: day, hour: toHourBucket(sch[0]) };
+      if (Array.isArray(sch) && sch.length) return { ymd: day, hour: toHourBucket(sch[0]) };
     }
     return { ymd: "", hour: "" };
   }
@@ -321,8 +310,7 @@ export function getNextSlotForLottery({
       PT_RIO_SCHEDULE_WED_SAT,
       FEDERAL_SCHEDULE,
     });
-    if (Array.isArray(sch) && sch.length)
-      return { ymd: day, hour: toHourBucket(sch[0]) };
+    if (Array.isArray(sch) && sch.length) return { ymd: day, hour: toHourBucket(sch[0]) };
   }
 
   return { ymd: "", hour: "" };
@@ -351,14 +339,11 @@ export function findNextExistingDrawFromSlot({
   const y0 = safeStr(startSlot?.ymd);
   const h0 = toHourBucket(startSlot?.hour);
 
-  if (!isYMD(y0) || !h0 || !(drawsIndex instanceof Map))
-    return { slot: null, draw: null };
+  if (!isYMD(y0) || !h0 || !(drawsIndex instanceof Map)) return { slot: null, draw: null };
 
   if (key === "FEDERAL") {
     const d = drawsIndex.get(`${y0}|${h0}`) || null;
-    return d
-      ? { slot: { ymd: y0, hour: h0 }, draw: d }
-      : { slot: null, draw: null };
+    return d ? { slot: { ymd: y0, hour: h0 }, draw: d } : { slot: null, draw: null };
   }
 
   let curY = y0;
@@ -419,10 +404,7 @@ export function indexDrawsByYmdHour(draws) {
     const y = pickDrawYMD(d);
     const h = toHourBucket(pickDrawHour(d));
     if (!isYMD(y) || !h) continue;
-
-    const key = `${y}|${h}`;
-    // ✅ não sobrescreve (evita perder o primeiro válido)
-    if (!map.has(key)) map.set(key, d);
+    map.set(`${y}|${h}`, d);
   }
   return map;
 }
@@ -453,12 +435,7 @@ export function countAparicoesByGrupoInDraw(draw) {
   const ps = Array.isArray(draw?.prizes) ? draw.prizes : [];
   for (const p of ps) {
     const pos = guessPrizePos(p);
-    if (
-      !Number.isFinite(Number(pos)) ||
-      Number(pos) < 1 ||
-      Number(pos) > 7
-    )
-      continue;
+    if (!Number.isFinite(Number(pos)) || Number(pos) < 1 || Number(pos) > 7) continue;
     const g = guessPrizeGrupo(p);
     if (!Number.isFinite(Number(g)) || Number(g) <= 0) continue;
     const gg = Number(g);
@@ -487,8 +464,7 @@ function computeBaseNextDistribution({
   const lastH = toHourBucket(pickDrawHour(drawLast));
   const lastDow = getDowKey(lastY);
 
-  if (!isYMD(lastY) || !lastH || lastDow == null)
-    return { samples: 0, freq: new Map() };
+  if (!isYMD(lastY) || !lastH || lastDow == null) return { samples: 0, freq: new Map() };
 
   const drawsIndex = indexDrawsByYmdHour(list);
 
@@ -527,11 +503,8 @@ function computeBaseNextDistribution({
 
     samples += 1;
     const c = countAparicoesByGrupoInDraw(nextDraw);
-
     for (const [gg, n] of c.entries()) {
-      const prev = Number(freq.get(gg) || 0);
-      const add = Number(n || 0);
-      freq.set(gg, (Number.isFinite(prev) ? prev : 0) + (Number.isFinite(add) ? add : 0));
+      freq.set(gg, (freq.get(gg) || 0) + Number(n || 0));
     }
   }
 
@@ -542,11 +515,7 @@ function computeBaseNextDistribution({
    ✅ Suavização + Probabilidades
 ========================= */
 
-function freqToProbMap(
-  freq,
-  alpha = TOP3_SMOOTH_ALPHA,
-  groupsK = TOP3_GROUPS_K
-) {
+function freqToProbMap(freq, alpha = TOP3_SMOOTH_ALPHA, groupsK = TOP3_GROUPS_K) {
   const a = safeInt(alpha, 1);
   const k = safeInt(groupsK, 25);
 
@@ -604,12 +573,7 @@ export function computeConditionalNextTop3({
   const lastDow = getDowKey(lastY);
   const triggerGrupo = pickPrize1GrupoFromDraw(drawLast);
 
-  if (
-    !isYMD(lastY) ||
-    !lastH ||
-    lastDow == null ||
-    !Number.isFinite(Number(triggerGrupo))
-  ) {
+  if (!isYMD(lastY) || !lastH || lastDow == null || !Number.isFinite(Number(triggerGrupo))) {
     return { top: [], meta: null };
   }
 
@@ -667,9 +631,7 @@ export function computeConditionalNextTop3({
 
       const c = countAparicoesByGrupoInDraw(nextDraw);
       for (const [gg, n] of c.entries()) {
-        const prev = Number(freq.get(gg) || 0);
-        const add = Number(n || 0);
-        freq.set(gg, (Number.isFinite(prev) ? prev : 0) + (Number.isFinite(add) ? add : 0));
+        freq.set(gg, (freq.get(gg) || 0) + Number(n || 0));
       }
     }
 
@@ -740,40 +702,23 @@ export function computeConditionalNextTop3({
   const top = ranked.map((x, idx) => ({
     rank: idx + 1,
     title:
-      idx === 0
-        ? "Mais provável"
-        : idx === 1
-        ? "2º mais provável"
-        : "3º mais provável",
+      idx === 0 ? "Mais provável" : idx === 1 ? "2º mais provável" : "3º mais provável",
     grupo: x.grupo,
     prob: x.prob,
     freq: x.freq,
     reasons: [
-      `Gatilho: 1º lugar = G${String(triggerGrupo).padStart(
-        2,
-        "0"
-      )} (último sorteio)`,
+      `Gatilho: 1º lugar = G${String(triggerGrupo).padStart(2, "0")} (último sorteio)`,
       `Cenário (fallback): ${scenarioLabel}`,
       `Próximo slot (grade): ${nextSlot?.ymd ? nextSlot.ymd : "—"} ${
         nextSlot?.hour ? toHourBucket(nextSlot.hour) : ""
       }`,
       `Amostras condicional: ${condSamples} | Base horário: ${baseSamples}`,
-      `Mistura: w=${w.toFixed(2)} (condicional) / ${(1 - w).toFixed(
-        2
-      )} (base)`,
+      `Mistura: w=${w.toFixed(2)} (condicional) / ${(1 - w).toFixed(2)} (base)`,
       `Suavização: alpha=${alpha}`,
     ],
     meta: {
-      trigger: {
-        ymd: lastY,
-        hour: lastH,
-        dow: lastDow,
-        grupo: Number(triggerGrupo),
-      },
-      next: {
-        ymd: safeStr(nextSlot?.ymd),
-        hour: safeStr(toHourBucket(nextSlot?.hour)),
-      },
+      trigger: { ymd: lastY, hour: lastH, dow: lastDow, grupo: Number(triggerGrupo) },
+      next: { ymd: safeStr(nextSlot?.ymd), hour: safeStr(toHourBucket(nextSlot?.hour)) },
       samples: condSamples,
       baseSamples,
       scenario: scenarioLabel,
@@ -784,16 +729,8 @@ export function computeConditionalNextTop3({
   return {
     top,
     meta: {
-      trigger: {
-        ymd: lastY,
-        hour: lastH,
-        dow: lastDow,
-        grupo: Number(triggerGrupo),
-      },
-      next: {
-        ymd: safeStr(nextSlot?.ymd),
-        hour: safeStr(toHourBucket(nextSlot?.hour)),
-      },
+      trigger: { ymd: lastY, hour: lastH, dow: lastDow, grupo: Number(triggerGrupo) },
+      next: { ymd: safeStr(nextSlot?.ymd), hour: safeStr(toHourBucket(nextSlot?.hour)) },
       samples: condSamples,
       baseSamples,
       scenario: scenarioLabel,
@@ -815,8 +752,7 @@ function getDezenasFixasFromGrupo(grupo2) {
   if (!Number.isFinite(g) || g < 1 || g > 25) return [];
   const start = (g - 1) * 4 + 1; // 1,5,9,...,53...
   const out = [];
-  for (let i = 0; i < 4; i += 1)
-    out.push(String(start + i).padStart(2, "0"));
+  for (let i = 0; i < 4; i += 1) out.push(String(start + i).padStart(2, "0"));
   return out;
 }
 
@@ -845,9 +781,7 @@ export function buildMilharesForGrupo({
   const target = toHourBucket(analysisHourBucket);
   const schSet = scheduleSet(schedule);
 
-  const N = Number.isFinite(Number(count))
-    ? Math.max(4, Math.trunc(Number(count)))
-    : 16;
+  const N = Number.isFinite(Number(count)) ? Math.max(4, Math.trunc(Number(count))) : 16;
 
   if (!grupo2 || !list.length || !target) {
     return { dezenas: [], slots: [] };
@@ -902,11 +836,7 @@ export function buildMilharesForGrupo({
     }
 
     const rankedCentenas = Array.from(centCounts.entries())
-      .sort(
-        (a, b) =>
-          b[1] - a[1] ||
-          (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0)
-      )
+      .sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))
       .map((x) => x[0])
       .slice(0, perDezena);
 

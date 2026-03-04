@@ -10,7 +10,14 @@ function publicBase() {
 export function normalizeImgSrc(src) {
   const s0 = safeStr(src);
   if (!s0) return "";
-  if (/^https?:\/\//i.test(s0)) return s0;
+
+  // ✅ não mexe em URLs absolutas / especiais
+  // - http(s)://
+  // - //cdn...
+  // - data:... (placeholder)
+  // - blob:... (URL em runtime)
+  if (/^(https?:)?\/\//i.test(s0)) return s0;
+  if (/^(data:|blob:)/i.test(s0)) return s0;
 
   const base = publicBase();
   let s = s0;
@@ -21,7 +28,6 @@ export function normalizeImgSrc(src) {
 
   if (s.startsWith("/")) return `${base}${s}`;
   if (s.startsWith("public/")) return `${base}/${s.slice("public/".length)}`;
-  if (s.startsWith("img/")) return `${base}/${s}`;
 
   return `${base}/${s}`;
 }
@@ -69,10 +75,18 @@ export function makeImgVariantsFromGrupo({
 
   // fallback extra (se existir por grupo)
   const byGroupPng = `${base}/img/g${g2}_${s}.png`;
+  const byGroupJpg = `${base}/img/g${g2}_${s}.jpg`;
+  const byGroupJpeg = `${base}/img/g${g2}_${s}.jpeg`;
 
-  const seeds = [primary, bySlugPng, bySlugJpg, bySlugJpeg, byGroupPng].filter(
-    Boolean
-  );
+  const seeds = [
+    primary,
+    bySlugPng,
+    bySlugJpg,
+    bySlugJpeg,
+    byGroupPng,
+    byGroupJpg,
+    byGroupJpeg,
+  ].filter(Boolean);
 
   const out = [];
   for (const seed of seeds) {

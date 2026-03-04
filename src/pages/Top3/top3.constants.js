@@ -1,4 +1,4 @@
-// top3.constants.js
+// src/pages/Top3/top3.constants.js
 
 export const LOOKBACK_ALL = "ALL";
 
@@ -21,9 +21,17 @@ export const LOTTERY_OPTIONS = [
 ];
 
 // Grades
-export const PT_RIO_SCHEDULE_NORMAL = ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
+export const PT_RIO_SCHEDULE_NORMAL = [
+  "09:00",
+  "11:00",
+  "14:00",
+  "16:00",
+  "18:00",
+  "21:00",
+];
 
-// (mantendo como você tinha, mas blindando contra mutação acidental)
+// ✅ Se no seu projeto PT_RIO tiver horários diferentes em qua/sáb,
+// substitua aqui. Por ora, mantém igual ao normal (blindado contra mutação).
 export const PT_RIO_SCHEDULE_WED_SAT = [...PT_RIO_SCHEDULE_NORMAL];
 
 // Federal: travado em 20h (consistente com UX e regra do app)
@@ -43,7 +51,7 @@ export const TOP3_SHRINK_M = 40;
 
 // Busca do "próximo sorteio real" quando o slot da grade não existe na base
 // varre próximos slots/dias até achar um draw existente
-export const TOP3_NEXTDRAW_SCAN_MAX_STEPS = 12; // suficiente para atravessar 1-2 dias PT_RIO
+export const TOP3_NEXTDRAW_SCAN_MAX_STEPS = 18; // ✅ mais robusto contra buracos/slots "quebrados"
 export const TOP3_NEXTDRAW_SCAN_MAX_DAYS = 7; // limite de segurança
 
 // Quantos grupos existem (Jogo do Bicho = 25)
