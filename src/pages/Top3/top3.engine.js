@@ -889,9 +889,10 @@ export function buildMilharesForGrupo({
   };
 
   let prizes = collectMilhares("target_only");
-// ✅ REGRA: não mistura horários. Se a amostra do horário-alvo for pequena, mantém a validade do recorte.
-if (!prizes.length) return { dezenas: dezenasFixas, slots: [] };
 
+  // ✅ REGRA: não mistura horários. Se a amostra do horário-alvo for pequena, mantém a validade do recorte.
+
+  if (!prizes.length) return { dezenas: dezenasFixas, slots: [] };
   // ✅ Regra final:
   // Para cada dezena fixa (coluna):
   // - conta CENTENAS (3 dígitos) cuja dezena final = dz
@@ -944,3 +945,4 @@ export function build16MilharesForGrupo(args) {
 export function build20MilharesForGrupo(args) {
   return buildMilharesForGrupo({ ...(args || {}), count: 20 });
 }
+
