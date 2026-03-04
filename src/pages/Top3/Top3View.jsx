@@ -142,6 +142,52 @@ function build20ByDezena({ grupo, baseMilhares, perCol = 5 }) {
   return { dezenas, rows, flat20 };
 }
 
+/** ✅ Limpa texto do "Condição:" (remove ruído tipo "• Amostras: 8") */
+function cleanLayerText(s) {
+  const raw = String(s || "").trim();
+  if (!raw) return "—";
+  const noSamples = raw
+    .replace(/\s*[•\-\|]\s*Amostras:\s*\d+\s*$/i, "")
+    .replace(/\s*Amostras:\s*\d+\s*$/i, "")
+    .trim();
+  return noSamples || "—";
+}
+
+/** ✅ Compacta "Detalhes técnicos" (remove linhas que não fazem sentido pro usuário final) */
+function compactTechReasons(reasons, max = 5) {
+  const arr = Array.isArray(reasons)
+    ? reasons.map((x) => String(x || "").trim()).filter(Boolean)
+    : [];
+
+  if (!arr.length) return [];
+
+  const blacklistStarts = [
+    "Puxou",
+    "Ajuste atraso",
+    "Suavização",
+    "Suavizacao",
+    "Base (horário/DOW) dominou",
+    "Base (horario/DOW) dominou",
+    "Próximo slot",
+    "Proximo slot",
+  ];
+
+  const filtered = arr.filter((s) => !blacklistStarts.some((p) => s.startsWith(p)));
+
+  const pickFirst = (prefix) => filtered.find((s) => s.startsWith(prefix)) || "";
+
+  const g = pickFirst("Gatilho:");
+  const c = filtered.find((s) => s.startsWith("Cenário") || s.startsWith("Cenario")) || "";
+  const d = pickFirst("Dominante:");
+  const p = filtered.find((s) => s.includes("probFinal=") || s.includes("probFinal")) || "";
+  const a = filtered.find((s) => s.startsWith("Amostras:")) || "";
+
+  const out = [g, c, d, p, a].filter(Boolean);
+  const base = out.length ? out : filtered;
+
+  return base.slice(0, max);
+}
+
 /** Imagem com fallback (array de srcs) */
 function ImgWithFallback({ srcs, alt, size = 84, style }) {
   const list = Array.isArray(srcs) ? srcs.filter(Boolean) : [];
@@ -181,9 +227,7 @@ function ImgWithFallback({ srcs, alt, size = 84, style }) {
           }}
         />
       ) : (
-        <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 12 }}>
-          sem imagem
-        </div>
+        <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 12 }}>sem imagem</div>
       )}
     </div>
   );
@@ -200,16 +244,15 @@ export default function Top3View(props) {
     prevLabel,
     theme,
 
-    // ✅ NOVO: seletor de loteria (vem do controller/hook)
+    // ✅ seletor de loteria
     LOTTERY_OPTIONS,
     lotteryKeySafe,
     setLotteryKey,
 
     // ✅ milhares
     build16,
-    buildMilhares, // (grupo2, count) => ...
-    build20, // ✅ (grupo2) => { dezenas, slots } — vindo do controller
-
+    buildMilhares,
+    build20,
   } = props || {};
 
   const list = Array.isArray(top3) ? top3.slice(0, 3) : [];
@@ -474,7 +517,10 @@ export default function Top3View(props) {
                       setLotteryKey(k);
                     }}
                     title={op?.label || k}
-                    style={{ opacity: canSet ? 1 : 0.55, cursor: canSet ? "pointer" : "default" }}
+                    style={{
+                      opacity: canSet ? 1 : 0.55,
+                      cursor: canSet ? "pointer" : "default",
+                    }}
                   >
                     {op?.label || k}
                   </button>
@@ -490,11 +536,12 @@ export default function Top3View(props) {
                 <b>Anterior:</b> {meta.prev}
               </div>
               <div>
-                <b>Condição:</b> {meta.layer}
+                <b>Condição:</b> {cleanLayerText(meta.layer)}
               </div>
             </div>
           </div>
 
+          {/* ✅ Botão renomeado */}
           <button
             type="button"
             onClick={() => setShowTech((v) => !v)}
@@ -508,9 +555,9 @@ export default function Top3View(props) {
               cursor: "pointer",
               whiteSpace: "nowrap",
             }}
-            title="Mostrar/ocultar detalhes técnicos"
+            title="Mostrar/ocultar explicação do cálculo"
           >
-            {showTech ? "Ocultar detalhes" : "Ver detalhes"}
+            {showTech ? "Fechar" : "Como foi calculado?"}
           </button>
         </div>
       </div>
@@ -575,7 +622,6 @@ export default function Top3View(props) {
               if (m20 && m20.length) milharesBase = m20.slice(0);
               else if (mAny && mAny.length) milharesBase = mAny.slice(0);
 
-              // fallback: build20(grupo) -> {slots} (controller), ou buildMilhares(grupo,20), ou build16(grupo)
               if (!milharesBase.length) {
                 const g = Number(item?.grupo);
                 if (Number.isFinite(g) && g > 0) {
@@ -619,6 +665,8 @@ export default function Top3View(props) {
               if (ok) setCopiedCellKey(`${key}__${rIdx}__${cIdx}`);
             };
 
+            const techLines = showTech ? compactTechReasons(item?.reasons, 5) : [];
+
             return (
               <div
                 key={key}
@@ -658,11 +706,7 @@ export default function Top3View(props) {
                     </div>
                   </div>
 
-                  <div style={{ color: t.muted, fontSize: 12 }}>
-                    Amostras: <b style={{ color: t.text }}>{samples}</b>
-                    {"  "}•{"  "}
-                    Freq: <b style={{ color: t.text }}>{freq}</b>
-                  </div>
+                  {/* ✅ REMOVIDO: bloco "Amostras / Freq" do topo */}
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "96px 1fr 180px", gap: 14, alignItems: "center" }}>
@@ -752,7 +796,7 @@ export default function Top3View(props) {
                   </div>
                 </div>
 
-                {showTech && Array.isArray(item?.reasons) && item.reasons.length ? (
+                {showTech && techLines.length ? (
                   <div
                     style={{
                       borderTop: "1px solid rgba(255,255,255,0.08)",
@@ -764,8 +808,8 @@ export default function Top3View(props) {
                       gap: 6,
                     }}
                   >
-                    <div style={{ fontWeight: 900, color: t.text }}>Detalhes técnicos</div>
-                    {item.reasons.slice(0, 10).map((r, i) => (
+                    <div style={{ fontWeight: 900, color: t.text }}>Como foi calculado?</div>
+                    {techLines.map((r, i) => (
                       <div key={i}>• {String(r)}</div>
                     ))}
                   </div>
