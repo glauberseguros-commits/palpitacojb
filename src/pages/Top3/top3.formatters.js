@@ -140,10 +140,17 @@ export function hourToInt(hhmm) {
 }
 
 export function getDowKey(ymd) {
-  if (!isYMD(ymd)) return null;
-  const [Y, M, D] = ymd.split("-").map((x) => Number(x));
-  const dt = new Date(Date.UTC(Y, M - 1, D));
-  return dt.getUTCDay(); // 0 dom ... 6 sáb
+  const s = String(ymd || "").trim();
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return NaN;
+
+  const y = Number(m[1]);
+  const mo = Number(m[2]);
+  const d = Number(m[3]);
+
+  // ✅ LOCAL (não UTC)
+  const dt = new Date(y, mo - 1, d);
+  return dt.getDay(); // 0=dom ... 3=qua ... 6=sáb
 }
 
 /* =========================
