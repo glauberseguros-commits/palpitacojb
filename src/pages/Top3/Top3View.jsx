@@ -14,13 +14,6 @@ function formatGrupo(grupo) {
   return String(Math.trunc(g)).padStart(2, "0");
 }
 
-function pickSeal(pct) {
-  const p = Number(pct || 0);
-  if (p >= 8) return { label: "MAIS FORTE", emoji: "🔥" };
-  if (p >= 5) return { label: "EQUILIBRADO", emoji: "⚖️" };
-  return { label: "OPORTUNIDADE", emoji: "🎯" };
-}
-
 function normalizeMilharStr(v) {
   const s = String(v || "").trim();
   if (!s) return "";
@@ -147,45 +140,10 @@ function cleanLayerText(s) {
   const raw = String(s || "").trim();
   if (!raw) return "—";
   const noSamples = raw
-    .replace(/\s*[•\-\|]\s*Amostras:\s*\d+\s*$/i, "")
+    .replace(/\s*[•\-|]\s*Amostras:\s*\d+\s*$/i, "")
     .replace(/\s*Amostras:\s*\d+\s*$/i, "")
     .trim();
   return noSamples || "—";
-}
-
-/** ✅ Compacta "Detalhes técnicos" (remove linhas que não fazem sentido pro usuário final) */
-function compactTechReasons(reasons, max = 5) {
-  const arr = Array.isArray(reasons)
-    ? reasons.map((x) => String(x || "").trim()).filter(Boolean)
-    : [];
-
-  if (!arr.length) return [];
-
-  const blacklistStarts = [
-    "Puxou",
-    "Ajuste atraso",
-    "Suavização",
-    "Suavizacao",
-    "Base (horário/DOW) dominou",
-    "Base (horario/DOW) dominou",
-    "Próximo slot",
-    "Proximo slot",
-  ];
-
-  const filtered = arr.filter((s) => !blacklistStarts.some((p) => s.startsWith(p)));
-
-  const pickFirst = (prefix) => filtered.find((s) => s.startsWith(prefix)) || "";
-
-  const g = pickFirst("Gatilho:");
-  const c = filtered.find((s) => s.startsWith("Cenário") || s.startsWith("Cenario")) || "";
-  const d = pickFirst("Dominante:");
-  const p = filtered.find((s) => s.includes("probFinal=") || s.includes("probFinal")) || "";
-  const a = filtered.find((s) => s.startsWith("Amostras:")) || "";
-
-  const out = [g, c, d, p, a].filter(Boolean);
-  const base = out.length ? out : filtered;
-
-  return base.slice(0, max);
 }
 
 /** Imagem com fallback (array de srcs) */
@@ -244,12 +202,12 @@ export default function Top3View(props) {
     prevLabel,
     theme,
 
-    // ✅ seletor de loteria
+    // seletor de loteria
     LOTTERY_OPTIONS,
     lotteryKeySafe,
     setLotteryKey,
 
-    // ✅ milhares
+    // milhares
     build16,
     buildMilhares,
     build20,
@@ -260,7 +218,7 @@ export default function Top3View(props) {
   const meta = useMemo(() => {
     const last = lastLabel || "—";
     const prev = prevLabel || "—";
-    const layer = layerMetaText || "—";
+    const layer = cleanLayerText(layerMetaText || "—");
     return { last, prev, layer };
   }, [lastLabel, prevLabel, layerMetaText]);
 
@@ -272,8 +230,6 @@ export default function Top3View(props) {
     muted: "rgba(255,255,255,0.72)",
     accent: "rgba(201,168,62,0.92)",
   };
-
-  const [showTech, setShowTech] = useState(false);
 
   const [copiedAllKey, setCopiedAllKey] = useState("");
   const [copiedCellKey, setCopiedCellKey] = useState("");
@@ -322,7 +278,7 @@ export default function Top3View(props) {
     ? LOTTERY_OPTIONS
     : [
         { value: "PT_RIO", label: "PT_RIO (RJ)" },
-        { value: "FEDERAL", label: "FEDERAL" },
+        { value: "FEDERAL", label: "Federal" },
       ];
 
   const curLot = String(lotteryKeySafe || "PT_RIO").toUpperCase();
@@ -486,79 +442,46 @@ export default function Top3View(props) {
           marginBottom: 12,
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
-            gap: 12,
-          }}
-        >
-          <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 900, fontSize: 18, marginBottom: 6 }}>
-              TOP3 (Próximo sorteio)
-            </div>
+        <div style={{ display: "grid", gap: 10 }}>
+          <div style={{ fontWeight: 900, fontSize: 18 }}>TOP3 (Próximo sorteio)</div>
 
-            {/* ✅ Abas (Loteria) */}
-            <div className="pp-tabs">
-              {lotOptions.map((op) => {
-                const k = String(op?.value || "").toUpperCase();
-                const active = k === curLot ? "1" : "0";
-                const canSet = typeof setLotteryKey === "function";
-                return (
-                  <button
-                    key={k || op?.label}
-                    type="button"
-                    className="pp-tab"
-                    data-active={active}
-                    onClick={() => {
-                      if (!canSet) return;
-                      if (!k) return;
-                      setLotteryKey(k);
-                    }}
-                    title={op?.label || k}
-                    style={{
-                      opacity: canSet ? 1 : 0.55,
-                      cursor: canSet ? "pointer" : "default",
-                    }}
-                  >
-                    {op?.label || k}
-                  </button>
-                );
-              })}
-            </div>
+          {/* Abas (Loteria) */}
+          <div className="pp-tabs">
+            {lotOptions.map((op) => {
+              const k = String(op?.value || "").toUpperCase();
+              const active = k === curLot ? "1" : "0";
+              const canSet = typeof setLotteryKey === "function" && !!k;
 
-            <div style={{ color: t.muted, fontSize: 13, lineHeight: 1.25, marginTop: 10 }}>
-              <div>
-                <b>Último:</b> {meta.last}
-              </div>
-              <div>
-                <b>Anterior:</b> {meta.prev}
-              </div>
-              <div>
-                <b>Condição:</b> {cleanLayerText(meta.layer)}
-              </div>
-            </div>
+              return (
+                <button
+                  key={k || op?.label}
+                  type="button"
+                  className="pp-tab"
+                  data-active={active}
+                  onClick={() => {
+                    if (!canSet) return;
+                    setLotteryKey(k);
+                  }}
+                  title={op?.label || k}
+                  style={{ opacity: canSet ? 1 : 0.55, cursor: canSet ? "pointer" : "default" }}
+                >
+                  {op?.label || k}
+                </button>
+              );
+            })}
           </div>
 
-          {/* ✅ Botão renomeado */}
-          <button
-            type="button"
-            onClick={() => setShowTech((v) => !v)}
-            style={{
-              borderRadius: 999,
-              padding: "8px 10px",
-              background: "rgba(0,0,0,0.35)",
-              border: `1px solid rgba(201,168,62,0.35)`,
-              color: t.text,
-              fontWeight: 800,
-              cursor: "pointer",
-              whiteSpace: "nowrap",
-            }}
-            title="Mostrar/ocultar explicação do cálculo"
-          >
-            {showTech ? "Fechar" : "Como foi calculado?"}
-          </button>
+          <div style={{ color: t.muted, fontSize: 13, lineHeight: 1.25 }}>
+            <div>
+              <b>Último:</b> {meta.last}
+            </div>
+            <div>
+              <b>Anterior:</b> {meta.prev}
+            </div>
+            <div>
+              <b>Condição:</b> {meta.layer}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -591,7 +514,6 @@ export default function Top3View(props) {
             const derivedScore = denom > 0 ? freq / denom : 0;
 
             const pct = toPercent(item?.probPct ?? item?.score ?? derivedScore);
-            const seal = pickSeal(pct);
 
             const iconSrcs = Array.isArray(item?.imgIcon)
               ? item.imgIcon
@@ -622,6 +544,7 @@ export default function Top3View(props) {
               if (m20 && m20.length) milharesBase = m20.slice(0);
               else if (mAny && mAny.length) milharesBase = mAny.slice(0);
 
+              // fallback: build20(grupo) -> {slots}, ou buildMilhares(grupo,20), ou build16(grupo)
               if (!milharesBase.length) {
                 const g = Number(item?.grupo);
                 if (Number.isFinite(g) && g > 0) {
@@ -665,8 +588,6 @@ export default function Top3View(props) {
               if (ok) setCopiedCellKey(`${key}__${rIdx}__${cIdx}`);
             };
 
-            const techLines = showTech ? compactTechReasons(item?.reasons, 5) : [];
-
             return (
               <div
                 key={key}
@@ -700,13 +621,10 @@ export default function Top3View(props) {
 
                     <div style={{ display: "grid", gap: 2 }}>
                       <div style={{ fontWeight: 900, letterSpacing: 0.4 }}>🏅 {title}</div>
-                      <div style={{ color: t.muted, fontSize: 12 }}>
-                        {seal.emoji} {seal.label}
-                      </div>
                     </div>
                   </div>
 
-                  {/* ✅ REMOVIDO: bloco "Amostras / Freq" do topo */}
+                  {/* amostras/freq removidos do topo por UX */}
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "96px 1fr 180px", gap: 14, alignItems: "center" }}>
@@ -717,7 +635,6 @@ export default function Top3View(props) {
                     <div style={{ fontSize: 22, fontWeight: 950, letterSpacing: 0.6 }}>
                       {animal ? animal.toUpperCase() : "—"}
                     </div>
-                    <div style={{ color: t.muted, fontSize: 12 }}>Próximo sorteio (TOP3)</div>
                   </div>
 
                   <div style={{ justifySelf: "end", textAlign: "right", display: "grid", gap: 6 }}>
@@ -726,14 +643,7 @@ export default function Top3View(props) {
                       {pct.toFixed(2)}%
                     </div>
 
-                    <div
-                      style={{
-                        height: 8,
-                        borderRadius: 999,
-                        background: "rgba(255,255,255,0.10)",
-                        overflow: "hidden",
-                      }}
-                    >
+                    <div style={{ height: 8, borderRadius: 999, background: "rgba(255,255,255,0.10)", overflow: "hidden" }}>
                       <div style={{ height: "100%", width: `${pct}%`, background: t.accent, opacity: 0.75 }} />
                     </div>
                   </div>
@@ -795,25 +705,6 @@ export default function Top3View(props) {
                     ))}
                   </div>
                 </div>
-
-                {showTech && techLines.length ? (
-                  <div
-                    style={{
-                      borderTop: "1px solid rgba(255,255,255,0.08)",
-                      paddingTop: 12,
-                      color: t.muted,
-                      fontSize: 12,
-                      lineHeight: 1.25,
-                      display: "grid",
-                      gap: 6,
-                    }}
-                  >
-                    <div style={{ fontWeight: 900, color: t.text }}>Como foi calculado?</div>
-                    {techLines.map((r, i) => (
-                      <div key={i}>• {String(r)}</div>
-                    ))}
-                  </div>
-                ) : null}
               </div>
             );
           })}
