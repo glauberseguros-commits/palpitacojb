@@ -1,5 +1,5 @@
 // src/pages/Top3/Top3View.jsx
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useMemo, useState, useCallback, useEffect } from "react";
 
 function toPercent(score) {
   const n = Number(score);
@@ -250,14 +250,30 @@ export default function Top3View(props) {
 
   const [showTech, setShowTech] = useState(false);
 
+  // ✅ feedback premium de copiar (por card / por célula)
+  const [copiedAllKey, setCopiedAllKey] = useState("");
+  const [copiedCellKey, setCopiedCellKey] = useState("");
+
+  useEffect(() => {
+    if (!copiedAllKey) return;
+    const id = setTimeout(() => setCopiedAllKey(""), 900);
+    return () => clearTimeout(id);
+  }, [copiedAllKey]);
+
+  useEffect(() => {
+    if (!copiedCellKey) return;
+    const id = setTimeout(() => setCopiedCellKey(""), 750);
+    return () => clearTimeout(id);
+  }, [copiedCellKey]);
+
   const copyText = useCallback(async (txt) => {
     const s = String(txt || "").trim();
-    if (!s) return;
+    if (!s) return false;
 
     try {
       if (navigator?.clipboard?.writeText) {
         await navigator.clipboard.writeText(s);
-        return;
+        return true;
       }
     } catch {
       // cai no fallback abaixo
@@ -275,11 +291,146 @@ export default function Top3View(props) {
       ta.select();
       document.execCommand("copy");
       document.body.removeChild(ta);
-    } catch {}
+      return true;
+    } catch {
+      return false;
+    }
   }, []);
 
   return (
     <div style={{ padding: 16, color: t.text }}>
+      {/* CSS local (hover/active/shine) */}
+      <style>{`
+        .pp-m20wrap{
+          position: relative;
+        }
+        .pp-m20hdr{
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:10px;
+        }
+        .pp-btn{
+          border-radius: 999px;
+          padding: 9px 12px;
+          background: rgba(201,168,62,0.16);
+          border: 1px solid rgba(201,168,62,0.35);
+          color: rgba(255,255,255,0.92);
+          font-weight: 950;
+          cursor: pointer;
+          white-space: nowrap;
+          transition: transform .12s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
+          box-shadow: 0 0 0 rgba(201,168,62,0.0);
+        }
+        .pp-btn:hover{
+          transform: translateY(-1px);
+          background: rgba(201,168,62,0.22);
+          border-color: rgba(201,168,62,0.48);
+          box-shadow: 0 10px 24px rgba(0,0,0,0.35), 0 0 0 1px rgba(201,168,62,0.10);
+        }
+        .pp-btn:active{
+          transform: translateY(0px);
+        }
+
+        .pp-chipRow{
+          display:grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 10px;
+          padding: 0 12px;
+          margin-top: 2px;
+        }
+        .pp-chip{
+          display:flex;
+          justify-content:center;
+          align-items:center;
+          height: 26px;
+          border-radius: 999px;
+          font-size: 12px;
+          font-weight: 950;
+          letter-spacing: 1.4px;
+          color: rgba(255,255,255,0.90);
+          background: linear-gradient(180deg, rgba(201,168,62,0.22), rgba(201,168,62,0.10));
+          border: 1px solid rgba(201,168,62,0.35);
+          box-shadow: 0 10px 26px rgba(0,0,0,0.35);
+        }
+
+        .pp-gridBox{
+          position: relative;
+          display: grid;
+          gap: 8px;
+          padding: 12px;
+          border-radius: 14px;
+          background: radial-gradient(1200px 260px at 50% 0%, rgba(201,168,62,0.10), rgba(0,0,0,0.28));
+          border: 1px solid rgba(201,168,62,0.22);
+          overflow:hidden;
+        }
+        .pp-gridBox:before{
+          content:"";
+          position:absolute;
+          inset:-120px -60px auto -60px;
+          height:160px;
+          background: radial-gradient(closest-side, rgba(201,168,62,0.14), rgba(201,168,62,0.0));
+          pointer-events:none;
+          filter: blur(1px);
+        }
+
+        .pp-row{
+          display:grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 10px;
+        }
+
+        .pp-pill{
+          position: relative;
+          padding: 11px 10px;
+          border-radius: 14px;
+          text-align:center;
+          font-weight: 1000;
+          letter-spacing: 1.6px;
+          color: rgba(255,255,255,0.92);
+          user-select: text;
+          transition: transform .10s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease, opacity .18s ease;
+          background: linear-gradient(180deg, rgba(201,168,62,0.14), rgba(201,168,62,0.08));
+          border: 1px solid rgba(201,168,62,0.28);
+          box-shadow: 0 10px 26px rgba(0,0,0,0.28);
+        }
+        .pp-pill[data-empty="1"]{
+          opacity: .32;
+          cursor: default;
+          box-shadow: none;
+        }
+        .pp-pill:not([data-empty="1"]){
+          cursor:pointer;
+        }
+        .pp-pill:not([data-empty="1"]):hover{
+          transform: translateY(-1px);
+          border-color: rgba(201,168,62,0.52);
+          background: linear-gradient(180deg, rgba(201,168,62,0.22), rgba(201,168,62,0.10));
+          box-shadow: 0 16px 34px rgba(0,0,0,0.42), 0 0 0 1px rgba(201,168,62,0.10);
+        }
+        .pp-pill:not([data-empty="1"]):active{
+          transform: translateY(0px);
+        }
+        .pp-copiedBadge{
+          position:absolute;
+          right: 10px;
+          top: 10px;
+          font-size: 11px;
+          font-weight: 900;
+          color: rgba(0,0,0,0.92);
+          background: rgba(201,168,62,0.92);
+          padding: 4px 8px;
+          border-radius: 999px;
+          box-shadow: 0 10px 20px rgba(0,0,0,0.35);
+        }
+
+        .pp-miniNote{
+          color: rgba(255,255,255,0.68);
+          font-size: 12px;
+          font-weight: 800;
+        }
+      `}</style>
+
       {/* Cabeçalho */}
       <div
         style={{
@@ -416,16 +567,26 @@ export default function Top3View(props) {
 
             const dezenasHeader = grid.dezenas; // ["53","54","55","56"]
             const gridRows = grid.rows; // 5x4
-            const copyAll = () => copyText(grid.flat20.join(" "));
 
             const key = `${String(item?.grupo ?? "g")}__${animal || "x"}__${idx}`;
-
             const title =
               idx === 0
                 ? "1º MAIS FORTE"
                 : idx === 1
                 ? "2º MAIS FORTE"
                 : "3º MAIS FORTE";
+
+            const doCopyAll = async () => {
+              const ok = await copyText(grid.flat20.join(" "));
+              if (ok) setCopiedAllKey(key);
+            };
+
+            const doCopyOne = async (m, rIdx, cIdx) => {
+              const mm = normalizeMilharStr(m);
+              if (!mm) return;
+              const ok = await copyText(mm);
+              if (ok) setCopiedCellKey(`${key}__${rIdx}__${cIdx}`);
+            };
 
             return (
               <div
@@ -552,8 +713,9 @@ export default function Top3View(props) {
                   </div>
                 </div>
 
-                {/* Milhares */}
+                {/* Milhares (Premium) */}
                 <div
+                  className="pp-m20wrap"
                   style={{
                     borderTop: "1px solid rgba(255,255,255,0.08)",
                     paddingTop: 12,
@@ -561,98 +723,59 @@ export default function Top3View(props) {
                     gap: 10,
                   }}
                 >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      gap: 10,
-                    }}
-                  >
-                    <div style={{ fontWeight: 900 }}>📌 20 MILHARES RECOMENDADAS</div>
+                  <div className="pp-m20hdr">
+                    <div style={{ display: "grid", gap: 2 }}>
+                      <div style={{ fontWeight: 950 }}>📌 20 MILHARES RECOMENDADAS</div>
+                      <div className="pp-miniNote">
+                        Clique em uma milhar para copiar • Grade por dezena fixa
+                      </div>
+                    </div>
 
                     <button
                       type="button"
-                      onClick={copyAll}
-                      style={{
-                        borderRadius: 999,
-                        padding: "8px 10px",
-                        background: "rgba(201,168,62,0.18)",
-                        border: "1px solid rgba(201,168,62,0.35)",
-                        color: t.text,
-                        fontWeight: 900,
-                        cursor: "pointer",
-                        whiteSpace: "nowrap",
-                      }}
+                      onClick={doCopyAll}
+                      className="pp-btn"
                       title="Copiar as 20 milhares"
                     >
-                      Copiar 20
+                      {copiedAllKey === key ? "✅ Copiado" : "Copiar 20"}
                     </button>
                   </div>
 
-                  {/* ✅ headers das dezenas (opcional, mas ajuda demais) */}
+                  {/* Chips das dezenas */}
                   {dezenasHeader.length ? (
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-                        gap: 10,
-                        padding: "0 12px",
-                        color: t.muted,
-                        fontSize: 12,
-                        fontWeight: 900,
-                        letterSpacing: 1,
-                      }}
-                    >
+                    <div className="pp-chipRow">
                       {dezenasHeader.map((dz) => (
-                        <div key={dz} style={{ textAlign: "center" }}>
+                        <div key={dz} className="pp-chip">
                           {dz}
                         </div>
                       ))}
                     </div>
                   ) : null}
 
-                  <div
-                    style={{
-                      display: "grid",
-                      gap: 8,
-                      padding: 12,
-                      borderRadius: 14,
-                      background: "rgba(0,0,0,0.30)",
-                      border: "1px solid rgba(201,168,62,0.22)",
-                    }}
-                  >
+                  <div className="pp-gridBox">
                     {gridRows.map((row, rIdx) => (
-                      <div
-                        key={rIdx}
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-                          gap: 10,
-                        }}
-                      >
-                        {row.map((m, cIdx) => (
-                          <div
-                            key={`${rIdx}-${cIdx}`}
-                            style={{
-                              padding: "10px 10px",
-                              borderRadius: 12,
-                              textAlign: "center",
-                              fontWeight: 950,
-                              letterSpacing: 1.2,
-                              background: "rgba(201,168,62,0.10)",
-                              border: "1px solid rgba(201,168,62,0.28)",
-                              color: t.text,
-                              userSelect: "text",
-                              cursor: m ? "pointer" : "default",
-                              opacity: m ? 1 : 0.35,
-                            }}
-                            title={m ? "Clique para copiar" : ""}
-                            onClick={() => (m ? copyText(m) : null)}
-                          >
-                            {m || "—"}
-                          </div>
-                        ))}
+                      <div key={rIdx} className="pp-row">
+                        {row.map((m, cIdx) => {
+                          const mm = normalizeMilharStr(m);
+                          const empty = !mm ? "1" : "0";
+                          const cKey = `${key}__${rIdx}__${cIdx}`;
+                          const isCopied = copiedCellKey === cKey;
+
+                          return (
+                            <div
+                              key={`${rIdx}-${cIdx}`}
+                              className="pp-pill"
+                              data-empty={empty}
+                              title={mm ? "Clique para copiar" : ""}
+                              onClick={() => doCopyOne(mm, rIdx, cIdx)}
+                            >
+                              {mm || "—"}
+                              {isCopied ? (
+                                <div className="pp-copiedBadge">COPIADO</div>
+                              ) : null}
+                            </div>
+                          );
+                        })}
                       </div>
                     ))}
                   </div>
