@@ -936,9 +936,8 @@ if (!prizes.length) return { dezenas: dezenasFixas, slots: [] };
       .slice(0, perDezena);
 
     for (const c3 of rankedCentenas) {
-      const prefix = pickPrefixFromBaseForCentena(prizes, c3);
-      const milhar = prefix ? `${prefix}${c3}` : ""; // sem prefixo na base => vazio (SEM inventar)
-      slots.push({ dezena: dz, milhar });
+      const milharRep = pickRepresentativeMilharForCentena(prizes, c3);
+slots.push({ dezena: dz, milhar: milharRep || "" });
     }
 
     while (slots.filter((s) => s.dezena === dz).length < perDezena) {
@@ -960,6 +959,7 @@ export function build16MilharesForGrupo(args) {
 export function build20MilharesForGrupo(args) {
   return buildMilharesForGrupo({ ...(args || {}), count: 20 });
 }
+
 
 
 
