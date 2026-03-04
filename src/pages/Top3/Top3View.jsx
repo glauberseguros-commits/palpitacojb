@@ -274,12 +274,25 @@ export default function Top3View(props) {
     }
   }, []);
 
-  const lotOptions = Array.isArray(LOTTERY_OPTIONS)
-    ? LOTTERY_OPTIONS
-    : [
-        { value: "PT_RIO", label: "PT_RIO (RJ)" },
-        { value: "FEDERAL", label: "Federal" },
-      ];
+  const baseLots = Array.isArray(LOTTERY_OPTIONS) ? LOTTERY_OPTIONS : [];
+  const mustHave = [
+    { value: "PT_RIO", label: "PT_RIO (RJ)" },
+    { value: "FEDERAL", label: "Federal" },
+  ];
+
+  const map = new Map();
+  [...baseLots, ...mustHave].forEach((op) => {
+    const k = String(op?.value || "").toUpperCase();
+    if (!k) return;
+    if (!map.has(k)) map.set(k, { value: k, label: op?.label || k });
+  });
+
+  // ordem: PT_RIO, FEDERAL, depois o resto
+  const lotOptions = [
+    map.get("PT_RIO"),
+    map.get("FEDERAL"),
+    ...[...map.values()].filter((x) => !["PT_RIO", "FEDERAL"].includes(String(x?.value))),
+  ].filter(Boolean);
 
   const curLot = String(lotteryKeySafe || "PT_RIO").toUpperCase();
 
@@ -713,3 +726,4 @@ export default function Top3View(props) {
     </div>
   );
 }
+
