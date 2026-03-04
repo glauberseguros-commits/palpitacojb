@@ -396,7 +396,9 @@ export function useTop3Controller() {
   }, [load]);
 
   // TOP3 (condicionado)
-  const analytics = useMemo(() => {
+  const analyticsCacheRef = useRef({ key:"", value:{ top:[], meta:null } });
+
+const analytics = useMemo(() => {
     const list = Array.isArray(rangeDraws) ? rangeDraws : [];
     const lastG = lastInfo?.lastGrupo;
     const lastY = safeStr(lastInfo?.lastYmd);
