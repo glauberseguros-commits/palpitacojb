@@ -937,7 +937,7 @@ if (!prizes.length) return { dezenas: dezenasFixas, slots: [] };
 
     for (const c3 of rankedCentenas) {
       const milharRep = pickRepresentativeMilharForCentena(prizes, c3);
-      $
+      slots.push({ dezena: dz, milhar: milharRep || "" });
     }
 
     while (slots.filter((s) => s.dezena === dz).length < perDezena) {
@@ -959,10 +959,3 @@ export function build16MilharesForGrupo(args) {
 export function build20MilharesForGrupo(args) {
   return buildMilharesForGrupo({ ...(args || {}), count: 20 });
 }
-
-
-
-
-
-
-
