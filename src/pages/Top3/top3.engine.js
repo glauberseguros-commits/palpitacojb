@@ -889,8 +889,8 @@ export function buildMilharesForGrupo({
   };
 
   let prizes = collectMilhares("target_only");
-  if (prizes.length < N) prizes = prizes.concat(collectMilhares("any_hour"));
-  if (!prizes.length) return { dezenas: dezenasFixas, slots: [] };
+// ✅ REGRA: não mistura horários. Se a amostra do horário-alvo for pequena, mantém a validade do recorte.
+if (!prizes.length) return { dezenas: dezenasFixas, slots: [] };
 
   // ✅ prefixo (1 dígito) escolhido APENAS da base, para a centena (3 dígitos)
   function pickPrefixFromBaseForCentena(prizesList, centena3) {
@@ -960,6 +960,7 @@ export function build16MilharesForGrupo(args) {
 export function build20MilharesForGrupo(args) {
   return buildMilharesForGrupo({ ...(args || {}), count: 20 });
 }
+
 
 
 
