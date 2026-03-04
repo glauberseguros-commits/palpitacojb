@@ -456,7 +456,7 @@ export function countAparicoesByGrupoInDraw(draw) {
     if (
       !Number.isFinite(Number(pos)) ||
       Number(pos) < 1 ||
-      Number(pos) > 7
+      Number(pos) > 5
     )
       continue;
     const g = guessPrizeGrupo(p);
