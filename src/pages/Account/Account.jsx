@@ -405,9 +405,21 @@ export default function Account({ onClose = null }) {
   ========================= */
 
   const onEnter = () => {
-    // LoginVisual faz sign-in; o listener onAuthStateChanged marcará sessão auth.
+    // ✅ Login VISUAL (sem Firebase): cria sessão local "user"
+    setMsg("");
+    setErr("");
+
     setGuestActive(false);
     setIsGuest(false);
+
+    try {
+      localStorage.setItem(
+        "pp_session_v1",
+        JSON.stringify({ type: "user", plan: "FREE" })
+      );
+      localStorage.removeItem("pp_guest_active_v1");
+      window.dispatchEvent(new Event("pp_session_changed"));
+    } catch {}
   };
 
   const onSkip = () => {
@@ -469,6 +481,7 @@ export default function Account({ onClose = null }) {
     />
   );
 }
+
 
 
 

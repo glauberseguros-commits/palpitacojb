@@ -456,4 +456,3 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
     </div>
   );
 }
-
