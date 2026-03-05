@@ -58,6 +58,16 @@ function normalizePlan(plan) {
     lastPayment: plan?.lastPayment || null,
   };
 }
+function normalizeProvider(v) {
+  const s = String(v ?? "").trim().toLowerCase();
+  if (s === "mercadopago" || s === "manual" || s === "other") return s;
+  return "other";
+}
+
+function normalizePaymentId(v) {
+  const s = String(v ?? "").trim();
+  return s ? s : null;
+}
 
 export function computeEntitlement(plan, atMs = nowMs()) {
   const p = normalizePlan(plan);
@@ -147,10 +157,10 @@ export async function ensureUserPlan(uid) {
   }
 
   if (changed) {
-    await updateDoc(ref, {
+    await setDoc(ref, {
       updatedAt: serverTimestamp(),
       plan: nextPlan,
-    });
+    }, { merge: true });
 
     return { uid, plan: nextPlan, entitlement: computeEntitlement(nextPlan, t) };
   }
@@ -187,9 +197,9 @@ export async function activatePremium30d(uid, payload = {}) {
     premiumUntilMs: newUntil,
     // trial pode existir historicamente, mas não interfere no entitlement (premium manda)
     lastPayment: {
-      amount: safeNum(payload.amount) ?? 10,
-      provider: String(payload.provider || "mercadopago"),
-      paymentId: String(payload.paymentId || ""),
+      amount: safeNum(payload.amount),
+      provider: normalizeProvider(payload.provider || "mercadopago"),
+      paymentId: normalizePaymentId(payload.paymentId),
       confirmedAtMs: t,
     },
   };
@@ -201,10 +211,10 @@ export async function activatePremium30d(uid, payload = {}) {
       plan: nextPlan,
     });
   } else {
-    await updateDoc(ref, {
+    await setDoc(ref, {
       updatedAt: serverTimestamp(),
       plan: nextPlan,
-    });
+    }, { merge: true });
   }
 
   return { uid, plan: nextPlan, entitlement: computeEntitlement(nextPlan, t) };
@@ -224,3 +234,4 @@ export async function getUserPlan(uid) {
   const plan = normalizePlan(data.plan);
   return { uid, plan, entitlement: computeEntitlement(plan, nowMs()) };
 }
+

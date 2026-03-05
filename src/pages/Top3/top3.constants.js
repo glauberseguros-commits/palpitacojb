@@ -36,9 +36,20 @@ export const PT_RIO_SCHEDULE_NORMAL = [
   "21:00",
 ];
 
-// ✅ Se no seu projeto PT_RIO tiver horários diferentes em qua/sáb,
-// substitua aqui. Por ora, mantém igual ao normal (blindado contra mutação).
-export const PT_RIO_SCHEDULE_WED_SAT = [...PT_RIO_SCHEDULE_NORMAL];
+/**
+ * ✅ PT_RIO em QUA/SÁB (RJ)
+ * - Ajuste solicitado: NÃO tem 18h nesses dias no seu cenário real
+ * - Mantém 21h como alvo natural do próximo sorteio
+ *
+ * Se no futuro mudar, ajuste aqui (sem herdar do NORMAL).
+ */
+export const PT_RIO_SCHEDULE_WED_SAT = [
+  "09:00",
+  "11:00",
+  "14:00",
+  "16:00",
+  "21:00",
+];
 
 // Federal: travado em 20h (consistente com UX e regra do app)
 export const FEDERAL_SCHEDULE = ["20:00"];

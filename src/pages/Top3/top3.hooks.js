@@ -37,11 +37,7 @@ import {
   computeConditionalNextTop3,
 } from "./top3.engine";
 
-import {
-  lotteryLabel,
-  makeImgVariantsFromGrupo,
-  normalizeImgSrc,
-} from "./top3.selectors";
+import { lotteryLabel, makeImgVariantsFromGrupo, normalizeImgSrc } from "./top3.selectors";
 
 import {
   getKingResultsByDate,
@@ -89,6 +85,58 @@ function build4ColsFromEngineOut(out, expectedCols = 4, perCol = 5) {
   }
 
   return cols.slice(0, expectedCols);
+}
+
+/**
+ * ✅ Resolve qual "UF/coleção" realmente contém dados para a loteria selecionada.
+ * Motivo: alguns backends não salvam Federal em uf="FEDERAL".
+ *
+ * Estratégia:
+ * - Para PT_RIO: usa "PT_RIO" direto (como você já usa)
+ * - Para FEDERAL: tenta uma lista de chaves até achar um "last" válido para o schedule (20:00)
+ */
+async function resolveUfForLottery({
+  lotteryKey,
+  ymd,
+  schedule,
+  getKingResultsByDateFn,
+}) {
+  const lk = safeStr(lotteryKey).toUpperCase();
+
+  // padrão (mantém comportamento atual)
+  if (lk !== "FEDERAL") return lk;
+
+  const candidates = [
+    "FEDERAL",
+    "BR",
+    "DF",
+    "RJ",
+    "PT_RIO",
+  ];
+
+  // tenta achar dados do dia que batam com o schedule (20:00)
+  for (const uf of candidates) {
+    try {
+      const out = await getKingResultsByDateFn({
+        uf,
+        date: ymd,
+        closeHour: null,
+        positions: null,
+        readPolicy: "server",
+      });
+      const today = Array.isArray(out) ? out : [];
+      const last = findLastDrawInList(today, schedule);
+      if (last) return uf;
+
+      // fallback: se veio algo (mesmo sem casar horário), ainda assim é candidato viável
+      if (today.length) return uf;
+    } catch {
+      // tenta próximo
+    }
+  }
+
+  // se nada funcionou, volta para FEDERAL mesmo
+  return "FEDERAL";
 }
 
 export function useTop3Controller() {
@@ -191,9 +239,9 @@ export function useTop3Controller() {
       prevInfo?.prevYmd && prevInfo?.prevHour
         ? `${ymdToBR(prevInfo.prevYmd)} ${prevInfo.prevHour}`
         : "";
-    return `G${String(g).padStart(2, "0")}${
-      animal ? " • " + animal.toUpperCase() : ""
-    }${when ? " • " + when : ""}`;
+    return `G${String(g).padStart(2, "0")}${animal ? " • " + animal.toUpperCase() : ""}${
+      when ? " • " + when : ""
+    }`;
   }, [prevInfo]);
 
   const lastLabel = useMemo(() => {
@@ -204,9 +252,9 @@ export function useTop3Controller() {
       lastInfo?.lastYmd && lastInfo?.lastHour
         ? `${ymdToBR(lastInfo.lastYmd)} ${lastInfo.lastHour}`
         : "";
-    return `G${String(g).padStart(2, "0")}${
-      animal ? " • " + animal.toUpperCase() : ""
-    }${when ? " • " + when : ""}`;
+    return `G${String(g).padStart(2, "0")}${animal ? " • " + animal.toUpperCase() : ""}${
+      when ? " • " + when : ""
+    }`;
   }, [lastInfo]);
 
   const load = useCallback(async () => {
@@ -218,7 +266,7 @@ export function useTop3Controller() {
     setError("");
     const currentRequestId = ++requestIdRef.current;
 
-    // FEDERAL: trava cedo e sai rápido
+    // FEDERAL: trava cedo e sai rápido (dia errado)
     if (lKey === "FEDERAL" && !isFederalDrawDay(ymdSafe)) {
       if (requestIdRef.current === currentRequestId) {
         setLastHourBucket("");
@@ -227,8 +275,6 @@ export function useTop3Controller() {
         setLastInfo({ lastYmd: "", lastHour: "", lastGrupo: null, lastAnimal: "" });
         setPrevInfo({ prevYmd: "", prevHour: "", prevGrupo: null, prevAnimal: "", source: "none" });
         setRangeInfo({ from: "", to: "" });
-        // não precisa limpar rangeDraws aqui (mantém UI viva), mas pode:
-        // setRangeDraws([]);
         setLoadingStage({ today: false, range: false });
         setLoading(false);
         setError(
@@ -239,11 +285,19 @@ export function useTop3Controller() {
     }
 
     try {
+      // ✅ resolve UF real (especialmente para FEDERAL)
+      const ufResolved = await resolveUfForLottery({
+        lotteryKey: lKey,
+        ymd: ymdSafe,
+        schedule,
+        getKingResultsByDateFn: getKingResultsByDate,
+      });
+
       // ========= 1) Bounds (cacheado) =========
       let minDate = safeStr(bounds?.minDate);
       let maxDate = safeStr(bounds?.maxDate);
 
-      const cached = boundsCacheRef.current.get(lKey);
+      const cached = boundsCacheRef.current.get(ufResolved);
       if (cached?.minDate || cached?.maxDate) {
         minDate = cached.minDate || minDate;
         maxDate = cached.maxDate || maxDate;
@@ -251,15 +305,14 @@ export function useTop3Controller() {
           setBounds({ minDate: minDate || "", maxDate: maxDate || "" });
         }
       } else {
-        // busca bounds sem travar a UX (mas aqui ainda é barato)
         try {
-          const b = await getKingBoundsByUf({ uf: lKey });
+          const b = await getKingBoundsByUf({ uf: ufResolved });
           const bMin = safeStr(b?.minYmd || b?.minDate || b?.min || "");
           const bMax = safeStr(b?.maxYmd || b?.maxDate || b?.max || "");
           if (isYMD(bMin)) minDate = bMin;
           if (isYMD(bMax)) maxDate = bMax;
 
-          boundsCacheRef.current.set(lKey, {
+          boundsCacheRef.current.set(ufResolved, {
             minDate: isYMD(minDate) ? minDate : "",
             maxDate: isYMD(maxDate) ? maxDate : "",
           });
@@ -272,9 +325,9 @@ export function useTop3Controller() {
         }
       }
 
-      // ========= 2) HOJE (rápido) — atualiza UI imediatamente =========
+      // ========= 2) HOJE (rápido) =========
       const outToday = await getKingResultsByDate({
-        uf: lKey,
+        uf: ufResolved,
         date: ymdSafe,
         closeHour: null,
         positions: null,
@@ -316,7 +369,7 @@ export function useTop3Controller() {
         setTargetHourBucket(safeStr(nextSlot?.hour || ""));
       }
 
-      // prev robusto (barato o suficiente)
+      // prev robusto
       const hourForPrev = safeStr(nextSlot?.hour || lastBucket || "");
       if (hourForPrev) {
         const prev = await getPreviousDrawRobust({
@@ -356,12 +409,11 @@ export function useTop3Controller() {
         }
       }
 
-      // marca fim da fase 1
       if (requestIdRef.current === currentRequestId) {
         setLoadingStage({ today: false, range: true });
       }
 
-      // ========= 3) RANGE (pesado) — NÃO derruba a tela =========
+      // ========= 3) RANGE (pesado) =========
       let rangeTo = ymdSafe;
       let rangeFrom = "";
 
@@ -381,7 +433,7 @@ export function useTop3Controller() {
       }
 
       const outRange = await getKingResultsByRange({
-        uf: lKey,
+        uf: ufResolved,
         dateFrom: rangeFrom,
         dateTo: addDaysYMD(rangeTo, 1),
         closeHour: null,
@@ -396,7 +448,6 @@ export function useTop3Controller() {
       }
     } catch (e) {
       if (requestIdRef.current === currentRequestId) {
-        // não zera rangeDraws aqui (mantém tela), só mostra erro
         setError(String(e?.message || e || "Falha ao carregar dados do TOP3."));
       }
     } finally {
@@ -432,7 +483,6 @@ export function useTop3Controller() {
       return empty;
     }
 
-    // chave de cache (barata e suficiente)
     const cacheKey = [
       lotteryKeySafe,
       lookback,
@@ -482,8 +532,7 @@ export function useTop3Controller() {
     lastInfo?.lastHour,
   ]);
 
-  // ✅ motor 20 milhares (EXATOS) -> 4 colunas x 5 (por terminação/dezena fixa)
-  // Obs: esse é pesado por natureza (varre histórico). Mas só roda pros 3 cards.
+  // ✅ motor 20 milhares (EXATOS) -> 4 colunas x 5
   const build20 = useCallback(
     (grupo2) => {
       return buildMilharesForGrupo({
@@ -491,13 +540,12 @@ export function useTop3Controller() {
         analysisHourBucket,
         schedule,
         grupo2,
-        count: 20, // ✅ EXATO
+        count: 20,
       });
     },
     [rangeDraws, analysisHourBucket, schedule]
   );
 
-  // meta (DERIVADO)
   const metaNext = useMemo(() => {
     const m = analytics?.meta;
     if (!(m?.trigger?.grupo && m?.next?.ymd && m?.next?.hour)) {
@@ -525,9 +573,9 @@ export function useTop3Controller() {
         : "—";
 
     return {
-      triggerText: `G${String(g).padStart(2, "0")}${
-        animal ? " • " + animal.toUpperCase() : ""
-      } • ${dowLabel} ${m.trigger.hour}`,
+      triggerText: `G${String(g).padStart(2, "0")}${animal ? " • " + animal.toUpperCase() : ""} • ${dowLabel} ${
+        m.trigger.hour
+      }`,
       targetText: `${ymdToBR(m.next.ymd)} ${m.next.hour}`,
       samples: Number(m.samples || 0),
     };
@@ -537,13 +585,8 @@ export function useTop3Controller() {
     const arr = Array.isArray(analytics?.top) ? analytics.top : [];
     const samplesMeta = Number(analytics?.meta?.samples || 0);
 
-    const alpha = Number.isFinite(Number(TOP3_SMOOTH_ALPHA))
-      ? Number(TOP3_SMOOTH_ALPHA)
-      : 1;
-
-    const groupsK = Number.isFinite(Number(TOP3_GROUPS_K))
-      ? Number(TOP3_GROUPS_K)
-      : 25;
+    const alpha = Number.isFinite(Number(TOP3_SMOOTH_ALPHA)) ? Number(TOP3_SMOOTH_ALPHA) : 1;
+    const groupsK = Number.isFinite(Number(TOP3_GROUPS_K)) ? Number(TOP3_GROUPS_K) : 25;
 
     const denomRaw = Math.max(0, samplesMeta) * 7;
     const denom = denomRaw + alpha * groupsK;
@@ -552,9 +595,7 @@ export function useTop3Controller() {
       const g = Number(x.grupo);
       const animal = safeStr(getAnimalLabel?.(g) || "");
 
-      const bgPrimary = normalizeImgSrc(
-        safeStr(getImgFromGrupo?.(g, 512) || getImgFromGrupo?.(g) || "")
-      );
+      const bgPrimary = normalizeImgSrc(safeStr(getImgFromGrupo?.(g, 512) || getImgFromGrupo?.(g) || ""));
 
       const iconVariants = makeImgVariantsFromGrupo({
         grupo: g,
@@ -576,7 +617,6 @@ export function useTop3Controller() {
       const prob = denom > 0 ? (freq + alpha) / denom : 0;
       const probPct = Math.max(0, prob * 100);
 
-      // ✅ 20 milhares em 4 colunas (5 por terminação/dezena fixa)
       let milharesCols = [
         { dezena: "", items: ["", "", "", "", ""] },
         { dezena: "", items: ["", "", "", "", ""] },
@@ -588,7 +628,7 @@ export function useTop3Controller() {
         const out = build20(g);
         milharesCols = build4ColsFromEngineOut(out, 4, 5);
       } catch {
-        // mantém vazio (SEM inventar)
+        // mantém vazio
       }
 
       const milhares20 = milharesCols.flatMap((c) => c.items).slice(0, 20);
@@ -659,7 +699,7 @@ export function useTop3Controller() {
     ymdSafe,
     lookback,
     loading,
-    loadingStage, // ✅ novo (opcional pro UI premium)
+    loadingStage,
     error,
     dateBR,
     schedule,

@@ -35,9 +35,7 @@ function pad2(n) {
   return String(n).padStart(2, "0");
 }
 
-/**
- * ✅ Normaliza "qualquer data" para YYYY-MM-DD (ou null).
- */
+/** ✅ Normaliza "qualquer data" para YYYY-MM-DD (ou null). */
 function normalizeToYMD(input) {
   if (!input) return null;
 
@@ -45,7 +43,6 @@ function normalizeToYMD(input) {
   if (typeof input === "object" && typeof input.toDate === "function") {
     const d = input.toDate();
     if (d instanceof Date && !Number.isNaN(d.getTime())) {
-      // ✅ UTC para não "voltar um dia" por timezone
       return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(
         d.getUTCDate()
       )}`;
@@ -64,7 +61,6 @@ function normalizeToYMD(input) {
 
     const d = new Date(sec * 1000);
     if (!Number.isNaN(d.getTime())) {
-      // ✅ UTC para não "voltar um dia" por timezone
       return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(
         d.getUTCDate()
       )}`;
@@ -73,7 +69,6 @@ function normalizeToYMD(input) {
 
   // Date
   if (input instanceof Date && !Number.isNaN(input.getTime())) {
-    // ✅ UTC para consistência total
     return `${input.getUTCFullYear()}-${pad2(input.getUTCMonth() + 1)}-${pad2(
       input.getUTCDate()
     )}`;
@@ -93,9 +88,7 @@ function normalizeToYMD(input) {
   return null;
 }
 
-/**
- * ✅ Resolve data do draw independente do nome do campo vindo do Firestore/backend
- */
+/** ✅ Resolve data do draw independente do nome do campo vindo do Firestore/backend */
 function getDrawDate(draw) {
   if (!draw) return null;
 
@@ -111,9 +104,7 @@ function getDrawDate(draw) {
   return normalizeToYMD(raw);
 }
 
-/**
- * ✅ Resolve close_hour independente do nome do campo
- */
+/** ✅ Resolve close_hour independente do nome do campo */
 function getDrawCloseHour(draw) {
   if (!draw) return "";
   return String(
@@ -121,9 +112,7 @@ function getDrawCloseHour(draw) {
   ).trim();
 }
 
-/**
- * ✅ Resolve lottery key (quando existir)
- */
+/** ✅ Resolve lottery key (quando existir) */
 function getDrawLotteryKey(draw) {
   if (!draw) return "";
   return String(
@@ -136,9 +125,7 @@ function getDrawLotteryKey(draw) {
   ).trim();
 }
 
-/**
- * ✅ Mês por extenso (PT-BR) a partir de YYYY-MM-DD
- */
+/** ✅ Mês por extenso (PT-BR) a partir de YYYY-MM-DD */
 function getMonthPT(dateInput) {
   const ymd = normalizeToYMD(dateInput);
   if (!ymd) return null;
@@ -161,9 +148,7 @@ function getMonthPT(dateInput) {
   return meses[m - 1] || null;
 }
 
-/**
- * ✅ Normaliza close_hour para HH:MM
- */
+/** ✅ Normaliza close_hour para HH:MM */
 function normHHMM(value) {
   const s0 = String(value || "").trim();
   if (!s0) return null;
@@ -197,9 +182,7 @@ function normHHMM(value) {
   return null;
 }
 
-/**
- * ✅ Mapeia HH:MM -> BUCKET "09h" etc.
- */
+/** ✅ Mapeia HH:MM -> BUCKET "09h" etc. */
 function hhmmToBucket09h(value) {
   const hhmm = normHHMM(value);
   if (!hhmm) return null;
@@ -223,9 +206,7 @@ function fmtIntPT(n) {
   }
 }
 
-/**
- * ✅ DEDUPE conservador (sem colapsar draws reais)
- */
+/** ✅ DEDUPE conservador (sem colapsar draws reais) */
 function dedupeDraws(drawsRaw) {
   const arr = Array.isArray(drawsRaw) ? drawsRaw : [];
   if (!arr.length) return arr;
@@ -326,10 +307,7 @@ function normalizePosFilter(filters) {
   return Number.isFinite(n) ? n : null;
 }
 
-/**
- * ✅ Lê grupo/posição de um prize com compatibilidade
- * (blindagem extra: aceita "01", 1, "1º", etc.)
- */
+/** ✅ Lê grupo/posição de um prize com compatibilidade */
 function getPrizeGrupo(pz) {
   const g =
     pz?.grupo ?? pz?.group ?? pz?.grupo1 ?? pz?.grupo_1 ?? pz?.g ?? null;
@@ -348,9 +326,7 @@ function getPrizePos(pz) {
   return Number.isFinite(n) ? n : null;
 }
 
-/**
- * ✅ Detecta se um draw "contém" o grupo selecionado (qualquer posição)
- */
+/** ✅ Detecta se um draw "contém" o grupo selecionado (qualquer posição) */
 function drawHasGrupo(draw, selectedGrupo) {
   const gSel = Number(selectedGrupo);
   if (!Number.isFinite(gSel) || gSel < 1 || gSel > 25) return false;
@@ -363,9 +339,7 @@ function drawHasGrupo(draw, selectedGrupo) {
   return false;
 }
 
-/**
- * ✅ Conta aparições do grupo selecionado (por posição) e total
- */
+/** ✅ Conta aparições do grupo selecionado (por posição) e total */
 function countGrupoAparicoes(draws, selectedGrupo, expectedPositions) {
   const gSel = Number(selectedGrupo);
   if (!Number.isFinite(gSel) || gSel < 1 || gSel > 25) {
@@ -404,9 +378,7 @@ function countGrupoAparicoes(draws, selectedGrupo, expectedPositions) {
   return { total, byPos };
 }
 
-/**
- * ✅ Conta APARIÇÕES no draw com recortes coerentes
- */
+/** ✅ Conta APARIÇÕES no draw com recortes coerentes */
 function countAparicoesInDraw(
   draw,
   { selectedGrupo, selectedPosOrNull, expectedPositions } = {}
@@ -445,9 +417,7 @@ function countAparicoesInDraw(
   return c;
 }
 
-/**
- * ✅ OPÇÃO B (insight) — original (apenas quando NÃO há selectedGrupo)
- */
+/** ✅ OPÇÃO B (insight) — original (apenas quando NÃO há selectedGrupo) */
 function buildPosAnimalRanking(draws, expectedPositions, selectedPosOrNull) {
   const safeDraws = Array.isArray(draws) ? draws : [];
 
@@ -551,9 +521,7 @@ function buildPosAnimalRanking(draws, expectedPositions, selectedPosOrNull) {
   };
 }
 
-/**
- * ✅ GLOBAL: aparições por grupo (01..25), IGNORANDO filtros e selectedGrupo
- */
+/** ✅ GLOBAL: aparições por grupo (01..25), IGNORANDO filtros e selectedGrupo */
 function buildGlobalAparicoes25(drawsAll) {
   const safeDraws = Array.isArray(drawsAll) ? drawsAll : [];
   const map = new Map(); // grupo -> count
@@ -632,10 +600,6 @@ const PP = {
   goldStroke: "rgba(200,178,90,0.38)",
 };
 
-
-// Largura base dos SVG charts (fixo para padronizar tipografia)
-const W = 660;
-
 /* =========================
    Card / Empty
 ========================= */
@@ -683,7 +647,7 @@ function calcMonthViewH(rows) {
 }
 
 function BarChartHorizontalMonthPremium({ data }) {
-
+  const W = 900;
   const safeData = Array.isArray(data) ? data : [];
   const rows = Math.max(1, safeData.length);
   const H = calcMonthViewH(rows);
@@ -702,8 +666,8 @@ function BarChartHorizontalMonthPremium({ data }) {
 
   const max = Math.max(0, ...safeData.map((d) => safeNumber(d.value)));
 
-  const fontLabel = 17;
-  const fontVal = 17;
+  const fontLabel = 18;
+  const fontVal = 18;
 
   return (
     <div style={{ ...ui.svgFill, height: "100%" }}>
@@ -712,7 +676,7 @@ function BarChartHorizontalMonthPremium({ data }) {
         width="100%"
         height="100%"
         style={{ display: "block" }}
-        preserveAspectRatio="xMidYMid meet"
+        preserveAspectRatio="none"
       >
         {safeData.map((d, i) => {
           const v = safeNumber(d.value);
@@ -788,13 +752,13 @@ function BarChartHorizontalBasic({
   onBarClick = null,
   compact = false,
 }) {
-
+  const W = 900;
   const safeData = Array.isArray(data) ? data : [];
   const rows = Math.max(1, safeData.length);
 
   const H = compact
-    ? clamp(190 + rows * 64, 520, 760)
-    : clamp(210 + rows * 68, 560, 820);
+    ? clamp(130 + rows * 52, 380, 600)
+    : clamp(150 + rows * 58, 420, 700);
 
   const pad = { l: 24, r: 18, t: 18, b: 18 };
 
@@ -821,8 +785,8 @@ function BarChartHorizontalBasic({
   const clickable = typeof onBarClick === "function";
 
   // ✅ FONTE MAIS LEGÍVEL
-  const fontLabel = 17;
-  const fontVal = 17;
+  const fontLabel = 20;
+  const fontVal = 20;
 
   return (
     <div style={{ ...ui.svgFill, height: "100%" }}>
@@ -831,7 +795,7 @@ function BarChartHorizontalBasic({
         width="100%"
         height="100%"
         style={{ display: "block" }}
-        preserveAspectRatio="xMidYMid meet"
+        preserveAspectRatio="none"
       >
         {safeData.map((d, i) => {
           const v = safeNumber(d.value);
@@ -915,6 +879,7 @@ function WaterfallHourChart({ data }) {
   const safeData = Array.isArray(data) ? data : [];
   if (!safeData.length) return <EmptyState label="" />;
 
+  const W = 900;
   const H = 420;
 
   const pad = { l: 26, r: 26, t: 28, b: 58 };
@@ -928,8 +893,8 @@ function WaterfallHourChart({ data }) {
   const max = Math.max(1, ...safeData.map((d) => safeNumber(d.value)));
   const scaleMax = max;
 
-  const fontValue = 20; // ✅ número bem legível
-  const fontLabel = 17; // ✅ label bem legível
+  const fontValue = 20;
+  const fontLabel = 20;
 
   return (
     <div style={{ ...ui.svgFill, height: "100%" }}>
@@ -938,7 +903,7 @@ function WaterfallHourChart({ data }) {
         width="100%"
         height="100%"
         style={{ display: "block" }}
-        preserveAspectRatio="xMidYMid meet"
+        preserveAspectRatio="none"
       >
         {safeData.map((d, i) => {
           const v = safeNumber(d.value);
@@ -1002,7 +967,7 @@ function AparicoesList({ items }) {
   const max = Math.max(1, ...safeItems.map((x) => safeNumber(x.value)));
 
   return (
-    <div style={ui.scrollWrap} className="ppChartsGrid pp_scroll">
+    <div style={ui.scrollWrap} className="pp_scroll">
       <div style={ui.apList}>
         {safeItems.map((x, idx) => {
           const pct = (safeNumber(x.value) / max) * 100;
@@ -1412,9 +1377,15 @@ export default function ChartsGrid({
     if (stats.selectedPosOrNull)
       return `Filtro: ${prettyPosLabel(stats.selectedPosOrNull)}`;
     return "Clique para filtrar";
-  }, [hasDataForView, disabledInteractions, stats.hasSelected, stats.selectedPosOrNull]);
+  }, [
+    hasDataForView,
+    disabledInteractions,
+    stats.hasSelected,
+    stats.selectedPosOrNull,
+  ]);
 
-  const canPickPos = !disabledInteractions && typeof onSelectPosicao === "function";
+  const canPickPos =
+    !disabledInteractions && typeof onSelectPosicao === "function";
 
   return (
     <>
@@ -1482,7 +1453,9 @@ export default function ChartsGrid({
                 emptyLabel={emptyLabel}
                 disabled={!canPickPos}
                 onPickPos={
-                  canPickPos ? (posLabel) => onSelectPosicao(String(posLabel || "1º")) : null
+                  canPickPos
+                    ? (posLabel) => onSelectPosicao(String(posLabel || "1º"))
+                    : null
                 }
               />
             )}
@@ -1492,10 +1465,6 @@ export default function ChartsGrid({
     </>
   );
 }
-
-/* =========================
-   UI (premium)
-========================= */
 
 /* =========================
    UI (premium)
@@ -1524,9 +1493,9 @@ const ui = {
   areaPosicao: { gridArea: "posicao", minHeight: 0, minWidth: 0 },
 
   card: {
-    border: `1px solid ${PP.strokeStrong}`,
+    border: "1px solid " + PP.strokeStrong,
     borderRadius: PP.rCard,
-    background: `linear-gradient(180deg, ${PP.surface}, ${PP.surface2})`,
+    background: "linear-gradient(180deg, " + PP.surface + ", " + PP.surface2 + ")",
     padding: 14,
     position: "relative",
     overflow: "hidden",
@@ -1545,7 +1514,8 @@ const ui = {
     right: 12,
     top: 10,
     height: 1,
-    background: `linear-gradient(90deg, transparent, ${PP.hairline}, transparent)`,
+    background:
+      "linear-gradient(90deg, transparent, " + PP.hairline + ", transparent)",
     opacity: 0.9,
     pointerEvents: "none",
   },
@@ -1570,7 +1540,7 @@ const ui = {
     gap: 10,
     paddingBottom: 12,
     marginBottom: 12,
-    borderBottom: `1px solid ${PP.stroke}`,
+    borderBottom: "1px solid " + PP.stroke,
     flex: "0 0 auto",
     minWidth: 0,
   },
@@ -1601,11 +1571,11 @@ const ui = {
     height: 26,
     padding: "0 12px",
     borderRadius: 999,
-    border: `1px solid ${PP.stroke}`,
+    border: "1px solid " + PP.stroke,
     background: "rgba(0,0,0,0.35)",
     color: PP.text2,
     fontWeight: 900,
-    fontSize: 18,
+    fontSize: 15,
     letterSpacing: 0.2,
     whiteSpace: "nowrap",
   },
@@ -1624,7 +1594,7 @@ const ui = {
     minHeight: 0,
     minWidth: 0,
     borderRadius: PP.rInner,
-    border: `1px solid ${PP.stroke}`,
+    border: "1px solid " + PP.stroke,
     background:
       "radial-gradient(1000px 360px at 20% 10%, rgba(255,255,255,0.06), transparent 55%), linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01))",
     overflow: "hidden",
@@ -1692,7 +1662,7 @@ const ui = {
     top: 0,
     bottom: 0,
     background: PP.gold,
-    boxShadow: `0 0 0 1px rgba(200,178,90,0.14)`,
+    boxShadow: "0 0 0 1px rgba(200,178,90,0.14)",
   },
 
   apVal: {
@@ -1721,7 +1691,7 @@ const ui = {
     justifyContent: "space-between",
     gap: 10,
     paddingBottom: 8,
-    borderBottom: `1px solid rgba(255,255,255,0.10)`,
+    borderBottom: "1px solid rgba(255,255,255,0.10)",
     minWidth: 0,
   },
 
@@ -1744,7 +1714,7 @@ const ui = {
 
   posHdrSub: {
     fontWeight: 900,
-    fontSize: 17,
+    fontSize: 14,
     letterSpacing: 0.14,
     color: PP.text2,
     opacity: 0.92,
@@ -1765,7 +1735,7 @@ const ui = {
   posRowBtn: {
     width: "100%",
     textAlign: "left",
-    border: `1px solid rgba(255,255,255,0.12)`,
+    border: "1px solid rgba(255,255,255,0.12)",
     background: "rgba(0,0,0,0.30)",
     borderRadius: 12,
     padding: 12,
@@ -1778,7 +1748,7 @@ const ui = {
   },
 
   posRow: {
-    border: `1px solid rgba(255,255,255,0.12)`,
+    border: "1px solid rgba(255,255,255,0.12)",
     background: "rgba(0,0,0,0.30)",
     borderRadius: 12,
     padding: 12,
@@ -1816,7 +1786,7 @@ const ui = {
     borderRadius: 12,
     overflow: "hidden",
     minWidth: 0,
-    border: `1px solid rgba(255,255,255,0.10)`,
+    border: "1px solid rgba(255,255,255,0.10)",
     background: "rgba(255,255,255,0.04)",
   },
 
@@ -1832,7 +1802,7 @@ const ui = {
     top: 0,
     bottom: 0,
     background: PP.gold,
-    boxShadow: `0 0 0 1px rgba(200,178,90,0.14)`,
+    boxShadow: "0 0 0 1px rgba(200,178,90,0.14)",
   },
 
   posRight: {
@@ -1845,7 +1815,7 @@ const ui = {
   },
 
   posHint: {
-    fontSize: 17,
+    fontSize: 14,
     color: PP.muted,
     letterSpacing: 0.12,
     opacity: 0.92,
@@ -1884,7 +1854,7 @@ const ui = {
     bottom: 10,
     fontWeight: 900,
     opacity: 0.86,
-    fontSize: 18,
+    fontSize: 15,
     letterSpacing: 0.2,
     color: PP.text,
     textShadow: "0 2px 10px rgba(0,0,0,0.55)",
@@ -1926,30 +1896,5 @@ const ui = {
         "posicao";
     }
   }
-  
-/* ✅ FIX LEGIBILIDADE RECHARTS (ticks/labels/tooltip/legend) */
-.ppChartsGrid .recharts-cartesian-axis-tick-value,
-.ppChartsGrid .recharts-cartesian-axis-tick text,
-.ppChartsGrid .recharts-cartesian-axis text,
-.ppChartsGrid .recharts-label,
-.ppChartsGrid .recharts-legend-item-text,
-.ppChartsGrid .recharts-tooltip-wrapper,
-.ppChartsGrid .recharts-tooltip-label,
-.ppChartsGrid .recharts-tooltip-item,
-.ppChartsGrid .recharts-text{
-  font-size: 14px !important;
-  font-weight: 800 !important;
-  letter-spacing: 0.2px !important;
-}
-
-/* ✅ se ainda ficar pequeno, sobe só o eixo X (dias da semana) */
-.ppChartsGrid .recharts-xAxis .recharts-cartesian-axis-tick-value,
-.ppChartsGrid .recharts-xAxis .recharts-cartesian-axis-tick text{
-  font-size: 15px !important;
-  font-weight: 850 !important;
-}
-`,
+  `,
 };
-
-
-

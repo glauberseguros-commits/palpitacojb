@@ -38,6 +38,10 @@ export const AGGREGATED_AUTO_DAYS = 60;
  */
 const DEFAULT_READ_POLICY = "cache"; // "cache" | "server"
 
+function pad2(n) {
+  return String(n).padStart(2, "0");
+} // "cache" | "server"
+
 function nowMs() {
   return Date.now();
 }
@@ -69,8 +73,12 @@ const RJ_LOTTERY_KEY = "PT_RIO";
 function applyBoundsFloor(scopeKey, boundsLike) {
   const min = String(boundsLike?.minYmd || "").trim();
   const max = String(boundsLike?.maxYmd || "").trim();
+
+  // ✅ valida localmente (evita dependência de isYMD antes da declaração)
+  const isYMDLocal = (s) => /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
+
   // ✅ SEM piso rígido (nem RJ nem FEDERAL). Apenas valida.
-  return { minYmd: isYMD(min) ? min : null, maxYmd: isYMD(max) ? max : null };
+  return { minYmd: isYMDLocal(min) ? min : null, maxYmd: isYMDLocal(max) ? max : null };
 }
 // ✅ Escopo canônico para Federal no app
 const FEDERAL_SCOPE_CODE = "FEDERAL";
@@ -187,9 +195,7 @@ function normalizeValueForField(fieldName, valueInput) {
    Utils
 ========================= */
 
-function pad2(n) {
-  return String(n).padStart(2, "0");
-}
+// pad2 já foi definido acima (mantido)
 
 function isYMD(s) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
@@ -1812,6 +1818,8 @@ export async function getKingLateByRange({
   cacheSet(LATE_CACHE, cacheKey, out);
   return out;
 }
+
+
 
 
 
