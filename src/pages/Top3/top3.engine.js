@@ -156,7 +156,6 @@ export function findLastDrawInList(draws, schedule) {
   const sorted = [...list]
     .filter((d) => isHourInSchedule(schedule, pickDrawHour(d)))
     .sort((a, b) => {
-      // ✅ robustez: hour inválido não quebra sort
       const ha0 = hourToInt(pickDrawHour(a));
       const hb0 = hourToInt(pickDrawHour(b));
       const ha = Number.isFinite(ha0) && ha0 >= 0 ? ha0 : -1;
@@ -354,11 +353,33 @@ export function findNextExistingDrawFromSlot({
   if (!isYMD(y0) || !h0 || !(drawsIndex instanceof Map))
     return { slot: null, draw: null };
 
+  // ✅ FEDERAL: varre dias elegíveis (qua/sáb) para não perder amostra
   if (key === "FEDERAL") {
-    const d = drawsIndex.get(`${y0}|${h0}`) || null;
-    return d
-      ? { slot: { ymd: y0, hour: h0 }, draw: d }
-      : { slot: null, draw: null };
+    let curY = y0;
+    let steps = 0;
+    let daysWalked = 0;
+
+    while (steps < maxSteps && daysWalked <= maxDays) {
+      const sch = getScheduleForLottery({
+        lotteryKey: key,
+        ymd: curY,
+        PT_RIO_SCHEDULE_NORMAL,
+        PT_RIO_SCHEDULE_WED_SAT,
+        FEDERAL_SCHEDULE,
+      });
+
+      if (Array.isArray(sch) && sch.length) {
+        const hh = toHourBucket(sch[0]);
+        const d = drawsIndex.get(`${curY}|${hh}`) || null;
+        if (d) return { slot: { ymd: curY, hour: hh }, draw: d };
+      }
+
+      curY = addDaysYMD(curY, 1);
+      daysWalked += 1;
+      steps += 1;
+    }
+
+    return { slot: null, draw: null };
   }
 
   let curY = y0;
@@ -421,7 +442,6 @@ export function indexDrawsByYmdHour(draws) {
     if (!isYMD(y) || !h) continue;
 
     const key = `${y}|${h}`;
-    // ✅ não sobrescreve (evita perder o primeiro válido)
     if (!map.has(key)) map.set(key, d);
   }
   return map;
@@ -469,7 +489,6 @@ export function countAparicoesByGrupoInDraw(draw) {
 
 /* =========================
    ✅ Base model: horário (sem gatilho)
-   - mesmo próximo slot (real)
 ========================= */
 
 function computeBaseNextDistribution({
@@ -745,12 +764,10 @@ export function computeConditionalNextTop3({
           2
         )} ficou intermediário (amostras cond=${condSamples}, M=${M}).`;
 
-  // ✅ referência temporal do universo analisado (o "agora" do motor)
   const nowTs = ymdHourToTs(lastY, lastH);
 
-  // ✅ bônus pequeno e controlado (prob manda; atraso só ajusta fino)
-  const LATE_BONUS_MAX = 0.02; // até +0.02 no score (seguro)
-  const LATE_CAP_DAYS = 30; // normaliza até 30 dias
+  const LATE_BONUS_MAX = 0.02;
+  const LATE_CAP_DAYS = 30;
 
   const ranked = Array.from(finalProb.entries())
     .map(([grupo, p]) => {
@@ -777,7 +794,6 @@ export function computeConditionalNextTop3({
       const gapNorm = Math.max(0, Math.min(1, gapDays / LATE_CAP_DAYS));
       const lateBonus = gapNorm * LATE_BONUS_MAX;
 
-      // explica "freq=0 entrou por quê?"
       let freqZeroWhy = "";
       if (freqCond <= 0) {
         if (freqBase > 0) {
@@ -805,7 +821,7 @@ export function computeConditionalNextTop3({
     .sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score;
       if (b.prob !== a.prob) return b.prob - a.prob;
-      return a.grupo - b.grupo; // determinístico
+      return a.grupo - b.grupo;
     })
     .slice(0, Math.max(1, Number(topN || 3)));
 
@@ -832,19 +848,14 @@ export function computeConditionalNextTop3({
           ? "2º mais provável"
           : "3º mais provável",
       grupo: x.grupo,
-
-      // ✅ mantém compat com UI atual (prob)
       prob: x.prob,
-
-      // ✅ agora o UI pode mostrar isso se quiser
       probCond: x.probCond,
       probBase: x.probBase,
       lateBonus: x.lateBonus,
-      freq: x.freqCond, // compat: o UI atual usa item.freq (cond)
+      freq: x.freqCond,
       freqCond: x.freqCond,
       freqBase: x.freqBase,
       freqZeroWhy: x.freqZeroWhy,
-
       reasons: [
         `Gatilho: 1º lugar = G${trig2} (último sorteio)`,
         `Cenário (fallback): ${scenarioLabel}`,
@@ -882,8 +893,6 @@ export function computeConditionalNextTop3({
         baseSamples,
         scenario: scenarioLabel,
         shrinkW: w,
-
-        // ✅ pacote premium para o front explicar
         explain: {
           dominantDriver: driver.key,
           dominantLabel: driver.label,
@@ -923,8 +932,6 @@ export function computeConditionalNextTop3({
       scenario: scenarioLabel,
       shrinkW: w,
       alpha,
-
-      // ✅ explicação premium global
       explain: {
         dominantDriver: driver.key,
         dominantLabel: driver.label,
@@ -948,18 +955,17 @@ export function computeConditionalNextTop3({
 
 /* =========================
    16/20 milhares (por grupo) — POR TERMINAÇÃO (CORRETO)
-   - fixa as 4 terminações do grupo (ex: G14 => 53/54/55/56)
-   - rankeia por CENTENA (3 dígitos) dentro de cada terminação
-   - ordena por frequência desc (e desempate asc)
 ========================= */
 
 function getDezenasFixasFromGrupo(grupo2) {
   const g = Number(grupo2);
   if (!Number.isFinite(g) || g < 1 || g > 25) return [];
-  const start = (g - 1) * 4 + 1; // 1,5,9,...,53...
+  const start = (g - 1) * 4 + 1; // 1..97
   const out = [];
-  for (let i = 0; i < 4; i += 1)
-    out.push(String(start + i).padStart(2, "0"));
+  for (let i = 0; i < 4; i += 1) {
+    const dz = (start + i) % 100; // ✅ wrap dezena (00-99) => 100 vira 00
+    out.push(String(dz).padStart(2, "0"));
+  }
   return out;
 }
 
@@ -999,10 +1005,6 @@ export function buildMilharesForGrupo({
   const dezenasFixas = getDezenasFixasFromGrupo(grupo2);
   if (!dezenasFixas.length) return { dezenas: [], slots: [] };
 
-  // ✅ Coleta milhares REAIS do histórico, sem inventar:
-  // - usa somente prêmios 1º ao 5º (ignora 6º e 7º)
-  // - respeita grade
-  // - target_only = só no horário alvo; fallback = qualquer horário da grade
   const collectMilhares = (mode) => {
     const out = [];
     for (const d of list) {
@@ -1034,21 +1036,18 @@ export function buildMilharesForGrupo({
     return out;
   };
 
-  let prizes = collectMilhares("target_only");
+  const prizes = collectMilhares("target_only");
 
-  // ✅ REGRA: não mistura horários. Se a amostra do horário-alvo for pequena, mantém a validade do recorte.
   if (!prizes.length) return { dezenas: dezenasFixas, slots: [] };
 
-  const perDezena = Math.max(1, Math.ceil(N / dezenasFixas.length)); // 16=>4, 20=>5
+  const perDezena = Math.max(1, Math.ceil(N / dezenasFixas.length));
   const slots = [];
 
   for (const dz of dezenasFixas) {
-    const centCounts = new Map(); // c3 -> count
+    const centCounts = new Map();
 
     for (const m4 of prizes) {
       if (!m4 || !/^\d{4}$/.test(m4)) continue;
-
-      // trava por coluna
       if (getDezena2(m4) !== dz) continue;
 
       const c3 = getCentena3(m4);
@@ -1077,12 +1076,10 @@ export function buildMilharesForGrupo({
   return { dezenas: dezenasFixas, slots: slots.slice(0, N) };
 }
 
-// ✅ compat: mantém a API antiga (16)
 export function build16MilharesForGrupo(args) {
   return buildMilharesForGrupo({ ...(args || {}), count: 16 });
 }
 
-// ✅ compat: 20 (nome corrigido)
 export function build20MilharesForGrupo(args) {
   return buildMilharesForGrupo({ ...(args || {}), count: 20 });
 }

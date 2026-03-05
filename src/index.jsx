@@ -1,4 +1,4 @@
-// src/index.js
+// src/index.jsx
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
@@ -10,11 +10,11 @@ if (!rootEl) throw new Error("Elemento #root não encontrado no DOM.");
 
 const root = ReactDOM.createRoot(rootEl);
 
-// ✅ StrictMode SOMENTE no DEV (recomendado).
-// Se quiser desligar double-effects no DEV, troque STRICTMODE_DEV para false.
+// ✅ StrictMode SOMENTE no DEV.
+// Para auditoria de bugs (efeitos duplicados), coloque false temporariamente.
 const STRICTMODE_DEV = true;
 
-// ✅ Vite: flags oficiais
+// ✅ CRA (react-scripts): ambiente
 const isProd = process.env.NODE_ENV === "production";
 
 const AppTree = (
@@ -30,5 +30,3 @@ root.render(
     AppTree
   )
 );
-
-

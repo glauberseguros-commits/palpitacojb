@@ -101,42 +101,10 @@ async function resolveUfForLottery({
   schedule,
   getKingResultsByDateFn,
 }) {
+  // ✅ Sem gambiarra: Federal é Federal. Se o backend não salva certo,
+  // isso deve ser corrigido na origem dos dados, não mascarado aqui.
   const lk = safeStr(lotteryKey).toUpperCase();
-
-  // padrão (mantém comportamento atual)
-  if (lk !== "FEDERAL") return lk;
-
-  const candidates = [
-    "FEDERAL",
-    "BR",
-    "DF",
-    "RJ",
-    "PT_RIO",
-  ];
-
-  // tenta achar dados do dia que batam com o schedule (20:00)
-  for (const uf of candidates) {
-    try {
-      const out = await getKingResultsByDateFn({
-        uf,
-        date: ymd,
-        closeHour: null,
-        positions: null,
-        readPolicy: "server",
-      });
-      const today = Array.isArray(out) ? out : [];
-      const last = findLastDrawInList(today, schedule);
-      if (last) return uf;
-
-      // fallback: se veio algo (mesmo sem casar horário), ainda assim é candidato viável
-      if (today.length) return uf;
-    } catch {
-      // tenta próximo
-    }
-  }
-
-  // se nada funcionou, volta para FEDERAL mesmo
-  return "FEDERAL";
+  return lk;
 }
 
 export function useTop3Controller() {

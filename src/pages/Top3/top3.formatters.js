@@ -200,3 +200,20 @@ export function milharCompareByCentenaAsc(a, b) {
     return String(ca).localeCompare(String(cb), "en", { numeric: true });
   return milharCompareAsc(a, b);
 }
+// ✅ Dezena canônica: 100 -> "00", 101 -> "01" ...
+export function toDezena2Wrap100(n) {
+  const x = Number(n);
+  if (!Number.isFinite(x)) return null;
+  const d = ((x % 100) + 100) % 100;
+  return pad2(d);
+}
+
+// ✅ Dezenas de um grupo (1..25) no padrão do bicho
+// grupo 1 => 01,02,03,04
+// grupo 25 => 97,98,99,00  ✅
+export function dezenasFromGrupo(grupo) {
+  const g = Number(grupo);
+  if (!Number.isFinite(g) || g < 1 || g > 25) return [];
+  const start = (g - 1) * 4 + 1; // 1..97
+  return [0, 1, 2, 3].map((i) => toDezena2Wrap100(start + i)).filter(Boolean);
+}
