@@ -88,6 +88,15 @@ function normalizeHourLike(value) {
   const mISO = s.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
   if (mISO) return `${pad2(mISO[1])}:${pad2(mISO[2])}`;
 
+  const mHm = s.match(/^(\d{3,4})$/);
+  if (mHm) {
+    const hh = String(mHm[1]).slice(0, -2);
+    const mm = String(mHm[1]).slice(-2);
+    if (/^\d{1,2}$/.test(hh) && /^\d{2}$/.test(mm)) {
+      return `${pad2(hh)}:${mm}`;
+    }
+  }
+
   const m2 = s.match(/^(\d{1,2})$/);
   if (m2) return `${pad2(m2[1])}:00`;
 
@@ -97,7 +106,7 @@ function normalizeHourLike(value) {
 function toHourBucket(hhmm) {
   const s = normalizeHourLike(hhmm);
   const m = s.match(/^(\d{2}):(\d{2})$/);
-  if (!m) return s;
+  if (!m) return null;
   return `${m[1]}:00`;
 }
 
@@ -120,7 +129,9 @@ function getDomNumber(ymd) {
 }
 
 function scheduleSet(schedule) {
-  return new Set((Array.isArray(schedule) ? schedule : []).map(toHourBucket));
+  const arr = Array.isArray(schedule) ? schedule : [];
+  const buckets = arr.map(toHourBucket).filter(Boolean);
+  return new Set(buckets);
 }
 
 /* =========================
@@ -174,7 +185,7 @@ function pickDrawYMD(draw) {
     draw?.ymdTarget ??
     null;
 
-  const y = normalizeToYMD(raw);
+  const y = (typeof raw === "string" || raw instanceof Date) ? normalizeToYMD(raw) : null;
   return y && isYMD(y) ? y : null;
 }
 
@@ -297,7 +308,7 @@ export function computeTop3Signals({
     const h = toHourBucket(pickDrawHour(d));
     if (!h) continue;
 
-    if (!schSet.has(h)) continue; // ignora fora da grade
+    if (schSet.size > 0 && !schSet.has(h)) continue; // ignora fora da grade
 
     const g1 = pickPrize1GrupoFromDraw(d);
     if (!Number.isFinite(Number(g1))) continue;
@@ -610,3 +621,5 @@ export function computeTop3Signals({
     },
   };
 }
+
+
