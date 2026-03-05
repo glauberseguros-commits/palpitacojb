@@ -15,7 +15,7 @@ const root = ReactDOM.createRoot(rootEl);
 const STRICTMODE_DEV = true;
 
 // ✅ Vite: flags oficiais
-const isProd = import.meta.env.PROD;
+const isProd = process.env.NODE_ENV === "production";
 
 const AppTree = (
   <BrowserRouter>
@@ -30,4 +30,5 @@ root.render(
     AppTree
   )
 );
+
 
