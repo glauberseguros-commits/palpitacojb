@@ -153,6 +153,8 @@ function loadSessionObj() {
 }
 
 function hasActiveSession() {
+  // ✅ convidado ativo conta como sessão
+  if (safeReadLS(LS_GUEST_ACTIVE_KEY) === "1") return true;
   return !!loadSessionObj();
 }
 
