@@ -1,4 +1,4 @@
-// src/App.js
+// src/App.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -9,16 +9,16 @@ import Top3Mod from "./pages/Top3/Top3";
 import LateMod from "./pages/Late/Late";
 import SearchMod from "./pages/Search/Search";
 
-// ✅ Admin (apenas UMA vez)
-import AdminMod from "./pages/Admin/Admin.jsx";
-import AdminLoginMod from "./pages/Admin/AdminLogin.jsx";
+// ✅ Admin
+import AdminMod from "./pages/Admin/Admin";
+import AdminLoginMod from "./pages/Admin/AdminLogin";
 
 // ✅ Páginas placeholder
 import PaymentsMod from "./pages/Payments/Payments";
 import DownloadsMod from "./pages/Downloads/Downloads";
 
 // ✅ página de Centenas
-import CentenasMod from "./pages/Centenas/Centenas.jsx";
+import CentenasMod from "./pages/Centenas/Centenas";
 
 // ✅ AppShell
 import AppShellMod from "./pages/Dashboard/components/Sidebar/AppShell";
@@ -120,11 +120,6 @@ function resolveComponent(mod, name) {
    Sessão (robusta e compatível)
 ========================= */
 
-/**
- * ✅ Lê sessão do localStorage e normaliza:
- * - aceita formato novo: { type:"user"/"guest", plan, uid }
- * - aceita formato antigo: { ok:true, ... }
- */
 function loadSessionObj() {
   const raw = safeReadLS(ACCOUNT_SESSION_KEY);
   if (!raw) return null;
@@ -194,7 +189,6 @@ function normalizeLoteriaInput(v) {
     .replace(/[^A-Z0-9]+/g, "_")
     .replace(/^_+|_+$/g, "");
 
-  // fallback defensivo (não deve acontecer)
   return out || "PT_RIO";
 }
 function loteriaToLotteryKey(loteria) {
@@ -203,9 +197,7 @@ function loteriaToLotteryKey(loteria) {
 
 function getDefaultDashboardFilters() {
   return {
-    // ✅ NOVO: loteria persistente
     loteria: "PT_RIO",
-
     mes: "Todos",
     diaMes: "Todos",
     diaSemana: "Todos",
@@ -223,7 +215,6 @@ function loadDashboardFilters() {
   if (!obj || typeof obj !== "object") return getDefaultDashboardFilters();
 
   const base = getDefaultDashboardFilters();
-
   const loteria = normalizeLoteriaInput(obj.loteria);
 
   // ✅ coerência: FEDERAL => horário deve ser 19h ou 20h (default 20h)
@@ -238,7 +229,6 @@ function loadDashboardFilters() {
 
   return {
     loteria,
-
     mes: typeof obj.mes === "string" ? obj.mes : base.mes,
     diaMes: typeof obj.diaMes === "string" ? obj.diaMes : base.diaMes,
     diaSemana: typeof obj.diaSemana === "string" ? obj.diaSemana : base.diaSemana,
@@ -297,8 +287,7 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       const msg =
-        this.state.err?.message ||
-        String(this.state.err || "Erro desconhecido");
+        this.state.err?.message || String(this.state.err || "Erro desconhecido");
       return (
         <div
           style={{
@@ -313,18 +302,12 @@ class ErrorBoundary extends React.Component {
           <div style={{ fontWeight: 900, marginBottom: 8 }}>
             Falha ao renderizar a aplicação
           </div>
-          <div
-            style={{
-              opacity: 0.85,
-              whiteSpace: "pre-wrap",
-              lineHeight: 1.35,
-            }}
-          >
+          <div style={{ opacity: 0.85, whiteSpace: "pre-wrap", lineHeight: 1.35 }}>
             {msg}
           </div>
           <div style={{ marginTop: 12, opacity: 0.7, fontSize: 12 }}>
-            Dica: abra o Console (F12). Se aparecer “[IMPORT INVALID] …”, o
-            import desse componente está errado (default vs named).
+            Dica: abra o Console (F12). Se aparecer “[IMPORT INVALID] …”, o import
+            desse componente está errado (default vs named).
           </div>
         </div>
       );
@@ -393,7 +376,9 @@ function BuildStamp() {
   const shaShort = BUILD_SHA ? BUILD_SHA.slice(0, 7) : "";
   const ref = BUILD_REF || "";
   const tm = BUILD_TIME || "";
-  const text = shaShort ? `build ${shaShort}${ref ? ` · ${ref}` : ""}${tm ? ` · ${tm}` : ""}` : "";
+  const text = shaShort
+    ? `build ${shaShort}${ref ? ` · ${ref}` : ""}${tm ? ` · ${tm}` : ""}`
+    : "";
 
   if (!shaShort) return null;
 
@@ -448,15 +433,12 @@ export default function App() {
   // ✅ log de build (uma vez)
   useEffect(() => {
     // eslint-disable-next-line no-console
-    console.log(
-      "[PALPITACO BUILD]",
-      {
-        sha: BUILD_SHA || "(none)",
-        ref: BUILD_REF || "(none)",
-        time: BUILD_TIME || "(none)",
-        href: typeof window !== "undefined" ? window.location.href : "",
-      }
-    );
+    console.log("[PALPITACO BUILD]", {
+      sha: BUILD_SHA || "(none)",
+      ref: BUILD_REF || "(none)",
+      time: BUILD_TIME || "(none)",
+      href: typeof window !== "undefined" ? window.location.href : "",
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -512,10 +494,7 @@ export default function App() {
     };
   }, [adminMode]);
 
-  /* ============================================================
-     ✅ Blindagem: pós-login => sempre Dashboard
-     - Nunca entra “automaticamente” em ACCOUNT
-  ============================================================ */
+  // ✅ Blindagem: pós-login => sempre Dashboard (nunca cai em ACCOUNT automaticamente)
   const [screen, setScreen] = useState(() => {
     const sessionOn = hasActiveSession();
     const saved = normalizeRoute(safeReadLS(STORAGE_KEY));
@@ -532,30 +511,22 @@ export default function App() {
     safeWriteLS(STORAGE_KEY, screen);
   }, [screen]);
 
-  const [dashboardFilters, setDashboardFilters] = useState(() =>
-    loadDashboardFilters()
-  );
+  const [dashboardFilters, setDashboardFilters] = useState(() => loadDashboardFilters());
 
-  // ✅ garante coerência:
-  // - FEDERAL => horário 19h ou 20h (default 20h)
-  // - outras loterias => NÃO força PT_RIO; apenas normaliza aliases
+  // ✅ garante coerência FEDERAL
   useEffect(() => {
     const lot = normalizeLoteriaInput(dashboardFilters?.loteria);
 
     if (lot === "FEDERAL") {
       const h = String(dashboardFilters?.horario || "");
       if (h !== "Todos" && h !== "19h" && h !== "20h") {
-        setDashboardFilters((prev) => ({
-          ...prev,
-          horario: "Todos",
-        }));
+        setDashboardFilters((prev) => ({ ...prev, horario: "Todos" }));
       } else if (dashboardFilters?.loteria !== "FEDERAL") {
         setDashboardFilters((prev) => ({ ...prev, loteria: "FEDERAL" }));
       }
       return;
     }
 
-    // ✅ só normaliza aliases/forma, sem impor loteria
     if (dashboardFilters?.loteria !== lot) {
       setDashboardFilters((prev) => ({ ...prev, loteria: lot }));
     }
@@ -567,13 +538,11 @@ export default function App() {
   }, [dashboardFilters]);
 
   const logout = () => {
-    // ✅ limpa apenas o que é do navegador (LocalStorage)
     safeRemoveLS(STORAGE_KEY);
     safeRemoveLS(ACCOUNT_SESSION_KEY);
     safeRemoveLS(LS_GUEST_ACTIVE_KEY);
     safeRemoveLS(DASH_FILTERS_KEY);
 
-    // ✅ avisa o próprio tab (se alguém estiver ouvindo)
     try {
       window.dispatchEvent(new Event("pp_session_changed"));
     } catch {}
@@ -581,11 +550,7 @@ export default function App() {
     setScreen(ROUTES.LOGIN);
   };
 
-  /**
-   * ✅ Enquanto estiver no LOGIN:
-   * Assim que a sessão existir (guest/user), entra no Dashboard.
-   * Sem setInterval. Usa storage + evento interno.
-   */
+  // ✅ Enquanto estiver no LOGIN: quando existir sessão, entra no Dashboard
   useEffect(() => {
     if (adminMode) return;
     if (screen !== ROUTES.LOGIN) return;
@@ -599,19 +564,14 @@ export default function App() {
       if (hasActiveSession()) goDashboard();
     };
 
-    // checa já
     check();
 
-    // outros tabs
     const onStorage = (e) => {
       if (!e) return;
       if (e.key === ACCOUNT_SESSION_KEY || e.key === LS_GUEST_ACTIVE_KEY) check();
     };
 
-    // mesmo tab (se LoginVisual/Account disparar)
     const onSessionChanged = () => check();
-
-    // reforço
     const onFocus = () => check();
     const onVis = () => check();
 
@@ -634,7 +594,6 @@ export default function App() {
   useEffect(() => {
     if (adminMode) return;
 
-    // ✅ marca boot na primeira passagem desse effect
     if (!bootRef.current) {
       bootRef.current = true;
       setRouterBooted(true);
@@ -643,13 +602,11 @@ export default function App() {
     const wanted = pathToScreen(location?.pathname);
     if (!wanted) return;
 
-    // se não tem sessão, força login
     if (!hasActiveSession()) {
       if (screen !== ROUTES.LOGIN) setScreen(ROUTES.LOGIN);
       return;
     }
 
-    // se tem sessão e a rota é /login, manda dashboard
     if (wanted === ROUTES.LOGIN) {
       if (screen !== ROUTES.DASHBOARD) setScreen(ROUTES.DASHBOARD);
       return;
@@ -657,18 +614,15 @@ export default function App() {
 
     if (wanted !== screen) setScreen(wanted);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location?.pathname, adminMode]);
+  }, [location?.pathname, adminMode, screen]);
 
   /* =========================
      ✅ screen -> URL (somente app normal)
-     (deps completas, mesma lógica)
+     ✅ FIX: não bloquear navegação quando a rota atual é conhecida
   ========================= */
   useEffect(() => {
     if (adminMode) return;
     if (!routerBooted) return;
-
-    const wanted = pathToScreen(location?.pathname);
-    if (wanted && wanted !== screen) return;
 
     const path = screenToPath(screen);
     const cur = cleanPathname(location?.pathname);
@@ -678,7 +632,7 @@ export default function App() {
     }
   }, [screen, adminMode, routerBooted, location?.pathname, navigate]);
 
-  const PageRouter = ({ screen: s }) => {
+  const PageRouter = ({ s }) => {
     switch (s) {
       case ROUTES.ACCOUNT:
         return <Account />;
@@ -712,7 +666,6 @@ export default function App() {
   /* =========================
      ✅ Admin Router (isolado)
   ========================= */
-
   if (adminMode) {
     return (
       <ErrorBoundary>
@@ -770,13 +723,11 @@ export default function App() {
      App normal
      ✅ LOGIN agora é o Account (ele renderiza LoginVisual internamente)
   ========================= */
-
   if (screen === ROUTES.LOGIN) {
     return (
       <ErrorBoundary>
         <Account
           onClose={() => {
-            // mantém no login
             setScreen(ROUTES.LOGIN);
           }}
         />
@@ -797,7 +748,7 @@ export default function App() {
             setFilters={setDashboardFilters}
           />
         ) : (
-          <PageRouter screen={screen} />
+          <PageRouter s={screen} />
         )}
       </AppShell>
       <BuildStamp />
