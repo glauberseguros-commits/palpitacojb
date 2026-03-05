@@ -95,7 +95,7 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
       if (user?.uid) {
         safeWriteLS(
           ACCOUNT_SESSION_KEY,
-          JSON.stringify({ type: "user", plan: "FREE", uid: user.uid })
+          JSON.stringify({ ok: true, type: "user", plan: "FREE", uid: user.uid })
         );
         setSession(readSession());
         return;
@@ -105,7 +105,7 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
       if (safeReadLS(LS_GUEST_ACTIVE_KEY) === "1") {
         safeWriteLS(
           ACCOUNT_SESSION_KEY,
-          JSON.stringify({ type: "guest", plan: "FREE" })
+          JSON.stringify({ ok: true, type: "guest", plan: "FREE" })
         );
         setSession(readSession());
         return;
