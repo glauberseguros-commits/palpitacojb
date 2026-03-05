@@ -32,12 +32,16 @@ function dezenaFromMilhar(m4) {
   return s ? s.slice(-2) : "";
 }
 
+// ✅ FIX: wrap 100 -> 00 (grupo 25)
 function getDezenasFixasFromGrupo(grupo) {
   const g = Number(grupo);
   if (!Number.isFinite(g) || g < 1 || g > 25) return [];
-  const start = (g - 1) * 4 + 1;
+  const start = (g - 1) * 4 + 1; // 1..97
   const out = [];
-  for (let i = 0; i < 4; i += 1) out.push(String(start + i).padStart(2, "0"));
+  for (let i = 0; i < 4; i += 1) {
+    const d = (start + i) % 100; // ✅ 100 -> 0
+    out.push(String(d).padStart(2, "0"));
+  }
   return out;
 }
 
@@ -541,7 +545,9 @@ export default function Top3View(props) {
               Array.isArray(item.milharesCols[0]?.items);
 
             let dezenasHeader = [];
-            let gridRows = Array(5).fill(0).map(() => Array(4).fill(""));
+            let gridRows = Array(5)
+              .fill(0)
+              .map(() => Array(4).fill(""));
             let flat20 = [];
 
             if (hasCols) {
@@ -726,4 +732,3 @@ export default function Top3View(props) {
     </div>
   );
 }
-
