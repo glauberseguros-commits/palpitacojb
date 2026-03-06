@@ -102,6 +102,128 @@ export function pickPrize1GrupoFromDraw(draw) {
 }
 
 /* =========================
+   ✅ Helpers novos (recência / pesos / gatilho expandido)
+========================= */
+
+function safeInt(v, fallback) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function ymdToUtcDayTs(ymd) {
+  if (!isYMD(ymd)) return Number.NaN;
+  const [Y, M, D] = ymd.split("-").map((x) => Number(x));
+  return Date.UTC(Y, M - 1, D);
+}
+
+function diffDaysYMD(a, b) {
+  const ta = ymdToUtcDayTs(a);
+  const tb = ymdToUtcDayTs(b);
+  if (!Number.isFinite(ta) || !Number.isFinite(tb)) return Number.POSITIVE_INFINITY;
+  return Math.max(0, Math.round((tb - ta) / (24 * 60 * 60 * 1000)));
+}
+
+function getRecencyWeight(sampleYmd, refYmd) {
+  const days = diffDaysYMD(sampleYmd, refYmd);
+
+  if (!Number.isFinite(days)) return 0.10;
+  if (days <= 3) return 1.0;
+  if (days <= 7) return 0.7;
+  if (days <= 15) return 0.45;
+  if (days <= 30) return 0.25;
+  return 0.10;
+}
+
+function getPrizePosWeight(pos) {
+  const p = Number(pos);
+  if (p === 1) return 1.0;
+  if (p === 2) return 0.8;
+  if (p === 3) return 0.6;
+  if (p === 4) return 0.4;
+  if (p === 5) return 0.25;
+  return 0;
+}
+
+function getTopTriggerEntries(draw, maxPos = 3) {
+  const ps = Array.isArray(draw?.prizes) ? draw.prizes : [];
+  const out = [];
+
+  for (const p of ps) {
+    const pos = guessPrizePos(p);
+    if (!Number.isFinite(Number(pos)) || Number(pos) < 1 || Number(pos) > maxPos)
+      continue;
+
+    const g = guessPrizeGrupo(p);
+    if (!Number.isFinite(Number(g)) || Number(g) <= 0) continue;
+
+    out.push({
+      grupo: Number(g),
+      pos: Number(pos),
+      weight: getPrizePosWeight(Number(pos)),
+    });
+  }
+
+  return out.sort((a, b) => a.pos - b.pos);
+}
+
+function getTopTriggerMap(draw, maxPos = 3) {
+  const map = new Map();
+  const arr = getTopTriggerEntries(draw, maxPos);
+
+  for (const x of arr) {
+    if (!map.has(x.grupo)) {
+      map.set(x.grupo, { pos: x.pos, weight: x.weight });
+    }
+  }
+
+  return map;
+}
+
+function computeTriggerMatchWeight(drawCandidate, currentTriggerMap) {
+  if (!(currentTriggerMap instanceof Map) || !currentTriggerMap.size) return 0;
+
+  const candMap = getTopTriggerMap(drawCandidate, 3);
+  if (!candMap.size) return 0;
+
+  let sum = 0;
+
+  for (const [grupo, cur] of currentTriggerMap.entries()) {
+    const hit = candMap.get(grupo);
+    if (!hit) continue;
+
+    const samePosBonus = hit.pos === cur.pos ? 1.15 : 1.0;
+    sum += cur.weight * hit.weight * samePosBonus;
+  }
+
+  return sum;
+}
+
+function countWeightedAparicoesByGrupoInDraw(draw, sampleWeight = 1) {
+  const counts = new Map();
+  const ps = Array.isArray(draw?.prizes) ? draw.prizes : [];
+  const sampleW = Math.max(0, Number(sampleWeight || 0));
+
+  if (sampleW <= 0) return counts;
+
+  for (const p of ps) {
+    const pos = guessPrizePos(p);
+    if (!Number.isFinite(Number(pos)) || Number(pos) < 1 || Number(pos) > 5)
+      continue;
+
+    const g = guessPrizeGrupo(p);
+    if (!Number.isFinite(Number(g)) || Number(g) <= 0) continue;
+
+    const gg = Number(g);
+    const posW = getPrizePosWeight(pos);
+    if (posW <= 0) continue;
+
+    counts.set(gg, (counts.get(gg) || 0) + posW * sampleW);
+  }
+
+  return counts;
+}
+
+/* =========================
    Schedules
 ========================= */
 
@@ -298,6 +420,7 @@ export function getNextSlotForLottery({
   const sch0 = getScheduleForLottery({
     lotteryKey: key,
     ymd: y0,
+    hourBucket: h0,
     PT_RIO_SCHEDULE_NORMAL,
     PT_RIO_SCHEDULE_WED_SAT,
     FEDERAL_SCHEDULE,
@@ -328,13 +451,8 @@ export function getNextSlotForLottery({
 }
 
 /* =========================
-   ✅ NOVO: próximo DRAW REAL (não perde amostra)
+   ✅ Próximo DRAW REAL (não perde amostra)
 ========================= */
-
-function safeInt(v, fallback) {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : fallback;
-}
 
 export function findNextExistingDrawFromSlot({
   lotteryKey,
@@ -353,7 +471,6 @@ export function findNextExistingDrawFromSlot({
   if (!isYMD(y0) || !h0 || !(drawsIndex instanceof Map))
     return { slot: null, draw: null };
 
-  // ✅ FEDERAL: varre dias elegíveis (qua/sáb) para não perder amostra
   if (key === "FEDERAL") {
     let curY = y0;
     let steps = 0;
@@ -448,7 +565,7 @@ export function indexDrawsByYmdHour(draws) {
 }
 
 export function computeLastSeenByGrupo(draws) {
-  const last = new Map(); // grupo -> ts
+  const last = new Map();
   const list = Array.isArray(draws) ? draws : [];
   for (const d of list) {
     const y = pickDrawYMD(d);
@@ -473,11 +590,7 @@ export function countAparicoesByGrupoInDraw(draw) {
   const ps = Array.isArray(draw?.prizes) ? draw.prizes : [];
   for (const p of ps) {
     const pos = guessPrizePos(p);
-    if (
-      !Number.isFinite(Number(pos)) ||
-      Number(pos) < 1 ||
-      Number(pos) > 5
-    )
+    if (!Number.isFinite(Number(pos)) || Number(pos) < 1 || Number(pos) > 5)
       continue;
     const g = guessPrizeGrupo(p);
     if (!Number.isFinite(Number(g)) || Number(g) <= 0) continue;
@@ -488,7 +601,7 @@ export function countAparicoesByGrupoInDraw(draw) {
 }
 
 /* =========================
-   ✅ Base model: horário (sem gatilho)
+   ✅ Base model: horário (com recência + peso por posição)
 ========================= */
 
 function computeBaseNextDistribution({
@@ -500,18 +613,20 @@ function computeBaseNextDistribution({
   FEDERAL_SCHEDULE,
 }) {
   const list = Array.isArray(drawsRange) ? drawsRange : [];
-  if (!list.length || !drawLast) return { samples: 0, freq: new Map() };
+  if (!list.length || !drawLast) return { samples: 0, freq: new Map(), weightSum: 0 };
 
   const lastY = pickDrawYMD(drawLast);
   const lastH = toHourBucket(pickDrawHour(drawLast));
   const lastDow = getDowKey(lastY);
 
-  if (!isYMD(lastY) || !lastH || lastDow == null)
-    return { samples: 0, freq: new Map() };
+  if (!isYMD(lastY) || !lastH || lastDow == null) {
+    return { samples: 0, freq: new Map(), weightSum: 0 };
+  }
 
   const drawsIndex = indexDrawsByYmdHour(list);
 
   let samples = 0;
+  let weightSum = 0;
   const freq = new Map();
 
   for (const d of list) {
@@ -544,8 +659,13 @@ function computeBaseNextDistribution({
     const nextDraw = found?.draw || null;
     if (!nextDraw) continue;
 
+    const recencyW = getRecencyWeight(y, lastY);
+    if (recencyW <= 0) continue;
+
     samples += 1;
-    const c = countAparicoesByGrupoInDraw(nextDraw);
+    weightSum += recencyW;
+
+    const c = countWeightedAparicoesByGrupoInDraw(nextDraw, recencyW);
 
     for (const [gg, n] of c.entries()) {
       const prev = Number(freq.get(gg) || 0);
@@ -557,7 +677,7 @@ function computeBaseNextDistribution({
     }
   }
 
-  return { samples, freq };
+  return { samples, freq, weightSum };
 }
 
 /* =========================
@@ -632,6 +752,8 @@ export function computeConditionalNextTop3({
   const lastH = toHourBucket(pickDrawHour(drawLast));
   const lastDow = getDowKey(lastY);
   const triggerGrupo = pickPrize1GrupoFromDraw(drawLast);
+  const currentTriggerMap = getTopTriggerMap(drawLast, 3);
+  const currentTriggerEntries = getTopTriggerEntries(drawLast, 3);
 
   if (
     !isYMD(lastY) ||
@@ -656,6 +778,7 @@ export function computeConditionalNextTop3({
 
   function runScenario({ label, matchDow, matchHour }) {
     let samples = 0;
+    let weightSum = 0;
     const freq = new Map();
 
     for (const d of list) {
@@ -666,8 +789,8 @@ export function computeConditionalNextTop3({
       if (matchDow && getDowKey(y) !== lastDow) continue;
       if (matchHour && h !== lastH) continue;
 
-      const g1 = pickPrize1GrupoFromDraw(d);
-      if (Number(g1) !== Number(triggerGrupo)) continue;
+      const triggerMatchW = computeTriggerMatchWeight(d, currentTriggerMap);
+      if (triggerMatchW <= 0) continue;
 
       const ns = getNextSlotForLottery({
         lotteryKey,
@@ -692,9 +815,14 @@ export function computeConditionalNextTop3({
       const nextDraw = found?.draw || null;
       if (!nextDraw) continue;
 
-      samples += 1;
+      const recencyW = getRecencyWeight(y, lastY);
+      const sampleW = recencyW * triggerMatchW;
+      if (sampleW <= 0) continue;
 
-      const c = countAparicoesByGrupoInDraw(nextDraw);
+      samples += 1;
+      weightSum += sampleW;
+
+      const c = countWeightedAparicoesByGrupoInDraw(nextDraw, sampleW);
       for (const [gg, n] of c.entries()) {
         const prev = Number(freq.get(gg) || 0);
         const add = Number(n || 0);
@@ -705,7 +833,7 @@ export function computeConditionalNextTop3({
       }
     }
 
-    return { label, samples, freq };
+    return { label, samples, freq, weightSum };
   }
 
   const tries = [
@@ -738,9 +866,11 @@ export function computeConditionalNextTop3({
 
   const condFreq = chosen?.freq || new Map();
   const condSamples = safeInt(chosen?.samples, 0);
+  const condWeightSum = Number(chosen?.weightSum || 0);
 
   const baseFreq = base?.freq || new Map();
   const baseSamples = safeInt(base?.samples, 0);
+  const baseWeightSum = Number(base?.weightSum || 0);
 
   const condStats = freqToProbMap(condFreq, alpha, groupsK);
   const baseStats = freqToProbMap(baseFreq, alpha, groupsK);
@@ -749,7 +879,8 @@ export function computeConditionalNextTop3({
   const baseProb = baseStats.prob;
 
   const M = safeInt(TOP3_SHRINK_M, 40);
-  const w = condSamples / (condSamples + M);
+  const effectiveCond = Math.max(condSamples, condWeightSum);
+  const w = effectiveCond / (effectiveCond + M);
 
   const finalProb = mixProbMaps(condProb, baseProb, w);
 
@@ -757,12 +888,18 @@ export function computeConditionalNextTop3({
 
   const dominantReason =
     driver.key === "BASE"
-      ? `Puxou mais para BASE porque a janela condicional foi curta (amostras cond=${condSamples}) e o shrink M=${M} reduziu o peso do gatilho.`
-      : driver.key === "COND"
-      ? `Puxou mais para CONDICIONAL porque houve evidência suficiente no recorte (amostras cond=${condSamples}), aumentando o peso do gatilho.`
-      : `Puxou para uma mistura (condicional e base) porque o peso w=${w.toFixed(
+      ? `Puxou mais para BASE porque a janela condicional ficou curta/fraca (samples cond=${condSamples}, peso cond=${condWeightSum.toFixed(
           2
-        )} ficou intermediário (amostras cond=${condSamples}, M=${M}).`;
+        )}) e o shrink M=${M} segurou o gatilho.`
+      : driver.key === "COND"
+      ? `Puxou mais para CONDICIONAL porque houve evidência suficiente no recorte (samples cond=${condSamples}, peso cond=${condWeightSum.toFixed(
+          2
+        )}), aumentando o peso do gatilho expandido.`
+      : `Puxou para uma mistura porque o peso w=${w.toFixed(
+          2
+        )} ficou intermediário (samples cond=${condSamples}, peso cond=${condWeightSum.toFixed(
+          2
+        )}, M=${M}).`;
 
   const nowTs = ymdHourToTs(lastY, lastH);
 
@@ -826,17 +963,22 @@ export function computeConditionalNextTop3({
     .slice(0, Math.max(1, Number(topN || 3)));
 
   const scenarioLabel = chosen?.label || "NONE";
+  const triggerText =
+    currentTriggerEntries.length > 0
+      ? currentTriggerEntries
+          .map((x) => `P${x.pos}=G${String(x.grupo).padStart(2, "0")}`)
+          .join(" | ")
+      : `P1=G${String(triggerGrupo).padStart(2, "0")}`;
 
   const top = ranked.map((x, idx) => {
     const g2 = String(x.grupo).padStart(2, "0");
-    const trig2 = String(triggerGrupo).padStart(2, "0");
 
     const whyLine =
       x.freqZeroWhy ||
       (driver.key === "BASE"
         ? "Base (horário/DOW) dominou nesta rodada."
         : driver.key === "COND"
-        ? "Condicional (gatilho) dominou nesta rodada."
+        ? "Condicional (gatilho expandido) dominou nesta rodada."
         : "Mistura entre condicional e base nesta rodada.");
 
     return {
@@ -857,7 +999,7 @@ export function computeConditionalNextTop3({
       freqBase: x.freqBase,
       freqZeroWhy: x.freqZeroWhy,
       reasons: [
-        `Gatilho: 1º lugar = G${trig2} (último sorteio)`,
+        `Gatilho expandido do último sorteio: ${triggerText}`,
         `Cenário (fallback): ${scenarioLabel}`,
         `Dominante: ${driver.label} (w=${w.toFixed(2)})`,
         dominantReason,
@@ -867,12 +1009,14 @@ export function computeConditionalNextTop3({
         x.lateBonus > 0
           ? `Ajuste atraso: +${(x.lateBonus * 100).toFixed(
               2
-            )}% no score (cap ${(
-              LATE_BONUS_MAX * 100
-            ).toFixed(2)}%)`
+            )}% no score (cap ${(LATE_BONUS_MAX * 100).toFixed(2)}%)`
           : `Ajuste atraso: 0 (sem impacto relevante)`,
-        `Amostras: cond=${condSamples} | base=${baseSamples} | shrink M=${M}`,
+        `Amostras: cond=${condSamples} | base=${baseSamples} | pesoCond=${condWeightSum.toFixed(
+          2
+        )} | pesoBase=${baseWeightSum.toFixed(2)} | shrink M=${M}`,
         `Suavização: alpha=${condStats.alpha} | K=${condStats.k}`,
+        `Peso por posição habilitado: P1=1.00 | P2=0.80 | P3=0.60 | P4=0.40 | P5=0.25`,
+        `Recência habilitada: 0-3d=1.00 | 4-7d=0.70 | 8-15d=0.45 | 16-30d=0.25 | >30d=0.10`,
         whyLine,
         `Próximo slot (grade): ${nextSlot?.ymd ? nextSlot.ymd : "—"} ${
           nextSlot?.hour ? toHourBucket(nextSlot.hour) : ""
@@ -884,6 +1028,11 @@ export function computeConditionalNextTop3({
           hour: lastH,
           dow: lastDow,
           grupo: Number(triggerGrupo),
+          top3: currentTriggerEntries.map((x) => ({
+            grupo: x.grupo,
+            pos: x.pos,
+            weight: x.weight,
+          })),
         },
         next: {
           ymd: safeStr(nextSlot?.ymd),
@@ -902,6 +1051,8 @@ export function computeConditionalNextTop3({
           wBase: 1 - w,
           condSamples,
           baseSamples,
+          condWeightSum,
+          baseWeightSum,
           shrinkM: M,
           condTotal: condStats.total,
           baseTotal: baseStats.total,
@@ -922,6 +1073,11 @@ export function computeConditionalNextTop3({
         hour: lastH,
         dow: lastDow,
         grupo: Number(triggerGrupo),
+        top3: currentTriggerEntries.map((x) => ({
+          grupo: x.grupo,
+          pos: x.pos,
+          weight: x.weight,
+        })),
       },
       next: {
         ymd: safeStr(nextSlot?.ymd),
@@ -941,6 +1097,8 @@ export function computeConditionalNextTop3({
         wBase: 1 - w,
         condSamples,
         baseSamples,
+        condWeightSum,
+        baseWeightSum,
         shrinkM: M,
         condTotal: condStats.total,
         baseTotal: baseStats.total,
@@ -960,10 +1118,10 @@ export function computeConditionalNextTop3({
 function getDezenasFixasFromGrupo(grupo2) {
   const g = Number(grupo2);
   if (!Number.isFinite(g) || g < 1 || g > 25) return [];
-  const start = (g - 1) * 4 + 1; // 1..97
+  const start = (g - 1) * 4 + 1;
   const out = [];
   for (let i = 0; i < 4; i += 1) {
-    const dz = (start + i) % 100; // ✅ wrap dezena (00-99) => 100 vira 00
+    const dz = (start + i) % 100;
     out.push(String(dz).padStart(2, "0"));
   }
   return out;
