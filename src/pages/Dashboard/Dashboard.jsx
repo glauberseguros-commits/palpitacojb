@@ -1,4 +1,3 @@
-// src/pages/Dashboard/Dashboard.jsx
 /**
  * ============================================================
  * DASHBOARD — BASELINE CONGELADA (freeze)
@@ -7,7 +6,9 @@
  * - "Entrar sem login" = modo DEMO (guest):
  *   - entra no Dashboard
  *   - mostra dados gerais (Todos + período completo desde 2022)
- *   - NÃO permite mexer em filtros/período/seleções
+ *   - PODE mexer nos filtros
+ *   - NÃO pode mexer no período
+ *   - NÃO pode usar ações premium / seleções por clique premium
  * ============================================================
  */
 
@@ -76,11 +77,9 @@ function isGuestSession(sess) {
   const s = sess || loadSessionObj();
   if (!s || s.ok !== true) return false;
 
-  // formato NOVO (App.js): { type: "guest" }
   const t2 = String(s.type || "").toLowerCase();
   if (t2 === "guest") return true;
 
-  // formato antigo (compat)
   const t = String(s.loginType || "").toLowerCase();
   const id = String(s.loginId || "").toLowerCase();
   return t === "guest" || id === "guest" || s.skipped === true || String(s.mode || "") === "skip";
@@ -133,22 +132,17 @@ function normalizeHourBucket(h) {
   const raw = String(h ?? "").trim();
   if (!raw || raw.toLowerCase() === "todos") return null;
 
-  // normaliza: remove espaços e deixa upper pra pegar HS/hs
   const s = raw.replace(/\s+/g, "").toUpperCase();
 
-  // 1) "09HS" / "9HS" / "09H" / "9H"
   let m = s.match(/^(\d{1,2})(?:H|HS)$/);
   if (m) return `${String(m[1]).padStart(2, "0")}h`;
 
-  // 2) "09:10" / "9:10" / "09:10:00"
   m = s.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
   if (m) return `${String(m[1]).padStart(2, "0")}h`;
 
-  // 3) "09" / "9"
   m = s.match(/^(\d{1,2})$/);
   if (m) return `${String(m[1]).padStart(2, "0")}h`;
 
-  // 4) fallback: extrai a 1ª hora que aparecer ("...09HS..." etc.)
   m = s.match(/(\d{1,2})/);
   if (m) {
     const hh = Number(m[1]);
@@ -179,7 +173,6 @@ function isISODate(s) {
   return /^(\d{4})-(\d{2})-(\d{2})$/.test(String(s || ""));
 }
 
-// ✅ ISO puro (sem Date/timezone). Aceita 'YYYY-MM-DD' ou 'YYYY-MM-DDTHH:mm...'
 function normalizeISO10(v) {
   const s = String(v || "").trim();
   const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
@@ -200,7 +193,6 @@ function getDrawDate(d) {
 function getDrawCloseHour(d) {
   if (!d) return "";
 
-  // tenta campos mais comuns primeiro (inclui raw)
   const cand =
     d.close_hour_raw ??
     d.closeHourRaw ??
@@ -340,7 +332,15 @@ function mapRankingJsonToApp(json) {
     dateTo: meta.d2 || null,
     totalDraws: Number(totals.draws || 0),
     totalOcorrencias: Number(totals.ocorrencias || 0),
-    totalDays: Number(totals.days || totals.dias || totals.uniqueDays || totals.unique_days || totals.unique_days || 0) || 0,
+    totalDays:
+      Number(
+        totals.days ||
+          totals.dias ||
+          totals.uniqueDays ||
+          totals.unique_days ||
+          totals.unique_days ||
+          0
+      ) || 0,
     generatedAt: meta.generatedAt || null,
     top3,
   };
@@ -384,7 +384,7 @@ function PremiumTopRightSkeleton({ message }) {
       <PremiumInfoBox
         title="Carregando período disponível"
         description={message || "Consultando base para identificar min/max reais..."}
-        extra="Enquanto o período não for resolvido, o painel não exibe estatísticas para evitar zeros e inconsistências."
+        extra="Enquanto o período não for resolvido, o painel não exibe estatística fechada para evitar zeros e inconsistências."
       />
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
         <div
@@ -440,7 +440,6 @@ function clampRangeToBounds(next, minDate, maxDate) {
 function normalizeLoteriaKey(v) {
   const raw = String(v ?? "").trim();
 
-  // ✅ default só quando não veio nada
   if (!raw) return "PT_RIO";
 
   const key = raw
@@ -453,13 +452,37 @@ function normalizeLoteriaKey(v) {
   if (key === "federal" || key === "fed" || key === "br" || key === "brasil") return "FEDERAL";
   if (key === "rj" || key === "rio" || key === "pt_rio" || key === "pt-rio") return "PT_RIO";
 
-  // ✅ canônico para outras loterias
   const out = key
     .toUpperCase()
     .replace(/[^A-Z0-9]+/g, "_")
     .replace(/^_+|_+$/g, "");
 
   return out || "PT_RIO";
+}
+
+function getDefaultFloorByUf(ufKey) {
+  const u = String(ufKey || "").trim().toUpperCase();
+
+  if (u === "PT_RIO" || u === "RJ" || u === "RIO" || u === "PT-RIO") {
+    return "2022-06-07";
+  }
+
+  if (u === "FEDERAL" || u === "FED" || u === "BR" || u === "BRASIL") {
+    return "2022-02-08";
+  }
+
+  return "2022-01-01";
+}
+
+function getTodayYmdSafe() {
+  const ymd = normalizeToYMD_SP(new Date());
+  if (ymd && isISODate(ymd)) return ymd;
+
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, "0");
+  const dd = String(now.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
 }
 
 function yearRangeToDates(minY, maxY, floorISO, ceilISO) {
@@ -470,7 +493,6 @@ function yearRangeToDates(minY, maxY, floorISO, ceilISO) {
   const a = Math.min(y1, y2);
   const b = Math.max(y1, y2);
 
-  // ISO puro (sem Date / timezone)
   let from = `${a}-01-01`;
   let to = `${b}-12-31`;
 
@@ -485,18 +507,15 @@ function normalizeCloseHourForKpi(raw) {
   const s = String(raw ?? "").trim();
   if (!s) return "";
 
-  // reaproveita sua normalizeHourBucket -> "11h", "09h" etc
   const bucket = normalizeHourBucket(s);
   if (bucket) {
     const hh = String(bucket).replace(/\D/g, "").padStart(2, "0");
     return `${hh}:00`;
   }
 
-  // tenta hh:mm
   let m = s.match(/^(\d{1,2}):(\d{2})/);
   if (m) return `${String(m[1]).padStart(2, "0")}:00`;
 
-  // tenta hh puro
   m = s.match(/^(\d{1,2})/);
   if (m) return `${String(m[1]).padStart(2, "0")}:00`;
 
@@ -508,7 +527,6 @@ function getDrawUniqKeyForKpi(d, ufKey, idx) {
 
   const ymd = getDrawDate(d);
 
-  // tenta hora em mais lugares (inclui buckets)
   const chRaw =
     d.close_hour ??
     d.closeHour ??
@@ -527,15 +545,11 @@ function getDrawUniqKeyForKpi(d, ufKey, idx) {
     .trim()
     .toUpperCase() || "UF";
 
-  // 1) Se tem slot completo, dedupe por (UF + YMD + HORA)
   if (ymd && ch) return `UF__${uf}__${ymd}__${ch}`;
 
-  // 2) Se não tem hora, mas tem drawId, dedupe por drawId (melhor do que colapsar tudo no dia)
   const drawId = String(d.drawId ?? d.draw_id ?? d.lottery_id ?? d.id ?? "").trim();
   if (drawId) return `UF__${uf}__DRAWID__${drawId}`;
 
-  // 3) Se só tem data, NÃO pode deduplicar por dia (isso derruba o KPI).
-  // Usa o índice para manter cada item único (sem “colapsar”).
   if (ymd) return `UF__${uf}__${ymd}__IDX__${Number.isFinite(idx) ? idx : 0}`;
 
   return null;
@@ -582,11 +596,9 @@ function makeDashStateKeyV2(ufKey) {
 function loadDashStateV2(ufKey) {
   const KEY = makeDashStateKeyV2(ufKey);
 
-  // v2 por UF
   const v2 = safeReadJSON(KEY);
   if (v2 && typeof v2 === "object") return v2;
 
-  // compat: v2 antigo global (sem sufixo UF) -> migra pra chave por UF
   const legacyV2 = safeReadJSON(DASH_STATE_KEY_BASE);
   if (legacyV2 && typeof legacyV2 === "object") {
     const migrated = { ...legacyV2 };
@@ -594,7 +606,6 @@ function loadDashStateV2(ufKey) {
     return migrated;
   }
 
-  // compat v1 -> migra pra v2 “light” (por UF)
   const v1 = safeReadJSON(DASH_STATE_KEY_V1);
   if (v1 && typeof v1 === "object") {
     const migrated = {
@@ -631,7 +642,6 @@ export default function Dashboard(props) {
     []
   );
 
-  // ✅ sessão/guest (demo)
   const [isGuest, setIsGuest] = useState(() => isGuestSession(loadSessionObj()));
 
   useEffect(() => {
@@ -643,7 +653,6 @@ export default function Dashboard(props) {
     };
 
     const onVisibility = () => {
-      // ao voltar pra aba, atualiza imediatamente
       if (document.visibilityState === "visible") refresh();
     };
 
@@ -651,7 +660,6 @@ export default function Dashboard(props) {
     document.addEventListener("visibilitychange", onVisibility);
 
     const t = setInterval(() => {
-      // evita ficar “martelando” quando aba está oculta
       if (document.visibilityState !== "visible") return;
       refresh();
     }, SESSION_POLL_MS);
@@ -663,29 +671,26 @@ export default function Dashboard(props) {
     };
   }, []);
 
-  // ✅ filtros estáveis
   const rawFilters = useMemo(() => {
     return externalFilters && typeof externalFilters === "object" ? externalFilters : fallbackFilters;
   }, [externalFilters, fallbackFilters]);
 
-  // ✅ no guest, força "Todos" (vitrine) — mantém loteria em PT_RIO (não vale FEDERAL no demo)
+  // ✅ guest continua usando os filtros normais
   const filters = useMemo(() => {
-    if (!isGuest) return { ...fallbackFilters, ...rawFilters };
-    return fallbackFilters;
-  }, [isGuest, rawFilters, fallbackFilters]);
+    return { ...fallbackFilters, ...rawFilters };
+  }, [rawFilters, fallbackFilters]);
 
-  // ✅ setter estável
   const noopSetFilters = useCallback(() => {}, []);
   const setFilters = useMemo(() => {
-    if (isGuest) return noopSetFilters;
     return typeof externalSetFilters === "function" ? externalSetFilters : noopSetFilters;
-  }, [externalSetFilters, noopSetFilters, isGuest]);
+  }, [externalSetFilters, noopSetFilters]);
 
   const loteriaKey = useMemo(
     () => normalizeLoteriaKey(filters?.lotteryKey || filters?.loteria || filters?.uf),
     [filters?.lotteryKey, filters?.loteria, filters?.uf]
   );
-const isFederal = loteriaKey === "FEDERAL";
+
+  const isFederal = loteriaKey === "FEDERAL";
 
   const fedBucket = isFederal ? normalizeHourBucket(filters?.horario) : null;
   const locationLabel = isFederal
@@ -694,7 +699,6 @@ const isFederal = loteriaKey === "FEDERAL";
 
   const uf = loteriaKey;
 
-  // ✅ estado salvo por UF (recarrega quando UF muda)
   const [savedDashState, setSavedDashState] = useState(() => loadDashStateV2(uf));
 
   useEffect(() => {
@@ -709,7 +713,6 @@ const isFederal = loteriaKey === "FEDERAL";
   const didInitRangeFromBoundsRef = useRef(false);
   const debounceTimerRef = useRef(null);
 
-  // ✅ followMax VOLTOU e é USADO (sem warning e sem travar usuário)
   const [followMax, setFollowMax] = useState(() => savedDashState?.followMax !== false);
 
   const [dateRange, setDateRange] = useState(() => {
@@ -733,7 +736,6 @@ const isFederal = loteriaKey === "FEDERAL";
     return arr.map((y) => Number(y)).filter((y) => Number.isFinite(y));
   });
 
-  // ✅ bounds por UF
   const [bounds, setBounds] = useState({
     loading: DATA_MODE === "firestore",
     minDate: null,
@@ -741,7 +743,6 @@ const isFederal = loteriaKey === "FEDERAL";
     error: null,
   });
 
-  // ✅ ao trocar UF: rehidrata estado (por UF) e força re-init de bounds/range
   useEffect(() => {
     if (isGuest) return;
 
@@ -773,7 +774,6 @@ const isFederal = loteriaKey === "FEDERAL";
       return null;
     });
 
-    // coloca bounds em loading para evitar “flash” de range antigo
     setBounds((b) => ({ ...b, loading: DATA_MODE === "firestore", error: null, minDate: null, maxDate: null }));
   }, [uf, isGuest]);
 
@@ -797,11 +797,68 @@ const isFederal = loteriaKey === "FEDERAL";
     let alive = true;
 
     (async () => {
-      // ✅ vars usadas em lógica de range (evita no-undef)
-      let minYmd = null;
-      let maxYmd = null;
-      void minYmd;
-      void maxYmd;
+      const floorByUf = getDefaultFloorByUf(uf);
+      const todayYmd = getTodayYmdSafe();
+
+      let minYmd = floorByUf;
+      let maxYmd = todayYmd;
+
+      const initRangeIfNeeded = (safeMin, safeMax) => {
+        if (didInitRangeFromBoundsRef.current) return;
+
+        didInitRangeFromBoundsRef.current = true;
+
+        const rr = restoredRangeRef.current;
+        const rq = restoredQueryRef.current;
+
+        const hasRestoredRange =
+          rr?.from && rr?.to && isISODate(rr.from) && isISODate(rr.to);
+
+        const hasRestoredQuery =
+          rq?.from && rq?.to && isISODate(rq.from) && isISODate(rq.to);
+
+        const savedYearsRaw = Array.isArray(savedDashState?.selectedYears)
+          ? savedDashState.selectedYears
+          : [];
+
+        const savedYears = savedYearsRaw
+          .map((y) => Number(y))
+          .filter((y) => Number.isFinite(y));
+
+        const hasSavedYears = savedYears.length > 0;
+
+        if (hasRestoredRange && hasRestoredQuery) {
+          const clamped =
+            clampRangeToBounds(
+              { from: rr.from, to: rr.to },
+              safeMin,
+              safeMax
+            ) || { from: safeMin, to: safeMax };
+
+          const shouldExtendToMax = !hasSavedYears && clamped.to < safeMax;
+
+          const fixed = {
+            from: clamped.from,
+            to: shouldExtendToMax ? safeMax : clamped.to,
+          };
+
+          setDateRange(fixed);
+          setDateRangeQuery(fixed);
+
+          if (shouldExtendToMax) {
+            setSelectedYears([]);
+            setFollowMax(true);
+          }
+
+          return;
+        }
+
+        const init = { from: safeMin, to: safeMax };
+        setDateRange(init);
+        setDateRangeQuery(init);
+        setSelectedYears([]);
+        setFollowMax(true);
+      };
 
       try {
         setBounds((b) => ({ ...b, loading: true, error: null }));
@@ -809,102 +866,48 @@ const isFederal = loteriaKey === "FEDERAL";
         const res = await getKingBoundsByUf({ uf });
         if (!alive) return;
 
-        // ✅ bounds já vêm como YYYY-MM-DD -> NÃO normalizar com timezone
         const rawMin = String(res?.minYmd ?? res?.minDate ?? "").trim();
         const rawMax = String(res?.maxYmd ?? res?.maxDate ?? "").trim();
-        minYmd = normalizeISO10(rawMin);
-        maxYmd = normalizeISO10(rawMax);
 
-        // ✅ redundância: chão histórico por UF
-        const ufU = String(uf || "").trim().toUpperCase();
+        const parsedMin = normalizeISO10(rawMin);
+        const parsedMax = normalizeISO10(rawMax);
 
-        // RJ / PT_RIO
-        const isRJ = ufU === "PT_RIO" || ufU === "RJ" || ufU === "RIO" || ufU === "PT-RIO";
-        if (isRJ) {
-          const FLOOR = "2022-06-07";
-          if (minYmd && isISODate(minYmd) && minYmd > FLOOR) minYmd = FLOOR;
-          if (!minYmd) minYmd = FLOOR;
-          if (maxYmd && isISODate(maxYmd) && maxYmd < minYmd) maxYmd = minYmd;
+        if (parsedMin) minYmd = parsedMin;
+        if (parsedMax) maxYmd = parsedMax;
+
+        if (isISODate(floorByUf) && (!minYmd || minYmd > floorByUf)) {
+          minYmd = floorByUf;
         }
 
-        // FEDERAL
-        const isFED = ufU === "FEDERAL" || ufU === "FED" || ufU === "BR";
-        if (isFED) {
-          const FLOOR = "2022-02-08";
-          if (minYmd && isISODate(minYmd) && minYmd > FLOOR) minYmd = FLOOR;
-          if (!minYmd) minYmd = FLOOR;
-          if (maxYmd && isISODate(maxYmd) && maxYmd < minYmd) maxYmd = minYmd;
-        }
-
-        if (!minYmd || !maxYmd) {
-          setBounds({
-            loading: false,
-            minDate: minYmd,
-            maxDate: maxYmd,
-            error: "Sem bounds confiáveis (min/max não retornados).",
-          });
-          return;
-        }
+        if (!maxYmd) maxYmd = todayYmd;
+        if (minYmd > maxYmd) maxYmd = minYmd;
 
         setBounds({
           loading: false,
           minDate: minYmd,
           maxDate: maxYmd,
-          error: res?.ok === false ? "Sem bounds confiáveis (índice/campos)." : null,
+          error:
+            res?.ok === false
+              ? "Bounds remotos inconsistentes. Usando fallback local."
+              : null,
         });
 
-        if (!didInitRangeFromBoundsRef.current) {
-          didInitRangeFromBoundsRef.current = true;
-
-          const rr = restoredRangeRef.current;
-          const rq = restoredQueryRef.current;
-
-          const hasRestoredRange = rr?.from && rr?.to && isISODate(rr.from) && isISODate(rr.to);
-          const hasRestoredQuery = rq?.from && rq?.to && isISODate(rq.from) && isISODate(rq.to);
-
-          const savedYearsRaw = Array.isArray(savedDashState?.selectedYears) ? savedDashState.selectedYears : [];
-          const savedYears = savedYearsRaw.map((y) => Number(y)).filter((y) => Number.isFinite(y));
-          const hasSavedYears = savedYears.length > 0;
-
-          // ✅ MIGRAÇÃO: se existir range salvo antigo e NÃO há anos selecionados,
-          // força “to” para o max atual e liga followMax.
-          if (hasRestoredRange && hasRestoredQuery) {
-            const clamped =
-              clampRangeToBounds({ from: rr.from, to: rr.to }, minYmd, maxYmd) || { from: minYmd, to: maxYmd };
-
-            const shouldExtendToMax = !hasSavedYears && clamped.to < maxYmd;
-
-            const fixed = {
-              from: clamped.from,
-              to: shouldExtendToMax ? maxYmd : clamped.to,
-            };
-
-            setDateRange(fixed);
-            setDateRangeQuery(fixed);
-
-            if (shouldExtendToMax) {
-              setSelectedYears([]);
-              setFollowMax(true);
-            }
-
-            return;
-          }
-
-          const init = { from: minYmd, to: maxYmd };
-          setDateRange(init);
-          setDateRangeQuery(init);
-          setSelectedYears([]);
-          setFollowMax(true);
-        }
+        initRangeIfNeeded(minYmd, maxYmd);
       } catch (e) {
         if (!alive) return;
 
+        if (minYmd > maxYmd) maxYmd = minYmd;
+
         setBounds({
           loading: false,
           minDate: minYmd,
           maxDate: maxYmd,
-          error: e?.message || String(e),
+          error: `Falha ao obter bounds remotos. Usando fallback local. Detalhe: ${
+            e?.message || String(e)
+          }`,
         });
+
+        initRangeIfNeeded(minYmd, maxYmd);
       }
     })();
 
@@ -917,7 +920,6 @@ const isFederal = loteriaKey === "FEDERAL";
   const MAX_DATE = bounds.maxDate;
   const boundsReady = !!(MIN_DATE && MAX_DATE && !bounds.loading);
 
-  // ✅ Guest (demo): força SEMPRE período completo e filtros "Todos"
   useEffect(() => {
     if (!isGuest) return;
     if (!boundsReady || !MIN_DATE || !MAX_DATE) return;
@@ -956,7 +958,6 @@ const isFederal = loteriaKey === "FEDERAL";
     }
   }, [boundsReady, MIN_DATE, MAX_DATE, dateRange?.from, dateRange?.to]);
 
-  // AUTO FOLLOW MAX_DATE (produção-first)
   useEffect(() => {
     if (!boundsReady || !MIN_DATE || !MAX_DATE) return;
     if (isGuest) return;
@@ -976,7 +977,6 @@ const isFederal = loteriaKey === "FEDERAL";
       if (!next) return;
       if (isGuest) return;
 
-      // ✅ clamp primeiro, para followMax refletir o valor FINAL
       let clampedNext = next;
 
       if (boundsReady && MIN_DATE && MAX_DATE) {
@@ -984,7 +984,6 @@ const isFederal = loteriaKey === "FEDERAL";
         clampedNext = c || { from: MIN_DATE, to: MAX_DATE };
       }
 
-      // ✅ usuário mexeu no range: followMax só fica true se “to” = MAX_DATE (já clampado)
       if (boundsReady && MAX_DATE && isISODate(clampedNext?.to)) {
         setFollowMax(String(clampedNext.to) === String(MAX_DATE));
       } else {
@@ -1029,9 +1028,9 @@ const isFederal = loteriaKey === "FEDERAL";
     return dateRangeQuery.to;
   }, [dateRangeQuery]);
 
-  const canQueryFirestore = DATA_MODE === "firestore" ? !!(boundsReady && dateRangeQuery) : true;
+  const hasQueryableRange = !!(queryDate || (dateFrom && dateTo));
+  const canQueryFirestore = DATA_MODE === "firestore" ? hasQueryableRange : true;
 
-  // ✅ Quando o usuário filtra Posição/Grupo, precisamos de prizes => força modo detailed no hook
   const needsPrizesLocal = useMemo(() => {
     const wantsPositionFilter = String(filters?.posicao || "").trim().toLowerCase() !== "todos";
     const wantsGrupoFilter = !!selectedGrupo;
@@ -1103,27 +1102,23 @@ const isFederal = loteriaKey === "FEDERAL";
 
   const rankingLoading = DATA_MODE === "json" ? jsonState.loading : fsLoading;
   const rankingError = DATA_MODE === "json" ? jsonState.error : fsError;
-
   const rankingMeta = DATA_MODE === "json" ? jsonState.rankingMeta : fsRankingMeta;
 
   const rankingRowsFromMeta = useMemo(() => {
-    // fallback: quando drawsRaw vierem agregados/sem prizes,
-    // usamos o ranking pronto que o hook já calculou.
     return mapMetaRankingToRows(rankingMeta);
   }, [rankingMeta]);
 
   const loadingEffective = !!rankingLoading || !!isHydrating;
-
   const drawsRaw = DATA_MODE === "json" ? jsonState.drawsRaw : fsDrawsRaw;
   const drawsForUi = useMemo(() => (Array.isArray(drawsRaw) ? drawsRaw : []), [drawsRaw]);
 
   const dataReady = useMemo(() => {
     if (DATA_MODE === "json") return true;
-    if (!boundsReady || !dateRangeQuery) return false;
+    if (!hasQueryableRange) return false;
     if (loadingEffective) return false;
     if (rankingError) return false;
     return true;
-  }, [boundsReady, dateRangeQuery, loadingEffective, rankingError]);
+  }, [hasQueryableRange, loadingEffective, rankingError]);
 
   const closeHourBucketLocal = useMemo(() => normalizeHourBucket(filters.horario), [filters.horario]);
   const positionsLocal = useMemo(() => normalizePositions(filters.posicao), [filters.posicao]);
@@ -1150,9 +1145,6 @@ const isFederal = loteriaKey === "FEDERAL";
     return null;
   }, []);
 
-  /* =========================
-     ✅ Guest Toast (fix)
-  ========================= */
   const [guestToast, setGuestToast] = useState("");
   const toastTimerRef = useRef(null);
 
@@ -1168,22 +1160,14 @@ const isFederal = loteriaKey === "FEDERAL";
     };
   }, []);
 
-  // ✅ detecta troca de loteria e reseta filtros sensíveis (horário/animal/posição)
   const lastUfRef = useRef(String(uf || ""));
   useEffect(() => {
-    if (isGuest) {
-      lastUfRef.current = String(uf || "");
-      return;
-    }
     const prev = String(lastUfRef.current || "");
     const next = String(uf || "");
-if (prev && next && prev !== next) {
-      // reseta seleção local
-      setSelectedGrupo(null);
-      setSelectedYears([]);
-      setFollowMax(true);
 
-      // reseta filtros dependentes (principal: horário)
+    if (prev && next && prev !== next) {
+      setSelectedGrupo(null);
+
       setFilters((p) => ({
         ...p,
         horario: "Todos",
@@ -1191,22 +1175,21 @@ if (prev && next && prev !== next) {
         posicao: "Todos",
       }));
 
-      // deixa bounds re-inicializar o range da UF nova
-      setDateRange(null);
-      setDateRangeQuery(null);
-      didInitRangeFromBoundsRef.current = false;
+      // ✅ período continua resetando apenas fora do guest
+      if (!isGuest) {
+        setSelectedYears([]);
+        setFollowMax(true);
+        setDateRange(null);
+        setDateRangeQuery(null);
+        didInitRangeFromBoundsRef.current = false;
+      }
     }
+
     lastUfRef.current = next;
   }, [uf, setFilters, isGuest]);
 
   const handleFilterChange = useCallback(
     (name, value) => {
-      if (isGuest) {
-        showGuestToast("Modo demonstração: filtros estão bloqueados. Faça login para usar.");
-        return;
-      }
-
-      // ✅ ao trocar loteria, zera horário/animal/posição na mesma transação
       if (name === "loteria" || name === "lotteryKey" || name === "uf") {
         setFilters((prev) => ({
           ...prev,
@@ -1215,12 +1198,18 @@ if (prev && next && prev !== next) {
           animal: "Todos",
           posicao: "Todos",
         }));
+
         setSelectedGrupo(null);
-        setSelectedYears([]);
-        setFollowMax(true);
-        setDateRange(null);
-        setDateRangeQuery(null);
-        didInitRangeFromBoundsRef.current = false;
+
+        // ✅ período continua travado no DEMO
+        if (!isGuest) {
+          setSelectedYears([]);
+          setFollowMax(true);
+          setDateRange(null);
+          setDateRangeQuery(null);
+          didInitRangeFromBoundsRef.current = false;
+        }
+
         return;
       }
 
@@ -1231,7 +1220,7 @@ if (prev && next && prev !== next) {
         setSelectedGrupo(g);
       }
     },
-    [findGrupoByAnimalLabel, setFilters, isGuest, showGuestToast]
+    [findGrupoByAnimalLabel, setFilters, isGuest]
   );
 
   const drawsForView = useMemo(() => {
@@ -1290,7 +1279,6 @@ if (prev && next && prev !== next) {
       .map((d) => {
         const prizes = Array.isArray(d?.prizes) ? d.prizes : null;
 
-        // ✅ Durante hydrating, não elimina draws (senão a UI "some")
         if (!prizes) {
           if (requiresPrizes && !isHydrating) return null;
           return d;
@@ -1381,7 +1369,6 @@ if (prev && next && prev !== next) {
       if (arr.length) return arr;
     } catch {}
 
-    // fallback: usa meta, mas no formato que ChartsGrid tolera (ranking[])
     return (rankingRowsFromMeta || []).map((r) => ({
       grupo: r.grupo,
       animal: r.animal,
@@ -1407,7 +1394,6 @@ if (prev && next && prev !== next) {
       animais.push(lbl || `Grupo ${pad2(g)}`);
     }
 
-    // horários disponíveis (RJ) + FEDERAL 20h
     const baseBuckets = new Set();
     if (Array.isArray(drawsForUi) && drawsForUi.length) {
       for (const d of drawsForUi) {
@@ -1463,11 +1449,9 @@ if (prev && next && prev !== next) {
     if (!MIN_DATE || !MAX_DATE) return;
     if (isGuest) return;
     setSelectedYears([]);
-const full = { from: MIN_DATE, to: MAX_DATE };
+    const full = { from: MIN_DATE, to: MAX_DATE };
     setDateRange(full);
     setDateRangeQuery(full);
-
-    // ✅ volta a seguir max quando “Todos”
     setFollowMax(true);
   }, [MIN_DATE, MAX_DATE, isGuest]);
 
@@ -1499,7 +1483,6 @@ const full = { from: MIN_DATE, to: MAX_DATE };
           return [];
         }
 
-        // ✅ seleção por ano é explícita, então não deve seguir o max automaticamente
         setFollowMax(false);
 
         const minY = next[0];
@@ -1517,7 +1500,6 @@ const full = { from: MIN_DATE, to: MAX_DATE };
   );
 
   const kpiItems = useMemo(() => {
-    // KPIs gerais do período (base = drawsForUi)
     if (!dataReady) {
       return [
         { key: "dias", title: "Qtde Dias de sorteios", value: null, icon: "calendar" },
@@ -1533,7 +1515,6 @@ const full = { from: MIN_DATE, to: MAX_DATE };
       ];
     }
 
-    // ✅ KPI deve contar sorteios reais (dedupe por drawId ou ymd+hora+uf)
     const uniqDraws = dedupeDrawsForKpi(base, uf);
 
     const dias = new Set(uniqDraws.map((d) => getDrawDate(d)).filter(Boolean)).size;
@@ -1559,7 +1540,6 @@ const full = { from: MIN_DATE, to: MAX_DATE };
         return;
       }
 
-      // seleção de grupo é explícita -> não muda followMax
       setSelectedGrupo((prev) => {
         const next = prev === g ? null : g;
 
@@ -1606,7 +1586,17 @@ const full = { from: MIN_DATE, to: MAX_DATE };
     return null;
   }, [bounds.loading, boundsReady, bounds.error]);
 
-  const uiBlockedByBounds = DATA_MODE === "firestore" ? !boundsReady : false;
+  const hasLocalRangeReady = !!(
+    dateRange?.from &&
+    dateRange?.to &&
+    isISODate(dateRange.from) &&
+    isISODate(dateRange.to)
+  );
+
+  const uiBlockedByBounds =
+    DATA_MODE === "firestore"
+      ? !hasLocalRangeReady && !hasQueryableRange && bounds.loading
+      : false;
 
   const emptyForRange = useMemo(() => {
     if (!dataReady) return false;
@@ -1665,7 +1655,6 @@ const full = { from: MIN_DATE, to: MAX_DATE };
     run();
   }, [selectedGrupo]);
 
-  // ✅ salva estado por UF (não vaza)
   useEffect(() => {
     if (isGuest) return;
 
@@ -1692,7 +1681,7 @@ const full = { from: MIN_DATE, to: MAX_DATE };
     return (
       <PremiumInfoBox
         title="Carregando detalhes do período"
-        description='Você selecionou um intervalo grande ("Todos"). O sistema está hidratando os prizes para garantir estatística correta (sem “meio certo”).'
+        description='Você selecionou um intervalo grande ("Todos"). O sistema está hidratando os prizes para garantir estatística correta.'
         extra={`Intervalo: ${from} → ${to}\nAguarde concluir para liberar KPIs, ranking filtrado e gráficos.`}
       />
     );
@@ -1706,14 +1695,14 @@ const full = { from: MIN_DATE, to: MAX_DATE };
     return (
       <PremiumInfoBox
         title="Modo Demonstração (sem login)"
-        description="Você está vendo o painel geral da base (desde 2022). Para proteger as funcionalidades, filtros e ações estão bloqueados."
+        description="Você está vendo o painel geral da base (desde 2022). Para proteger as funcionalidades, apenas período e ações premium continuam bloqueados."
         extra={
           `Período: ${from} → ${to}\n` +
           "Bloqueado no DEMO:\n" +
-          "• Alterar filtros e período\n" +
-          "• Selecionar bicho/posição\n" +
+          "• Alterar período\n" +
+          "• Selecionar bicho/posição clicando nos cards/tabelas\n" +
           "• Ações premium (Top 3 completo, Busca, Centenas+, Downloads)\n" +
-          "Faça login para liberar."
+          "Os filtros superiores continuam liberados."
         }
       />
     );
@@ -1724,12 +1713,12 @@ const full = { from: MIN_DATE, to: MAX_DATE };
       <aside className="dashLeft">
         <LeftRankingTable
           locationLabel={locationLabel}
-          loading={uiBlockedByBounds ? true : loadingEffective}
-          error={uiBlockedByBounds ? null : rankingError}
-          data={uiBlockedByBounds || !dataReady ? [] : rankingDataForLeftTable}
+          loading={loadingEffective && !rankingRowsFromMeta.length && !drawsForUi.length}
+          error={rankingError}
+          data={!dataReady ? rankingRowsFromMeta : rankingDataForLeftTable}
           selectedGrupo={selectedGrupo}
           onSelectGrupo={onSelectGrupo}
-          palpitesByGrupo={uiBlockedByBounds || !dataReady ? {} : palpitesByGrupo}
+          palpitesByGrupo={dataReady ? palpitesByGrupo : {}}
         />
       </aside>
 
@@ -1812,23 +1801,7 @@ const full = { from: MIN_DATE, to: MAX_DATE };
 
         <section className="dashFilters">
           <div style={{ position: "relative" }}>
-            <div style={isGuest ? { opacity: 0.65, filter: "grayscale(0.2)" } : null}>
-              <FiltersBar filters={filters} onChange={handleFilterChange} options={options} />
-            </div>
-
-            {isGuest ? (
-              <div
-                role="button"
-                aria-label="Filtros bloqueados no modo demonstração"
-                onClick={() => showGuestToast("Modo demonstração: filtros bloqueados. Faça login para usar.")}
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  cursor: "not-allowed",
-                  background: "transparent",
-                }}
-              />
-            ) : null}
+            <FiltersBar filters={filters} onChange={handleFilterChange} options={options} />
           </div>
 
           {guestToast ? (
@@ -1853,9 +1826,9 @@ const full = { from: MIN_DATE, to: MAX_DATE };
         <section className="dashCharts">
           {uiBlockedByBounds ? (
             <PremiumInfoBox
-              title="Painel aguardando período real"
-              description="O sistema precisa identificar min/max reais no Firestore para garantir consistência estatística. Assim evitamos gráficos zerados e rankings incorretos."
-              extra="Assim que os bounds forem resolvidos, o painel libera automaticamente os gráficos e o ranking."
+              title="Painel inicializando período"
+              description="O sistema ainda está resolvendo o intervalo oficial da base. Assim que o range local estiver disponível, o painel libera o conteúdo."
+              extra="Se houver período salvo ou consulta já resolvida, os blocos carregam sem esperar o bounds finalizar."
             />
           ) : rankingError && isIndexErrorMessage(rankingError) ? (
             <PremiumInfoBox
@@ -1869,7 +1842,7 @@ const full = { from: MIN_DATE, to: MAX_DATE };
             <PremiumInfoBox
               title="Sem registros no período / filtro atual"
               description="O período selecionado retornou zero draws. Ajuste o intervalo de datas ou filtros (horário, mês, dia, etc.) para voltar a exibir estatísticas."
-              extra={`Dica rápida: ajuste o intervalo dentro de ${MIN_DATE} a ${MAX_DATE}.`}
+              extra={`Dica rápida: ajuste o intervalo dentro de ${MIN_DATE || "—"} a ${MAX_DATE || "—"}.`}
             />
           ) : (
             <ChartsGrid
@@ -1889,5 +1862,3 @@ const full = { from: MIN_DATE, to: MAX_DATE };
     </div>
   );
 }
-
-
