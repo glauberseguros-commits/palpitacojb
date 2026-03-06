@@ -32,16 +32,28 @@ function dezenaFromMilhar(m4) {
   return s ? s.slice(-2) : "";
 }
 
-// ✅ FIX: wrap 100 -> 00 (grupo 25)
+/**
+ * Wrap cíclico apenas para montar as 4 dezenas fixas do grupo.
+ * NÃO é regra geral de transformação de centena em dezena.
+ */
+function wrapToDezena2(n) {
+  const x = Number(n);
+  if (!Number.isFinite(x)) return "";
+  const d = ((x % 100) + 100) % 100;
+  return String(d).padStart(2, "0");
+}
+
 function getDezenasFixasFromGrupo(grupo) {
   const g = Number(grupo);
   if (!Number.isFinite(g) || g < 1 || g > 25) return [];
+
   const start = (g - 1) * 4 + 1; // 1..97
   const out = [];
+
   for (let i = 0; i < 4; i += 1) {
-    const d = (start + i) % 100; // ✅ 100 -> 0
-    out.push(String(d).padStart(2, "0"));
+    out.push(wrapToDezena2(start + i));
   }
+
   return out;
 }
 
@@ -85,7 +97,9 @@ function build20ByDezena({ grupo, baseMilhares, perCol = 5 }) {
   }
 
   const input = Array.isArray(baseMilhares) ? baseMilhares : [];
-  const normalized = input.map(normalizeMilharStr).filter((x) => /^\d{4}$/.test(x));
+  const normalized = input
+    .map(normalizeMilharStr)
+    .filter((x) => /^\d{4}$/.test(x));
 
   const byDz = new Map();
   for (const dz of dezenas) byDz.set(dz, []);
@@ -291,7 +305,6 @@ export default function Top3View(props) {
     if (!map.has(k)) map.set(k, { value: k, label: op?.label || k });
   });
 
-  // ordem: PT_RIO, FEDERAL, depois o resto
   const lotOptions = [
     map.get("PT_RIO"),
     map.get("FEDERAL"),
@@ -449,7 +462,6 @@ export default function Top3View(props) {
         }
       `}</style>
 
-      {/* Cabeçalho */}
       <div
         style={{
           background: t.panel,
@@ -462,7 +474,6 @@ export default function Top3View(props) {
         <div style={{ display: "grid", gap: 10 }}>
           <div style={{ fontWeight: 900, fontSize: 18 }}>TOP3 (Próximo sorteio)</div>
 
-          {/* Abas (Loteria) */}
           <div className="pp-tabs">
             {lotOptions.map((op) => {
               const k = String(op?.value || "").toUpperCase();
@@ -527,10 +538,17 @@ export default function Top3View(props) {
             const freqRaw = Number(item?.freq ?? 0);
             const freq = Number.isFinite(freqRaw) ? Math.max(0, Math.trunc(freqRaw)) : 0;
 
-            const denom = samples > 0 ? samples * 7 : 0;
+            // fallback coerente com o motor: TOP5, não TOP7
+            const denom = samples > 0 ? samples * 5 : 0;
             const derivedScore = denom > 0 ? freq / denom : 0;
 
-            const pct = toPercent(item?.probPct ?? item?.score ?? derivedScore);
+            const pct = toPercent(
+              item?.probPct ??
+                item?.prob ??
+                item?.probCond ??
+                item?.score ??
+                derivedScore
+            );
 
             const iconSrcs = Array.isArray(item?.imgIcon)
               ? item.imgIcon
@@ -538,7 +556,6 @@ export default function Top3View(props) {
               ? item.imgBg
               : [];
 
-            // ========= Milhares (20) =========
             const hasCols =
               Array.isArray(item?.milharesCols) &&
               item.milharesCols.length >= 4 &&
@@ -563,7 +580,6 @@ export default function Top3View(props) {
               if (m20 && m20.length) milharesBase = m20.slice(0);
               else if (mAny && mAny.length) milharesBase = mAny.slice(0);
 
-              // fallback: build20(grupo) -> {slots}, ou buildMilhares(grupo,20), ou build16(grupo)
               if (!milharesBase.length) {
                 const g = Number(item?.grupo);
                 if (Number.isFinite(g) && g > 0) {
@@ -586,14 +602,20 @@ export default function Top3View(props) {
               }
 
               const grupoNum = Number(item?.grupo);
-              const grid = build20ByDezena({ grupo: grupoNum, baseMilhares: milharesBase, perCol: 5 });
+              const grid = build20ByDezena({
+                grupo: grupoNum,
+                baseMilhares: milharesBase,
+                perCol: 5,
+              });
+
               dezenasHeader = grid.dezenas;
               gridRows = grid.rows;
               flat20 = grid.flat20;
             }
 
             const key = `${String(item?.grupo ?? "g")}__${animal || "x"}__${idx}`;
-            const title = idx === 0 ? "1º MAIS FORTE" : idx === 1 ? "2º MAIS FORTE" : "3º MAIS FORTE";
+            const title =
+              idx === 0 ? "1º MAIS FORTE" : idx === 1 ? "2º MAIS FORTE" : "3º MAIS FORTE";
 
             const doCopyAll = async () => {
               const ok = await copyText(flat20.join(" "));
@@ -620,7 +642,14 @@ export default function Top3View(props) {
                   ...(idx === 0 ? { gridColumn: "1 / -1" } : null),
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 12,
+                  }}
+                >
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <div
                       style={{
@@ -642,28 +671,69 @@ export default function Top3View(props) {
                       <div style={{ fontWeight: 900, letterSpacing: 0.4 }}>🏅 {title}</div>
                     </div>
                   </div>
-
-                  {/* amostras/freq removidos do topo por UX */}
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "96px 1fr 180px", gap: 14, alignItems: "center" }}>
-                  <ImgWithFallback srcs={iconSrcs} alt={animal ? `${animal}` : `G${grupoTxt}`} size={96} />
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "96px 1fr 180px",
+                    gap: 14,
+                    alignItems: "center",
+                  }}
+                >
+                  <ImgWithFallback
+                    srcs={iconSrcs}
+                    alt={animal ? `${animal}` : `G${grupoTxt}`}
+                    size={96}
+                  />
 
                   <div style={{ display: "grid", gap: 6 }}>
-                    <div style={{ fontSize: 12, color: t.muted, fontWeight: 800 }}>GRUPO {grupoTxt}</div>
+                    <div style={{ fontSize: 12, color: t.muted, fontWeight: 800 }}>
+                      GRUPO {grupoTxt}
+                    </div>
                     <div style={{ fontSize: 22, fontWeight: 950, letterSpacing: 0.6 }}>
                       {animal ? animal.toUpperCase() : "—"}
                     </div>
                   </div>
 
-                  <div style={{ justifySelf: "end", textAlign: "right", display: "grid", gap: 6 }}>
-                    <div style={{ color: t.muted, fontSize: 12, fontWeight: 800 }}>CONFIANÇA</div>
-                    <div style={{ fontSize: 34, fontWeight: 950, color: t.accent, lineHeight: 1 }}>
+                  <div
+                    style={{
+                      justifySelf: "end",
+                      textAlign: "right",
+                      display: "grid",
+                      gap: 6,
+                    }}
+                  >
+                    <div style={{ color: t.muted, fontSize: 12, fontWeight: 800 }}>
+                      CONFIANÇA
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 34,
+                        fontWeight: 950,
+                        color: t.accent,
+                        lineHeight: 1,
+                      }}
+                    >
                       {pct.toFixed(2)}%
                     </div>
 
-                    <div style={{ height: 8, borderRadius: 999, background: "rgba(255,255,255,0.10)", overflow: "hidden" }}>
-                      <div style={{ height: "100%", width: `${pct}%`, background: t.accent, opacity: 0.75 }} />
+                    <div
+                      style={{
+                        height: 8,
+                        borderRadius: 999,
+                        background: "rgba(255,255,255,0.10)",
+                        overflow: "hidden",
+                      }}
+                    >
+                      <div
+                        style={{
+                          height: "100%",
+                          width: `${pct}%`,
+                          background: t.accent,
+                          opacity: 0.75,
+                        }}
+                      />
                     </div>
                   </div>
                 </div>
@@ -680,10 +750,17 @@ export default function Top3View(props) {
                   <div className="pp-m20hdr">
                     <div style={{ display: "grid", gap: 2 }}>
                       <div style={{ fontWeight: 950 }}>📌 20 MILHARES RECOMENDADAS</div>
-                      <div className="pp-miniNote">Clique em uma milhar para copiar • Grade por dezena fixa</div>
+                      <div className="pp-miniNote">
+                        Clique em uma milhar para copiar • Grade por dezena fixa
+                      </div>
                     </div>
 
-                    <button type="button" onClick={doCopyAll} className="pp-btn" title="Copiar as 20 milhares">
+                    <button
+                      type="button"
+                      onClick={doCopyAll}
+                      className="pp-btn"
+                      title="Copiar as 20 milhares"
+                    >
                       {copiedAllKey === key ? "✅ Copiado" : "Copiar 20"}
                     </button>
                   </div>

@@ -71,13 +71,9 @@ function isSlotPublishedToday(hh, nowMin, graceMin) {
 function normalizeLotteryKey(v) {
   const s = String(v ?? "").trim().toUpperCase();
 
-  // RJ
   if (s === "RJ" || s === "RIO" || s === "PT-RIO" || s === "PT_RIO") return "PT_RIO";
-
-  // FEDERAL (inclui alias BR)
   if (s === "FED" || s === "FEDERAL" || s === "BR") return "FEDERAL";
 
-  // inválido → força 400 (projeto atual só usa PT_RIO e FEDERAL)
   return "";
 }
 
@@ -86,11 +82,28 @@ function normalizeLotteryKey(v) {
 ========================= */
 
 function isISODate(s) {
-  return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
+  const str = String(s || "").trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) return false;
+
+  const [y, m, d] = str.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+
+  return (
+    dt.getUTCFullYear() === y &&
+    dt.getUTCMonth() === m - 1 &&
+    dt.getUTCDate() === d
+  );
 }
 
 function isHHMM(s) {
-  return /^\d{2}:\d{2}$/.test(String(s || "").trim());
+  const str = String(s || "").trim();
+  const m = str.match(/^(\d{2}):(\d{2})$/);
+  if (!m) return false;
+
+  const hh = Number(m[1]);
+  const mm = Number(m[2]);
+
+  return hh >= 0 && hh <= 23 && mm >= 0 && mm <= 59;
 }
 
 function pad2(n) {
@@ -103,20 +116,28 @@ function normalizeHHMM(value) {
 
   if (isHHMM(s)) return s;
 
-  // "10h" => "10:00"
   const m1 = s.match(/^(\d{1,2})h$/i);
-  if (m1) return `${pad2(m1[1])}:00`;
+  if (m1) {
+    const hh = Number(m1[1]);
+    if (hh >= 0 && hh <= 23) return `${pad2(hh)}:00`;
+    return "";
+  }
 
-  // "10" => "10:00"
   const m2 = s.match(/^(\d{1,2})$/);
-  if (m2) return `${pad2(m2[1])}:00`;
+  if (m2) {
+    const hh = Number(m2[1]);
+    if (hh >= 0 && hh <= 23) return `${pad2(hh)}:00`;
+    return "";
+  }
 
-  // "10:9" => "10:09"
   const m3 = s.match(/^(\d{1,2}):(\d{1,2})$/);
   if (m3) {
-    const hh = pad2(m3[1]);
-    const mm = pad2(m3[2]);
-    return `${hh}:${mm}`;
+    const hh = Number(m3[1]);
+    const mm = Number(m3[2]);
+    if (hh >= 0 && hh <= 23 && mm >= 0 && mm <= 59) {
+      return `${pad2(hh)}:${pad2(mm)}`;
+    }
+    return "";
   }
 
   return "";
@@ -137,7 +158,7 @@ function parseBool01(v) {
 
 function parsePosInt(v, def, min, max) {
   const s = String(v ?? "").trim();
-  if (!s) return def; // evita Number('') => 0 quando v é undefined/empty
+  if (!s) return def;
 
   const n = Number(s);
   if (!Number.isFinite(n)) return def;
@@ -206,7 +227,6 @@ function normalizeCloseHourForLottery(value, lotteryKey) {
   if (lk === "PT_RIO") {
     const hh = raw0.slice(0, 2);
     const mm = raw0.slice(3, 5);
-    // HH:09 é "marcação" do provider
     const raw = mm === "09" ? "" : raw0;
     return { raw, slot: `${hh}:00` };
   }
@@ -225,12 +245,26 @@ function hourFromCloseHourSlot(closeHour, lotteryKey) {
   return pad2(hh);
 }
 
+async function fetchDayDrawDocs(db, date) {
+  const [snapDate, snapYmd] = await Promise.all([
+    db.collection("draws").where("date", "==", date).get(),
+    db.collection("draws").where("ymd", "==", date).get(),
+  ]);
+
+  const byId = new Map();
+
+  for (const doc of snapDate.docs) byId.set(doc.id, doc);
+  for (const doc of snapYmd.docs) byId.set(doc.id, doc);
+
+  return Array.from(byId.values());
+}
+
 /* =========================
    Day Status cache
 ========================= */
 
-const _dayStatusCache = new Map(); // lottery -> { loadedAt, map }
-const DAY_STATUS_TTL_MS = 60_000; // 1 min (dev-friendly)
+const _dayStatusCache = new Map();
+const DAY_STATUS_TTL_MS = 60_000;
 
 function readDayStatusMap(lottery, opts) {
   const key = upTrim(lottery || "PT_RIO") || "PT_RIO";
@@ -260,10 +294,7 @@ function readDayStatusMap(lottery, opts) {
 function shouldBlockDayStatus(dayStatus, strict) {
   if (dayStatus === "holiday_no_draw") return true;
   if (dayStatus === "incomplete") return true;
-
-  // modo estrito: só dias "completos" (normal / normal_partial)
   if (strict && dayStatus === "partial_hard") return true;
-
   return false;
 }
 
@@ -308,9 +339,8 @@ function shouldInclude09ForDate(ymd, include09FromYmd) {
 }
 
 function expectedHoursPT_RIO_FALLBACK(ymd, include09FromYmd) {
-  // dow SP (-03:00) no meio-dia evita edge de DST
   const d = new Date(`${ymd}T12:00:00-03:00`);
-  const dow = d.getDay(); // 0=dom
+  const dow = d.getDay();
 
   const has09 = shouldInclude09ForDate(ymd, include09FromYmd);
 
@@ -322,7 +352,7 @@ function expectedHoursPT_RIO_FALLBACK(ymd, include09FromYmd) {
 
   if (dow === 0) {
     hard.push(...hardSun);
-    if (has09) soft.push("09"); // domingo 09 variável
+    if (has09) soft.push("09");
     return { hard, soft, mode: "fallback", scheduleFile: false };
   }
 
@@ -340,10 +370,8 @@ function pickRangeForDate(ranges, ymd) {
     const hasFrom = isISODate(from0);
     const hasTo = isISODate(to0);
 
-    // sem from/to => "default" range
     if (!hasFrom && !hasTo) return r;
 
-    // aberto
     if (!hasFrom && hasTo) {
       if (ymd <= to0) return r;
       continue;
@@ -353,7 +381,6 @@ function pickRangeForDate(ranges, ymd) {
       continue;
     }
 
-    // fechado
     if (hasFrom && hasTo && ymd >= from0 && ymd <= to0) return r;
   }
   return null;
@@ -373,21 +400,18 @@ function getExpectedForDate(lotteryKey, ymd, include09FromYmdDefault) {
   const scheduleRaw = safeReadJson(p, null);
   const scheduleFile = !!scheduleRaw;
 
-  // 1) se schedule existir e for "global" (sem ranges), usa
   if (scheduleRaw) {
     const global = parseScheduleGlobal(scheduleRaw);
     if (global && (global.hard.length || global.soft.length)) return global;
   }
 
-  // 2) tenta ranges
   const ranges = Array.isArray(scheduleRaw) ? scheduleRaw : scheduleRaw?.ranges;
   const r = pickRangeForDate(ranges, ymd);
 
   if (r) {
-    // Suporta schedule por dia da semana
     if (r.dow && typeof r.dow === "object") {
       const d = new Date(String(ymd) + "T12:00:00-03:00");
-      const dow = String(d.getDay()); // 0=dom
+      const dow = String(d.getDay());
       const block = r.dow[dow] || r.dow[Number(dow)] || null;
 
       const hard = normalizeHourList(block?.hard || block?.expectedHard || []);
@@ -398,7 +422,6 @@ function getExpectedForDate(lotteryKey, ymd, include09FromYmdDefault) {
       return { hard, soft, mode: "schedule", scheduleFile: true };
     }
 
-    // formato antigo
     const hard = normalizeHourList(r?.hard || r?.expectedHard || []);
     const soft = normalizeHourList(r?.soft || r?.expectedSoft || []);
     const hours = normalizeHourList(r?.hours || []);
@@ -406,12 +429,10 @@ function getExpectedForDate(lotteryKey, ymd, include09FromYmdDefault) {
     return { hard, soft, mode: "schedule", scheduleFile: true };
   }
 
-  // 3) fallback: PT_RIO
   if (lotteryKey === "PT_RIO") {
     return expectedHoursPT_RIO_FALLBACK(ymd, include09FromYmdDefault || "2024-01-05");
   }
 
-  // 4) universo vazio
   return { hard: [], soft: [], mode: "none", scheduleFile };
 }
 
@@ -419,7 +440,7 @@ function getExpectedForDate(lotteryKey, ymd, include09FromYmdDefault) {
    SOURCE GAPS
 ========================= */
 
-const _gapsCache = new Map(); // lottery -> { loadedAt, map }
+const _gapsCache = new Map();
 const GAPS_TTL_MS = 60_000;
 
 function readGapsMap(lottery, opts) {
@@ -467,10 +488,6 @@ function normalizeGapEntry(entry) {
 
 function getGapsForDate(lotteryKey, ymd, opts) {
   const map = readGapsMap(lotteryKey, opts);
-
-  // SUPORTA:
-  // (A) { "gapsByDay": { "YYYY-MM-DD": {...} } }  <-- formato atual do seu repo
-  // (B) { "YYYY-MM-DD": {...} }                  <-- formato legado
   const entry = map?.gapsByDay?.[ymd] ?? map?.[ymd];
 
   if (!entry) return { removedHard: [], removedSoft: [] };
@@ -529,15 +546,12 @@ function buildSlots(opts) {
     const isSoft = Array.isArray(baseSoft) && baseSoft.includes(hh);
     const kind = isSoft ? "soft" : "hard";
 
-    // GAP (escusado)
     if (removedHardApplied?.has?.(hh) || removedSoftApplied?.has?.(hh)) {
       return { hour: hh, kind, status: "gap", reason: "source_gap", draw: null };
     }
 
-    // válido
     if (draw) return { hour: hh, kind, status: "valid", draw };
 
-    // HOJE + ainda não publicado → FUTURE
     if (
       capToday &&
       isToday &&
@@ -549,7 +563,6 @@ function buildSlots(opts) {
       }
     }
 
-    // faltante — apenas se já deveria ter saído
     if (expectedHardPublished && expectedHardPublished.includes(hh)) {
       return { hour: hh, kind: "hard", status: "missing", draw: null };
     }
@@ -557,13 +570,11 @@ function buildSlots(opts) {
       return { hour: hh, kind: "soft", status: "soft_missing", draw: null };
     }
 
-    // defensivo: não esperado
     return { hour: hh, kind, status: "gap", reason: "not_expected", draw: null };
   });
 }
 
 router.get("/results", async (req, res) => {
-  // UF_CONFLICT_GUARD: evita pegadinha de uf junto com lottery explícito
   if ((req.query.lotteryKey != null || req.query.lottery != null) && req.query.uf != null) {
     return res.status(400).json({
       ok: false,
@@ -577,10 +588,7 @@ router.get("/results", async (req, res) => {
   const noCapToday = parseBool01(req.query.noCapToday);
   const capToday = !noCapToday;
 
-  // aceita ?lottery= ou ?lotteryKey= ou ?uf=
   const lotteryParam = req.query.lotteryKey ?? req.query.lottery ?? null;
-
-  // legado: se NÃO veio lottery explícito, ainda aceita uf como lottery
   const legacyLottery = lotteryParam == null ? req.query.uf : null;
 
   const lotteryRaw = String(lotteryParam ?? legacyLottery ?? "").trim();
@@ -609,7 +617,6 @@ router.get("/results", async (req, res) => {
       });
     }
 
-    // HARD GUARD: bloqueia datas futuras (fuso Brasil)
     if (isFutureISODate(date)) {
       const todayBR = todayYMDInSaoPaulo();
       return res.json({
@@ -629,24 +636,20 @@ router.get("/results", async (req, res) => {
       });
     }
 
-    // lê day_status (hint) — MAS vamos confirmar no Firestore antes de bloquear
     const dayStatusMap = readDayStatusMap(lottery, { reload: reloadDayStatus });
     const dayStatus = String(dayStatusMap?.[date] || "").trim();
 
     const db = getDb();
 
-    // Query mínima: SOMENTE date (evita índice composto)
-    const snap = await db.collection("draws").where("date", "==", date).get();
+    const docsDay = await fetchDayDrawDocs(db, date);
 
-    // filtra lottery em memória (aceita snake e camel)
-    const docsAll = snap.docs.filter((doc) => {
+    const docsAll = docsDay.filter((doc) => {
       const d = doc.data() || {};
       const lkSnake = upTrim(d.lottery_key || "");
       const lkCamel = upTrim(d.lotteryKey || "");
       return lkSnake === lotteryKey || lkCamel === lotteryKey;
     });
 
-    // Se day_status mandar bloquear, confirma:
     if (dayStatus && shouldBlockDayStatus(dayStatus, strict)) {
       if (!docsAll.length) {
         return res.json({
@@ -664,27 +667,22 @@ router.get("/results", async (req, res) => {
           slots: [],
         });
       }
-      // existe dado real -> segue o fluxo normal
     }
 
-    // Guard rail
     const docsFound = docsAll.length;
     const docs = docsAll.slice(0, limitDocs);
     const docsCapped = docs.length !== docsFound;
 
-    // Esperado (universo) do dia — hard + soft (BASE schedule)
     const include09FromDefault = "2024-01-05";
     const expectedBase = getExpectedForDate(lottery, date, include09FromDefault);
 
     const baseHard = expectedBase?.hard || [];
     const baseSoft = expectedBase?.soft || [];
 
-    // CAP do dia atual
     const todayBR = todayYMDInSaoPaulo();
     const isToday = date === todayBR;
     const nowMinBR = nowMinutesInSaoPaulo();
 
-    // DEBUG CAP TODAY (somente dev)
     if (process.env.NODE_ENV === "development") {
       try {
         const dbg18 = isSlotPublishedToday("18", nowMinBR, slotGraceMin);
@@ -703,19 +701,15 @@ router.get("/results", async (req, res) => {
       }
     }
 
-    // GAPS (source gaps)
     const gaps = getGapsForDate(lottery, date, { reload: reloadGaps });
     const removedHardSet = new Set(gaps.removedHard || []);
     const removedSoftSet = new Set(gaps.removedSoft || []);
 
-    // universo para exibir (mantém slots do schedule mesmo se gap)
     const scheduleAll = uniqSorted([...baseHard, ...baseSoft]);
 
-    // esperado "válido" (depois de remover gaps)
     const expectedHard = setDiff(baseHard, removedHardSet);
     const expectedSoft = setDiff(baseSoft, removedSoftSet);
 
-    // somente slots que já deveriam ter sido publicados hoje
     const expectedHardPublished =
       capToday && isToday
         ? expectedHard.filter((hh) => isSlotPublishedToday(hh, nowMinBR, slotGraceMin))
@@ -726,11 +720,9 @@ router.get("/results", async (req, res) => {
         ? expectedSoft.filter((hh) => isSlotPublishedToday(hh, nowMinBR, slotGraceMin))
         : expectedSoft;
 
-    // contagens removidas (somente se estavam no schedule base)
     const removedHardApplied = intersectToSet(baseHard, removedHardSet);
     const removedSoftApplied = intersectToSet(baseSoft, removedSoftSet);
 
-    // Se não incluir prizes, devolve só os docs + slots
     if (!includePrizes) {
       const drawsNoPrizes = docs.map((doc) => {
         const d = doc.data() || {};
@@ -739,9 +731,7 @@ router.get("/results", async (req, res) => {
         return {
           id: doc.id,
           ...d,
-          // close_hour sempre no SLOT (compat com front)
           close_hour: slot || normalizeHHMM(d.close_hour),
-          // opcional: raw só quando fizer sentido (PT_RIO HH:09 vira "")
           close_hour_raw: raw || d.close_hour_raw || null,
           prizesCount: typeof d.prizesCount !== "undefined" ? d.prizesCount : undefined,
         };
@@ -749,7 +739,6 @@ router.get("/results", async (req, res) => {
 
       drawsNoPrizes.sort((a, b) => cmpHHMM(a.close_hour, b.close_hour));
 
-      // mapa hour -> draw (hour vem do SLOT)
       const byHour = new Map();
       for (const dr of drawsNoPrizes) {
         const hh = hourFromCloseHourSlot(dr?.close_hour, lotteryKey);
@@ -785,19 +774,14 @@ router.get("/results", async (req, res) => {
       const slotsSummary = {
         mode: expectedBase?.mode || "none",
         scheduleFile: !!expectedBase?.scheduleFile,
-
         scheduleHard: baseHard.length,
         scheduleSoft: baseSoft.length,
         scheduleAll: scheduleAll.length,
-
         expectedHard: expectedHard.length,
         expectedSoft: expectedSoft.length,
-
         presentHours: presentHours.length,
-
         removedHard: removedHardApplied.size,
         removedSoft: removedSoftApplied.size,
-
         missingHard: slots.filter((s) => s.status === "missing").length,
         missingSoft: slots.filter((s) => s.status === "soft_missing").length,
       };
@@ -813,12 +797,8 @@ router.get("/results", async (req, res) => {
         docsCapped,
         dayStatus,
         blocked: false,
-
-        // legado
         count: drawsNoPrizes.length,
         draws: drawsNoPrizes,
-
-        // novo
         expectedHard,
         expectedSoft,
         presentHours,
@@ -827,7 +807,6 @@ router.get("/results", async (req, res) => {
       });
     }
 
-    // carrega prizes com concorrência limitada
     const draws = await mapWithConcurrency(docs, 6, async (doc) => {
       const d = doc.data() || {};
       const cand = getCloseCandidate(d);
@@ -846,7 +825,6 @@ router.get("/results", async (req, res) => {
 
     draws.sort((a, b) => cmpHHMM(a.close_hour, b.close_hour));
 
-    // mapa hour -> draw
     const byHour = new Map();
     for (const dr of draws) {
       const hh = hourFromCloseHourSlot(dr?.close_hour, lotteryKey);
@@ -882,19 +860,14 @@ router.get("/results", async (req, res) => {
     const slotsSummary = {
       mode: expectedBase?.mode || "none",
       scheduleFile: !!expectedBase?.scheduleFile,
-
       scheduleHard: baseHard.length,
       scheduleSoft: baseSoft.length,
       scheduleAll: scheduleAll.length,
-
       expectedHard: expectedHard.length,
       expectedSoft: expectedSoft.length,
-
       presentHours: presentHours.length,
-
       removedHard: removedHardApplied.size,
       removedSoft: removedSoftApplied.size,
-
       missingHard: slots.filter((s) => s.status === "missing").length,
       missingSoft: slots.filter((s) => s.status === "soft_missing").length,
     };
@@ -910,12 +883,8 @@ router.get("/results", async (req, res) => {
       docsCapped,
       dayStatus,
       blocked: false,
-
-      // legado
       count: draws.length,
       draws,
-
-      // novo
       expectedHard,
       expectedSoft,
       presentHours,

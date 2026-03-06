@@ -1,23 +1,27 @@
 "use strict";
 
-// 🔒 Normalização única de lottery_key
-function normalizeLotteryKey(v) {
-  const s = String(v ?? "").trim().toUpperCase();
-
-  // RJ
-  if (s === "RJ" || s === "RIO" || s === "PT-RIO" || s === "PT_RIO") return "PT_RIO";
-
-  // FEDERAL
-  if (s === "FED" || s === "FEDERAL" || s === "BR" || s === "NACIONAL") return "FEDERAL";
-
-  // fallback seguro (projeto atual só usa esses 2)
-  return "PT_RIO";
-}
-
 const express = require("express");
 const { admin, getDb } = require("../service/firebaseAdmin");
 
 const router = express.Router();
+
+/* ======================================================
+   LOTTERY NORMALIZATION
+====================================================== */
+
+function normalizeLotteryKey(v) {
+  const s = String(v ?? "").trim().toUpperCase();
+
+  if (["RJ", "RIO", "PT-RIO", "PT_RIO"].includes(s)) return "PT_RIO";
+
+  if (["FED", "FEDERAL", "BR", "NACIONAL"].includes(s)) return "FEDERAL";
+
+  return null;
+}
+
+/* ======================================================
+   UTILS
+====================================================== */
 
 function pad2(n) {
   return String(n).padStart(2, "0");
@@ -29,49 +33,69 @@ function isISODateStrict(s) {
 
   const [y, m, d] = str.split("-").map(Number);
   const dt = new Date(Date.UTC(y, m - 1, d));
-  return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
+
+  return (
+    dt.getUTCFullYear() === y &&
+    dt.getUTCMonth() === m - 1 &&
+    dt.getUTCDate() === d
+  );
 }
+
+/* ======================================================
+   DATE NORMALIZATION
+====================================================== */
 
 function normalizeToYMD(input) {
   if (!input) return null;
 
-  // Timestamp (admin)
   if (typeof input === "object" && typeof input.toDate === "function") {
     const d = input.toDate();
     if (!Number.isNaN(d.getTime())) {
-      return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
+      return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(
+        d.getUTCDate()
+      )}`;
     }
   }
 
-  // Timestamp-like { seconds } / { _seconds }
   if (
     typeof input === "object" &&
-    (Number.isFinite(Number(input.seconds)) || Number.isFinite(Number(input._seconds)))
+    (Number.isFinite(Number(input.seconds)) ||
+      Number.isFinite(Number(input._seconds)))
   ) {
-    const sec = Number.isFinite(Number(input.seconds)) ? Number(input.seconds) : Number(input._seconds);
+    const sec = Number.isFinite(Number(input.seconds))
+      ? Number(input.seconds)
+      : Number(input._seconds);
+
     const d = new Date(sec * 1000);
+
     if (!Number.isNaN(d.getTime())) {
-      return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
+      return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(
+        d.getUTCDate()
+      )}`;
     }
   }
 
   if (input instanceof Date && !Number.isNaN(input.getTime())) {
-    return `${input.getUTCFullYear()}-${pad2(input.getUTCMonth() + 1)}-${pad2(input.getUTCDate())}`;
+    return `${input.getUTCFullYear()}-${pad2(input.getUTCMonth() + 1)}-${pad2(
+      input.getUTCDate()
+    )}`;
   }
 
   const s = String(input || "").trim();
   if (!s) return null;
 
-  // ISO
-  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
 
-  // BR (robustez)
   const br = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
   if (br) return `${br[3]}-${br[2]}-${br[1]}`;
 
   return null;
 }
+
+/* ======================================================
+   DOC SCAN
+====================================================== */
 
 function pickMinMaxFromDocs(docs) {
   let minYmd = null;
@@ -79,9 +103,12 @@ function pickMinMaxFromDocs(docs) {
 
   for (const doc of docs || []) {
     const d = doc?.data ? doc.data() : doc || {};
+
     const y =
       d?.ymd ||
-      normalizeToYMD(d?.date ?? d?.data ?? d?.dt ?? d?.draw_date ?? d?.close_date);
+      normalizeToYMD(
+        d?.date ?? d?.data ?? d?.dt ?? d?.draw_date ?? d?.close_date
+      );
 
     if (!y || !isISODateStrict(y)) continue;
 
@@ -92,9 +119,14 @@ function pickMinMaxFromDocs(docs) {
   return { minYmd, maxYmd };
 }
 
+/* ======================================================
+   FIRESTORE INDEX ERROR DETECTOR
+====================================================== */
+
 function isIndexError(err) {
   const msg = String(err?.message || "").toLowerCase();
   const code = String(err?.code || "").toLowerCase();
+
   return (
     code.includes("failed-precondition") ||
     msg.includes("failed_precondition") ||
@@ -103,14 +135,13 @@ function isIndexError(err) {
   );
 }
 
-/**
- * ✅ bounds por campo com SCAN curto (evita pegar 1 doc inválido)
- * - Busca N docs ASC e pega o primeiro que vira ISO válido
- * - Busca N docs DESC e pega o primeiro que vira ISO válido
- * - Desempate por docId (estável)
- */
+/* ======================================================
+   BOUNDS BY FIELD
+====================================================== */
+
 async function tryBoundsByField(db, lotteryKey, field, scanLimit = 50) {
   const DOC_ID = admin.firestore.FieldPath.documentId();
+
   const base = db.collection("draws").where("lottery_key", "==", lotteryKey);
 
   const ascSnap = await base
@@ -136,10 +167,12 @@ async function tryBoundsByField(db, lotteryKey, field, scanLimit = 50) {
     for (const doc of docs || []) {
       const v = doc?.data()?.[fieldName];
       const y = normalizeToYMD(v);
+
       if (y && isISODateStrict(y)) {
         return { ymd: y, docId: doc.id, raw: v };
       }
     }
+
     return { ymd: null, docId: null, raw: null };
   }
 
@@ -153,19 +186,23 @@ async function tryBoundsByField(db, lotteryKey, field, scanLimit = 50) {
     source: `where(lottery_key)+orderBy(${field})+docId(scan=${scanLimit})`,
     minDocId: minPick.docId,
     maxDocId: maxPick.docId,
-    minRaw: minPick.raw ?? null,
-    maxRaw: maxPick.raw ?? null,
   };
 }
 
+/* ======================================================
+   FALLBACK
+====================================================== */
+
 async function fallbackBoundsByDocIdEdges(db, lotteryKey, edgeLimit) {
   const DOC_ID = admin.firestore.FieldPath.documentId();
+
   const base = db.collection("draws").where("lottery_key", "==", lotteryKey);
 
   const ascSnap = await base.orderBy(DOC_ID, "asc").limit(edgeLimit).get();
   const descSnap = await base.orderBy(DOC_ID, "asc").limitToLast(edgeLimit).get();
 
   const merged = [...ascSnap.docs, ...descSnap.docs];
+
   const { minYmd, maxYmd } = pickMinMaxFromDocs(merged);
 
   return {
@@ -179,24 +216,30 @@ async function fallbackBoundsByDocIdEdges(db, lotteryKey, edgeLimit) {
   };
 }
 
+/* ======================================================
+   COMPUTE BOUNDS
+====================================================== */
+
 async function computeBounds(db, lotteryKey, opts = {}) {
-  // ✅ defensivo: normaliza aqui também
   const lk = normalizeLotteryKey(lotteryKey);
 
-  const scanLimit = Number.isFinite(Number(opts.scanLimit)) ? Math.max(10, Number(opts.scanLimit)) : 50;
-  const edgeLimit = Number.isFinite(Number(opts.edgeLimit)) ? Math.max(200, Number(opts.edgeLimit)) : 800;
+  const scanLimit = Number.isFinite(Number(opts.scanLimit))
+    ? Math.max(10, Number(opts.scanLimit))
+    : 50;
+
+  const edgeLimit = Number.isFinite(Number(opts.edgeLimit))
+    ? Math.max(200, Number(opts.edgeLimit))
+    : 800;
 
   let result = null;
   let warn = null;
 
-  // 1) ymd
   try {
     result = await tryBoundsByField(db, lk, "ymd", scanLimit);
   } catch (e) {
     warn = e;
   }
 
-  // 2) date (normaliza e valida ISO)
   if (!result || !result.ok) {
     try {
       const r2 = await tryBoundsByField(db, lk, "date", scanLimit);
@@ -208,7 +251,6 @@ async function computeBounds(db, lotteryKey, opts = {}) {
     }
   }
 
-  // 3) fallback docId edges
   if (!result || !result.ok) {
     result = await fallbackBoundsByDocIdEdges(db, lk, edgeLimit);
   }
@@ -216,42 +258,40 @@ async function computeBounds(db, lotteryKey, opts = {}) {
   return { lk, result, warn };
 }
 
-/**
- * GET /api/bounds?lottery=PT_RIO
- * GET /api/bounds?lottery=FEDERAL
- * compat: ?uf=RJ etc.
- *
- * opcional:
- * - ?scanLimit=50
- * - ?edgeLimit=800
- */
-const BASELINE_MIN_BY_LOTTERY = {
-  PT_RIO: "2022-06-07",
-  FEDERAL: "2022-06-08",
-};
-
-function clampMinYmd(lotteryKey, v) {
-  const s = String(v || "").trim();
-  if (!isISODateStrict(s)) return v;
-
-  const baseline = BASELINE_MIN_BY_LOTTERY[normalizeLotteryKey(lotteryKey)] || "2022-06-07";
-  // se o min calculado for "mais novo" que o baseline, força baseline
-  return s > baseline ? baseline : s;
-}
+/* ======================================================
+   API
+====================================================== */
 
 router.get("/bounds", async (req, res) => {
   const lottery = normalizeLotteryKey(req.query.lottery || req.query.uf);
-  const scanLimit = req.query.scanLimit ? Number(req.query.scanLimit) : undefined;
-  const edgeLimit = req.query.edgeLimit ? Number(req.query.edgeLimit) : undefined;
+
+  if (!lottery) {
+    return res.status(400).json({
+      ok: false,
+      error: "invalid_lottery",
+    });
+  }
+
+  const scanLimit = req.query.scanLimit
+    ? Number(req.query.scanLimit)
+    : undefined;
+
+  const edgeLimit = req.query.edgeLimit
+    ? Number(req.query.edgeLimit)
+    : undefined;
 
   try {
     const db = getDb();
-    const { lk, result, warn } = await computeBounds(db, lottery, { scanLimit, edgeLimit });
+
+    const { lk, result, warn } = await computeBounds(db, lottery, {
+      scanLimit,
+      edgeLimit,
+    });
 
     return res.json({
       ok: true,
       lottery: lk,
-      minYmd: clampMinYmd(lk, result?.minYmd) || null,
+      minYmd: result?.minYmd || null,
       maxYmd: result?.maxYmd || null,
       source: result?.source || "unknown",
       minDocId: result?.minDocId || null,

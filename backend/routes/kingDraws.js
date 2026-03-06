@@ -19,18 +19,35 @@ const { getDb } = require("../service/firebaseAdmin");
 
 const router = express.Router();
 
-// ✅ prova definitiva do arquivo carregado (ajuda demais em debug de "sumiu/voltou")
+// ✅ prova definitiva do arquivo carregado
 console.log("[KING] routes loaded from:", __filename);
 
 /**
  * Helpers
  */
 function isISODate(s) {
-  return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
+  const str = String(s || "").trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) return false;
+
+  const [y, m, d] = str.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+
+  return (
+    dt.getUTCFullYear() === y &&
+    dt.getUTCMonth() === m - 1 &&
+    dt.getUTCDate() === d
+  );
 }
 
 function isHHMM(s) {
-  return /^\d{2}:\d{2}$/.test(String(s || "").trim());
+  const str = String(s || "").trim();
+  const m = str.match(/^(\d{2}):(\d{2})$/);
+  if (!m) return false;
+
+  const hh = Number(m[1]);
+  const mm = Number(m[2]);
+
+  return hh >= 0 && hh <= 23 && mm >= 0 && mm <= 59;
 }
 
 function normalizeHHMM(value) {
@@ -40,16 +57,27 @@ function normalizeHHMM(value) {
   if (isHHMM(s)) return s;
 
   const m1 = s.match(/^(\d{1,2})h$/i);
-  if (m1) return `${String(m1[1]).padStart(2, "0")}:00`;
+  if (m1) {
+    const hh = Number(m1[1]);
+    if (hh >= 0 && hh <= 23) return `${String(hh).padStart(2, "0")}:00`;
+    return "";
+  }
 
   const m2 = s.match(/^(\d{1,2})$/);
-  if (m2) return `${String(m2[1]).padStart(2, "0")}:00`;
+  if (m2) {
+    const hh = Number(m2[1]);
+    if (hh >= 0 && hh <= 23) return `${String(hh).padStart(2, "0")}:00`;
+    return "";
+  }
 
   const m3 = s.match(/^(\d{1,2}):(\d{1,2})$/);
   if (m3) {
-    const hh = String(m3[1]).padStart(2, "0");
-    const mm = String(m3[2]).padStart(2, "0");
-    return `${hh}:${mm}`;
+    const hh = Number(m3[1]);
+    const mm = Number(m3[2]);
+    if (hh >= 0 && hh <= 23 && mm >= 0 && mm <= 59) {
+      return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+    }
+    return "";
   }
 
   return "";
@@ -73,15 +101,22 @@ function upTrim(v) {
 
 /**
  * ✅ Harden: fetch do DIA robusto
- * - prioriza ymd (canônico nos teus endpoints de range)
- * - plano B: usa "date" se "ymd" não existir/estiver inconsistente quando ymd não existir/estiver inconsistente
+ * - mescla ymd e date
+ * - dedup por doc.id
+ * - evita perder draw legado quando uma parte está em ymd e outra em date
  */
 async function fetchDayDraws(db, ymd) {
-  const s1 = await db.collection("draws").where("ymd", "==", ymd).get();
-  if (s1 && !s1.empty) return s1;
+  const [s1, s2] = await Promise.all([
+    db.collection("draws").where("ymd", "==", ymd).get(),
+    db.collection("draws").where("date", "==", ymd).get(),
+  ]);
 
-  const s2 = await db.collection("draws").where("date", "==", ymd).get();
-  return s2;
+  const map = new Map();
+
+  for (const doc of s1.docs) map.set(doc.id, doc);
+  for (const doc of s2.docs) map.set(doc.id, doc);
+
+  return Array.from(map.values());
 }
 
 /**
@@ -102,7 +137,10 @@ async function mapWithConcurrency(items, limitN, mapper) {
     }
   }
 
-  await Promise.all(Array.from({ length: Math.min(concurrency, arr.length) }, () => worker()));
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, arr.length) }, () => worker())
+  );
+
   return results;
 }
 
@@ -162,7 +200,11 @@ function parsePositionsParam(v) {
 async function loadPrizesForDraws(db, drawsWindow, includePrizes, positionsInfo) {
   if (!includePrizes) return drawsWindow;
 
-  const posArr = positionsInfo && Array.isArray(positionsInfo.positions) ? positionsInfo.positions : null;
+  const posArr =
+    positionsInfo && Array.isArray(positionsInfo.positions)
+      ? positionsInfo.positions
+      : null;
+
   const posSet = posArr && posArr.length ? new Set(posArr.map((n) => Number(n))) : null;
 
   const draws = await mapWithConcurrency(drawsWindow, 6, async (d) => {
@@ -205,10 +247,44 @@ function redirect308(destPath) {
  */
 function requireLotteryOr400(lottery, res) {
   if (!lottery) {
-    res.status(400).json({ ok: false, error: "Parâmetro inválido: lottery (use RJ/PT_RIO ou FED/FEDERAL)" });
+    res.status(400).json({
+      ok: false,
+      error: "Parâmetro inválido: lottery (use RJ/PT_RIO ou FED/FEDERAL)",
+    });
     return false;
   }
   return true;
+}
+
+function normalizeDrawDoc(doc) {
+  const data = doc.data() || {};
+  return {
+    id: doc.id,
+    ...data,
+    close_hour: normalizeHHMM(data.close_hour),
+  };
+}
+
+function sortDrawsByHourOnly(a, b) {
+  return cmpHHMM(a.close_hour, b.close_hour);
+}
+
+function sortDrawsByDateThenHour(a, b) {
+  const da = String(a.ymd || a.date || "");
+  const dbb = String(b.ymd || b.date || "");
+  if (da !== dbb) return da.localeCompare(dbb);
+  return cmpHHMM(a.close_hour, b.close_hour);
+}
+
+function applyLotteryFilter(draws, lottery) {
+  return (Array.isArray(draws) ? draws : []).filter((d) => upTrim(d.lottery_key) === lottery);
+}
+
+function applyHourWindow(draws, from, to) {
+  return (Array.isArray(draws) ? draws : []).filter((d) => {
+    if (!from && !to) return true;
+    return inRangeHHMM(d.close_hour, from || "", to || "");
+  });
 }
 
 /**
@@ -231,32 +307,33 @@ router.get("/draws", async (req, res) => {
     const positionsInfo = parsePositionsParam(req.query.positions);
 
     if (!isISODate(date)) {
-      return res.status(400).json({ ok: false, error: "Parâmetro inválido: date (use YYYY-MM-DD)" });
+      return res.status(400).json({
+        ok: false,
+        error: "Parâmetro inválido: date (use YYYY-MM-DD)",
+      });
     }
+
     if (!requireLotteryOr400(lottery, res)) return;
 
     if (fromRaw && !from) {
-      return res.status(400).json({ ok: false, error: "Parâmetro inválido: from (use HH:MM, 10h ou 10)" });
+      return res.status(400).json({
+        ok: false,
+        error: "Parâmetro inválido: from (use HH:MM, 10h ou 10)",
+      });
     }
+
     if (toRaw && !to) {
-      return res.status(400).json({ ok: false, error: "Parâmetro inválido: to (use HH:MM, 10h ou 10)" });
+      return res.status(400).json({
+        ok: false,
+        error: "Parâmetro inválido: to (use HH:MM, 10h ou 10)",
+      });
     }
 
-    const snap = await fetchDayDraws(db, date);
+    const docs = await fetchDayDraws(db, date);
 
-    const rawDraws = snap.docs.map((doc) => {
-      const data = doc.data() || {};
-      return { id: doc.id, ...data, close_hour: normalizeHHMM(data.close_hour) };
-    });
-
-    const byLottery = rawDraws.filter((d) => upTrim(d.lottery_key) === lottery);
-    byLottery.sort((a, b) => cmpHHMM(a.close_hour, b.close_hour));
-
-    const drawsWindow = byLottery.filter((d) => {
-      if (!from && !to) return true;
-      return inRangeHHMM(d.close_hour, from || "", to || "");
-    });
-
+    const rawDraws = docs.map(normalizeDrawDoc);
+    const byLottery = applyLotteryFilter(rawDraws, lottery).sort(sortDrawsByHourOnly);
+    const drawsWindow = applyHourWindow(byLottery, from || "", to || "");
     const draws = await loadPrizesForDraws(db, drawsWindow, includePrizes, positionsInfo);
 
     return res.json({
@@ -290,7 +367,10 @@ async function handleDay(req, res) {
     if (!requireLotteryOr400(lottery, res)) return;
 
     if (!isISODate(date)) {
-      return res.status(400).json({ ok: false, error: "Parâmetro inválido: date (use YYYY-MM-DD)" });
+      return res.status(400).json({
+        ok: false,
+        error: "Parâmetro inválido: date (use YYYY-MM-DD)",
+      });
     }
 
     const win = getWindowFromQuery(req);
@@ -299,21 +379,11 @@ async function handleDay(req, res) {
     const includePrizes = parseIncludePrizes(req.query.includePrizes, true);
     const positionsInfo = parsePositionsParam(req.query.positions);
 
-    const snap = await fetchDayDraws(db, date);
+    const docs = await fetchDayDraws(db, date);
 
-    const rawDraws = snap.docs.map((doc) => {
-      const data = doc.data() || {};
-      return { id: doc.id, ...data, close_hour: normalizeHHMM(data.close_hour) };
-    });
-
-    const byLottery = rawDraws.filter((d) => upTrim(d.lottery_key) === lottery);
-    byLottery.sort((a, b) => cmpHHMM(a.close_hour, b.close_hour));
-
-    const drawsWindow = byLottery.filter((d) => {
-      if (!win.from && !win.to) return true;
-      return inRangeHHMM(d.close_hour, win.from || "", win.to || "");
-    });
-
+    const rawDraws = docs.map(normalizeDrawDoc);
+    const byLottery = applyLotteryFilter(rawDraws, lottery).sort(sortDrawsByHourOnly);
+    const drawsWindow = applyHourWindow(byLottery, win.from || "", win.to || "");
     const draws = await loadPrizesForDraws(db, drawsWindow, includePrizes, positionsInfo);
 
     return res.json({
@@ -343,11 +413,17 @@ async function handleRange(req, res) {
     if (!requireLotteryOr400(lottery, res)) return;
 
     if (!isISODate(dateFrom) || !isISODate(dateTo)) {
-      return res.status(400).json({ ok: false, error: "Parâmetro inválido: dateFrom/dateTo (use YYYY-MM-DD)" });
+      return res.status(400).json({
+        ok: false,
+        error: "Parâmetro inválido: dateFrom/dateTo (use YYYY-MM-DD)",
+      });
     }
 
     if (dateFrom > dateTo) {
-      return res.status(400).json({ ok: false, error: "Parâmetro inválido: dateFrom não pode ser maior que dateTo" });
+      return res.status(400).json({
+        ok: false,
+        error: "Parâmetro inválido: dateFrom não pode ser maior que dateTo",
+      });
     }
 
     const win = getWindowFromQuery(req);
@@ -363,25 +439,9 @@ async function handleRange(req, res) {
       .orderBy("ymd", "asc")
       .get();
 
-    const rawDraws = snap.docs.map((doc) => {
-      const data = doc.data() || {};
-      return { id: doc.id, ...data, close_hour: normalizeHHMM(data.close_hour) };
-    });
-
-    const byLottery = rawDraws.filter((d) => upTrim(d.lottery_key) === lottery);
-
-    byLottery.sort((a, b) => {
-      const da = String(a.ymd || a.date || "");
-      const dbb = String(b.ymd || b.date || "");
-      if (da !== dbb) return da.localeCompare(dbb);
-      return cmpHHMM(a.close_hour, b.close_hour);
-    });
-
-    const drawsWindow = byLottery.filter((d) => {
-      if (!win.from && !win.to) return true;
-      return inRangeHHMM(d.close_hour, win.from || "", win.to || "");
-    });
-
+    const rawDraws = snap.docs.map(normalizeDrawDoc);
+    const byLottery = applyLotteryFilter(rawDraws, lottery).sort(sortDrawsByDateThenHour);
+    const drawsWindow = applyHourWindow(byLottery, win.from || "", win.to || "");
     const draws = await loadPrizesForDraws(db, drawsWindow, includePrizes, positionsInfo);
 
     return res.json({
