@@ -10,14 +10,10 @@ import { auth, authReady } from "./firebase";
  * =====================================================
  * AUTH SERVICE — PALPITACO
  * =====================================================
- * Regras:
- * - Login inicial: anônimo (free + trial)
- * - Controle de sessão será feito no Firestore (próximo passo)
- * - Aqui apenas identidade + listener
  */
 
 /**
- * Garante que o Auth está pronto (persistência aplicada quando possível)
+ * Aguarda inicialização do Firebase Auth
  */
 async function ensureAuthReady() {
   try {
@@ -26,15 +22,23 @@ async function ensureAuthReady() {
 }
 
 /**
- * Login anônimo
- * Usado para:
- * - usuário free
- * - trial automático (24h)
+ * Login anônimo seguro
  */
 export async function loginAnonymous() {
   await ensureAuthReady();
-  const cred = await signInAnonymously(auth);
-  return cred.user;
+
+  // se já estiver logado, não cria outro usuário
+  if (auth.currentUser) {
+    return auth.currentUser;
+  }
+
+  try {
+    const cred = await signInAnonymously(auth);
+    return cred.user;
+  } catch (err) {
+    console.error("Auth anonymous login error:", err);
+    throw err;
+  }
 }
 
 /**
@@ -42,13 +46,23 @@ export async function loginAnonymous() {
  */
 export async function logoutAuth() {
   await ensureAuthReady();
-  await signOut(auth);
+
+  try {
+    await signOut(auth);
+  } catch (err) {
+    console.error("Auth logout error:", err);
+  }
 }
 
 /**
  * Listener de estado de autenticação
- * Retorna unsubscribe()
  */
 export function onAuthChange(callback) {
-  return onAuthStateChanged(auth, callback);
+  if (typeof callback !== "function") {
+    throw new Error("onAuthChange requires a callback function");
+  }
+
+  return onAuthStateChanged(auth, (user) => {
+    callback(user ?? null);
+  });
 }

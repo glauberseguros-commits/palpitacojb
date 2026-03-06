@@ -26,6 +26,13 @@ export function normalizeImgSrc(src) {
   s = s.replace(/^(\.\/)+/, "");
   s = s.replace(/^(\.\.\/)+/, "");
 
+  // ✅ evita duplicar PUBLIC_URL quando o src já vem prefixado
+  // exemplo: base="/palpitaco" e s="/palpitaco/img/x.png"
+  if (base) {
+    if (s === base) return s;
+    if (s.startsWith(base + "/")) return s;
+  }
+
   if (s.startsWith("/")) return `${base}${s}`;
   if (s.startsWith("public/")) return `${base}/${s.slice("public/".length)}`;
 

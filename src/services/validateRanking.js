@@ -9,19 +9,42 @@ function toNumber(v) {
   return Number.isFinite(n) ? n : 0;
 }
 
+/**
+ * Normaliza qualquer formato de grupo para "01".."25".
+ * Aceita:
+ * - 7, "7", "07"
+ * - "Grupo 7", "GRUPO 07", "G7", "G-07"
+ * - "25 - VACA", "grupo:25"
+ *
+ * Retorna "00" se inválido.
+ */
 function normalizeGrupo(g) {
-  const s = String(g ?? "").trim();
-  if (!s) return "00";
+  const s0 = String(g ?? "").trim();
+  if (!s0) return "00";
 
-  if (/^\d{2}$/.test(s)) {
-    const n = Number(s);
+  // 1) se já vier exatamente "07"
+  if (/^\d{2}$/.test(s0)) {
+    const n = Number(s0);
     if (!Number.isFinite(n) || n < 1 || n > 25) return "00";
     return pad2(n);
   }
 
-  const n = Number(s);
-  if (!Number.isFinite(n) || n < 1 || n > 25) return "00";
-  return pad2(n);
+  // 2) se vier "7"
+  if (/^\d{1,2}$/.test(s0)) {
+    const n = Number(s0);
+    if (!Number.isFinite(n) || n < 1 || n > 25) return "00";
+    return pad2(n);
+  }
+
+  // 3) extrai 1-2 dígitos de dentro do texto (ex.: "Grupo 25", "25 - VACA")
+  const m = s0.match(/(\d{1,2})/);
+  if (m) {
+    const n = Number(m[1]);
+    if (!Number.isFinite(n) || n < 1 || n > 25) return "00";
+    return pad2(n);
+  }
+
+  return "00";
 }
 
 export function validateRankingLineByLine(expectedCounts, rankingRows) {

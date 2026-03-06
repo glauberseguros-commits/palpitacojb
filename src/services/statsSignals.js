@@ -59,6 +59,33 @@ function normalizeToYMD(input) {
     )}`;
   }
 
+  // ✅ Timestamp-like / objetos com toDate()
+  if (typeof input === "object" && typeof input.toDate === "function") {
+    const d = input.toDate();
+    if (d instanceof Date && !Number.isNaN(d.getTime())) {
+      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(
+        d.getDate()
+      )}`;
+    }
+  }
+
+  if (
+    typeof input === "object" &&
+    (Number.isFinite(Number(input.seconds)) ||
+      Number.isFinite(Number(input._seconds)))
+  ) {
+    const sec = Number.isFinite(Number(input.seconds))
+      ? Number(input.seconds)
+      : Number(input._seconds);
+
+    const d = new Date(sec * 1000);
+    if (!Number.isNaN(d.getTime())) {
+      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(
+        d.getDate()
+      )}`;
+    }
+  }
+
   const s = safeStr(input);
   if (!s) return null;
 
@@ -185,7 +212,7 @@ function pickDrawYMD(draw) {
     draw?.ymdTarget ??
     null;
 
-  const y = (typeof raw === "string" || raw instanceof Date) ? normalizeToYMD(raw) : null;
+  const y = normalizeToYMD(raw);
   return y && isYMD(y) ? y : null;
 }
 
@@ -287,7 +314,7 @@ export function computeTop3Signals({
     trans: 0.65,
     dow: 0.35,
     dom: 0.25,
-    global: 0.18, // fallback leve quando hora alvo tem pouca amostra
+    global: 0.18,
     ...(weights || {}),
   };
 
@@ -308,7 +335,7 @@ export function computeTop3Signals({
     const h = toHourBucket(pickDrawHour(d));
     if (!h) continue;
 
-    if (schSet.size > 0 && !schSet.has(h)) continue; // ignora fora da grade
+    if (schSet.size > 0 && !schSet.has(h)) continue;
 
     const g1 = pickPrize1GrupoFromDraw(d);
     if (!Number.isFinite(Number(g1))) continue;
@@ -327,11 +354,9 @@ export function computeTop3Signals({
   for (const [k, g] of byKey.entries()) {
     const hour = k.split("__")[1] || "";
 
-    // global
     globalTotal += 1;
     globalCounts.set(g, (globalCounts.get(g) || 0) + 1);
 
-    // target
     if (hour === target) {
       baseTotal += 1;
       baseCounts.set(g, (baseCounts.get(g) || 0) + 1);
@@ -350,7 +375,6 @@ export function computeTop3Signals({
     };
   }
 
-  // transições: prevG -> nextG no horário alvo
   const prevHourSameDay = prevHourFromSchedule(schedule, target);
   const lastHourInDay =
     (Array.isArray(schedule) && schedule.length
@@ -413,10 +437,6 @@ export function computeTop3Signals({
   const useDow = prevG != null && transTotalDow >= MIN.dow;
   const useDom = prevG != null && transTotalDom >= MIN.dom;
 
-  // ✅ candidatos:
-  // - sempre inclui os que aparecem no horário alvo
-  // - se base < 3, completa com global
-  // - se ainda faltar (muito raro), completa com 1..25
   const candidatesSet = new Set();
 
   for (const g of baseCounts.keys()) candidatesSet.add(Number(g));
@@ -434,8 +454,6 @@ export function computeTop3Signals({
     Number.isFinite(Number(g))
   );
 
-  // ✅ regra de produto:
-  // global só “ajuda” quando o horário alvo NÃO tem pelo menos 3 candidatos
   const useGlobalBoost = baseCounts.size < 3;
 
   const scored = candidates.map((g) => {
@@ -458,9 +476,6 @@ export function computeTop3Signals({
     const bonusDow = useDow ? clamp(pDow, 0, 0.40) : 0;
     const bonusDom = useDom ? clamp(pDom, 0, 0.32) : 0;
 
-    // ✅ score:
-    // - base do horário é a principal
-    // - global entra SOMENTE no fallback (para completar Top3)
     const finalScore =
       W.base * pBase +
       (useGlobalBoost ? W.global * pGlob : 0) +
@@ -481,7 +496,9 @@ export function computeTop3Signals({
     }
 
     reasons.push(
-      `Base global (grade): ${globHit}/${globalTotal} (${Math.round(pGlob * 100)}%)`
+      `Base global (grade): ${globHit}/${globalTotal} (${Math.round(
+        pGlob * 100
+      )}%)`
     );
 
     if (prevG == null) {
@@ -550,7 +567,6 @@ export function computeTop3Signals({
 
   const best = scored.slice(0, 3);
 
-  // ✅ garante 3 itens (se por algum motivo extremo vier <3)
   while (best.length < 3) {
     const g = allGroups25().find(
       (x) => !best.some((b) => Number(b.grupo) === Number(x))
@@ -582,15 +598,29 @@ export function computeTop3Signals({
     });
   }
 
-  const sum =
+  // ✅ percentuais estáveis: fecha em 100 sem ruído de arredondamento
+  const rawSum =
     best.reduce((acc, x) => acc + (Number(x.finalScore) || 0), 0) || 1;
 
+  const rawPcts = best.map((x) => (((Number(x.finalScore) || 0) / rawSum) * 100));
+  const floored = rawPcts.map((x) => Math.floor(x));
+  let remainder = 100 - floored.reduce((a, b) => a + b, 0);
+
+  const order = rawPcts
+    .map((x, i) => ({ i, frac: x - Math.floor(x) }))
+    .sort((a, b) => b.frac - a.frac);
+
+  const pctFinal = [...floored];
+  for (let i = 0; i < order.length && remainder > 0; i += 1) {
+    pctFinal[order[i].i] += 1;
+    remainder -= 1;
+  }
+
   const top = best.map((x, idx) => {
-    const pct = Math.round(((Number(x.finalScore) || 0) / sum) * 100);
     return {
       ...x,
       rank: idx + 1,
-      pct,
+      pct: pctFinal[idx] ?? 0,
       title:
         idx === 0 ? "Principal" : idx === 1 ? "Alternativa" : "Terceira opção",
     };
@@ -621,5 +651,3 @@ export function computeTop3Signals({
     },
   };
 }
-
-

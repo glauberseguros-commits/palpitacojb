@@ -837,7 +837,26 @@ async function fetchDrawDocsPreferUf({
   const ufTrim = String(extractUfParam(uf) || "").trim();
   const ufUp = ufTrim.toUpperCase();
 
-  // 1) tenta por uf
+  // FEDERAL: consulta somente lottery_key
+  if (isFederalInput(ufUp)) {
+    for (const lk of FEDERAL_LOTTERY_KEYS) {
+      const { snap, error } = await queryDrawsByField({
+        fieldName: "lottery_key",
+        uf: lk,
+        extraWheres,
+        extraOrderBy,
+        extraLimit,
+        policy,
+      });
+
+      if (error) return { docs: [], usedField: "lottery_key", error };
+      if (snap?.docs?.length) return { docs: snap.docs, usedField: "lottery_key", error: null };
+    }
+
+    return { docs: [], usedField: "lottery_key", error: null };
+  }
+
+  // tentativa por UF
   {
     const { snap, error } = await queryDrawsByField({
       fieldName: "uf",
@@ -852,29 +871,8 @@ async function fetchDrawDocsPreferUf({
     if (error) return { docs: [], usedField: "uf", error };
   }
 
-  // 2) fallback por lottery_key
+  // fallback lottery_key
   {
-    // ✅ Federal: tenta em cascata por possíveis lottery_key (sem OR no Firestore)
-    if (isFederalInput(ufUp)) {
-      for (const lk of FEDERAL_LOTTERY_KEYS) {
-        const { snap, error } = await queryDrawsByField({
-          fieldName: "lottery_key",
-          uf: lk,
-          extraWheres,
-          extraOrderBy,
-          extraLimit,
-          policy,
-        });
-
-        if (error) return { docs: [], usedField: "lottery_key", error };
-        if (snap?.docs?.length) {
-          return { docs: snap.docs, usedField: "lottery_key", error: null };
-        }
-      }
-
-      return { docs: [], usedField: "lottery_key", error: null };
-    }
-
     const lotteryKey = ufUp === RJ_STATE_CODE ? RJ_LOTTERY_KEY : resolveLotteryKeyForQuery(ufTrim);
 
     const { snap, error } = await queryDrawsByField({
@@ -892,7 +890,6 @@ async function fetchDrawDocsPreferUf({
 
   return { docs: [], usedField: "none", error: null };
 }
-
 /* =========================
    Bounds (min/max reais)
 ========================= */

@@ -1,5 +1,5 @@
 // src/services/planService.js
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "./firebase";
 
 /**
@@ -58,6 +58,7 @@ function normalizePlan(plan) {
     lastPayment: plan?.lastPayment || null,
   };
 }
+
 function normalizeProvider(v) {
   const s = String(v ?? "").trim().toLowerCase();
   if (s === "mercadopago" || s === "manual" || s === "other") return s;
@@ -157,10 +158,14 @@ export async function ensureUserPlan(uid) {
   }
 
   if (changed) {
-    await setDoc(ref, {
-      updatedAt: serverTimestamp(),
-      plan: nextPlan,
-    }, { merge: true });
+    await setDoc(
+      ref,
+      {
+        updatedAt: serverTimestamp(),
+        plan: nextPlan,
+      },
+      { merge: true }
+    );
 
     return { uid, plan: nextPlan, entitlement: computeEntitlement(nextPlan, t) };
   }
@@ -211,10 +216,14 @@ export async function activatePremium30d(uid, payload = {}) {
       plan: nextPlan,
     });
   } else {
-    await setDoc(ref, {
-      updatedAt: serverTimestamp(),
-      plan: nextPlan,
-    }, { merge: true });
+    await setDoc(
+      ref,
+      {
+        updatedAt: serverTimestamp(),
+        plan: nextPlan,
+      },
+      { merge: true }
+    );
   }
 
   return { uid, plan: nextPlan, entitlement: computeEntitlement(nextPlan, t) };
@@ -234,4 +243,3 @@ export async function getUserPlan(uid) {
   const plan = normalizePlan(data.plan);
   return { uid, plan, entitlement: computeEntitlement(plan, nowMs()) };
 }
-
