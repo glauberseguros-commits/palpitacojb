@@ -2,13 +2,10 @@
  * ============================================================
  * DASHBOARD — BASELINE CONGELADA (freeze)
  * ============================================================
- * ✅ Ajuste de produto (Guest / Vitrine):
- * - "Entrar sem login" = modo DEMO (guest):
- *   - entra no Dashboard
- *   - mostra dados gerais (Todos + período completo desde 2022)
- *   - PODE mexer nos filtros
- *   - NÃO pode mexer no período
- *   - NÃO pode usar ações premium / seleções por clique premium
+ * ✅ Ajuste temporário:
+ * - Enquanto o login real não estiver 100%, guest/demo funciona
+ *   como acesso liberado no painel.
+ * - Sem bloqueio de filtros, período, cliques ou ações locais.
  * ============================================================
  */
 
@@ -675,7 +672,6 @@ export default function Dashboard(props) {
     return externalFilters && typeof externalFilters === "object" ? externalFilters : fallbackFilters;
   }, [externalFilters, fallbackFilters]);
 
-  // ✅ guest continua usando os filtros normais
   const filters = useMemo(() => {
     return { ...fallbackFilters, ...rawFilters };
   }, [rawFilters, fallbackFilters]);
@@ -921,19 +917,6 @@ export default function Dashboard(props) {
   const boundsReady = !!(MIN_DATE && MAX_DATE && !bounds.loading);
 
   useEffect(() => {
-    if (!isGuest) return;
-    if (!boundsReady || !MIN_DATE || !MAX_DATE) return;
-
-    setSelectedGrupo(null);
-    setSelectedYears([]);
-
-    const full = { from: MIN_DATE, to: MAX_DATE };
-    setDateRange(full);
-    setDateRangeQuery(full);
-    setFollowMax(true);
-  }, [isGuest, boundsReady, MIN_DATE, MAX_DATE]);
-
-  useEffect(() => {
     if (!boundsReady || !MAX_DATE) return;
 
     const f = dateRange?.from;
@@ -960,7 +943,6 @@ export default function Dashboard(props) {
 
   useEffect(() => {
     if (!boundsReady || !MIN_DATE || !MAX_DATE) return;
-    if (isGuest) return;
 
     const rq = dateRangeQuery;
     if (!rq?.from || !rq?.to) return;
@@ -970,12 +952,11 @@ export default function Dashboard(props) {
       setDateRange(fixed);
       setDateRangeQuery(fixed);
     }
-  }, [boundsReady, MIN_DATE, MAX_DATE, isGuest, followMax, dateRangeQuery]);
+  }, [boundsReady, MIN_DATE, MAX_DATE, followMax, dateRangeQuery]);
 
   const applyDateRange = useCallback(
     (next) => {
       if (!next) return;
-      if (isGuest) return;
 
       let clampedNext = next;
 
@@ -1001,7 +982,7 @@ export default function Dashboard(props) {
         setDateRangeQuery(clampedNext);
       }, 250);
     },
-    [boundsReady, MIN_DATE, MAX_DATE, isGuest]
+    [boundsReady, MIN_DATE, MAX_DATE]
   );
 
   useEffect(() => {
@@ -1145,28 +1126,14 @@ export default function Dashboard(props) {
     return null;
   }, []);
 
-  const [guestToast, setGuestToast] = useState("");
-  const toastTimerRef = useRef(null);
-
-  const showGuestToast = useCallback((msg) => {
-    setGuestToast(String(msg || "Disponível no PRO/VIP."));
-    if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
-    toastTimerRef.current = window.setTimeout(() => setGuestToast(""), 2400);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
-    };
-  }, []);
-
   const lastUfRef = useRef(String(uf || ""));
   useEffect(() => {
     const prev = String(lastUfRef.current || "");
     const next = String(uf || "");
-
     if (prev && next && prev !== next) {
       setSelectedGrupo(null);
+      setSelectedYears([]);
+      setFollowMax(true);
 
       setFilters((p) => ({
         ...p,
@@ -1175,18 +1142,12 @@ export default function Dashboard(props) {
         posicao: "Todos",
       }));
 
-      // ✅ período continua resetando apenas fora do guest
-      if (!isGuest) {
-        setSelectedYears([]);
-        setFollowMax(true);
-        setDateRange(null);
-        setDateRangeQuery(null);
-        didInitRangeFromBoundsRef.current = false;
-      }
+      setDateRange(null);
+      setDateRangeQuery(null);
+      didInitRangeFromBoundsRef.current = false;
     }
-
     lastUfRef.current = next;
-  }, [uf, setFilters, isGuest]);
+  }, [uf, setFilters]);
 
   const handleFilterChange = useCallback(
     (name, value) => {
@@ -1198,18 +1159,12 @@ export default function Dashboard(props) {
           animal: "Todos",
           posicao: "Todos",
         }));
-
         setSelectedGrupo(null);
-
-        // ✅ período continua travado no DEMO
-        if (!isGuest) {
-          setSelectedYears([]);
-          setFollowMax(true);
-          setDateRange(null);
-          setDateRangeQuery(null);
-          didInitRangeFromBoundsRef.current = false;
-        }
-
+        setSelectedYears([]);
+        setFollowMax(true);
+        setDateRange(null);
+        setDateRangeQuery(null);
+        didInitRangeFromBoundsRef.current = false;
         return;
       }
 
@@ -1220,7 +1175,7 @@ export default function Dashboard(props) {
         setSelectedGrupo(g);
       }
     },
-    [findGrupoByAnimalLabel, setFilters, isGuest]
+    [findGrupoByAnimalLabel, setFilters]
   );
 
   const drawsForView = useMemo(() => {
@@ -1447,29 +1402,19 @@ export default function Dashboard(props) {
 
   const applyAllYearsFull = useCallback(() => {
     if (!MIN_DATE || !MAX_DATE) return;
-    if (isGuest) return;
     setSelectedYears([]);
     const full = { from: MIN_DATE, to: MAX_DATE };
     setDateRange(full);
     setDateRangeQuery(full);
     setFollowMax(true);
-  }, [MIN_DATE, MAX_DATE, isGuest]);
+  }, [MIN_DATE, MAX_DATE]);
 
   const onClearYears = useCallback(() => {
-    if (isGuest) {
-      showGuestToast("Modo demonstração: período está bloqueado. Faça login para usar.");
-      return;
-    }
     applyAllYearsFull();
-  }, [applyAllYearsFull, isGuest, showGuestToast]);
+  }, [applyAllYearsFull]);
 
   const onToggleYear = useCallback(
     (year) => {
-      if (isGuest) {
-        showGuestToast("Modo demonstração: período está bloqueado. Faça login para usar.");
-        return;
-      }
-
       const y = Number(year);
       if (!Number.isFinite(y)) return;
 
@@ -1496,7 +1441,7 @@ export default function Dashboard(props) {
         return next;
       });
     },
-    [applyAllYearsFull, isGuest, showGuestToast, MIN_DATE, MAX_DATE]
+    [applyAllYearsFull, MIN_DATE, MAX_DATE]
   );
 
   const kpiItems = useMemo(() => {
@@ -1528,11 +1473,6 @@ export default function Dashboard(props) {
 
   const onSelectGrupo = useCallback(
     (grupoNum) => {
-      if (isGuest) {
-        showGuestToast("Modo demonstração: seleção de bicho está bloqueada. Faça login para usar.");
-        return;
-      }
-
       const g = Number(grupoNum);
       if (!Number.isFinite(g) || g < 1 || g > 25) {
         setSelectedGrupo(null);
@@ -1560,16 +1500,11 @@ export default function Dashboard(props) {
         return next;
       });
     },
-    [rankingDataGlobalForLabels, setFilters, isGuest, showGuestToast]
+    [rankingDataGlobalForLabels, setFilters]
   );
 
   const onSelectPosicao = useCallback(
     (posNumberString) => {
-      if (isGuest) {
-        showGuestToast("Modo demonstração: filtro por posição está bloqueado. Faça login para usar.");
-        return;
-      }
-
       const raw = String(posNumberString ?? "").trim();
       const m = raw.match(/^(\d+)/);
       const n = m ? Number(m[1]) : NaN;
@@ -1577,7 +1512,7 @@ export default function Dashboard(props) {
       if (!Number.isFinite(n) || n < 1 || n > 7) return;
       setFilters((prev) => ({ ...prev, posicao: `${n}º` }));
     },
-    [setFilters, isGuest, showGuestToast]
+    [setFilters]
   );
 
   const boundsMessage = useMemo(() => {
@@ -1656,8 +1591,6 @@ export default function Dashboard(props) {
   }, [selectedGrupo]);
 
   useEffect(() => {
-    if (isGuest) return;
-
     const KEY = makeDashStateKeyV2(uf);
 
     safeWriteJSON(KEY, {
@@ -1670,7 +1603,7 @@ export default function Dashboard(props) {
       lastBoundsMax: MAX_DATE || null,
       followMax: followMax !== false,
     });
-  }, [uf, selectedGrupo, selectedYears, dateRange, dateRangeQuery, isGuest, MIN_DATE, MAX_DATE, followMax]);
+  }, [uf, selectedGrupo, selectedYears, dateRange, dateRangeQuery, MIN_DATE, MAX_DATE, followMax]);
 
   const hydratingBox = useMemo(() => {
     if (!isHydrating) return null;
@@ -1694,16 +1627,9 @@ export default function Dashboard(props) {
 
     return (
       <PremiumInfoBox
-        title="Modo Demonstração (sem login)"
-        description="Você está vendo o painel geral da base (desde 2022). Para proteger as funcionalidades, apenas período e ações premium continuam bloqueados."
-        extra={
-          `Período: ${from} → ${to}\n` +
-          "Bloqueado no DEMO:\n" +
-          "• Alterar período\n" +
-          "• Selecionar bicho/posição clicando nos cards/tabelas\n" +
-          "• Ações premium (Top 3 completo, Busca, Centenas+, Downloads)\n" +
-          "Os filtros superiores continuam liberados."
-        }
+        title="Modo Demonstração"
+        description="Enquanto o login real não estiver concluído, o painel está liberado para navegação completa."
+        extra={`Período atual da base: ${from} → ${to}\nFiltros, período e interações estão liberados temporariamente.`}
       />
     );
   }, [isGuest, MIN_DATE, MAX_DATE]);
@@ -1745,32 +1671,16 @@ export default function Dashboard(props) {
                 {MIN_DATE && MAX_DATE && dateRange ? (
                   <div style={{ position: "relative", zIndex: 10, pointerEvents: "auto" }}>
                     <div style={{ position: "relative" }}>
-                      <div style={isGuest ? { opacity: 0.55, filter: "grayscale(0.2)" } : null}>
-                        <DateRangeControl
-                          value={dateRange}
-                          onChange={applyDateRange}
-                          minDate={MIN_DATE}
-                          maxDate={MAX_DATE}
-                          years={yearsAvailable}
-                          selectedYears={selectedYears}
-                          onToggleYear={onToggleYear}
-                          onClearYears={onClearYears}
-                        />
-                      </div>
-
-                      {isGuest ? (
-                        <div
-                          role="button"
-                          aria-label="Período bloqueado no modo demonstração"
-                          onClick={() => showGuestToast("Modo demonstração: período está bloqueado. Faça login para usar.")}
-                          style={{
-                            position: "absolute",
-                            inset: 0,
-                            cursor: "not-allowed",
-                            background: "transparent",
-                          }}
-                        />
-                      ) : null}
+                      <DateRangeControl
+                        value={dateRange}
+                        onChange={applyDateRange}
+                        minDate={MIN_DATE}
+                        maxDate={MAX_DATE}
+                        years={yearsAvailable}
+                        selectedYears={selectedYears}
+                        onToggleYear={onToggleYear}
+                        onClearYears={onClearYears}
+                      />
                     </div>
                   </div>
                 ) : (
@@ -1803,24 +1713,6 @@ export default function Dashboard(props) {
           <div style={{ position: "relative" }}>
             <FiltersBar filters={filters} onChange={handleFilterChange} options={options} />
           </div>
-
-          {guestToast ? (
-            <div
-              style={{
-                marginTop: 10,
-                border: "1px solid rgba(201,168,62,0.25)",
-                background: "rgba(201,168,62,0.10)",
-                color: "rgba(255,255,255,0.92)",
-                borderRadius: 12,
-                padding: "10px 12px",
-                fontWeight: 850,
-                letterSpacing: 0.15,
-                boxShadow: "0 16px 44px rgba(0,0,0,0.55)",
-              }}
-            >
-              {guestToast}
-            </div>
-          ) : null}
         </section>
 
         <section className="dashCharts">
