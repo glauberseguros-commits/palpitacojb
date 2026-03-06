@@ -29,12 +29,34 @@ function grupoFromDezena2(dezena2) {
   if (!/^\d{2}$/.test(s)) return null;
 
   const n = Number(s);
-
   if (!Number.isFinite(n) || n < 0 || n > 99) return null;
   if (n === 0) return 25;
 
   const g = Math.ceil(n / 4);
   return g >= 1 && g <= 25 ? g : null;
+}
+
+function wrapToDezena2(n) {
+  const x = Number(n);
+  if (!Number.isFinite(x)) return null;
+  const d = ((x % 100) + 100) % 100;
+  return String(d).padStart(2, "0");
+}
+
+function drawQualityScore(draw) {
+  const prizes = Array.isArray(draw?.prizes) ? draw.prizes : [];
+  const y = pickDrawYMD(draw);
+  const h = toHourBucket(pickDrawHour(draw));
+
+  let score = 0;
+  if (isYMD(y)) score += 20;
+  if (h) score += 20;
+  score += Math.min(10, prizes.length) * 10;
+
+  const hasP1 = prizes.some((p) => guessPrizePos(p) === 1);
+  if (hasP1) score += 15;
+
+  return score;
 }
 
 export function guessPrizePos(p) {
@@ -68,7 +90,6 @@ export function guessPrizeGrupo(p) {
     return Number(g);
   }
 
-  // fallback canônico: deriva grupo pela dezena da milhar
   const milhar4 = pickPrizeMilhar4(p);
   if (milhar4) {
     const dezena2 = getDezena2(milhar4);
@@ -91,6 +112,10 @@ export function pickDrawYMD(draw) {
     normalizeToYMD(draw?.date) ||
     normalizeToYMD(draw?.data) ||
     normalizeToYMD(draw?.dt) ||
+    normalizeToYMD(draw?.draw_date) ||
+    normalizeToYMD(draw?.drawDate) ||
+    normalizeToYMD(draw?.close_date) ||
+    normalizeToYMD(draw?.closeDate) ||
     null;
 
   return y;
@@ -156,7 +181,7 @@ function ymdHourToTs(ymd, hourBucket) {
 
 export function isFederalDrawDay(ymd) {
   const dow = getDowKey(ymd);
-  return dow === 3 || dow === 6; // qua/sáb
+  return dow === 3 || dow === 6;
 }
 
 export function getPtRioScheduleForYmd(
@@ -475,14 +500,25 @@ export function findNextExistingDrawFromSlot({
 export function indexDrawsByYmdHour(draws) {
   const map = new Map();
   const list = Array.isArray(draws) ? draws : [];
+
   for (const d of list) {
     const y = pickDrawYMD(d);
     const h = toHourBucket(pickDrawHour(d));
     if (!isYMD(y) || !h) continue;
 
     const key = `${y}|${h}`;
-    if (!map.has(key)) map.set(key, d);
+    const prev = map.get(key);
+
+    if (!prev) {
+      map.set(key, d);
+      continue;
+    }
+
+    if (drawQualityScore(d) > drawQualityScore(prev)) {
+      map.set(key, d);
+    }
   }
+
   return map;
 }
 
@@ -987,11 +1023,10 @@ function getDezenasFixasFromGrupo(grupo2) {
   const out = [];
 
   for (let i = 0; i < 4; i += 1) {
-    const dz = ((start + i) % 100 + 100) % 100;
-    out.push(String(dz).padStart(2, "0"));
+    out.push(wrapToDezena2(start + i));
   }
 
-  return out;
+  return out.filter(Boolean);
 }
 
 function pickRepresentativeMilharForCentena(prizes, centena3) {
@@ -1092,14 +1127,18 @@ export function buildMilharesForGrupo({
       .map((x) => x[0])
       .slice(0, perDezena);
 
+    const pushedForDz = [];
+
     for (const c3 of rankedCentenas) {
       const milharRep = pickRepresentativeMilharForCentena(prizes, c3);
-      slots.push({ dezena: dz, milhar: milharRep || "" });
+      pushedForDz.push({ dezena: dz, milhar: milharRep || "" });
     }
 
-    while (slots.filter((s) => s.dezena === dz).length < perDezena) {
-      slots.push({ dezena: dz, milhar: "" });
+    while (pushedForDz.length < perDezena) {
+      pushedForDz.push({ dezena: dz, milhar: "" });
     }
+
+    slots.push(...pushedForDz.slice(0, perDezena));
   }
 
   while (slots.length < N) slots.push({ dezena: "", milhar: "" });

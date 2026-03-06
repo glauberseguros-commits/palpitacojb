@@ -48,8 +48,39 @@ export function brToYMD(br) {
 }
 
 export function normalizeToYMD(input) {
-  if (!input) return null;
+  if (input == null) return null;
 
+  // Firestore Timestamp / compat com toDate()
+  if (typeof input === "object" && typeof input.toDate === "function") {
+    const d = input.toDate();
+    if (d instanceof Date && !Number.isNaN(d.getTime())) {
+      const ymd = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(
+        d.getDate()
+      )}`;
+      return isYMD(ymd) ? ymd : null;
+    }
+  }
+
+  // Timestamp-like { seconds } / { _seconds }
+  if (
+    typeof input === "object" &&
+    (Number.isFinite(Number(input.seconds)) ||
+      Number.isFinite(Number(input._seconds)))
+  ) {
+    const sec = Number.isFinite(Number(input.seconds))
+      ? Number(input.seconds)
+      : Number(input._seconds);
+
+    const d = new Date(sec * 1000);
+    if (!Number.isNaN(d.getTime())) {
+      const ymd = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(
+        d.getDate()
+      )}`;
+      return isYMD(ymd) ? ymd : null;
+    }
+  }
+
+  // Date
   if (input instanceof Date && !Number.isNaN(input.getTime())) {
     const ymd = `${input.getFullYear()}-${pad2(input.getMonth() + 1)}-${pad2(
       input.getDate()
@@ -57,8 +88,33 @@ export function normalizeToYMD(input) {
     return isYMD(ymd) ? ymd : null;
   }
 
+  // epoch number (ms ou sec)
+  if (typeof input === "number" && Number.isFinite(input)) {
+    const ms = input > 1e12 ? input : input * 1000;
+    const d = new Date(ms);
+    if (!Number.isNaN(d.getTime())) {
+      const ymd = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(
+        d.getDate()
+      )}`;
+      return isYMD(ymd) ? ymd : null;
+    }
+  }
+
   const s = safeStr(input);
   if (!s) return null;
+
+  // string numérica epoch
+  if (/^\d{10,13}$/.test(s)) {
+    const n = Number(s);
+    const ms = s.length >= 13 ? n : n * 1000;
+    const d = new Date(ms);
+    if (!Number.isNaN(d.getTime())) {
+      const ymd = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(
+        d.getDate()
+      )}`;
+      return isYMD(ymd) ? ymd : null;
+    }
+  }
 
   const isoFull = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (isoFull) {
@@ -69,6 +125,18 @@ export function normalizeToYMD(input) {
   const isoPrefix = s.match(/^(\d{4})-(\d{2})-(\d{2})[T\s]/);
   if (isoPrefix) {
     const ymd = `${isoPrefix[1]}-${isoPrefix[2]}-${isoPrefix[3]}`;
+    return isYMD(ymd) ? ymd : null;
+  }
+
+  const isoSlash = s.match(/^(\d{4})\/(\d{2})\/(\d{2})(?:\D.*)?$/);
+  if (isoSlash) {
+    const ymd = `${isoSlash[1]}-${isoSlash[2]}-${isoSlash[3]}`;
+    return isYMD(ymd) ? ymd : null;
+  }
+
+  const compact = s.match(/^(\d{4})(\d{2})(\d{2})$/);
+  if (compact) {
+    const ymd = `${compact[1]}-${compact[2]}-${compact[3]}`;
     return isYMD(ymd) ? ymd : null;
   }
 
@@ -113,7 +181,7 @@ function isValidHourMinute(hh, mm) {
  * - "9h" => "09:00"
  * - "09:0" => "09:00"
  * - "09:00" => "09:00"
- * Se inválido, retorna string original aparada.
+ * Se inválido, retorna "".
  */
 export function normalizeHourLike(value) {
   const s0 = safeStr(value);
@@ -124,26 +192,23 @@ export function normalizeHourLike(value) {
   const mhx = s.match(/^(\d{1,2})(?:h|hs|hr|hrs)$/i);
   if (mhx) {
     const hh = Number(mhx[1]);
-    if (isValidHourMinute(hh, 0)) return `${pad2(hh)}:00`;
-    return s0;
+    return isValidHourMinute(hh, 0) ? `${pad2(hh)}:00` : "";
   }
 
   const mISO = s.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
   if (mISO) {
     const hh = Number(mISO[1]);
     const mm = Number(mISO[2]);
-    if (isValidHourMinute(hh, mm)) return `${pad2(hh)}:${pad2(mm)}`;
-    return s0;
+    return isValidHourMinute(hh, mm) ? `${pad2(hh)}:${pad2(mm)}` : "";
   }
 
   const m2 = s.match(/^(\d{1,2})$/);
   if (m2) {
     const hh = Number(m2[1]);
-    if (isValidHourMinute(hh, 0)) return `${pad2(hh)}:00`;
-    return s0;
+    return isValidHourMinute(hh, 0) ? `${pad2(hh)}:00` : "";
   }
 
-  return s0;
+  return "";
 }
 
 /**
@@ -151,34 +216,20 @@ export function normalizeHourLike(value) {
  * - "09:00" => "09h"
  * - "9h" => "09h"
  * - "09" => "09h"
- * Se não reconhecer hora válida, devolve string normalizada.
+ * Se não reconhecer hora válida, devolve "".
  */
 export function toHourBucket(hhmm) {
   const s = normalizeHourLike(hhmm);
+  if (!s) return "";
 
-  const mh = safeStr(s).match(/^(\d{1,2})h$/i);
-  if (mh) {
-    const hh = Number(mh[1]);
-    if (isValidHourMinute(hh, 0)) return `${pad2(hh)}h`;
-    return safeStr(s);
-  }
+  const m = s.match(/^(\d{2}):(\d{2})$/);
+  if (!m) return "";
 
-  const m = safeStr(s).match(/^(\d{2}):(\d{2})$/);
-  if (m) {
-    const hh = Number(m[1]);
-    const mm = Number(m[2]);
-    if (isValidHourMinute(hh, mm)) return `${pad2(hh)}h`;
-    return safeStr(s);
-  }
+  const hh = Number(m[1]);
+  const mm = Number(m[2]);
+  if (!isValidHourMinute(hh, mm)) return "";
 
-  const m2 = safeStr(s).match(/^(\d{1,2})$/);
-  if (m2) {
-    const hh = Number(m2[1]);
-    if (isValidHourMinute(hh, 0)) return `${pad2(hh)}h`;
-    return safeStr(s);
-  }
-
-  return safeStr(s);
+  return `${pad2(hh)}h`;
 }
 
 /**
@@ -209,6 +260,8 @@ export function hourToInt(hhmm) {
 }
 
 export function getDowKey(ymd) {
+  if (!isYMD(ymd)) return NaN;
+
   const s = String(ymd || "").trim();
   const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!m) return NaN;
@@ -294,7 +347,7 @@ export function dezenasFromGrupo(grupo) {
   const g = Number(grupo);
   if (!Number.isFinite(g) || g < 1 || g > 25) return [];
 
-  const start = (g - 1) * 4 + 1; // 1..97
+  const start = (g - 1) * 4 + 1;
 
   return [0, 1, 2, 3]
     .map((i) => wrapToDezena2(start + i))

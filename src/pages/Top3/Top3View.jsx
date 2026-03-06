@@ -47,7 +47,7 @@ function getDezenasFixasFromGrupo(grupo) {
   const g = Number(grupo);
   if (!Number.isFinite(g) || g < 1 || g > 25) return [];
 
-  const start = (g - 1) * 4 + 1; // 1..97
+  const start = (g - 1) * 4 + 1;
   const out = [];
 
   for (let i = 0; i < 4; i += 1) {
@@ -82,11 +82,11 @@ function clampColsFromItemMilharesCols(milharesCols, expectedCols = 4, perCol = 
 }
 
 /**
- * ✅ MONTA 20 MILHARES EM 4 COLUNAS (5 POR DEZENA FIXA)
+ * MONTA 20 MILHARES EM 4 COLUNAS (5 POR DEZENA FIXA)
  * - NÃO INVENTA NÚMEROS
  * - se faltar, completa com "" (vazio)
  * - respeita dezenas fixas do grupo
- * - mantém "sem repetir centena" GLOBAL (últimos 3 dígitos)
+ * - mantém "sem repetir centena" GLOBAL
  */
 function build20ByDezena({ grupo, baseMilhares, perCol = 5 }) {
   const g = Number(grupo);
@@ -153,24 +153,34 @@ function build20ByDezena({ grupo, baseMilhares, perCol = 5 }) {
   return { dezenas, rows, flat20 };
 }
 
-/** ✅ Limpa texto do "Condição:" (remove ruído tipo "• Amostras: 8") */
 function cleanLayerText(s) {
   const raw = String(s || "").trim();
   if (!raw) return "—";
+
   const noSamples = raw
     .replace(/\s*[•\-|]\s*Amostras:\s*\d+\s*$/i, "")
     .replace(/\s*Amostras:\s*\d+\s*$/i, "")
     .trim();
+
   return noSamples || "—";
 }
 
-/** Imagem com fallback (array de srcs) */
 function ImgWithFallback({ srcs, alt, size = 84, style }) {
-  const list = Array.isArray(srcs) ? srcs.filter(Boolean) : [];
+  const list = useMemo(
+    () => (Array.isArray(srcs) ? srcs.filter(Boolean) : []),
+    [srcs]
+  );
+
   const [i, setI] = useState(0);
+
+  useEffect(() => {
+    setI(0);
+  }, [list.join("|")]);
+
   const src = list[i] || "";
+
   const onError = () => {
-    if (i < list.length - 1) setI((x) => x + 1);
+    setI((prev) => (prev < list.length - 1 ? prev + 1 : prev));
   };
 
   return (
@@ -203,7 +213,9 @@ function ImgWithFallback({ srcs, alt, size = 84, style }) {
           }}
         />
       ) : (
-        <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 12 }}>sem imagem</div>
+        <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 12 }}>
+          sem imagem
+        </div>
       )}
     </div>
   );
@@ -211,7 +223,6 @@ function ImgWithFallback({ srcs, alt, size = 84, style }) {
 
 export default function Top3View(props) {
   const {
-    // dados
     loading,
     error,
     top3,
@@ -220,12 +231,10 @@ export default function Top3View(props) {
     prevLabel,
     theme,
 
-    // seletor de loteria
     LOTTERY_OPTIONS,
     lotteryKeySafe,
     setLotteryKey,
 
-    // milhares
     build16,
     buildMilhares,
     build20,
@@ -269,13 +278,15 @@ export default function Top3View(props) {
     if (!s) return false;
 
     try {
-      if (navigator?.clipboard?.writeText) {
+      if (typeof navigator !== "undefined" && navigator?.clipboard?.writeText) {
         await navigator.clipboard.writeText(s);
         return true;
       }
     } catch {}
 
     try {
+      if (typeof document === "undefined") return false;
+
       const ta = document.createElement("textarea");
       ta.value = s;
       ta.style.position = "fixed";
@@ -299,22 +310,38 @@ export default function Top3View(props) {
   ];
 
   const map = new Map();
+
   [...baseLots, ...mustHave].forEach((op) => {
-    const k = String(op?.value || "").toUpperCase();
-    if (!k) return;
-    if (!map.has(k)) map.set(k, { value: k, label: op?.label || k });
+    const rawVal = String(op?.value ?? op?.key ?? "").toUpperCase();
+    if (!rawVal) return;
+
+    if (!map.has(rawVal)) {
+      map.set(rawVal, {
+        value: rawVal,
+        label: op?.label || rawVal,
+      });
+    }
   });
 
   const lotOptions = [
     map.get("PT_RIO"),
     map.get("FEDERAL"),
-    ...[...map.values()].filter((x) => !["PT_RIO", "FEDERAL"].includes(String(x?.value))),
+    ...[...map.values()].filter(
+      (x) => !["PT_RIO", "FEDERAL"].includes(String(x?.value || "").toUpperCase())
+    ),
   ].filter(Boolean);
 
   const curLot = String(lotteryKeySafe || "PT_RIO").toUpperCase();
 
   return (
-    <div style={{ padding: 16, color: t.text }}>
+    <div
+      style={{
+        padding: 16,
+        color: t.text,
+        background: t.bg,
+        minHeight: "100%",
+      }}
+    >
       <style>{`
         .pp-m20wrap{ position: relative; }
         .pp-m20hdr{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
@@ -491,7 +518,10 @@ export default function Top3View(props) {
                     setLotteryKey(k);
                   }}
                   title={op?.label || k}
-                  style={{ opacity: canSet ? 1 : 0.55, cursor: canSet ? "pointer" : "default" }}
+                  style={{
+                    opacity: canSet ? 1 : 0.55,
+                    cursor: canSet ? "pointer" : "default",
+                  }}
                 >
                   {op?.label || k}
                 </button>
@@ -533,12 +563,15 @@ export default function Top3View(props) {
             const animal = String(item?.animal || "").trim();
 
             const samplesRaw = Number(item?.meta?.samples ?? item?.samples ?? 0);
-            const samples = Number.isFinite(samplesRaw) ? Math.max(0, Math.trunc(samplesRaw)) : 0;
+            const samples = Number.isFinite(samplesRaw)
+              ? Math.max(0, Math.trunc(samplesRaw))
+              : 0;
 
             const freqRaw = Number(item?.freq ?? 0);
-            const freq = Number.isFinite(freqRaw) ? Math.max(0, Math.trunc(freqRaw)) : 0;
+            const freq = Number.isFinite(freqRaw)
+              ? Math.max(0, Math.trunc(freqRaw))
+              : 0;
 
-            // fallback coerente com o motor: TOP5, não TOP7
             const denom = samples > 0 ? samples * 5 : 0;
             const derivedScore = denom > 0 ? freq / denom : 0;
 
@@ -550,7 +583,7 @@ export default function Top3View(props) {
                 derivedScore
             );
 
-            const iconSrcs = Array.isArray(item?.imgIcon)
+            const iconSrcs = Array.isArray(item?.imgIcon) && item.imgIcon.length
               ? item.imgIcon
               : Array.isArray(item?.imgBg)
               ? item.imgBg
@@ -562,18 +595,19 @@ export default function Top3View(props) {
               Array.isArray(item.milharesCols[0]?.items);
 
             let dezenasHeader = [];
-            let gridRows = Array(5)
-              .fill(0)
-              .map(() => Array(4).fill(""));
+            let gridRows = Array.from({ length: 5 }, () => Array(4).fill(""));
             let flat20 = [];
 
             if (hasCols) {
               const cols4 = clampColsFromItemMilharesCols(item.milharesCols, 4, 5);
               dezenasHeader = cols4.map((c) => String(c.dezena || ""));
-              gridRows = Array.from({ length: 5 }, (_, r) => cols4.map((c) => c.items[r] || ""));
+              gridRows = Array.from({ length: 5 }, (_, r) =>
+                cols4.map((c) => c.items[r] || "")
+              );
               flat20 = gridRows.flat().filter(Boolean);
             } else {
               let milharesBase = [];
+
               const m20 = Array.isArray(item?.milhares20) ? item.milhares20 : null;
               const mAny = Array.isArray(item?.milhares) ? item.milhares : null;
 
@@ -582,6 +616,7 @@ export default function Top3View(props) {
 
               if (!milharesBase.length) {
                 const g = Number(item?.grupo);
+
                 if (Number.isFinite(g) && g > 0) {
                   if (typeof build20 === "function") {
                     const out20 = build20(g);
@@ -589,8 +624,9 @@ export default function Top3View(props) {
                     milharesBase = slots20.map((x) => x?.milhar).filter(Boolean);
                   } else if (typeof buildMilhares === "function") {
                     const out = buildMilhares(g, 20);
-                    if (Array.isArray(out)) milharesBase = out.slice(0);
-                    else if (out && Array.isArray(out.slots)) {
+                    if (Array.isArray(out)) {
+                      milharesBase = out.slice(0);
+                    } else if (out && Array.isArray(out.slots)) {
                       milharesBase = out.slots.map((x) => x?.milhar).filter(Boolean);
                     }
                   } else if (typeof build16 === "function") {
@@ -614,17 +650,26 @@ export default function Top3View(props) {
             }
 
             const key = `${String(item?.grupo ?? "g")}__${animal || "x"}__${idx}`;
+
             const title =
-              idx === 0 ? "1º MAIS FORTE" : idx === 1 ? "2º MAIS FORTE" : "3º MAIS FORTE";
+              idx === 0
+                ? "1º MAIS FORTE"
+                : idx === 1
+                ? "2º MAIS FORTE"
+                : "3º MAIS FORTE";
 
             const doCopyAll = async () => {
-              const ok = await copyText(flat20.join(" "));
+              const payload = flat20.join(" ").trim();
+              if (!payload) return;
+
+              const ok = await copyText(payload);
               if (ok) setCopiedAllKey(key);
             };
 
             const doCopyOne = async (m, rIdx, cIdx) => {
               const mm = normalizeMilharStr(m);
               if (!mm) return;
+
               const ok = await copyText(mm);
               if (ok) setCopiedCellKey(`${key}__${rIdx}__${cIdx}`);
             };
@@ -668,7 +713,9 @@ export default function Top3View(props) {
                     </div>
 
                     <div style={{ display: "grid", gap: 2 }}>
-                      <div style={{ fontWeight: 900, letterSpacing: 0.4 }}>🏅 {title}</div>
+                      <div style={{ fontWeight: 900, letterSpacing: 0.4 }}>
+                        🏅 {title}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -683,7 +730,7 @@ export default function Top3View(props) {
                 >
                   <ImgWithFallback
                     srcs={iconSrcs}
-                    alt={animal ? `${animal}` : `G${grupoTxt}`}
+                    alt={animal ? animal : `G${grupoTxt}`}
                     size={96}
                   />
 
@@ -691,7 +738,13 @@ export default function Top3View(props) {
                     <div style={{ fontSize: 12, color: t.muted, fontWeight: 800 }}>
                       GRUPO {grupoTxt}
                     </div>
-                    <div style={{ fontSize: 22, fontWeight: 950, letterSpacing: 0.6 }}>
+                    <div
+                      style={{
+                        fontSize: 22,
+                        fontWeight: 950,
+                        letterSpacing: 0.6,
+                      }}
+                    >
                       {animal ? animal.toUpperCase() : "—"}
                     </div>
                   </div>
@@ -749,7 +802,9 @@ export default function Top3View(props) {
                 >
                   <div className="pp-m20hdr">
                     <div style={{ display: "grid", gap: 2 }}>
-                      <div style={{ fontWeight: 950 }}>📌 20 MILHARES RECOMENDADAS</div>
+                      <div style={{ fontWeight: 950 }}>
+                        📌 20 MILHARES RECOMENDADAS
+                      </div>
                       <div className="pp-miniNote">
                         Clique em uma milhar para copiar • Grade por dezena fixa
                       </div>
@@ -793,7 +848,9 @@ export default function Top3View(props) {
                               onClick={() => doCopyOne(mm, rIdx, cIdx)}
                             >
                               {mm || "—"}
-                              {isCopied ? <div className="pp-copiedBadge">COPIADO</div> : null}
+                              {isCopied ? (
+                                <div className="pp-copiedBadge">COPIADO</div>
+                              ) : null}
                             </div>
                           );
                         })}
