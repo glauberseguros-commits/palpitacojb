@@ -1,4 +1,3 @@
-// src/hooks/useKingRanking.js
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   getKingResultsByDate,
@@ -74,9 +73,6 @@ function normalizePositionsFromKey(positionsInputKey) {
   return Array.from(new Set(nums)).sort((a, b) => a - b);
 }
 
-/**
- * ✅ Normaliza close_hour para HH:MM (robusto)
- */
 function normHHMM(value) {
   const s = String(value || "").trim();
   if (!s) return "";
@@ -116,8 +112,27 @@ function getDrawHourRaw(d) {
   return String(d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? "").trim();
 }
 
+function getDrawLotteryCodeRaw(d) {
+  if (!d) return "";
+  return String(
+    d.lottery_code ??
+      d.lotteryCode ??
+      d.lot_code ??
+      d.lotCode ??
+      d.lot ??
+      d.code ??
+      d.lottery_id ??
+      d.lotteryId ??
+      ""
+  )
+    .trim()
+    .toUpperCase();
+}
+
 /**
- * ✅ Dedup “de verdade” (alinhado ao service)
+ * ✅ DEDUPE ALINHADO AO SERVICE
+ * - chave lógica: ymd + hhmm + lottery_code (quando existir)
+ * - evita colapsar draws distintos do mesmo dia/hora
  */
 function dedupeDrawsLogicalPreferBest(draws) {
   const arr = Array.isArray(draws) ? draws : [];
@@ -139,6 +154,7 @@ function dedupeDrawsLogicalPreferBest(draws) {
     const d = arr[i] || {};
     const ymd = normalizeToYMD(getDrawDateRaw(d)) || "";
     const hhmm = normHHMM(getDrawHourRaw(d)) || "";
+    const lotteryCode = getDrawLotteryCodeRaw(d) || "";
 
     const id =
       (d?.drawId != null && String(d.drawId)) ||
@@ -146,7 +162,12 @@ function dedupeDrawsLogicalPreferBest(draws) {
       "";
 
     const hasLogical = !!(ymd && hhmm);
-    const key = hasLogical ? `${ymd}__${hhmm}` : `id__${id || `idx_${i}`}`;
+
+    const key = hasLogical
+      ? lotteryCode
+        ? `${ymd}__${hhmm}__${lotteryCode}`
+        : `${ymd}__${hhmm}`
+      : `id__${id || `idx_${i}`}`;
 
     if (!byKey.has(key)) {
       byKey.set(key, d);
@@ -163,13 +184,9 @@ function dedupeDrawsLogicalPreferBest(draws) {
   return order.map((k) => byKey.get(k)).filter(Boolean);
 }
 
-/**
- * ✅ Normalização final para UI/Charts
- */
 function normalizeDrawForCharts(d) {
   const ymd = d?.ymd || normalizeToYMD(getDrawDateRaw(d));
   const closeHour = normHHMM(getDrawHourRaw(d));
-
   const prizes = Array.isArray(d?.prizes) ? d.prizes : [];
 
   return {
@@ -178,12 +195,13 @@ function normalizeDrawForCharts(d) {
     ymd: ymd || null,
     close_hour: closeHour || "",
     closeHour: closeHour || "",
+    lottery_code: getDrawLotteryCodeRaw(d) || d?.lottery_code || null,
     prizes,
   };
 }
 
 /* =========================
-   Auto-refresh (Opção B) — SEM FLICKER
+   Auto-refresh
 ========================= */
 
 function clampMs(n, min, max) {
@@ -232,9 +250,6 @@ function normalizeBucketInput(bucket) {
   return s;
 }
 
-/**
- * ✅ Decide o modo do service no RANGE (performance/UX)
- */
 function decideRangeServiceMode(rangeDays) {
   const THRESHOLD = Number.isFinite(Number(AGGREGATED_AUTO_DAYS))
     ? Number(AGGREGATED_AUTO_DAYS)
@@ -245,10 +260,11 @@ function decideRangeServiceMode(rangeDays) {
 }
 
 /* =========================
-   ✅ Bounds cache com TTL (CORREÇÃO DO "TRAVOU NA DATA")
+   Bounds cache
 ========================= */
 
-const BOUNDS_TTL_MS = 10 * 60 * 1000; // 10 min
+const BOUNDS_TTL_MS = 10 * 60 * 1000;
+
 function nowMs() {
   return Date.now();
 }
@@ -298,24 +314,20 @@ export function useKingRanking({
 
   const [drawsRaw, setDrawsRaw] = useState([]);
 
-  // ✅ cache: uf -> { ts, data }
   const boundsCacheRef = useRef(new Map());
-
   const [bounds, setBounds] = useState(INITIAL_BOUNDS);
 
   const [boundsRetryTick, setBoundsRetryTick] = useState(0);
   const boundsRetryTimerRef = useRef(null);
-
-  // ✅ “soft tick” pra permitir refresh de bounds (sem spam)
   const [boundsSoftTick, setBoundsSoftTick] = useState(0);
 
-  // ✅ no foco, tenta atualizar bounds (respeitando TTL)
   useEffect(() => {
     const onFocus = () => setBoundsSoftTick((t) => t + 1);
     if (typeof window !== "undefined") window.addEventListener("focus", onFocus);
     return () => {
-      if (typeof window !== "undefined")
+      if (typeof window !== "undefined") {
         window.removeEventListener("focus", onFocus);
+      }
     };
   }, []);
 
@@ -329,7 +341,6 @@ export function useKingRanking({
         return;
       }
 
-      // ✅ cache com expiração (vale inclusive para ok=false, pra não martelar)
       if (boundsCacheRef.current.has(key)) {
         const cachedWrap = boundsCacheRef.current.get(key);
         const age = nowMs() - Number(cachedWrap?.ts || 0);
@@ -354,13 +365,11 @@ export function useKingRanking({
 
         if (mounted) setBounds(safe);
 
-        // retry controlado (apenas se não ok)
         if (mounted && !safe.ok) {
-          if (boundsRetryTimerRef.current)
-            clearTimeout(boundsRetryTimerRef.current);
+          if (boundsRetryTimerRef.current) clearTimeout(boundsRetryTimerRef.current);
           boundsRetryTimerRef.current = setTimeout(() => {
             if (mounted) setBoundsRetryTick((t) => t + 1);
-          }, 10_000);
+          }, 10000);
         }
       } catch {
         const safe = {
@@ -378,11 +387,12 @@ export function useKingRanking({
         if (boundsRetryTimerRef.current) clearTimeout(boundsRetryTimerRef.current);
         boundsRetryTimerRef.current = setTimeout(() => {
           if (mounted) setBoundsRetryTick((t) => t + 1);
-        }, 10_000);
+        }, 10000);
       }
     }
 
     loadBounds();
+
     return () => {
       mounted = false;
       if (boundsRetryTimerRef.current) clearTimeout(boundsRetryTimerRef.current);
@@ -435,11 +445,17 @@ export function useKingRanking({
     return clampRangeToBounds(a0, b0, bounds.minYmd, bounds.maxYmd);
   }, [ymdFromRaw, ymdToRaw, bounds.minYmd, bounds.maxYmd]);
 
+  const effectiveDayYmd = useMemo(() => {
+    if (ymdDate) return ymdDate;
+    if (uf && ymdFrom && ymdTo && ymdFrom === ymdTo) return ymdFrom;
+    return null;
+  }, [uf, ymdDate, ymdFrom, ymdTo]);
+
   const mode = useMemo(() => {
     if (uf && ymdFrom && ymdTo && ymdFrom !== ymdTo) return "range";
-    if (uf && ymdDate) return "day";
+    if (uf && effectiveDayYmd) return "day";
     return "none";
-  }, [uf, ymdDate, ymdFrom, ymdTo]);
+  }, [uf, ymdFrom, ymdTo, effectiveDayYmd]);
 
   const rangeDays = useMemo(() => {
     if (mode !== "range") return NaN;
@@ -448,7 +464,6 @@ export function useKingRanking({
 
   const RANGE_FALLBACK_LIMIT_DAYS = 31;
 
-  // ✅ agora é STATE (previsível no render)
   const [rangeBlocked, setRangeBlocked] = useState(false);
   const rangeBlockedKeyRef = useRef("");
 
@@ -480,32 +495,41 @@ export function useKingRanking({
     return rangeDays <= REFRESH_MAX_DAYS;
   }, [mode, rangeDays, rangeBlocked]);
 
-  const AUTO_REFRESH_MS = 60_000;
-  const intervalMs = useMemo(() => clampMs(AUTO_REFRESH_MS, 30_000, 300_000), []);
+  const AUTO_REFRESH_MS = 60000;
+  const intervalMs = useMemo(() => clampMs(AUTO_REFRESH_MS, 30000, 300000), []);
 
   const [refreshTick, setRefreshTick] = useState(0);
   const refreshSeqRef = useRef(0);
-
   const hydrateSeqRef = useRef(0);
 
-  // ✅ boundsKey: só muda quando clamp realmente pode mudar
   const boundsKey = useMemo(
     () => `${bounds.minYmd || ""}|${bounds.maxYmd || ""}`,
     [bounds.minYmd, bounds.maxYmd]
+  );
+
+  const boundsSnapshot = useMemo(
+    () => ({
+      ok: !!bounds?.ok,
+      uf: bounds?.uf || uf || null,
+      minYmd: bounds?.minYmd || null,
+      maxYmd: bounds?.maxYmd || null,
+      source: bounds?.source || "none",
+    }),
+    [bounds?.ok, bounds?.uf, bounds?.minYmd, bounds?.maxYmd, bounds?.source, uf]
   );
 
   const hardKey = useMemo(() => {
     return [
       mode,
       uf || "",
-      ymdDate || "",
+      effectiveDayYmd || "",
       ymdFrom || "",
       ymdTo || "",
       hourBucketKey || "",
       positionsKey || "",
       boundsKey,
     ].join("|");
-  }, [mode, uf, ymdDate, ymdFrom, ymdTo, hourBucketKey, positionsKey, boundsKey]);
+  }, [mode, uf, effectiveDayYmd, ymdFrom, ymdTo, hourBucketKey, positionsKey, boundsKey]);
 
   const lastHardKeyRef = useRef("");
 
@@ -585,9 +609,10 @@ export function useKingRanking({
           });
         } else if (mode === "day") {
           serviceMode = "detailed";
+
           draws = await getKingResultsByDate({
             uf,
-            date: ymdDate,
+            date: effectiveDayYmd,
             closeHour: null,
             positions: positionsArrStable,
             readPolicy: "server",
@@ -598,7 +623,6 @@ export function useKingRanking({
 
         if (!mounted || mySeq !== refreshSeqRef.current) return;
 
-        // ✅ sucesso desbloqueia
         if (rangeBlocked) setRangeBlocked(false);
 
         let unique = dedupeDrawsLogicalPreferBest(draws).map(normalizeDrawForCharts);
@@ -629,7 +653,7 @@ export function useKingRanking({
               totalOcorrencias: Number(built.totalOcorrencias || 0),
               totalDraws: unique.length,
               mode,
-              date: mode === "day" ? ymdDate : null,
+              date: mode === "day" ? effectiveDayYmd : null,
               dateFrom: mode === "range" ? ymdFrom : null,
               dateTo: mode === "range" ? ymdTo : null,
 
@@ -637,17 +661,10 @@ export function useKingRanking({
               palpiteSampleDrawsUsed: Number(palpiteBuilt?.sampleDrawsUsed || 0),
               palpiteUsedBucket: palpiteBuilt?.usedBucket ?? null,
 
-              bounds: {
-                ok: !!bounds?.ok,
-                uf: bounds?.uf || uf || null,
-                minYmd: bounds?.minYmd || null,
-                maxYmd: bounds?.maxYmd || null,
-                source: bounds?.source || "none",
-              },
-
+              bounds: boundsSnapshot,
               suggestedRange: {
-                from: bounds?.minYmd || null,
-                to: bounds?.maxYmd || null,
+                from: boundsSnapshot?.minYmd || null,
+                to: boundsSnapshot?.maxYmd || null,
               },
 
               serviceMode,
@@ -661,7 +678,7 @@ export function useKingRanking({
               totalOcorrencias: 0,
               totalDraws: unique.length,
               mode,
-              date: mode === "day" ? ymdDate : null,
+              date: mode === "day" ? effectiveDayYmd : null,
               dateFrom: mode === "range" ? ymdFrom : null,
               dateTo: mode === "range" ? ymdTo : null,
 
@@ -669,17 +686,10 @@ export function useKingRanking({
               palpiteSampleDrawsUsed: 0,
               palpiteUsedBucket: null,
 
-              bounds: {
-                ok: !!bounds?.ok,
-                uf: bounds?.uf || uf || null,
-                minYmd: bounds?.minYmd || null,
-                maxYmd: bounds?.maxYmd || null,
-                source: bounds?.source || "none",
-              },
-
+              bounds: boundsSnapshot,
               suggestedRange: {
-                from: bounds?.minYmd || null,
-                to: bounds?.maxYmd || null,
+                from: boundsSnapshot?.minYmd || null,
+                to: boundsSnapshot?.maxYmd || null,
               },
 
               serviceMode,
@@ -690,7 +700,6 @@ export function useKingRanking({
           return;
         }
 
-        // aggregated
         setMeta((prev) => ({
           ...prev,
           totalDraws: unique.length,
@@ -699,17 +708,10 @@ export function useKingRanking({
           dateFrom: mode === "range" ? ymdFrom : null,
           dateTo: mode === "range" ? ymdTo : null,
 
-          bounds: {
-            ok: !!bounds?.ok,
-            uf: bounds?.uf || uf || null,
-            minYmd: bounds?.minYmd || null,
-            maxYmd: bounds?.maxYmd || null,
-            source: bounds?.source || "none",
-          },
-
+          bounds: boundsSnapshot,
           suggestedRange: {
-            from: bounds?.minYmd || null,
-            to: bounds?.maxYmd || null,
+            from: boundsSnapshot?.minYmd || null,
+            to: boundsSnapshot?.maxYmd || null,
           },
 
           serviceMode,
@@ -768,17 +770,10 @@ export function useKingRanking({
                 palpiteSampleDrawsUsed: Number(palpiteBuilt?.sampleDrawsUsed || 0),
                 palpiteUsedBucket: palpiteBuilt?.usedBucket ?? null,
 
-                bounds: {
-                  ok: !!bounds?.ok,
-                  uf: bounds?.uf || uf || null,
-                  minYmd: bounds?.minYmd || null,
-                  maxYmd: bounds?.maxYmd || null,
-                  source: bounds?.source || "none",
-                },
-
+                bounds: boundsSnapshot,
                 suggestedRange: {
-                  from: bounds?.minYmd || null,
-                  to: bounds?.maxYmd || null,
+                  from: boundsSnapshot?.minYmd || null,
+                  to: boundsSnapshot?.maxYmd || null,
                 },
 
                 serviceMode: "detailed",
@@ -809,7 +804,16 @@ export function useKingRanking({
           setRangeBlocked(true);
         }
 
-        setMeta((prev) => ({ ...prev, hydrating: false }));
+        if (hard) {
+          setDrawsRaw([]);
+          setData([]);
+        }
+
+        setMeta((prev) => ({
+          ...prev,
+          hydrating: false,
+        }));
+
         setError(e instanceof Error ? e : new Error("Erro desconhecido"));
       } finally {
         if (mounted && mySeq === refreshSeqRef.current) {
@@ -840,7 +844,7 @@ export function useKingRanking({
   }, [
     mode,
     uf,
-    ymdDate,
+    effectiveDayYmd,
     ymdFrom,
     ymdTo,
     hourBucketKey,
@@ -849,11 +853,11 @@ export function useKingRanking({
     hardKey,
     refreshTick,
     bucketNorm,
-    boundsKey, // ✅ só muda quando min/max mudam
+    boundsKey,
     rangeDays,
     needsPrizes,
     rangeBlocked,
-    bounds, // usado dentro do meta bounds snapshot (mantém coerência do snapshot)
+    boundsSnapshot,
   ]);
 
   return { loading, error, data, meta, drawsRaw };
