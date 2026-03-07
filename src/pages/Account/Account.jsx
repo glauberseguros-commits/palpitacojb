@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import LoginVisual from "./LoginVisual";
 import AccountView from "./AccountView";
 
@@ -82,7 +82,7 @@ function isLocalVisualUserSession(sess) {
   return s.ok === true || type === "user" || loginType === "user" || plan === "FREE";
 }
 
-export default function Account({ onClose = null }) {
+export default function Account({ onClose = null, onAuthenticated = null }) {
   // viewport + ui
   const vw = useViewportWidth();
   const ui = useAccountUI(vw);
