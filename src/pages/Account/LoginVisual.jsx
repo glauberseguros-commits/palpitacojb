@@ -374,9 +374,6 @@ export default function LoginVisual({ onEnter, onSkip, onRegister }) {
             </div>
           </div>
 
-          <div style={ui.body}>
-            <h2 style={ui.sectionTitle}>Acesso ao painel</h2>
-
             {errorMsg ? <div style={ui.errorBox}>{errorMsg}</div> : null}
 
             <form style={ui.formGrid} onSubmit={onSubmitLogin}>
