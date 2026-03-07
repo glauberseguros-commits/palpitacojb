@@ -169,9 +169,9 @@ export default function LoginVisual({ onEnter, onSkip }) {
       },
 
       subtitle: {
-        fontSize: "clamp(12px, 1.5vw, 14px)",
-        color: WHITE_70,
-        margin: "8px 0 0 0",
+        fontSize: "clamp(14px, 1.6vw, 16px)",
+        color: WHITE,
+        fontWeight: 700, letterSpacing: 0.4, margin: "4px 0 0 0",
       },
 
       body: {
