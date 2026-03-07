@@ -25,7 +25,6 @@ function safeRemoveLS(key) {
 
 export default function LoginVisual({ onEnter, onSkip, onRegister }) {
   const [logoOk, setLogoOk] = useState(true);
-  const [stage, setStage] = useState("entry"); // entry | auth
   const [loginValue, setLoginValue] = useState("");
   const [passwordValue, setPasswordValue] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -263,18 +262,6 @@ export default function LoginVisual({ onEnter, onSkip, onRegister }) {
         opacity: 1,
       },
 
-      btnGhost: {
-        height: 46,
-        borderRadius: 15,
-        border: "1px solid rgba(255,255,255,0.10)",
-        background: "transparent",
-        color: WHITE_72,
-        fontWeight: 800,
-        cursor: "pointer",
-        fontSize: 14,
-        opacity: 1,
-      },
-
       btnDisabled: {
         opacity: 0.55,
         cursor: "not-allowed",
@@ -300,7 +287,6 @@ export default function LoginVisual({ onEnter, onSkip, onRegister }) {
     setSubmitting(true);
     setErrorMsg("");
 
-    // Impede conflito com sessão fake anterior
     clearVisualSession();
 
     try {
@@ -314,8 +300,6 @@ export default function LoginVisual({ onEnter, onSkip, onRegister }) {
         mode: "firebase",
       });
 
-      // O componente pai é o dono da autenticação real.
-      // Se ele autenticou, ele decide navegação/sessão Firebase.
       if (result === false) {
         throw new Error("Login inválido.");
       }
@@ -370,16 +354,6 @@ export default function LoginVisual({ onEnter, onSkip, onRegister }) {
     window.alert("Fluxo de cadastro ainda não foi conectado.");
   }
 
-  function goToAuthStage() {
-    setErrorMsg("");
-    setStage("auth");
-  }
-
-  function goToEntryStage() {
-    setErrorMsg("");
-    setStage("entry");
-  }
-
   return (
     <div style={ui.page}>
       <div style={ui.glowA} />
@@ -409,113 +383,87 @@ export default function LoginVisual({ onEnter, onSkip, onRegister }) {
           </div>
 
           <div style={ui.body}>
-            {stage === "entry" ? (
+            <h2 style={ui.sectionTitle}>Acesso ao painel</h2>
+            <p style={ui.sectionText}>
+              Login e senha precisam passar pelo fluxo real do Firebase. Convidado é acesso visual local.
+            </p>
+
+            {errorMsg ? <div style={ui.errorBox}>{errorMsg}</div> : null}
+
+            <form style={ui.formGrid} onSubmit={onSubmitLogin}>
+              <div style={ui.fieldWrap}>
+                <label style={ui.label} htmlFor="pp-login">
+                  Login
+                </label>
+                <input
+                  id="pp-login"
+                  type="text"
+                  value={loginValue}
+                  onChange={(e) => setLoginValue(e.target.value)}
+                  placeholder="Digite seu login"
+                  style={ui.input}
+                  autoComplete="username"
+                  disabled={submitting}
+                />
+              </div>
+
+              <div style={ui.fieldWrap}>
+                <label style={ui.label} htmlFor="pp-password">
+                  Senha
+                </label>
+                <input
+                  id="pp-password"
+                  type="password"
+                  value={passwordValue}
+                  onChange={(e) => setPasswordValue(e.target.value)}
+                  placeholder="Digite sua senha"
+                  style={ui.input}
+                  autoComplete="current-password"
+                  disabled={submitting}
+                />
+              </div>
+
+              <p style={ui.hint}>
+                Este formulário não cria sessão local fake de usuário. A autenticação deve ser feita no componente pai.
+              </p>
+
               <div style={ui.btnRow}>
-                <button type="button" style={ui.btnPrimary} onClick={goToAuthStage}>
-                  ENTRAR
+                <button
+                  type="submit"
+                  style={{
+                    ...ui.btnPrimary,
+                    ...(submitting ? ui.btnDisabled : null),
+                  }}
+                  disabled={submitting}
+                >
+                  {submitting ? "ENTRANDO..." : "ENTRAR"}
                 </button>
 
-                <button type="button" style={ui.btnSecondary} onClick={enterGuest}>
+                <button
+                  type="button"
+                  style={{
+                    ...ui.btnSecondary,
+                    ...(submitting ? ui.btnDisabled : null),
+                  }}
+                  onClick={onCadastrar}
+                  disabled={submitting}
+                >
+                  CADASTRAR
+                </button>
+
+                <button
+                  type="button"
+                  style={{
+                    ...ui.btnSecondary,
+                    ...(submitting ? ui.btnDisabled : null),
+                  }}
+                  onClick={enterGuest}
+                  disabled={submitting}
+                >
                   CONVIDADO
                 </button>
               </div>
-            ) : (
-              <>
-                <h2 style={ui.sectionTitle}>Acesso ao painel</h2>
-                <p style={ui.sectionText}>
-                  Login e senha precisam passar pelo fluxo real do Firebase. Convidado é acesso visual local.
-                </p>
-
-                {errorMsg ? <div style={ui.errorBox}>{errorMsg}</div> : null}
-
-                <form style={ui.formGrid} onSubmit={onSubmitLogin}>
-                  <div style={ui.fieldWrap}>
-                    <label style={ui.label} htmlFor="pp-login">
-                      Login
-                    </label>
-                    <input
-                      id="pp-login"
-                      type="text"
-                      value={loginValue}
-                      onChange={(e) => setLoginValue(e.target.value)}
-                      placeholder="Digite seu login"
-                      style={ui.input}
-                      autoComplete="username"
-                      disabled={submitting}
-                    />
-                  </div>
-
-                  <div style={ui.fieldWrap}>
-                    <label style={ui.label} htmlFor="pp-password">
-                      Senha
-                    </label>
-                    <input
-                      id="pp-password"
-                      type="password"
-                      value={passwordValue}
-                      onChange={(e) => setPasswordValue(e.target.value)}
-                      placeholder="Digite sua senha"
-                      style={ui.input}
-                      autoComplete="current-password"
-                      disabled={submitting}
-                    />
-                  </div>
-
-                  <p style={ui.hint}>
-                    Este formulário não cria sessão local fake de usuário. A autenticação deve ser feita no componente pai.
-                  </p>
-
-                  <div style={ui.btnRow}>
-                    <button
-                      type="submit"
-                      style={{
-                        ...ui.btnPrimary,
-                        ...(submitting ? ui.btnDisabled : null),
-                      }}
-                      disabled={submitting}
-                    >
-                      {submitting ? "ENTRANDO..." : "ENTRAR"}
-                    </button>
-
-                    <button
-                      type="button"
-                      style={{
-                        ...ui.btnSecondary,
-                        ...(submitting ? ui.btnDisabled : null),
-                      }}
-                      onClick={onCadastrar}
-                      disabled={submitting}
-                    >
-                      CADASTRAR
-                    </button>
-
-                    <button
-                      type="button"
-                      style={{
-                        ...ui.btnSecondary,
-                        ...(submitting ? ui.btnDisabled : null),
-                      }}
-                      onClick={enterGuest}
-                      disabled={submitting}
-                    >
-                      CONVIDADO
-                    </button>
-
-                    <button
-                      type="button"
-                      style={{
-                        ...ui.btnGhost,
-                        ...(submitting ? ui.btnDisabled : null),
-                      }}
-                      onClick={goToEntryStage}
-                      disabled={submitting}
-                    >
-                      VOLTAR
-                    </button>
-                  </div>
-                </form>
-              </>
-            )}
+            </form>
           </div>
         </div>
       </div>
