@@ -35,7 +35,9 @@ function goDashboardHard() {
 
 export default function LoginVisual({ onEnter, onSkip }) {
   const [logoOk, setLogoOk] = useState(true);
-  const [stage, setStage] = useState("entry"); // entry | choice
+  const [stage, setStage] = useState("entry"); // entry | auth
+  const [loginValue, setLoginValue] = useState("");
+  const [passwordValue, setPasswordValue] = useState("");
 
   useEffect(() => {
     if (process.env.NODE_ENV === "production") return;
@@ -187,6 +189,35 @@ export default function LoginVisual({ onEnter, onSkip }) {
         textAlign: "center",
       },
 
+      formGrid: {
+        display: "grid",
+        gap: 12,
+      },
+
+      fieldWrap: {
+        display: "grid",
+        gap: 6,
+      },
+
+      label: {
+        fontSize: 13,
+        fontWeight: 800,
+        color: WHITE_72,
+        letterSpacing: 0.2,
+      },
+
+      input: {
+        height: 50,
+        borderRadius: 15,
+        border: "1px solid rgba(255,255,255,0.14)",
+        background: "rgba(255,255,255,0.04)",
+        color: WHITE,
+        outline: "none",
+        padding: "0 14px",
+        fontSize: 15,
+        fontWeight: 700,
+      },
+
       btnRow: {
         display: "grid",
         gap: 12,
@@ -239,6 +270,7 @@ export default function LoginVisual({ onEnter, onSkip }) {
         loginType: "user",
         plan: "FREE",
         authMode: "visual",
+        login: String(loginValue || "").trim(),
         ts: Date.now(),
       })
     );
@@ -276,6 +308,15 @@ export default function LoginVisual({ onEnter, onSkip }) {
     goDashboardHard();
   };
 
+  const onSubmitLogin = (e) => {
+    e.preventDefault();
+    enterVip();
+  };
+
+  const onCadastrar = () => {
+    window.alert("Tela de cadastro será a próxima etapa.");
+  };
+
   return (
     <div style={ui.page}>
       <div style={ui.glowA} />
@@ -310,35 +351,79 @@ export default function LoginVisual({ onEnter, onSkip }) {
                 <button
                   type="button"
                   style={ui.btnPrimary}
-                  onClick={() => setStage("choice")}
+                  onClick={() => setStage("auth")}
                 >
                   ENTRAR
                 </button>
               </div>
             ) : (
               <>
-                <h2 style={ui.sectionTitle}>Escolha como deseja entrar</h2>
+                <h2 style={ui.sectionTitle}>Acesso ao painel</h2>
                 <p style={ui.sectionText}>
-                  Acesso VIP para experiência completa ou modo convidado para navegação de demonstração.
+                  Entre com seu login e senha, cadastre-se ou continue como convidado.
                 </p>
 
-                <div style={ui.btnRow}>
-                  <button type="button" style={ui.btnPrimary} onClick={enterVip}>
-                    ENTRAR COMO VIP
-                  </button>
+                <form style={ui.formGrid} onSubmit={onSubmitLogin}>
+                  <div style={ui.fieldWrap}>
+                    <label style={ui.label} htmlFor="pp-login">
+                      Login
+                    </label>
+                    <input
+                      id="pp-login"
+                      type="text"
+                      value={loginValue}
+                      onChange={(e) => setLoginValue(e.target.value)}
+                      placeholder="Digite seu login"
+                      style={ui.input}
+                      autoComplete="username"
+                    />
+                  </div>
 
-                  <button type="button" style={ui.btnSecondary} onClick={enterGuest}>
-                    CONTINUAR COMO CONVIDADO
-                  </button>
+                  <div style={ui.fieldWrap}>
+                    <label style={ui.label} htmlFor="pp-password">
+                      Senha
+                    </label>
+                    <input
+                      id="pp-password"
+                      type="password"
+                      value={passwordValue}
+                      onChange={(e) => setPasswordValue(e.target.value)}
+                      placeholder="Digite sua senha"
+                      style={ui.input}
+                      autoComplete="current-password"
+                    />
+                  </div>
 
-                  <button
-                    type="button"
-                    style={ui.btnGhost}
-                    onClick={() => setStage("entry")}
-                  >
-                    VOLTAR
-                  </button>
-                </div>
+                  <div style={ui.btnRow}>
+                    <button type="submit" style={ui.btnPrimary}>
+                      ENTRAR
+                    </button>
+
+                    <button
+                      type="button"
+                      style={ui.btnSecondary}
+                      onClick={onCadastrar}
+                    >
+                      CADASTRAR
+                    </button>
+
+                    <button
+                      type="button"
+                      style={ui.btnSecondary}
+                      onClick={enterGuest}
+                    >
+                      CONVIDADO
+                    </button>
+
+                    <button
+                      type="button"
+                      style={ui.btnGhost}
+                      onClick={() => setStage("entry")}
+                    >
+                      VOLTAR
+                    </button>
+                  </div>
+                </form>
               </>
             )}
           </div>
