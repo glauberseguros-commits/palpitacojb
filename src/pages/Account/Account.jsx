@@ -483,6 +483,10 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
       localStorage.removeItem("pp_guest_active_v1");
       window.dispatchEvent(new Event("pp_session_changed"));
     } catch {}
+
+    if (typeof onAuthenticated === "function") {
+      onAuthenticated();
+    }
   };
 
   const onSkip = () => {
@@ -502,6 +506,10 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
     setPhotoURL(g.photoURL);
     setPhotoFile(null);
     clearPreview();
+
+    if (typeof onAuthenticated === "function") {
+      onAuthenticated();
+    }
   };
 
   /* =========================
@@ -544,3 +552,4 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
     />
   );
 }
+
