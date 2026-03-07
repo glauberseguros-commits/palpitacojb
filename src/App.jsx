@@ -193,25 +193,19 @@ function getSessionKind(sess) {
   return s.type === "guest" ? "guest" : s.type === "user" ? "user" : "anon";
 }
 
-function hasActiveSession() {
-  const sess = loadSessionObj();
-  return !!sess;
-}
-
 function cleanupLegacyGuestFlagIfNeeded() {
   const sess = loadSessionObj();
   const guestFlag = safeReadLS(LS_GUEST_ACTIVE_KEY);
 
-  // remove flag legado quando já existe sessão formal
-  if (sess && guestFlag != null) {
-    safeRemoveLS(LS_GUEST_ACTIVE_KEY);
+  if (!guestFlag) return;
+
+  // mantém a flag quando a sessão formal atual é guest
+  if (sess?.type === "guest") {
     return;
   }
 
-  // remove flag órfã
-  if (!sess && guestFlag != null) {
-    safeRemoveLS(LS_GUEST_ACTIVE_KEY);
-  }
+  // remove quando a sessão é user ou não existe
+  safeRemoveLS(LS_GUEST_ACTIVE_KEY);
 }
 
 /* =========================
@@ -616,7 +610,6 @@ export default function App() {
         return;
       }
 
-      // se não há sessão formal, elimina guest legado
       cleanupLegacyGuestFlagIfNeeded();
     };
 

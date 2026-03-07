@@ -61,12 +61,39 @@ import {
 const PLAN_FREE = "FREE";
 const PLAN_PREMIUM = "PREMIUM";
 const PLAN_VIP = "VIP";
+const ACCOUNT_SESSION_KEY = "pp_session_v1";
 
 function normalizePlan(planRaw) {
   const p = String(planRaw || "").trim().toUpperCase();
   if (p === PLAN_VIP) return PLAN_VIP;
   if (p === PLAN_PREMIUM) return PLAN_PREMIUM;
   return PLAN_FREE;
+}
+
+function safeParseSession(raw) {
+  try {
+    const obj = JSON.parse(raw);
+    return obj && typeof obj === "object" ? obj : null;
+  } catch {
+    return null;
+  }
+}
+
+function loadFormalGuestSession() {
+  try {
+    const raw = localStorage.getItem(ACCOUNT_SESSION_KEY);
+    if (!raw) return null;
+
+    const obj = safeParseSession(raw);
+    if (!obj || obj.ok !== true) return null;
+
+    const type = String(obj.type || "").trim().toLowerCase();
+    if (type !== "guest") return null;
+
+    return obj;
+  } catch {
+    return null;
+  }
 }
 
 export default function Account({ onClose = null, onAuthenticated = null }) {
@@ -253,9 +280,10 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
 
       // sem Firebase user => pode ser guest local
       if (!user?.uid) {
+        const formalGuest = loadFormalGuestSession();
         const guestActive = isGuestActive();
 
-        if (guestActive) {
+        if (formalGuest || guestActive) {
           setIsGuest(true);
 
           setUid("");
@@ -274,6 +302,8 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
           setTrialActive(false);
 
           const g = loadGuestProfile();
+
+          // mantém a sessão formal guest como fonte principal
           markSessionGuest();
 
           setNameDraft(g.name);
