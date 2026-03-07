@@ -47,7 +47,18 @@ import {
  * - Login aceita:
  *   - e-mail
  *   - telefone (+55 / com máscara / só dígitos)
+ *
+ * Plano real:
+ *   - FREE
+ *   - PREMIUM
+ *   - VIP
+ *
+ * Compat temporária:
+ *   - trialStartAt / trialEndAt / trialActive continuam existindo
+ *     apenas para não quebrar hooks/view antigos.
  */
+
+const PLAN_FREE = "FREE";
 
 export default function Account({ onClose = null, onAuthenticated = null }) {
   // viewport + ui
@@ -61,7 +72,14 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
   const [email, setEmail] = useState("");
   const [createdAtIso, setCreatedAtIso] = useState("");
 
-  // trial
+  // plan (novo)
+  const [plan, setPlan] = useState(PLAN_FREE);
+  const [planStartAt, setPlanStartAt] = useState("");
+  const [planEndAt, setPlanEndAt] = useState("");
+  const [isLifetime, setIsLifetime] = useState(false);
+  const [isActivePlan, setIsActivePlan] = useState(false);
+
+  // compat legado para hooks/view
   const [trialStartAt, setTrialStartAt] = useState("");
   const [trialEndAt, setTrialEndAt] = useState("");
   const [trialActive, setTrialActive] = useState(false);
@@ -83,6 +101,14 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
     setUid("");
     setEmail("");
     setCreatedAtIso("");
+
+    setPlan(PLAN_FREE);
+    setPlanStartAt("");
+    setPlanEndAt("");
+    setIsLifetime(false);
+    setIsActivePlan(false);
+
+    // compat
     setTrialStartAt("");
     setTrialEndAt("");
     setTrialActive(false);
@@ -222,6 +248,16 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
 
         if (guestActive) {
           setIsGuest(true);
+          setPlan(PLAN_FREE);
+          setPlanStartAt("");
+          setPlanEndAt("");
+          setIsLifetime(false);
+          setIsActivePlan(false);
+
+          // compat
+          setTrialStartAt("");
+          setTrialEndAt("");
+          setTrialActive(false);
 
           const g = loadGuestProfile();
           markSessionGuest();
@@ -229,9 +265,6 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
           setUid("");
           setEmail("");
           setCreatedAtIso("");
-          setTrialStartAt("");
-          setTrialEndAt("");
-          setTrialActive(false);
 
           setNameDraft(g.name);
           setPhoneDraft(normalizePhoneDigits(g.phone));
@@ -264,13 +297,28 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
       await ensureUserDoc(db, user.uid, user);
       const remote = await loadUserProfile(db, user.uid);
 
+      const remotePlan = String(remote?.plan || PLAN_FREE).trim().toUpperCase() || PLAN_FREE;
+      const remotePlanStartAt = String(remote?.planStartAt || "").trim();
+      const remotePlanEndAt = String(remote?.planEndAt || "").trim();
+      const remoteIsLifetime = remote?.isLifetime === true;
+      const remoteIsActivePlan = remote?.isActivePlan === true;
+
+      setPlan(remotePlan);
+      setPlanStartAt(remotePlanStartAt);
+      setPlanEndAt(remotePlanEndAt);
+      setIsLifetime(remoteIsLifetime);
+      setIsActivePlan(remoteIsActivePlan);
+
+      // compat temporária com hooks/view antigos:
+      // FREE => sem trial ativo
+      // PREMIUM/VIP => considera como "ativo" se houver plano ativo
+      setTrialStartAt(remotePlanStartAt);
+      setTrialEndAt(remotePlanEndAt);
+      setTrialActive(remotePlan !== PLAN_FREE && remoteIsActivePlan);
+
       setNameDraft(String(remote?.name || "").trim());
       setPhoneDraft(normalizePhoneDigits(remote?.phone || ""));
       setPhotoURL(String(remote?.photoURL || "").trim());
-
-      setTrialStartAt(String(remote?.trialStartAt || "").trim());
-      setTrialEndAt(String(remote?.trialEndAt || "").trim());
-      setTrialActive(remote?.trialActive === true);
 
       setPhotoFile(null);
       clearPreview();
