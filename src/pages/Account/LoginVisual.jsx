@@ -16,14 +16,28 @@ function safeSetLS(key, value) {
   } catch {}
 }
 
+function safeRemoveLS(key) {
+  try {
+    localStorage.removeItem(key);
+  } catch {}
+}
+
+function goDashboardHard() {
+  try {
+    window.location.assign("/");
+  } catch {
+    try {
+      window.location.href = "/";
+    } catch {}
+  }
+}
+
 export default function LoginVisual({ onEnter, onSkip }) {
-  // ✅ auditoria RJ somente em DEV (evita custo/log em produção)
   useEffect(() => {
     if (process.env.NODE_ENV === "production") return;
 
     (async () => {
       try {
-        // lazy import pra não empacotar dev tools no build prod
         const mod = await import("../../dev/runAuditRJ");
         if (mod?.runAuditRJ) {
           console.log("🔎 Rodando auditoria RJ (bounds) [DEV]...");
@@ -167,23 +181,47 @@ export default function LoginVisual({ onEnter, onSkip }) {
   const enterLogin = () => {
     safeSetLS(
       ACCOUNT_SESSION_KEY,
-      JSON.stringify({ ok: true, type: "user", plan: "FREE", ts: Date.now() })
+      JSON.stringify({
+        ok: true,
+        type: "user",
+        loginType: "user",
+        plan: "FREE",
+        authMode: "visual",
+        ts: Date.now(),
+      })
     );
-    safeSetLS(LS_GUEST_ACTIVE_KEY, "0");
-    dispatchSessionChanged();
-    onEnter?.("dashboard");
-  };
 
-  
+    safeRemoveLS(LS_GUEST_ACTIVE_KEY);
+    dispatchSessionChanged();
+
+    try {
+      onEnter?.("dashboard");
+    } catch {}
+
+    goDashboardHard();
+  };
 
   const enterGuest = () => {
     safeSetLS(
       ACCOUNT_SESSION_KEY,
-      JSON.stringify({ ok: true, type: "guest", plan: "FREE", ts: Date.now() })
+      JSON.stringify({
+        ok: true,
+        type: "guest",
+        loginType: "guest",
+        plan: "FREE",
+        authMode: "visual",
+        ts: Date.now(),
+      })
     );
+
     safeSetLS(LS_GUEST_ACTIVE_KEY, "1");
     dispatchSessionChanged();
-    onSkip?.();
+
+    try {
+      onSkip?.();
+    } catch {}
+
+    goDashboardHard();
   };
 
   return (
@@ -205,11 +243,11 @@ export default function LoginVisual({ onEnter, onSkip }) {
 
           <div style={ui.body}>
             <div style={ui.btnRow}>
-              <button style={ui.btnPrimary} onClick={enterLogin}>
+              <button type="button" style={ui.btnPrimary} onClick={enterLogin}>
                 ENTRAR
               </button>
 
-              <button style={ui.btnSecondary} onClick={enterGuest}>
+              <button type="button" style={ui.btnSecondary} onClick={enterGuest}>
                 ENTRAR COMO CONVIDADO
               </button>
             </div>
@@ -219,5 +257,3 @@ export default function LoginVisual({ onEnter, onSkip }) {
     </div>
   );
 }
-
-
