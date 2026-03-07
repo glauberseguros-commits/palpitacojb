@@ -35,6 +35,7 @@ function goDashboardHard() {
 
 export default function LoginVisual({ onEnter, onSkip }) {
   const [logoOk, setLogoOk] = useState(true);
+  const [stage, setStage] = useState("entry"); // entry | choice
 
   useEffect(() => {
     if (process.env.NODE_ENV === "production") return;
@@ -55,6 +56,7 @@ export default function LoginVisual({ onEnter, onSkip }) {
   const ui = useMemo(() => {
     const GOLD = "rgba(202,166,75,1)";
     const WHITE = "rgba(255,255,255,0.94)";
+    const WHITE_72 = "rgba(255,255,255,0.72)";
     const BORDER = "rgba(255,255,255,0.12)";
     const BORDER_GOLD = "rgba(202,166,75,0.30)";
     const BG = "#050505";
@@ -166,7 +168,23 @@ export default function LoginVisual({ onEnter, onSkip }) {
       body: {
         padding: "18px 22px 22px",
         display: "grid",
-        gap: 12,
+        gap: 14,
+      },
+
+      sectionTitle: {
+        margin: 0,
+        fontSize: 18,
+        fontWeight: 900,
+        letterSpacing: 0.2,
+        textAlign: "center",
+      },
+
+      sectionText: {
+        margin: 0,
+        fontSize: 13,
+        lineHeight: 1.45,
+        color: WHITE_72,
+        textAlign: "center",
       },
 
       btnRow: {
@@ -186,10 +204,33 @@ export default function LoginVisual({ onEnter, onSkip }) {
         letterSpacing: 0.3,
         boxShadow: "0 10px 24px rgba(0,0,0,0.28)",
       },
+
+      btnSecondary: {
+        height: 54,
+        borderRadius: 17,
+        border: "1px solid rgba(255,255,255,0.16)",
+        background: "rgba(255,255,255,0.05)",
+        color: WHITE,
+        fontWeight: 900,
+        cursor: "pointer",
+        fontSize: 16,
+        letterSpacing: 0.2,
+      },
+
+      btnGhost: {
+        height: 46,
+        borderRadius: 15,
+        border: "1px solid rgba(255,255,255,0.10)",
+        background: "transparent",
+        color: WHITE_72,
+        fontWeight: 800,
+        cursor: "pointer",
+        fontSize: 14,
+      },
     };
   }, []);
 
-  const enterLogin = () => {
+  const enterVip = () => {
     safeSetLS(
       ACCOUNT_SESSION_KEY,
       JSON.stringify({
@@ -207,6 +248,29 @@ export default function LoginVisual({ onEnter, onSkip }) {
 
     try {
       onEnter?.("dashboard");
+    } catch {}
+
+    goDashboardHard();
+  };
+
+  const enterGuest = () => {
+    safeSetLS(
+      ACCOUNT_SESSION_KEY,
+      JSON.stringify({
+        ok: true,
+        type: "guest",
+        loginType: "guest",
+        plan: "FREE",
+        authMode: "visual",
+        ts: Date.now(),
+      })
+    );
+
+    safeSetLS(LS_GUEST_ACTIVE_KEY, "1");
+    dispatchSessionChanged();
+
+    try {
+      onSkip?.();
     } catch {}
 
     goDashboardHard();
@@ -241,11 +305,42 @@ export default function LoginVisual({ onEnter, onSkip }) {
           </div>
 
           <div style={ui.body}>
-            <div style={ui.btnRow}>
-              <button type="button" style={ui.btnPrimary} onClick={enterLogin}>
-                ENTRAR
-              </button>
-            </div>
+            {stage === "entry" ? (
+              <div style={ui.btnRow}>
+                <button
+                  type="button"
+                  style={ui.btnPrimary}
+                  onClick={() => setStage("choice")}
+                >
+                  ENTRAR
+                </button>
+              </div>
+            ) : (
+              <>
+                <h2 style={ui.sectionTitle}>Escolha como deseja entrar</h2>
+                <p style={ui.sectionText}>
+                  Acesso VIP para experiência completa ou modo convidado para navegação de demonstração.
+                </p>
+
+                <div style={ui.btnRow}>
+                  <button type="button" style={ui.btnPrimary} onClick={enterVip}>
+                    ENTRAR COMO VIP
+                  </button>
+
+                  <button type="button" style={ui.btnSecondary} onClick={enterGuest}>
+                    CONTINUAR COMO CONVIDADO
+                  </button>
+
+                  <button
+                    type="button"
+                    style={ui.btnGhost}
+                    onClick={() => setStage("entry")}
+                  >
+                    VOLTAR
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
