@@ -59,6 +59,15 @@ import {
  */
 
 const PLAN_FREE = "FREE";
+const PLAN_PREMIUM = "PREMIUM";
+const PLAN_VIP = "VIP";
+
+function normalizePlan(planRaw) {
+  const p = String(planRaw || "").trim().toUpperCase();
+  if (p === PLAN_VIP) return PLAN_VIP;
+  if (p === PLAN_PREMIUM) return PLAN_PREMIUM;
+  return PLAN_FREE;
+}
 
 export default function Account({ onClose = null, onAuthenticated = null }) {
   // viewport + ui
@@ -248,6 +257,11 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
 
         if (guestActive) {
           setIsGuest(true);
+
+          setUid("");
+          setEmail("");
+          setCreatedAtIso("");
+
           setPlan(PLAN_FREE);
           setPlanStartAt("");
           setPlanEndAt("");
@@ -261,10 +275,6 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
 
           const g = loadGuestProfile();
           markSessionGuest();
-
-          setUid("");
-          setEmail("");
-          setCreatedAtIso("");
 
           setNameDraft(g.name);
           setPhoneDraft(normalizePhoneDigits(g.phone));
@@ -285,8 +295,6 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
       setGuestActive(false);
       setIsGuest(false);
 
-      markSessionAuth(user);
-
       setUid(String(user.uid));
       setEmail(String(user.email || "").trim().toLowerCase());
 
@@ -297,11 +305,13 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
       await ensureUserDoc(db, user.uid, user);
       const remote = await loadUserProfile(db, user.uid);
 
-      const remotePlan = String(remote?.plan || PLAN_FREE).trim().toUpperCase() || PLAN_FREE;
+      const remotePlan = normalizePlan(remote?.plan);
       const remotePlanStartAt = String(remote?.planStartAt || "").trim();
       const remotePlanEndAt = String(remote?.planEndAt || "").trim();
       const remoteIsLifetime = remote?.isLifetime === true;
-      const remoteIsActivePlan = remote?.isActivePlan === true;
+      const remoteIsActivePlan =
+        remote?.isActivePlan === true ||
+        (remotePlan !== PLAN_FREE && remoteIsLifetime === true);
 
       setPlan(remotePlan);
       setPlanStartAt(remotePlanStartAt);
@@ -322,6 +332,18 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
 
       setPhotoFile(null);
       clearPreview();
+
+      // ✅ grava sessão somente depois de conhecer o plano real
+      markSessionAuth({
+        uid: user.uid,
+        email: String(user.email || "").trim().toLowerCase(),
+        plan: remotePlan,
+        planStartAt: remotePlanStartAt,
+        planEndAt: remotePlanEndAt,
+        isLifetime: remoteIsLifetime,
+        isActivePlan: remoteIsActivePlan,
+        metadata: user?.metadata || {},
+      });
 
       if (typeof onAuthenticated === "function") {
         onAuthenticated();

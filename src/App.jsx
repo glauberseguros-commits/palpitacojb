@@ -66,11 +66,13 @@ function safeReadLS(key) {
     return null;
   }
 }
+
 function safeWriteLS(key, value) {
   try {
     localStorage.setItem(key, value);
   } catch {}
 }
+
 function safeRemoveLS(key) {
   try {
     localStorage.removeItem(key);
@@ -111,6 +113,14 @@ function resolveComponent(mod, name) {
    Sessão (estrita)
 ========================= */
 
+function normalizePlan(plan) {
+  const p = String(plan || "").trim().toUpperCase();
+  if (p === "VIP") return "VIP";
+  if (p === "PREMIUM") return "PREMIUM";
+  if (p === "FREE") return "FREE";
+  return "";
+}
+
 function loadSessionObj() {
   const raw = safeReadLS(ACCOUNT_SESSION_KEY);
   if (!raw) return null;
@@ -122,43 +132,86 @@ function loadSessionObj() {
   if (!obj || typeof obj !== "object") return null;
 
   const type = String(obj.type || "").trim().toLowerCase();
-  const plan = String(obj.plan || "FREE").trim().toUpperCase();
   const uid = String(obj.uid || "").trim();
   const email = String(obj.email || "").trim().toLowerCase();
   const ok = obj.ok === true;
+  const plan = normalizePlan(
+    obj.plan ??
+      obj.profile?.plan ??
+      obj.subscription?.plan ??
+      obj.account?.plan ??
+      obj.customClaims?.plan ??
+      obj.claims?.plan ??
+      obj.appData?.plan ??
+      obj.metadata?.plan
+  );
 
-  // guest local válido
-  if (type === "guest" && ok) {
+  if (!ok) return null;
+
+  // guest real
+  if (type === "guest") {
     return {
       ok: true,
       type: "guest",
-      plan,
+      plan: plan || "FREE",
       uid: "",
       email: "",
       raw: obj,
     };
   }
 
-  // user real válido = precisa uid Firebase
-  if (type === "user" && ok && uid) {
+  // user real/local válido
+  if (type === "user" && uid) {
     return {
       ok: true,
       type: "user",
-      plan,
+      plan: plan || "PREMIUM",
       uid,
       email,
       raw: obj,
     };
   }
 
-  // qualquer sessão legada/fake/visual é inválida
+  // fallback legado: se tiver uid/email sem type coerente, ainda considera user
+  if (uid || email) {
+    return {
+      ok: true,
+      type: "user",
+      plan: plan || "PREMIUM",
+      uid,
+      email,
+      raw: obj,
+    };
+  }
+
   return null;
 }
 
+function getSessionKind(sess) {
+  const s = sess || loadSessionObj();
+  if (!s || s.ok !== true) return "anon";
+  return s.type === "guest" ? "guest" : s.type === "user" ? "user" : "anon";
+}
+
 function hasActiveSession() {
-  if (safeReadLS(LS_GUEST_ACTIVE_KEY) === "1") return true;
   const sess = loadSessionObj();
   return !!sess;
+}
+
+function cleanupLegacyGuestFlagIfNeeded() {
+  const sess = loadSessionObj();
+  const guestFlag = safeReadLS(LS_GUEST_ACTIVE_KEY);
+
+  // remove flag legado quando já existe sessão formal
+  if (sess && guestFlag != null) {
+    safeRemoveLS(LS_GUEST_ACTIVE_KEY);
+    return;
+  }
+
+  // remove flag órfã
+  if (!sess && guestFlag != null) {
+    safeRemoveLS(LS_GUEST_ACTIVE_KEY);
+  }
 }
 
 /* =========================
@@ -428,6 +481,10 @@ export default function App() {
     });
   }, []);
 
+  useEffect(() => {
+    cleanupLegacyGuestFlagIfNeeded();
+  }, []);
+
   const [adminMode, setAdminMode] = useState(() => isAdminHashNow());
 
   useEffect(() => {
@@ -478,11 +535,11 @@ export default function App() {
   }, [adminMode]);
 
   const [screen, setScreen] = useState(() => {
-    const sessionOn = hasActiveSession();
+    const session = loadSessionObj();
     const saved = normalizeRoute(safeReadLS(STORAGE_KEY));
 
-    if (!sessionOn) return ROUTES.LOGIN;
-    if (saved && saved !== ROUTES.LOGIN && saved !== ROUTES.ACCOUNT) return saved;
+    if (!session) return ROUTES.LOGIN;
+    if (saved && saved !== ROUTES.LOGIN) return saved;
 
     return ROUTES.DASHBOARD;
   });
@@ -516,7 +573,6 @@ export default function App() {
   }, [dashboardFilters]);
 
   const logout = async () => {
-    // limpa estado local primeiro
     safeRemoveLS(STORAGE_KEY);
     safeRemoveLS(ACCOUNT_SESSION_KEY);
     safeRemoveLS(LS_GUEST_ACTIVE_KEY);
@@ -526,7 +582,6 @@ export default function App() {
       window.dispatchEvent(new Event("pp_session_changed"));
     } catch {}
 
-    // encerra sessão real do Firebase
     try {
       await signOut(auth);
     } catch {}
@@ -536,6 +591,7 @@ export default function App() {
   };
 
   const forceGoDashboard = useRef(() => {
+    cleanupLegacyGuestFlagIfNeeded();
     setScreen(ROUTES.DASHBOARD);
     safeWriteLS(STORAGE_KEY, ROUTES.DASHBOARD);
     navigate("/", { replace: true });
@@ -546,13 +602,22 @@ export default function App() {
     if (screen !== ROUTES.LOGIN) return;
 
     const goDashboard = () => {
+      cleanupLegacyGuestFlagIfNeeded();
       setScreen(ROUTES.DASHBOARD);
       safeWriteLS(STORAGE_KEY, ROUTES.DASHBOARD);
       navigate("/", { replace: true });
     };
 
     const check = () => {
-      if (hasActiveSession()) goDashboard();
+      const sess = loadSessionObj();
+
+      if (sess) {
+        goDashboard();
+        return;
+      }
+
+      // se não há sessão formal, elimina guest legado
+      cleanupLegacyGuestFlagIfNeeded();
     };
 
     check();
@@ -564,7 +629,9 @@ export default function App() {
 
     const onSessionChanged = () => check();
     const onFocus = () => check();
-    const onVis = () => check();
+    const onVis = () => {
+      if (document.visibilityState === "visible") check();
+    };
 
     window.addEventListener("storage", onStorage);
     window.addEventListener("pp_session_changed", onSessionChanged);
@@ -582,6 +649,47 @@ export default function App() {
   useEffect(() => {
     if (adminMode) return;
 
+    const syncFromSession = () => {
+      cleanupLegacyGuestFlagIfNeeded();
+
+      const sess = loadSessionObj();
+      const kind = getSessionKind(sess);
+
+      if (!sess) {
+        if (screen !== ROUTES.LOGIN) setScreen(ROUTES.LOGIN);
+        return;
+      }
+
+      if (kind === "guest" || kind === "user") {
+        if (screen === ROUTES.LOGIN) {
+          setScreen(ROUTES.DASHBOARD);
+        }
+      }
+    };
+
+    syncFromSession();
+
+    const onStorage = (e) => {
+      if (!e) return;
+      if (e.key === ACCOUNT_SESSION_KEY || e.key === LS_GUEST_ACTIVE_KEY) {
+        syncFromSession();
+      }
+    };
+
+    const onSessionChanged = () => syncFromSession();
+
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("pp_session_changed", onSessionChanged);
+
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("pp_session_changed", onSessionChanged);
+    };
+  }, [adminMode, screen]);
+
+  useEffect(() => {
+    if (adminMode) return;
+
     if (!bootRef.current) {
       bootRef.current = true;
       setRouterBooted(true);
@@ -590,7 +698,9 @@ export default function App() {
     const wanted = pathToScreen(location?.pathname);
     if (!wanted) return;
 
-    if (!hasActiveSession()) {
+    const sess = loadSessionObj();
+
+    if (!sess) {
       if (screen !== ROUTES.LOGIN) setScreen(ROUTES.LOGIN);
       return;
     }

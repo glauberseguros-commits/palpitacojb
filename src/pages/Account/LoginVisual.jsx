@@ -11,12 +11,6 @@ function dispatchSessionChanged() {
   } catch {}
 }
 
-function safeSetLS(key, value) {
-  try {
-    localStorage.setItem(key, value);
-  } catch {}
-}
-
 function safeRemoveLS(key) {
   try {
     localStorage.removeItem(key);
@@ -266,6 +260,7 @@ export default function LoginVisual({ onEnter, onSkip, onRegister }) {
     setSubmitting(true);
     setErrorMsg("");
 
+    // limpa apenas resíduo legado/local antes do fluxo real
     clearVisualSession();
 
     try {
@@ -296,24 +291,18 @@ export default function LoginVisual({ onEnter, onSkip, onRegister }) {
     setErrorMsg("");
     setSubmitting(false);
 
-    safeSetLS(
-      ACCOUNT_SESSION_KEY,
-      JSON.stringify({
-        ok: true,
-        type: "guest",
-        loginType: "guest",
-        plan: "FREE",
-        authMode: "visual",
-        ts: Date.now(),
-      })
-    );
-
-    safeSetLS(LS_GUEST_ACTIVE_KEY, "1");
-    dispatchSessionChanged();
-
     try {
-      onSkip?.();
-    } catch {}
+      if (typeof onSkip !== "function") {
+        throw new Error("Fluxo de convidado não foi conectado no componente pai.");
+      }
+
+      onSkip();
+    } catch (err) {
+      const msg =
+        String(err?.message || "").trim() ||
+        "Não foi possível entrar como convidado.";
+      setErrorMsg(msg);
+    }
   }
 
   async function onSubmitLogin(e) {

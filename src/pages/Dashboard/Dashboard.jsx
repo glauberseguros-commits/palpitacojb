@@ -6,6 +6,7 @@
  * - guest/demo continua com acesso liberado no painel
  * - login visual "ENTRAR" (sessão local type:user) NÃO aparece mais
  *   como convidado/demonstração
+ * - sessão agora lê type + plan corretamente
  * - sem bloqueio de filtros, período, cliques ou ações locais
  * ============================================================
  */
@@ -48,7 +49,6 @@ const DASH_STATE_KEY_BASE = "pp_dash_state_v2"; // versionado + por UF
    Sessão / Guest / User
 ========================= */
 const ACCOUNT_SESSION_KEY = "pp_session_v1";
-const LS_GUEST_ACTIVE_KEY = "pp_guest_active_v1";
 const SESSION_POLL_MS = 1500;
 
 function safeParseJSON(s) {
@@ -72,14 +72,16 @@ function loadSessionObj() {
   }
 }
 
+function normalizeSessionPlan(plan) {
+  const p = String(plan || "").trim().toUpperCase();
+  if (p === "VIP") return "VIP";
+  if (p === "PREMIUM") return "PREMIUM";
+  if (p === "FREE") return "FREE";
+  return "";
+}
+
 function getSessionKind(sess) {
   const s = sess || loadSessionObj();
-
-  try {
-    const guestFlag = localStorage.getItem(LS_GUEST_ACTIVE_KEY);
-    if (guestFlag === "1") return "guest";
-  } catch {}
-
   if (!s || s.ok !== true) return "anon";
 
   const type = String(s.type || "").trim().toLowerCase();
@@ -87,24 +89,50 @@ function getSessionKind(sess) {
   if (type === "user") return "user";
 
   const loginType = String(s.loginType || "").trim().toLowerCase();
-  if (loginType === "guest") return "guest";
-  if (loginType === "user") return "user";
-
   const loginId = String(s.loginId || "").trim().toLowerCase();
-  if (loginId === "guest") return "guest";
-  if (loginId === "user") return "user";
-
-  if (s.skipped === true) return "guest";
-
   const mode = String(s.mode || "").trim().toLowerCase();
-  if (mode === "skip") return "guest";
+
+  if (
+    loginType === "guest" ||
+    loginId === "guest" ||
+    s.skipped === true ||
+    mode === "skip"
+  ) {
+    return "guest";
+  }
+
+  if (loginType === "user" || loginId === "user") {
+    return "user";
+  }
 
   if (s.uid || s.email) return "user";
 
   return "anon";
 }
 
+function getSessionPlan(sess) {
+  const s = sess || loadSessionObj();
+  if (!s || s.ok !== true) return "";
 
+  const normalized = normalizeSessionPlan(
+    s.plan ??
+      s.profile?.plan ??
+      s.subscription?.plan ??
+      s.account?.plan ??
+      s.customClaims?.plan ??
+      s.claims?.plan ??
+      s.appData?.plan ??
+      s.metadata?.plan
+  );
+
+  if (normalized) return normalized;
+
+  const kind = getSessionKind(s);
+  if (kind === "guest") return "FREE";
+  if (kind === "user") return "PREMIUM";
+
+  return "";
+}
 
 /* =========================
    Banner
@@ -663,11 +691,23 @@ export default function Dashboard(props) {
     []
   );
 
+  const [sessionObj, setSessionObj] = useState(() => loadSessionObj());
   const [sessionKind, setSessionKind] = useState(() => getSessionKind(loadSessionObj()));
+  const [sessionPlan, setSessionPlan] = useState(() => getSessionPlan(loadSessionObj()));
+
   const isGuest = sessionKind === "guest";
+  const isUser = sessionKind === "user";
+  const isFreePlan = sessionPlan === "FREE";
+  const isPremiumPlan = sessionPlan === "PREMIUM";
+  const isVipPlan = sessionPlan === "VIP";
 
   useEffect(() => {
-    const refresh = () => setSessionKind(getSessionKind(loadSessionObj()));
+    const refresh = () => {
+      const sess = loadSessionObj();
+      setSessionObj(sess);
+      setSessionKind(getSessionKind(sess));
+      setSessionPlan(getSessionPlan(sess));
+    };
 
     const onStorage = (e) => {
       if (e && e.key && e.key !== ACCOUNT_SESSION_KEY) return;
@@ -1649,19 +1689,52 @@ export default function Dashboard(props) {
     );
   }, [isHydrating, dateFrom, dateTo, queryDate, MIN_DATE, MAX_DATE]);
 
-  const demoBox = useMemo(() => {
-    if (!isGuest) return null;
+  const accessBox = useMemo(() => {
     const from = MIN_DATE || "2022-01-01";
     const to = MAX_DATE || "—";
 
-    return (
-      <PremiumInfoBox
-        title="Modo Demonstração"
-        description="Enquanto o login real não estiver concluído, o painel está liberado para navegação completa."
-        extra={`Período atual da base: ${from} → ${to}\nFiltros, período e interações estão liberados temporariamente.`}
-      />
-    );
-  }, [isGuest, MIN_DATE, MAX_DATE]);
+    if (isGuest) {
+      return (
+        <PremiumInfoBox
+          title="Modo Demonstração"
+          description="O painel está liberado para navegação completa."
+          extra={`Plano: FREE\nPeríodo atual da base: ${from} → ${to}\nFiltros, período e interações estão liberados temporariamente.`}
+        />
+      );
+    }
+
+    if (isUser && isVipPlan) {
+      return (
+        <PremiumInfoBox
+          title="Conta VIP"
+          description="Sessão reconhecida com acesso completo."
+          extra={`Plano: VIP\nPeríodo atual da base: ${from} → ${to}`}
+        />
+      );
+    }
+
+    if (isUser && isPremiumPlan) {
+      return (
+        <PremiumInfoBox
+          title="Conta Premium"
+          description="Sessão reconhecida com acesso completo."
+          extra={`Plano: PREMIUM\nPeríodo atual da base: ${from} → ${to}`}
+        />
+      );
+    }
+
+    if (isUser && isFreePlan) {
+      return (
+        <PremiumInfoBox
+          title="Conta Free"
+          description="Sessão reconhecida. O painel segue liberado nesta fase."
+          extra={`Plano: FREE\nPeríodo atual da base: ${from} → ${to}\nNenhuma função local está bloqueada nesta baseline.`}
+        />
+      );
+    }
+
+    return null;
+  }, [isGuest, isUser, isFreePlan, isPremiumPlan, isVipPlan, MIN_DATE, MAX_DATE]);
 
   return (
     <div className="dashRoot">
@@ -1695,7 +1768,7 @@ export default function Dashboard(props) {
               <PremiumTopRightSkeleton message={boundsMessage} />
             ) : (
               <>
-                {demoBox}
+                {accessBox}
 
                 {MIN_DATE && MAX_DATE && dateRange ? (
                   <div style={{ position: "relative", zIndex: 10, pointerEvents: "auto" }}>
@@ -1783,4 +1856,3 @@ export default function Dashboard(props) {
     </div>
   );
 }
-

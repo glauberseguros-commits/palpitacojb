@@ -60,6 +60,43 @@ export function safeRemoveSession() {
 }
 
 /* =========================
+   Plan helpers
+========================= */
+
+function normalizePlan(plan) {
+  const raw = String(plan ?? "")
+    .trim()
+    .toUpperCase();
+
+  if (raw === "VIP") return "VIP";
+  if (raw === "PREMIUM") return "PREMIUM";
+  if (raw === "FREE") return "FREE";
+  return "";
+}
+
+function resolveUserPlan(user) {
+  const candidates = [
+    user?.plan,
+    user?.profile?.plan,
+    user?.subscription?.plan,
+    user?.account?.plan,
+    user?.customClaims?.plan,
+    user?.claims?.plan,
+    user?.appData?.plan,
+    user?.metadata?.plan,
+  ];
+
+  for (const candidate of candidates) {
+    const normalized = normalizePlan(candidate);
+    if (normalized) return normalized;
+  }
+
+  // fallback seguro para usuário autenticado:
+  // evita cair como FREE por ausência de plan no objeto local
+  return "PREMIUM";
+}
+
+/* =========================
    Markers
 ========================= */
 
@@ -68,10 +105,12 @@ export function markSessionAuth(user) {
   const email = String(user?.email || "").trim().toLowerCase();
   if (!uid) return;
 
+  const plan = resolveUserPlan(user);
+
   safeWriteSession({
     ok: true,
     type: "user",
-    plan: "FREE",
+    plan,
     uid,
     email,
     ts: Date.now(),
