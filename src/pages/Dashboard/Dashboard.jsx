@@ -74,6 +74,12 @@ function loadSessionObj() {
 
 function getSessionKind(sess) {
   const s = sess || loadSessionObj();
+
+  try {
+    const guestFlag = localStorage.getItem(LS_GUEST_ACTIVE_KEY);
+    if (guestFlag === "1") return "guest";
+  } catch {}
+
   if (!s || s.ok !== true) return "anon";
 
   const type = String(s.type || "").trim().toLowerCase();
@@ -81,47 +87,24 @@ function getSessionKind(sess) {
   if (type === "user") return "user";
 
   const loginType = String(s.loginType || "").trim().toLowerCase();
+  if (loginType === "guest") return "guest";
+  if (loginType === "user") return "user";
+
   const loginId = String(s.loginId || "").trim().toLowerCase();
+  if (loginId === "guest") return "guest";
+  if (loginId === "user") return "user";
+
+  if (s.skipped === true) return "guest";
+
   const mode = String(s.mode || "").trim().toLowerCase();
-
-  if (
-    loginType === "guest" ||
-    loginId === "guest" ||
-    s.skipped === true ||
-    mode === "skip"
-  ) {
-    return "guest";
-  }
-
-  if (loginType === "user" || loginId === "user") {
-    return "user";
-  }
+  if (mode === "skip") return "guest";
 
   if (s.uid || s.email) return "user";
 
   return "anon";
 }
 
-function isGuestSession(sess) {
-  const s = sess || loadSessionObj();
 
-  try {
-    const guestFlag = localStorage.getItem(LS_GUEST_ACTIVE_KEY);
-    if (guestFlag === "1") return true;
-  } catch {}
-
-  if (!s || s.ok !== true) return false;
-
-  const type = String(s.type || "").trim().toLowerCase();
-  if (type === "guest") return true;
-  if (type === "user") return false;
-
-  const loginType = String(s.loginType || "").trim().toLowerCase();
-  if (loginType === "guest") return true;
-  if (loginType === "user") return false;
-
-  return false;
-}
 
 /* =========================
    Banner
@@ -1800,3 +1783,4 @@ export default function Dashboard(props) {
     </div>
   );
 }
+
