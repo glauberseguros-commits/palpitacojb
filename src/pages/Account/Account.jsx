@@ -1,10 +1,11 @@
+﻿// src/pages/Account/Account.jsx
 import React, { useEffect, useState } from "react";
 import LoginVisual from "./LoginVisual";
 import AccountView from "./AccountView";
 
 // Firebase (real)
 import { auth, db, storage } from "../../services/firebase";
-import { onAuthStateChanged, deleteUser } from "firebase/auth";
+import { onAuthStateChanged, deleteUser, signInWithEmailAndPassword } from "firebase/auth";
 import { doc, deleteDoc } from "firebase/firestore";
 
 // Module pieces
@@ -32,55 +33,11 @@ import {
 
 /**
  * Account (controller)
- * - Lógica (auth/guest/storage/services) + passa props para AccountView
+ * - Estados válidos:
+ *   1) Firebase real autenticado
+ *   2) Guest local
+ * - NÃO existe mais "user visual fake"
  */
-
-const ACCOUNT_SESSION_KEY = "pp_session_v1";
-
-function safeParseJSON(raw) {
-  try {
-    const obj = JSON.parse(raw);
-    return obj && typeof obj === "object" ? obj : null;
-  } catch {
-    return null;
-  }
-}
-
-function loadLocalSessionObj() {
-  try {
-    const raw = localStorage.getItem(ACCOUNT_SESSION_KEY);
-    if (!raw) return null;
-    const s = String(raw || "").trim();
-    if (!s.startsWith("{")) return null;
-    return safeParseJSON(s);
-  } catch {
-    return null;
-  }
-}
-
-function isLocalVisualUserSession(sess) {
-  const s = sess || loadLocalSessionObj();
-  if (!s || typeof s !== "object") return false;
-
-  const type = String(s.type || "").trim().toLowerCase();
-  const loginType = String(s.loginType || "").trim().toLowerCase();
-  const plan = String(s.plan || "").trim().toUpperCase();
-
-  const looksLikeUser =
-    type === "user" ||
-    loginType === "user" ||
-    !!s.uid ||
-    !!s.email;
-
-  if (!looksLikeUser) return false;
-
-  // visual/local = sessão user sem Firebase user real
-  const hasFirebaseIdentity = !!String(s.uid || "").trim() || !!String(s.email || "").trim();
-  if (hasFirebaseIdentity) return false;
-
-  // aceita tanto sessão nova (ok:true) quanto legada
-  return s.ok === true || type === "user" || loginType === "user" || plan === "FREE";
-}
 
 export default function Account({ onClose = null, onAuthenticated = null }) {
   // viewport + ui
@@ -128,6 +85,39 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
     clearPreview();
   }
 
+  function resetGuestState() {
+    setIsGuest(false);
+    setNameDraft("");
+    setPhoneDraft("");
+    setPhotoURL("");
+    setPhotoFile(null);
+    clearPreview();
+  }
+
+  function normalizeLoginToEmail(loginRaw) {
+    const login = String(loginRaw || "").trim().toLowerCase();
+    return login;
+  }
+
+  function buildFirebaseLoginError(error) {
+    const code = String(error?.code || "").trim();
+
+    switch (code) {
+      case "auth/invalid-email":
+        return "E-mail inválido.";
+      case "auth/user-not-found":
+      case "auth/wrong-password":
+      case "auth/invalid-credential":
+        return "Login ou senha inválidos.";
+      case "auth/too-many-requests":
+        return "Muitas tentativas. Aguarde e tente novamente.";
+      case "auth/network-request-failed":
+        return "Falha de rede. Verifique sua conexão.";
+      default:
+        return String(error?.message || "").trim() || "Falha ao autenticar no Firebase.";
+    }
+  }
+
   // auth listener
   useEffect(() => {
     let alive = true;
@@ -139,15 +129,23 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
       setErr("");
       setAuthReady(true);
 
-      // sem Firebase user
+      // sem Firebase user => pode ser guest local
       if (!user?.uid) {
-        const ga = isGuestActive();
+        const guestActive = isGuestActive();
 
-        if (ga) {
+        if (guestActive) {
           setIsGuest(true);
-          markSessionGuest();
 
           const g = loadGuestProfile();
+          markSessionGuest();
+
+          setUid("");
+          setEmail("");
+          setCreatedAtIso("");
+          setTrialStartAt("");
+          setTrialEndAt("");
+          setTrialActive(false);
+
           setNameDraft(g.name);
           setPhoneDraft(normalizePhoneDigits(g.phone));
           setPhotoURL(g.photoURL);
@@ -156,21 +154,14 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
           return;
         }
 
-        // ✅ se existir sessão local visual "user", NÃO apaga
-        const localSess = loadLocalSessionObj();
-        if (isLocalVisualUserSession(localSess)) {
-          setIsGuest(false);
-          return;
-        }
-
-        // sem guest e sem user local válido => limpa sessão
-        setIsGuest(false);
+        // sem auth real e sem guest => limpa tudo
         resetAuthedState();
+        resetGuestState();
         safeRemoveSession();
         return;
       }
 
-      // authed real
+      // auth real
       setGuestActive(false);
       setIsGuest(false);
 
@@ -196,6 +187,10 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
 
       setPhotoFile(null);
       clearPreview();
+
+      if (typeof onAuthenticated === "function") {
+        onAuthenticated();
+      }
     });
 
     return () => {
@@ -460,32 +455,34 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
      Login / Guest
   ========================= */
 
-  const onEnter = () => {
-    // ✅ Login VISUAL (sem Firebase): cria sessão local "user" consistente
+  const onEnter = async (payload) => {
     setMsg("");
     setErr("");
 
+    const login = String(payload?.login || "").trim();
+    const password = String(payload?.password || "");
+    const mode = String(payload?.mode || "").trim().toLowerCase();
+
+    if (mode !== "firebase") {
+      throw new Error("Modo de autenticação inválido.");
+    }
+
+    if (!login || !password) {
+      throw new Error("Preencha login e senha.");
+    }
+
+    const emailForAuth = normalizeLoginToEmail(login);
+
+    // mata estado guest antes do login real
     setGuestActive(false);
     setIsGuest(false);
+    safeRemoveSession();
 
     try {
-      localStorage.setItem(
-        ACCOUNT_SESSION_KEY,
-        JSON.stringify({
-          ok: true,
-          type: "user",
-          loginType: "user",
-          plan: "FREE",
-          authMode: "visual",
-          ts: Date.now(),
-        })
-      );
-      localStorage.removeItem("pp_guest_active_v1");
-      window.dispatchEvent(new Event("pp_session_changed"));
-    } catch {}
-
-    if (typeof onAuthenticated === "function") {
-      onAuthenticated();
+      await signInWithEmailAndPassword(auth, emailForAuth, password);
+      return true;
+    } catch (error) {
+      throw new Error(buildFirebaseLoginError(error));
     }
   };
 
@@ -493,6 +490,7 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
     setMsg("");
     setErr("");
 
+    safeRemoveSession();
     setGuestActive(true);
     setIsGuest(true);
 
@@ -512,6 +510,11 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
     }
   };
 
+  const onRegister = () => {
+    setMsg("");
+    setErr("Cadastro ainda não foi conectado ao Firebase.");
+  };
+
   /* =========================
      Render
   ========================= */
@@ -521,7 +524,7 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
   }
 
   if (!isLogged && !isGuest) {
-    return <LoginVisual onEnter={onEnter} onSkip={onSkip} />;
+    return <LoginVisual onEnter={onEnter} onSkip={onSkip} onRegister={onRegister} />;
   }
 
   return (
@@ -552,4 +555,3 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
     />
   );
 }
-

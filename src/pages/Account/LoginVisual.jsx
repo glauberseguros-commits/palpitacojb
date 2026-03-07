@@ -23,21 +23,13 @@ function safeRemoveLS(key) {
   } catch {}
 }
 
-function goDashboardHard() {
-  try {
-    window.location.assign("/");
-  } catch {
-    try {
-      window.location.href = "/";
-    } catch {}
-  }
-}
-
-export default function LoginVisual({ onEnter, onSkip }) {
+export default function LoginVisual({ onEnter, onSkip, onRegister }) {
   const [logoOk, setLogoOk] = useState(true);
   const [stage, setStage] = useState("entry"); // entry | auth
   const [loginValue, setLoginValue] = useState("");
   const [passwordValue, setPasswordValue] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
     if (process.env.NODE_ENV === "production") return;
@@ -59,9 +51,11 @@ export default function LoginVisual({ onEnter, onSkip }) {
     const GOLD = "rgba(202,166,75,1)";
     const WHITE = "rgba(255,255,255,0.94)";
     const WHITE_72 = "rgba(255,255,255,0.72)";
+    const WHITE_60 = "rgba(255,255,255,0.60)";
     const BORDER = "rgba(255,255,255,0.12)";
     const BORDER_GOLD = "rgba(202,166,75,0.30)";
     const BG = "#050505";
+    const RED = "rgba(255,110,110,0.95)";
 
     return {
       page: {
@@ -218,6 +212,25 @@ export default function LoginVisual({ onEnter, onSkip }) {
         fontWeight: 700,
       },
 
+      hint: {
+        margin: 0,
+        fontSize: 12,
+        lineHeight: 1.4,
+        color: WHITE_60,
+        textAlign: "center",
+      },
+
+      errorBox: {
+        border: "1px solid rgba(255,110,110,0.30)",
+        background: "rgba(255,110,110,0.08)",
+        color: RED,
+        borderRadius: 14,
+        padding: "10px 12px",
+        fontSize: 13,
+        fontWeight: 700,
+        textAlign: "center",
+      },
+
       btnRow: {
         display: "grid",
         gap: 12,
@@ -234,6 +247,7 @@ export default function LoginVisual({ onEnter, onSkip }) {
         fontSize: 16,
         letterSpacing: 0.3,
         boxShadow: "0 10px 24px rgba(0,0,0,0.28)",
+        opacity: 1,
       },
 
       btnSecondary: {
@@ -246,6 +260,7 @@ export default function LoginVisual({ onEnter, onSkip }) {
         cursor: "pointer",
         fontSize: 16,
         letterSpacing: 0.2,
+        opacity: 1,
       },
 
       btnGhost: {
@@ -257,35 +272,67 @@ export default function LoginVisual({ onEnter, onSkip }) {
         fontWeight: 800,
         cursor: "pointer",
         fontSize: 14,
+        opacity: 1,
+      },
+
+      btnDisabled: {
+        opacity: 0.55,
+        cursor: "not-allowed",
       },
     };
   }, []);
 
-  const enterVip = () => {
-    safeSetLS(
-      ACCOUNT_SESSION_KEY,
-      JSON.stringify({
-        ok: true,
-        type: "user",
-        loginType: "user",
-        plan: "FREE",
-        authMode: "visual",
-        login: String(loginValue || "").trim(),
-        ts: Date.now(),
-      })
-    );
-
+  function clearVisualSession() {
+    safeRemoveLS(ACCOUNT_SESSION_KEY);
     safeRemoveLS(LS_GUEST_ACTIVE_KEY);
     dispatchSessionChanged();
+  }
+
+  async function handleRealLogin() {
+    const login = String(loginValue || "").trim();
+    const password = String(passwordValue || "");
+
+    if (!login || !password) {
+      setErrorMsg("Preencha login e senha.");
+      return;
+    }
+
+    setSubmitting(true);
+    setErrorMsg("");
+
+    // Impede conflito com sessão fake anterior
+    clearVisualSession();
 
     try {
-      onEnter?.("dashboard");
-    } catch {}
+      if (typeof onEnter !== "function") {
+        throw new Error("Fluxo de autenticação real não foi conectado no componente pai.");
+      }
 
-    goDashboardHard();
-  };
+      const result = await onEnter({
+        login,
+        password,
+        mode: "firebase",
+      });
 
-  const enterGuest = () => {
+      // O componente pai é o dono da autenticação real.
+      // Se ele autenticou, ele decide navegação/sessão Firebase.
+      if (result === false) {
+        throw new Error("Login inválido.");
+      }
+    } catch (err) {
+      const msg =
+        String(err?.message || "").trim() ||
+        "Não foi possível autenticar com o Firebase.";
+      setErrorMsg(msg);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  function enterGuest() {
+    setErrorMsg("");
+    setSubmitting(false);
+
     safeSetLS(
       ACCOUNT_SESSION_KEY,
       JSON.stringify({
@@ -304,18 +351,34 @@ export default function LoginVisual({ onEnter, onSkip }) {
     try {
       onSkip?.();
     } catch {}
+  }
 
-    goDashboardHard();
-  };
-
-  const onSubmitLogin = (e) => {
+  async function onSubmitLogin(e) {
     e.preventDefault();
-    enterVip();
-  };
+    if (submitting) return;
+    await handleRealLogin();
+  }
 
-  const onCadastrar = () => {
-    window.alert("Tela de cadastro será a próxima etapa.");
-  };
+  function onCadastrar() {
+    setErrorMsg("");
+
+    if (typeof onRegister === "function") {
+      onRegister();
+      return;
+    }
+
+    window.alert("Fluxo de cadastro ainda não foi conectado.");
+  }
+
+  function goToAuthStage() {
+    setErrorMsg("");
+    setStage("auth");
+  }
+
+  function goToEntryStage() {
+    setErrorMsg("");
+    setStage("entry");
+  }
 
   return (
     <div style={ui.page}>
@@ -348,20 +411,22 @@ export default function LoginVisual({ onEnter, onSkip }) {
           <div style={ui.body}>
             {stage === "entry" ? (
               <div style={ui.btnRow}>
-                <button
-                  type="button"
-                  style={ui.btnPrimary}
-                  onClick={() => setStage("auth")}
-                >
+                <button type="button" style={ui.btnPrimary} onClick={goToAuthStage}>
                   ENTRAR
+                </button>
+
+                <button type="button" style={ui.btnSecondary} onClick={enterGuest}>
+                  CONVIDADO
                 </button>
               </div>
             ) : (
               <>
                 <h2 style={ui.sectionTitle}>Acesso ao painel</h2>
                 <p style={ui.sectionText}>
-                  Entre com seu login e senha, cadastre-se ou continue como convidado.
+                  Login e senha precisam passar pelo fluxo real do Firebase. Convidado é acesso visual local.
                 </p>
+
+                {errorMsg ? <div style={ui.errorBox}>{errorMsg}</div> : null}
 
                 <form style={ui.formGrid} onSubmit={onSubmitLogin}>
                   <div style={ui.fieldWrap}>
@@ -376,6 +441,7 @@ export default function LoginVisual({ onEnter, onSkip }) {
                       placeholder="Digite seu login"
                       style={ui.input}
                       autoComplete="username"
+                      disabled={submitting}
                     />
                   </div>
 
@@ -391,34 +457,58 @@ export default function LoginVisual({ onEnter, onSkip }) {
                       placeholder="Digite sua senha"
                       style={ui.input}
                       autoComplete="current-password"
+                      disabled={submitting}
                     />
                   </div>
 
+                  <p style={ui.hint}>
+                    Este formulário não cria sessão local fake de usuário. A autenticação deve ser feita no componente pai.
+                  </p>
+
                   <div style={ui.btnRow}>
-                    <button type="submit" style={ui.btnPrimary}>
-                      ENTRAR
+                    <button
+                      type="submit"
+                      style={{
+                        ...ui.btnPrimary,
+                        ...(submitting ? ui.btnDisabled : null),
+                      }}
+                      disabled={submitting}
+                    >
+                      {submitting ? "ENTRANDO..." : "ENTRAR"}
                     </button>
 
                     <button
                       type="button"
-                      style={ui.btnSecondary}
+                      style={{
+                        ...ui.btnSecondary,
+                        ...(submitting ? ui.btnDisabled : null),
+                      }}
                       onClick={onCadastrar}
+                      disabled={submitting}
                     >
                       CADASTRAR
                     </button>
 
                     <button
                       type="button"
-                      style={ui.btnSecondary}
+                      style={{
+                        ...ui.btnSecondary,
+                        ...(submitting ? ui.btnDisabled : null),
+                      }}
                       onClick={enterGuest}
+                      disabled={submitting}
                     >
                       CONVIDADO
                     </button>
 
                     <button
                       type="button"
-                      style={ui.btnGhost}
-                      onClick={() => setStage("entry")}
+                      style={{
+                        ...ui.btnGhost,
+                        ...(submitting ? ui.btnDisabled : null),
+                      }}
+                      onClick={goToEntryStage}
+                      disabled={submitting}
                     >
                       VOLTAR
                     </button>

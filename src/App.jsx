@@ -22,7 +22,7 @@ import CentenasMod from "./pages/Centenas/Centenas";
 // ✅ AppShell
 import AppShellMod from "./pages/Dashboard/components/Sidebar/AppShell";
 
-// ✅ Firebase (Admin real)
+// ✅ Firebase (Admin real / Auth real)
 import { auth, db } from "./services/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
@@ -108,7 +108,7 @@ function resolveComponent(mod, name) {
 }
 
 /* =========================
-   Sessão (robusta e compatível)
+   Sessão (estrita)
 ========================= */
 
 function loadSessionObj() {
@@ -116,34 +116,49 @@ function loadSessionObj() {
   if (!raw) return null;
 
   const s = String(raw || "").trim();
-  if (!s) return null;
-
-  if (!s.startsWith("{")) return null;
+  if (!s || !s.startsWith("{")) return null;
 
   const obj = safeParseJson(s);
   if (!obj || typeof obj !== "object") return null;
 
   const type = String(obj.type || "").trim().toLowerCase();
-  const ok =
-    obj.ok === true ||
-    type === "user" ||
-    type === "guest" ||
-    !!obj.uid;
+  const plan = String(obj.plan || "FREE").trim().toUpperCase();
+  const uid = String(obj.uid || "").trim();
+  const email = String(obj.email || "").trim().toLowerCase();
+  const ok = obj.ok === true;
 
-  if (!ok) return null;
+  // guest local válido
+  if (type === "guest" && ok) {
+    return {
+      ok: true,
+      type: "guest",
+      plan,
+      uid: "",
+      email: "",
+      raw: obj,
+    };
+  }
 
-  return {
-    ok: true,
-    type: type === "guest" ? "guest" : "user",
-    plan: String(obj.plan || "FREE").toUpperCase(),
-    uid: obj.uid,
-    raw: obj,
-  };
+  // user real válido = precisa uid Firebase
+  if (type === "user" && ok && uid) {
+    return {
+      ok: true,
+      type: "user",
+      plan,
+      uid,
+      email,
+      raw: obj,
+    };
+  }
+
+  // qualquer sessão legada/fake/visual é inválida
+  return null;
 }
 
 function hasActiveSession() {
   if (safeReadLS(LS_GUEST_ACTIVE_KEY) === "1") return true;
-  return !!loadSessionObj();
+  const sess = loadSessionObj();
+  return !!sess;
 }
 
 /* =========================
@@ -500,7 +515,8 @@ export default function App() {
     safeWriteLS(DASH_FILTERS_KEY, JSON.stringify(dashboardFilters));
   }, [dashboardFilters]);
 
-  const logout = () => {
+  const logout = async () => {
+    // limpa estado local primeiro
     safeRemoveLS(STORAGE_KEY);
     safeRemoveLS(ACCOUNT_SESSION_KEY);
     safeRemoveLS(LS_GUEST_ACTIVE_KEY);
@@ -508,6 +524,11 @@ export default function App() {
 
     try {
       window.dispatchEvent(new Event("pp_session_changed"));
+    } catch {}
+
+    // encerra sessão real do Firebase
+    try {
+      await signOut(auth);
     } catch {}
 
     setScreen(ROUTES.LOGIN);

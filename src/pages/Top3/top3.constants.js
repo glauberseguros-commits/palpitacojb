@@ -37,11 +37,11 @@ export const PT_RIO_SCHEDULE_NORMAL = [
 ];
 
 /**
- * ✅ PT_RIO em QUA/SÁB (RJ)
- * - Ajuste solicitado: NÃO tem 18h nesses dias no seu cenário real
- * - Mantém 21h como alvo natural do próximo sorteio
- *
- * Se no futuro mudar, ajuste aqui (sem herdar do NORMAL).
+ * PT_RIO em QUA/SÁB (RJ)
+ * ATENÇÃO:
+ * - aqui o 18:00 foi removido por regra operacional atual do projeto
+ * - se a análise histórica incluir períodos em que houve 18h em qua/sáb,
+ *   essa constante pode distorcer o motor e deve ser revista
  */
 export const PT_RIO_SCHEDULE_WED_SAT = [
   "09:00",
@@ -51,25 +51,28 @@ export const PT_RIO_SCHEDULE_WED_SAT = [
   "21:00",
 ];
 
-// Federal: travado em 20h (consistente com UX e regra do app)
+// Federal: travado em 20h
 export const FEDERAL_SCHEDULE = ["20:00"];
 
 /* =========================
-   ✅ Parâmetros do motor TOP3
-   (controle central)
+   Parâmetros do motor TOP3
 ========================= */
 
-// Suavização Laplace/Dirichlet: evita 0.00% e estabiliza
-export const TOP3_SMOOTH_ALPHA = 1; // 0.5 ou 1 é ótimo
+/**
+ * OBS:
+ * Estes parâmetros só têm efeito se forem realmente usados no motor.
+ * Se o engine não aplicar smoothing/shrinkage, eles são apenas declarativos.
+ */
 
-// Mistura (shrinkage) Condicional vs Base do horário
-// w = samples / (samples + M)
+// Suavização Laplace/Dirichlet
+export const TOP3_SMOOTH_ALPHA = 1;
+
+// Mistura Condicional vs Base do horário
 export const TOP3_SHRINK_M = 40;
 
 // Busca do "próximo sorteio real" quando o slot da grade não existe na base
-// varre próximos slots/dias até achar um draw existente
-export const TOP3_NEXTDRAW_SCAN_MAX_STEPS = 18; // ✅ mais robusto contra buracos/slots "quebrados"
-export const TOP3_NEXTDRAW_SCAN_MAX_DAYS = 7; // limite de segurança
+export const TOP3_NEXTDRAW_SCAN_MAX_STEPS = 18;
+export const TOP3_NEXTDRAW_SCAN_MAX_DAYS = 7;
 
 // Quantos grupos existem (Jogo do Bicho = 25)
 export const TOP3_GROUPS_K = 25;
