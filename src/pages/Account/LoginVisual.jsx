@@ -160,20 +160,7 @@ export default function LoginVisual({ onEnter, onSkip, onRegister }) {
       },
 
       body: {
-        padding: "18px 22px 22px",
-        display: "grid",
-        gap: 14,
-      },
-
-      sectionTitle: {
-        margin: 0,
-        fontSize: 18,
-        fontWeight: 900,
-        letterSpacing: 0.2,
-        textAlign: "center",
-      },
-
-      formGrid: {
+        padding: "14px 22px 22px",
         display: "grid",
         gap: 12,
       },
@@ -211,6 +198,11 @@ export default function LoginVisual({ onEnter, onSkip, onRegister }) {
         fontSize: 13,
         fontWeight: 700,
         textAlign: "center",
+      },
+
+      formGrid: {
+        display: "grid",
+        gap: 12,
       },
 
       btnRow: {
@@ -374,6 +366,7 @@ export default function LoginVisual({ onEnter, onSkip, onRegister }) {
             </div>
           </div>
 
+          <div style={ui.body}>
             {errorMsg ? <div style={ui.errorBox}>{errorMsg}</div> : null}
 
             <form style={ui.formGrid} onSubmit={onSubmitLogin}>
