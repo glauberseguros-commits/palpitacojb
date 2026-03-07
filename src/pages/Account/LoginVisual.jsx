@@ -55,7 +55,6 @@ export default function LoginVisual({ onEnter, onSkip }) {
   const ui = useMemo(() => {
     const GOLD = "rgba(202,166,75,1)";
     const WHITE = "rgba(255,255,255,0.94)";
-    const WHITE_70 = "rgba(255,255,255,0.70)";
     const BORDER = "rgba(255,255,255,0.12)";
     const BORDER_GOLD = "rgba(202,166,75,0.30)";
     const BG = "#050505";
@@ -136,12 +135,6 @@ export default function LoginVisual({ onEnter, onSkip }) {
           "drop-shadow(0 14px 34px rgba(0,0,0,0.50)) drop-shadow(0 0 18px rgba(202,166,75,0.08))",
       },
 
-      brandFallback: {
-        display: "grid",
-        justifyItems: "center",
-        gap: 12,
-      },
-
       markFallback: {
         width: 64,
         height: 64,
@@ -159,19 +152,15 @@ export default function LoginVisual({ onEnter, onSkip }) {
 
       titleWrap: {
         textAlign: "center",
-      },
-
-      title: {
-        fontSize: "clamp(24px, 2.8vw, 32px)",
-        fontWeight: 1000,
-        margin: 0,
-        letterSpacing: 0.2,
+        marginTop: 8,
       },
 
       subtitle: {
         fontSize: "clamp(14px, 1.6vw, 16px)",
         color: WHITE,
-        fontWeight: 700, letterSpacing: 0.4, margin: "4px 0 0 0",
+        fontWeight: 700,
+        letterSpacing: 0.4,
+        margin: "4px 0 0 0",
       },
 
       body: {
@@ -197,18 +186,6 @@ export default function LoginVisual({ onEnter, onSkip }) {
         letterSpacing: 0.3,
         boxShadow: "0 10px 24px rgba(0,0,0,0.28)",
       },
-
-      btnSecondary: {
-        height: 54,
-        borderRadius: 17,
-        border: "1px solid rgba(255,255,255,0.16)",
-        background: "rgba(255,255,255,0.05)",
-        color: WHITE,
-        fontWeight: 900,
-        cursor: "pointer",
-        fontSize: 16,
-        letterSpacing: 0.2,
-      },
     };
   }, []);
 
@@ -230,29 +207,6 @@ export default function LoginVisual({ onEnter, onSkip }) {
 
     try {
       onEnter?.("dashboard");
-    } catch {}
-
-    goDashboardHard();
-  };
-
-  const enterGuest = () => {
-    safeSetLS(
-      ACCOUNT_SESSION_KEY,
-      JSON.stringify({
-        ok: true,
-        type: "guest",
-        loginType: "guest",
-        plan: "FREE",
-        authMode: "visual",
-        ts: Date.now(),
-      })
-    );
-
-    safeSetLS(LS_GUEST_ACTIVE_KEY, "1");
-    dispatchSessionChanged();
-
-    try {
-      onSkip?.();
     } catch {}
 
     goDashboardHard();
@@ -291,10 +245,6 @@ export default function LoginVisual({ onEnter, onSkip }) {
               <button type="button" style={ui.btnPrimary} onClick={enterLogin}>
                 ENTRAR
               </button>
-
-              <button type="button" style={ui.btnSecondary} onClick={enterGuest}>
-                ENTRAR COMO CONVIDADO
-              </button>
             </div>
           </div>
         </div>
@@ -302,4 +252,3 @@ export default function LoginVisual({ onEnter, onSkip }) {
     </div>
   );
 }
-
