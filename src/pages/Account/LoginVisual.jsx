@@ -1,8 +1,9 @@
 // src/pages/Account/LoginVisual.jsx
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 const ACCOUNT_SESSION_KEY = "pp_session_v1";
 const LS_GUEST_ACTIVE_KEY = "pp_guest_active_v1";
+const LOGO_SRC = "/logo/palpitaco-jb.png";
 
 function dispatchSessionChanged() {
   try {
@@ -33,6 +34,8 @@ function goDashboardHard() {
 }
 
 export default function LoginVisual({ onEnter, onSkip }) {
+  const [logoOk, setLogoOk] = useState(true);
+
   useEffect(() => {
     if (process.env.NODE_ENV === "production") return;
 
@@ -51,10 +54,10 @@ export default function LoginVisual({ onEnter, onSkip }) {
 
   const ui = useMemo(() => {
     const GOLD = "rgba(202,166,75,1)";
-    const WHITE = "rgba(255,255,255,0.92)";
+    const WHITE = "rgba(255,255,255,0.94)";
     const WHITE_70 = "rgba(255,255,255,0.70)";
     const BORDER = "rgba(255,255,255,0.12)";
-    const BORDER_GOLD = "rgba(202,166,75,0.35)";
+    const BORDER_GOLD = "rgba(202,166,75,0.30)";
     const BG = "#050505";
 
     return {
@@ -64,7 +67,7 @@ export default function LoginVisual({ onEnter, onSkip }) {
         color: WHITE,
         display: "grid",
         placeItems: "center",
-        padding: "clamp(14px, 2.5vw, 26px)",
+        padding: "clamp(16px, 2.6vw, 28px)",
         boxSizing: "border-box",
         position: "relative",
         overflow: "hidden",
@@ -75,9 +78,9 @@ export default function LoginVisual({ onEnter, onSkip }) {
         position: "absolute",
         inset: "-25%",
         background:
-          "radial-gradient(700px 420px at 18% 22%, rgba(202,166,75,0.18), rgba(0,0,0,0) 60%)," +
-          "radial-gradient(520px 380px at 82% 34%, rgba(202,166,75,0.10), rgba(0,0,0,0) 62%)," +
-          "radial-gradient(520px 520px at 50% 92%, rgba(255,255,255,0.06), rgba(0,0,0,0) 64%)",
+          "radial-gradient(760px 460px at 18% 18%, rgba(202,166,75,0.16), rgba(0,0,0,0) 62%)," +
+          "radial-gradient(560px 380px at 84% 30%, rgba(202,166,75,0.08), rgba(0,0,0,0) 64%)," +
+          "radial-gradient(620px 620px at 50% 100%, rgba(255,255,255,0.04), rgba(0,0,0,0) 66%)",
         pointerEvents: "none",
       },
 
@@ -85,95 +88,126 @@ export default function LoginVisual({ onEnter, onSkip }) {
         position: "absolute",
         inset: 0,
         background:
-          "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(0,0,0,0) 40%)," +
-          "linear-gradient(0deg, rgba(255,255,255,0.03), rgba(0,0,0,0) 45%)",
+          "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0) 40%)," +
+          "linear-gradient(0deg, rgba(255,255,255,0.02), rgba(0,0,0,0) 44%)",
         pointerEvents: "none",
       },
 
       shell: {
-        width: "min(980px, 100%)",
+        width: "min(540px, 100%)",
         display: "grid",
-        gap: "clamp(12px, 2vw, 18px)",
         zIndex: 2,
       },
 
       card: {
-        width: "min(560px, 100%)",
+        width: "100%",
         margin: "0 auto",
-        borderRadius: 22,
+        borderRadius: 24,
         border: `1px solid ${BORDER}`,
-        background: "rgba(0,0,0,0.48)",
-        boxShadow: "0 18px 55px rgba(0,0,0,0.60)",
+        background: "rgba(0,0,0,0.54)",
+        boxShadow: "0 24px 70px rgba(0,0,0,0.62)",
         overflow: "hidden",
+        backdropFilter: "blur(4px)",
       },
 
       header: {
-        padding: "clamp(18px, 2.2vw, 22px)",
-        borderBottom: "1px solid rgba(255,255,255,0.08)",
-        background: "linear-gradient(180deg, rgba(202,166,75,0.10), rgba(0,0,0,0.10))",
+        padding: "clamp(24px, 3vw, 34px) clamp(22px, 3vw, 30px) 18px",
+        borderBottom: "1px solid rgba(255,255,255,0.07)",
+        background: "linear-gradient(180deg, rgba(202,166,75,0.09), rgba(0,0,0,0.02) 70%)",
       },
 
-      brandRow: {
-        display: "flex",
-        alignItems: "center",
+      logoWrap: {
+        display: "grid",
+        placeItems: "center",
+      },
+
+      logoBox: {
+        width: "min(380px, 82vw)",
+        display: "grid",
+        placeItems: "center",
+      },
+
+      logoImg: {
+        width: "100%",
+        height: "auto",
+        display: "block",
+        objectFit: "contain",
+        filter:
+          "drop-shadow(0 14px 34px rgba(0,0,0,0.50)) drop-shadow(0 0 18px rgba(202,166,75,0.08))",
+      },
+
+      brandFallback: {
+        display: "grid",
+        justifyItems: "center",
         gap: 12,
       },
 
-      mark: {
-        width: 44,
-        height: 44,
-        borderRadius: 14,
+      markFallback: {
+        width: 64,
+        height: 64,
+        borderRadius: 18,
         border: `1px solid ${BORDER_GOLD}`,
         background:
-          "radial-gradient(18px 18px at 28% 25%, rgba(255,255,255,0.20), rgba(0,0,0,0) 60%)," +
-          "linear-gradient(180deg, rgba(202,166,75,0.25), rgba(0,0,0,0.20))",
+          "radial-gradient(20px 20px at 28% 25%, rgba(255,255,255,0.20), rgba(0,0,0,0) 60%)," +
+          "linear-gradient(180deg, rgba(202,166,75,0.24), rgba(0,0,0,0.18))",
         display: "grid",
         placeItems: "center",
         fontWeight: 1000,
+        fontSize: 28,
         color: GOLD,
       },
 
+      titleWrap: {
+        textAlign: "center",
+      },
+
       title: {
-        fontSize: "clamp(18px, 2.2vw, 22px)",
+        fontSize: "clamp(24px, 2.8vw, 32px)",
         fontWeight: 1000,
         margin: 0,
+        letterSpacing: 0.2,
       },
 
       subtitle: {
-        fontSize: "clamp(12px, 1.5vw, 13px)",
+        fontSize: "clamp(12px, 1.5vw, 14px)",
         color: WHITE_70,
-        margin: 0,
+        margin: "8px 0 0 0",
       },
 
       body: {
-        padding: "clamp(18px, 2.2vw, 22px)",
+        padding: "18px 22px 22px",
         display: "grid",
         gap: 12,
       },
 
       btnRow: {
         display: "grid",
-        gap: 10,
+        gap: 12,
       },
 
       btnPrimary: {
-        height: 48,
-        borderRadius: 16,
-        border: "1px solid rgba(202,166,75,0.55)",
+        height: 54,
+        borderRadius: 17,
+        border: "1px solid rgba(202,166,75,0.52)",
         background: "linear-gradient(180deg, rgba(202,166,75,0.22), rgba(202,166,75,0.10))",
         color: WHITE,
         fontWeight: 950,
         cursor: "pointer",
+        fontSize: 16,
+        letterSpacing: 0.3,
+        boxShadow: "0 10px 24px rgba(0,0,0,0.28)",
       },
 
       btnSecondary: {
-        height: 48,
-        borderRadius: 16,
-        border: "1px solid rgba(255,255,255,0.18)",
-        background: "rgba(255,255,255,0.06)",
+        height: 54,
+        borderRadius: 17,
+        border: "1px solid rgba(255,255,255,0.16)",
+        background: "rgba(255,255,255,0.05)",
         color: WHITE,
         fontWeight: 900,
         cursor: "pointer",
+        fontSize: 16,
+        letterSpacing: 0.2,
       },
     };
   }, []);
@@ -232,12 +266,25 @@ export default function LoginVisual({ onEnter, onSkip }) {
       <div style={ui.shell}>
         <div style={ui.card}>
           <div style={ui.header}>
-            <div style={ui.brandRow}>
-              <div style={ui.mark}>PJ</div>
-              <div>
-                <h1 style={ui.title}>Palpitaco JB</h1>
-                <p style={ui.subtitle}>Resultados • Estatística • Insights</p>
-              </div>
+            <div style={ui.logoWrap}>
+              {logoOk ? (
+                <div style={ui.logoBox}>
+                  <img
+                    src={LOGO_SRC}
+                    alt="Palpitaco JB"
+                    style={ui.logoImg}
+                    onError={() => setLogoOk(false)}
+                  />
+                </div>
+              ) : (
+                <div style={ui.brandFallback}>
+                  <div style={ui.markFallback}>PJ</div>
+                  <div style={ui.titleWrap}>
+                    <h1 style={ui.title}>Palpitaco JB</h1>
+                    <p style={ui.subtitle}>Acesso ao painel</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
