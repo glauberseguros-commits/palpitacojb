@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import DashboardMod from "./pages/Dashboard/Dashboard";
@@ -31,7 +31,7 @@ const STORAGE_KEY = "palpitaco_screen_v2";
 const ACCOUNT_SESSION_KEY = "pp_session_v1";
 const LS_GUEST_ACTIVE_KEY = "pp_guest_active_v1";
 
-// ✅ Persistência de filtros do Dashboard (não resetar ao trocar de página)
+// ✅ Persistência de filtros do Dashboard
 const DASH_FILTERS_KEY = "pp_dashboard_filters_v1";
 
 /* =========================
@@ -148,7 +148,6 @@ function loadSessionObj() {
 
   if (!ok) return null;
 
-  // guest real
   if (type === "guest") {
     return {
       ok: true,
@@ -160,7 +159,6 @@ function loadSessionObj() {
     };
   }
 
-  // user real/local válido
   if (type === "user" && uid) {
     return {
       ok: true,
@@ -172,7 +170,6 @@ function loadSessionObj() {
     };
   }
 
-  // fallback legado: se tiver uid/email sem type coerente, ainda considera user
   if (uid || email) {
     return {
       ok: true,
@@ -199,12 +196,8 @@ function cleanupLegacyGuestFlagIfNeeded() {
 
   if (!guestFlag) return;
 
-  // mantém a flag quando a sessão formal atual é guest
-  if (sess?.type === "guest") {
-    return;
-  }
+  if (sess?.type === "guest") return;
 
-  // remove quando a sessão é user ou não existe
   safeRemoveLS(LS_GUEST_ACTIVE_KEY);
 }
 
@@ -356,7 +349,7 @@ class ErrorBoundary extends React.Component {
 }
 
 /* =========================
-   URL <-> Screen sync
+   URL helpers
 ========================= */
 
 function cleanPathname(p) {
@@ -448,9 +441,6 @@ export default function App() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const bootRef = useRef(false);
-  const [routerBooted, setRouterBooted] = useState(false);
-
   const Dashboard = useMemo(() => resolveComponent(DashboardMod, "Dashboard"), []);
   const Account = useMemo(() => resolveComponent(AccountMod, "Account"), []);
   const Results = useMemo(() => resolveComponent(ResultsMod, "Results"), []);
@@ -528,21 +518,8 @@ export default function App() {
     };
   }, [adminMode]);
 
-  const [screen, setScreen] = useState(() => {
-    const session = loadSessionObj();
-    const saved = normalizeRoute(safeReadLS(STORAGE_KEY));
-
-    if (!session) return ROUTES.LOGIN;
-    if (saved && saved !== ROUTES.LOGIN) return saved;
-
-    return ROUTES.DASHBOARD;
-  });
-
-  useEffect(() => {
-    safeWriteLS(STORAGE_KEY, screen);
-  }, [screen]);
-
   const [dashboardFilters, setDashboardFilters] = useState(() => loadDashboardFilters());
+  const [sessionTick, setSessionTick] = useState(0);
 
   useEffect(() => {
     const lot = normalizeLoteriaInput(dashboardFilters?.loteria);
@@ -566,6 +543,94 @@ export default function App() {
     safeWriteLS(DASH_FILTERS_KEY, JSON.stringify(dashboardFilters));
   }, [dashboardFilters]);
 
+  useEffect(() => {
+    const bump = () => setSessionTick((v) => v + 1);
+
+    const onStorage = (e) => {
+      if (!e) return;
+      if (e.key === ACCOUNT_SESSION_KEY || e.key === LS_GUEST_ACTIVE_KEY) {
+        bump();
+      }
+    };
+
+    const onSessionChanged = () => bump();
+    const onFocus = () => bump();
+    const onVis = () => {
+      if (document.visibilityState === "visible") bump();
+    };
+
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("pp_session_changed", onSessionChanged);
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVis);
+
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("pp_session_changed", onSessionChanged);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, []);
+
+  const sessionObj = useMemo(() => {
+    cleanupLegacyGuestFlagIfNeeded();
+    return loadSessionObj();
+  }, [sessionTick]);
+
+  const sessionKind = useMemo(() => getSessionKind(sessionObj), [sessionObj]);
+
+  const currentScreen = useMemo(() => {
+    const byPath = pathToScreen(location?.pathname);
+    if (byPath) return byPath;
+
+    const saved = normalizeRoute(safeReadLS(STORAGE_KEY));
+    if (saved && saved !== ROUTES.LOGIN) return saved;
+
+    return sessionObj ? ROUTES.DASHBOARD : ROUTES.LOGIN;
+  }, [location?.pathname, sessionObj]);
+
+  useEffect(() => {
+    if (adminMode) return;
+
+    const pathScreen = pathToScreen(location?.pathname);
+    const hasSession = !!sessionObj;
+    const curPath = cleanPathname(location?.pathname);
+
+    if (!hasSession) {
+      if (curPath !== "/login") {
+        navigate("/login", { replace: true });
+      }
+      return;
+    }
+
+    if (curPath === "/login") {
+      navigate("/", { replace: true });
+      return;
+    }
+
+    if (!pathScreen) {
+      const saved = normalizeRoute(safeReadLS(STORAGE_KEY));
+      navigate(screenToPath(saved && saved !== ROUTES.LOGIN ? saved : ROUTES.DASHBOARD), {
+        replace: true,
+      });
+    }
+  }, [adminMode, location?.pathname, navigate, sessionObj]);
+
+  useEffect(() => {
+    if (adminMode) return;
+    if (currentScreen && currentScreen !== ROUTES.LOGIN) {
+      safeWriteLS(STORAGE_KEY, currentScreen);
+    }
+  }, [adminMode, currentScreen]);
+
+  const goToScreen = (nextScreen) => {
+    const path = screenToPath(nextScreen);
+    const cur = cleanPathname(location?.pathname);
+    if (cur !== path) {
+      navigate(path);
+    }
+  };
+
   const logout = async () => {
     safeRemoveLS(STORAGE_KEY);
     safeRemoveLS(ACCOUNT_SESSION_KEY);
@@ -580,148 +645,19 @@ export default function App() {
       await signOut(auth);
     } catch {}
 
-    setScreen(ROUTES.LOGIN);
     navigate("/login", { replace: true });
   };
 
-  const forceGoDashboard = useRef(() => {
+  const handleAuthenticated = () => {
     cleanupLegacyGuestFlagIfNeeded();
-    setScreen(ROUTES.DASHBOARD);
     safeWriteLS(STORAGE_KEY, ROUTES.DASHBOARD);
     navigate("/", { replace: true });
-  }).current;
-
-  useEffect(() => {
-    if (adminMode) return;
-    if (screen !== ROUTES.LOGIN) return;
-
-    const goDashboard = () => {
-      cleanupLegacyGuestFlagIfNeeded();
-      setScreen(ROUTES.DASHBOARD);
-      safeWriteLS(STORAGE_KEY, ROUTES.DASHBOARD);
-      navigate("/", { replace: true });
-    };
-
-    const check = () => {
-      const sess = loadSessionObj();
-
-      if (sess) {
-        goDashboard();
-        return;
-      }
-
-      cleanupLegacyGuestFlagIfNeeded();
-    };
-
-    check();
-
-    const onStorage = (e) => {
-      if (!e) return;
-      if (e.key === ACCOUNT_SESSION_KEY || e.key === LS_GUEST_ACTIVE_KEY) check();
-    };
-
-    const onSessionChanged = () => check();
-    const onFocus = () => check();
-    const onVis = () => {
-      if (document.visibilityState === "visible") check();
-    };
-
-    window.addEventListener("storage", onStorage);
-    window.addEventListener("pp_session_changed", onSessionChanged);
-    window.addEventListener("focus", onFocus);
-    document.addEventListener("visibilitychange", onVis);
-
-    return () => {
-      window.removeEventListener("storage", onStorage);
-      window.removeEventListener("pp_session_changed", onSessionChanged);
-      window.removeEventListener("focus", onFocus);
-      document.removeEventListener("visibilitychange", onVis);
-    };
-  }, [screen, adminMode, navigate]);
-
-  useEffect(() => {
-    if (adminMode) return;
-
-    const syncFromSession = () => {
-      cleanupLegacyGuestFlagIfNeeded();
-
-      const sess = loadSessionObj();
-      const kind = getSessionKind(sess);
-
-      if (!sess) {
-        if (screen !== ROUTES.LOGIN) setScreen(ROUTES.LOGIN);
-        return;
-      }
-
-      if (kind === "guest" || kind === "user") {
-        if (screen === ROUTES.LOGIN) {
-          setScreen(ROUTES.DASHBOARD);
-        }
-      }
-    };
-
-    syncFromSession();
-
-    const onStorage = (e) => {
-      if (!e) return;
-      if (e.key === ACCOUNT_SESSION_KEY || e.key === LS_GUEST_ACTIVE_KEY) {
-        syncFromSession();
-      }
-    };
-
-    const onSessionChanged = () => syncFromSession();
-
-    window.addEventListener("storage", onStorage);
-    window.addEventListener("pp_session_changed", onSessionChanged);
-
-    return () => {
-      window.removeEventListener("storage", onStorage);
-      window.removeEventListener("pp_session_changed", onSessionChanged);
-    };
-  }, [adminMode, screen]);
-
-  useEffect(() => {
-    if (adminMode) return;
-
-    if (!bootRef.current) {
-      bootRef.current = true;
-      setRouterBooted(true);
-    }
-
-    const wanted = pathToScreen(location?.pathname);
-    if (!wanted) return;
-
-    const sess = loadSessionObj();
-
-    if (!sess) {
-      if (screen !== ROUTES.LOGIN) setScreen(ROUTES.LOGIN);
-      return;
-    }
-
-    if (wanted === ROUTES.LOGIN) {
-      if (screen !== ROUTES.DASHBOARD) setScreen(ROUTES.DASHBOARD);
-      return;
-    }
-
-    if (wanted !== screen) setScreen(wanted);
-  }, [location?.pathname, adminMode, screen]);
-
-  useEffect(() => {
-    if (adminMode) return;
-    if (!routerBooted) return;
-
-    const path = screenToPath(screen);
-    const cur = cleanPathname(location?.pathname);
-
-    if (cur !== path) {
-      navigate(path, { replace: true });
-    }
-  }, [screen, adminMode, routerBooted, location?.pathname, navigate]);
+  };
 
   const PageRouter = ({ s }) => {
     switch (s) {
       case ROUTES.ACCOUNT:
-        return <Account onAuthenticated={forceGoDashboard} />;
+        return <Account onAuthenticated={handleAuthenticated} />;
       case ROUTES.RESULTS:
         return <Results />;
       case ROUTES.TOP3:
@@ -802,14 +738,12 @@ export default function App() {
     );
   }
 
-  if (screen === ROUTES.LOGIN) {
+  if (sessionKind === "anon") {
     return (
       <ErrorBoundary>
         <Account
-          onClose={() => {
-            setScreen(ROUTES.LOGIN);
-          }}
-          onAuthenticated={forceGoDashboard}
+          onClose={() => {}}
+          onAuthenticated={handleAuthenticated}
         />
         <BuildStamp />
       </ErrorBoundary>
@@ -818,8 +752,8 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <AppShell active={screen} onNavigate={setScreen} onLogout={logout}>
-        {screen === ROUTES.DASHBOARD ? (
+      <AppShell active={currentScreen} onNavigate={goToScreen} onLogout={logout}>
+        {currentScreen === ROUTES.DASHBOARD ? (
           <Dashboard
             filters={{
               ...dashboardFilters,
@@ -828,7 +762,7 @@ export default function App() {
             setFilters={setDashboardFilters}
           />
         ) : (
-          <PageRouter s={screen} />
+          <PageRouter s={currentScreen} />
         )}
       </AppShell>
       <BuildStamp />
