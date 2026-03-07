@@ -37,25 +37,22 @@ function ymdToDateLocal(ymd) {
     .trim()
     .match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!m) return null;
-  // local time (Brasil)
   return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12, 0, 0);
 }
 
 function weekdayLocal(ymd) {
   const d = ymdToDateLocal(ymd);
   if (!d || Number.isNaN(d.getTime())) return null;
-  // 0=Dom..6=Sáb
   return d.getDay();
 }
 
 function isWedOrSat(ymd) {
   const wd = weekdayLocal(ymd);
-  return wd === 3 || wd === 6; // Quarta ou Sábado
+  return wd === 3 || wd === 6;
 }
 
 function prevWedOrSatFromYmd(ymd) {
   const d = ymdToDateLocal(ymd) || new Date();
-  // volta no máximo 7 dias para achar o último (qua/sáb)
   for (let i = 0; i < 8; i += 1) {
     const y = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
     if (isWedOrSat(y)) return y;
@@ -64,10 +61,6 @@ function prevWedOrSatFromYmd(ymd) {
   return ymd;
 }
 
-/**
- * ✅ Normaliza horário para "HH:MM"
- * Aceita: "09HS", "9 HS", "09HRS", "09HR", "09H", "9h", "09:00", "9", etc.
- */
 function normalizeHourLike(value) {
   const s0 = safeStr(value);
   if (!s0) return "";
@@ -93,10 +86,6 @@ function hourToNum(h) {
   return Number(m[1]) * 100 + Number(m[2]);
 }
 
-/**
- * ✅ Extrai array de draws de qualquer retorno comum do service
- * (evita "vazio" quando out = { drawsRaw: [...] } etc.)
- */
 function unwrapDraws(maybe) {
   if (Array.isArray(maybe)) return maybe;
   if (maybe && typeof maybe === "object") {
@@ -110,7 +99,7 @@ function unwrapDraws(maybe) {
 }
 
 /* =========================
-   ✅ Bounds (PATCH como no Late)
+   Bounds
 ========================= */
 
 function normalizeBoundsResponse(b) {
@@ -149,7 +138,7 @@ function normalizeSingleDateWithBounds(dateIn, minYmd, maxYmd) {
 }
 
 /* =========================
-   Escopos (RJ / Federal)
+   Escopos
 ========================= */
 
 const SCOPE_RJ = "RJ";
@@ -177,10 +166,6 @@ function isFederalInput(scope) {
   return false;
 }
 
-/**
- * ✅ Mapeamento UI -> query key do service
- * - Agora o service já entende "RJ" e "FEDERAL", então aqui é só padronização.
- */
 function normalizeScopeInput(input) {
   const s = safeStr(input).toUpperCase();
   if (!s) return SCOPE_RJ;
@@ -196,19 +181,13 @@ function scopeDisplayName(scope) {
   return up;
 }
 
-/**
- * ✅ Regras do Federal
- * - Quarta e Sábado
- * - Horário atual 20h, mas já existiu 19h => fallback automático (20h -> 19h)
- */
 const FEDERAL_CLOSE_CANDIDATES = [
   { bucket: "20h", hour: "20:00" },
   { bucket: "19h", hour: "19:00" },
 ];
 
 /* =========================
-   prizeNumber:
-   - Fonte da verdade é p.numero (já vem NORMALIZADO no service)
+   prizeNumber
 ========================= */
 
 function guessPrizeNumber(p) {
@@ -277,21 +256,19 @@ function guessPrizePos(p) {
 }
 
 /* =========================
-   Label robusto (bichoMap)
+   Label robusto
 ========================= */
 
 function safeGetAnimalLabel(grupo, animalFallback) {
   const g = Number(grupo);
   if (!Number.isFinite(g)) return safeStr(animalFallback || "");
 
-  // tenta assinatura "objeto" primeiro
   try {
     const a1 = getAnimalLabel({ grupo: g, animal: safeStr(animalFallback || "") });
     const s1 = safeStr(a1);
     if (s1) return s1;
   } catch {}
 
-  // tenta assinatura "número"
   try {
     const a2 = getAnimalLabel(g);
     const s2 = safeStr(a2);
@@ -302,18 +279,16 @@ function safeGetAnimalLabel(grupo, animalFallback) {
 }
 
 /* =========================
-   Imagens (BASE_URL/Vite + PUBLIC_URL/CRA)
+   Imagens
 ========================= */
 
 function publicBase() {
-  // ✅ Vite: BASE_URL (ex.: "/" ou "/palpitaco/")
   try {
     const viteBase = typeof import.meta !== "undefined" ? import.meta.env?.BASE_URL : "";
     const vb = String(viteBase || "").trim();
     if (vb) return vb.endsWith("/") ? vb.slice(0, -1) : vb;
   } catch {}
 
-  // ✅ CRA: PUBLIC_URL
   const b = String(process.env.PUBLIC_URL || "").trim();
   return b && b !== "/" ? b : "";
 }
@@ -333,13 +308,6 @@ function normalizeImgSrc(src) {
   return `${base}/${s}`;
 }
 
-/**
- * ✅ Gera tentativas inteligentes:
- * - mantém base
- * - alterna case/extensão
- * - tenta JPG/JPEG
- * - ✅ tenta também o padrão com _<size> no filename (fallback)
- */
 function makeImgVariantsFromGrupo(grupo, size) {
   const g = Number(grupo);
   if (!Number.isFinite(g) || g <= 0) return [];
@@ -403,11 +371,6 @@ function RowImg({ variants, alt, fallbackText }) {
   );
 }
 
-/**
- * ✅ Resolve label + imagem com prioridade:
- * 1) Grupo (mais confiável) -> bichoMap
- * 2) Animal vindo no prize (fallback)
- */
 function resolveAnimalUI(prize) {
   const grupo = guessPrizeGrupo(prize);
   const animalRaw = guessPrizeAnimal(prize);
@@ -423,17 +386,14 @@ function resolveAnimalUI(prize) {
 }
 
 /* =========================
-   Dedup de draws (✅ inclui lottery_code)
+   Dedup de draws
 ========================= */
 
 function drawKeyForDedup(d, scopeKey, ymd) {
-  // ✅ Nesta página (Resultados), a identidade lógica é: DATA + HORÁRIO (+ scope)
-  // Isso elimina duplicações causadas por docs diferentes (drawId/lottery_code) para o mesmo horário.
   const hour = normalizeHourLike(d?.close_hour || d?.closeHour || d?.hour || d?.hora || "");
 
   if (hour) return `HOUR:${scopeKey}|${ymd}|${hour}`;
 
-  // fallback raríssimo: se não veio horário, tenta id
   const id = safeStr(d?.drawId || d?.id || "");
   return `ID:${scopeKey}|${ymd}|${id || "?"}`;
 }
@@ -480,11 +440,6 @@ function prizeRankClass(pos) {
   return "";
 }
 
-/**
- * ✅ Formata número por posição:
- * - 7º prêmio = CENTENA (3 dígitos)
- * - demais = MILHAR (4 dígitos, com padStart)
- */
 function formatPrizeNumberByPos(value, pos) {
   const s = safeStr(value);
   if (!s) return "";
@@ -507,6 +462,15 @@ function scopePillClass(active) {
   return active ? "pp_pill isActive" : "pp_pill";
 }
 
+function stopEvt(e) {
+  e.preventDefault();
+  e.stopPropagation();
+}
+
+function stopOnly(e) {
+  e.stopPropagation();
+}
+
 /* =========================
    Page
 ========================= */
@@ -521,27 +485,23 @@ export default function Results() {
   const [error, setError] = useState("");
   const [draws, setDraws] = useState([]);
 
-  // ✅ Bounds por escopo (RJ/Federal)
   const [bounds, setBounds] = useState({ minYmd: null, maxYmd: null, source: "" });
 
-  // ✅ Agora: Resultados mostra TUDO por padrão
   const [showAll, setShowAll] = useState(true);
   const [needsToggle, setNeedsToggle] = useState(false);
 
   const centerRef = useRef(null);
+  const dateInputRef = useRef(null);
 
   const scopeKey = useMemo(() => normalizeScopeInput(scopeUi), [scopeUi]);
   const isFederal = useMemo(() => isFederalInput(scopeKey), [scopeKey]);
-
   const label = useMemo(() => scopeDisplayName(scopeKey), [scopeKey]);
 
-  // ✅ ymdSafe só garante formato
   const ymdSafe = useMemo(() => {
     const s = safeStr(ymd);
     return isYMD(s) ? s : todayYMDLocal();
   }, [ymd]);
 
-  // ✅ ymdClamped garante range quando bounds existe
   const ymdClamped = useMemo(() => {
     const minYmd = bounds?.minYmd;
     const maxYmd = bounds?.maxYmd;
@@ -549,16 +509,14 @@ export default function Results() {
     return normalizeSingleDateWithBounds(ymdSafe, minYmd, maxYmd);
   }, [ymdSafe, bounds?.minYmd, bounds?.maxYmd]);
 
-  // ✅ quando bounds chega, ajusta o input se estiver fora
   useEffect(() => {
     if (ymdClamped && ymdClamped !== ymdSafe) {
       setYmd(ymdClamped);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ymdClamped]);
+  }, [ymdClamped, ymdSafe]);
 
   const dateBR = useMemo(() => ymdToBR(ymdClamped), [ymdClamped]);
-// ✅ fetch bounds quando muda escopo
+
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -592,7 +550,6 @@ export default function Results() {
     setError("");
 
     try {
-      // ✅ Federal: tenta 20h e faz fallback pra 19h se vier vazio
       const tryFetch = async ({ hour, bucket }) => {
         const out = await getKingResultsByDate({
           uf: sKey,
@@ -634,7 +591,6 @@ export default function Results() {
   }, [load]);
 
   useEffect(() => {
-    // quando troca escopo/data, mantemos "mostrar tudo"
     setShowAll(true);
   }, [scopeKey, ymdClamped]);
 
@@ -645,7 +601,6 @@ export default function Results() {
       const hb = hourToNum(b?.close_hour || b?.closeHour || b?.hour || b?.hora);
       if (ha !== hb) return hb - ha;
 
-      // ✅ estabilidade: lottery_code (quando existir)
       const la = safeStr(a?.lottery_code || a?.lotteryCode || "");
       const lb = safeStr(b?.lottery_code || b?.lotteryCode || "");
       if (la !== lb) return lb.localeCompare(la);
@@ -666,6 +621,31 @@ export default function Results() {
     if (showAll) return drawsOrdered;
     return drawsOrdered.slice(0, 6);
   }, [drawsOrdered, needsToggle, showAll]);
+
+  const openDatePicker = useCallback((e) => {
+    stopEvt(e);
+    const el = dateInputRef.current;
+    if (!el) return;
+
+    try {
+      if (typeof el.showPicker === "function") {
+        el.showPicker();
+        return;
+      }
+    } catch {}
+
+    try {
+      el.focus({ preventScroll: true });
+    } catch {
+      try {
+        el.focus();
+      } catch {}
+    }
+
+    try {
+      el.click();
+    } catch {}
+  }, []);
 
   const styles = useMemo(() => {
     return `
@@ -820,7 +800,8 @@ export default function Results() {
         font-weight: 850;
         color: rgba(255,255,255,0.92);
       }
-.pp_topbar{
+
+      .pp_topbar{
         display:flex;
         align-items:center;
         justify-content:flex-end;
@@ -1043,6 +1024,27 @@ export default function Results() {
 
       .pp_row:hover{ background: rgba(255,255,255,0.03); }
 
+      .pp_dateWrap{
+        position: relative;
+      }
+
+      .pp_dateHidden{
+        position: absolute;
+        inset: 0;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .pp_dateBtn{
+        min-width: 150px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+
       @media (max-width: 980px){
         .pp_grid2{ grid-template-columns: 1fr; }
       }
@@ -1051,13 +1053,15 @@ export default function Results() {
         .pp_header{ flex-direction: column; align-items: stretch; }
         .pp_controls{ justify-content:flex-start; }
         .pp_input, .pp_btn{ width:100%; min-width:0; }
+        .pp_dateBtn{ width: 100%; }
 
         .pp_row{ grid-template-columns: 56px 1fr 104px; padding: 10px 10px; }
         .pp_numValue{ font-size: 17px; }
       }
     `;
   }, []);
-return (
+
+  return (
     <div className="pp_wrap">
       <style>{styles}</style>
 
@@ -1067,13 +1071,15 @@ return (
             <div className="pp_title">Resultados</div>
           </div>
 
-          <div className="pp_controls">
-            {/* ✅ Troca de escopo (RJ | Federal) */}
+          <div className="pp_controls" onClick={stopOnly} onMouseDown={stopOnly} onTouchStart={stopOnly}>
             <div className="pp_pills" aria-label="Escopo">
               <button
                 type="button"
                 className={scopePillClass(scopeKey === SCOPE_RJ)}
-                onClick={() => setScopeUi(SCOPE_RJ)}
+                onClick={(e) => {
+                  stopEvt(e);
+                  setScopeUi(SCOPE_RJ);
+                }}
                 title="Resultados do Rio (PT_RIO)"
               >
                 RJ
@@ -1082,37 +1088,72 @@ return (
               <button
                 type="button"
                 className={scopePillClass(isFederal)}
-                onClick={() => setScopeUi(SCOPE_FEDERAL)}
+                onClick={(e) => {
+                  stopEvt(e);
+                  setScopeUi(SCOPE_FEDERAL);
+                }}
                 title="Loteria Federal (qua/sáb) — tenta 20h e fallback 19h"
               >
                 FEDERAL
               </button>
             </div>
 
-            <input
-              className="pp_input"
-              type="date"
-              value={ymdClamped}
-              min={bounds?.minYmd || undefined}
-              max={bounds?.maxYmd || undefined}
-              onChange={(e) => setYmd(e.target.value)}
-              aria-label="Data"
-              title="Calendário"
-              style={{ minWidth: 150 }}
-            />
+            <div className="pp_dateWrap">
+              <input
+                ref={dateInputRef}
+                className="pp_dateHidden"
+                type="date"
+                value={ymdClamped}
+                min={bounds?.minYmd || undefined}
+                max={bounds?.maxYmd || undefined}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  setYmd(e.target.value);
+                }}
+                onClick={stopOnly}
+                onMouseDown={stopOnly}
+                onTouchStart={stopOnly}
+                aria-label="Data"
+                tabIndex={-1}
+              />
+
+              <button
+                type="button"
+                className="pp_btn pp_dateBtn"
+                onClick={openDatePicker}
+                onMouseDown={stopOnly}
+                onTouchStart={stopOnly}
+                title="Calendário"
+                aria-label={`Selecionar data. Atual: ${dateBR}`}
+              >
+                <span aria-hidden="true">📅</span>
+                <span>{dateBR}</span>
+              </button>
+            </div>
 
             {isFederal ? (
               <button
                 className="pp_btn"
                 type="button"
-                onClick={() => setYmd((prev) => prevWedOrSatFromYmd(prev || todayYMDLocal()))}
+                onClick={(e) => {
+                  stopEvt(e);
+                  setYmd((prev) => prevWedOrSatFromYmd(prev || todayYMDLocal()));
+                }}
                 title="Ir para a última quarta/sábado"
               >
                 Último Federal
               </button>
             ) : null}
 
-            <button className="pp_btn" onClick={load} type="button" title="Atualizar">
+            <button
+              className="pp_btn"
+              onClick={(e) => {
+                stopEvt(e);
+                load();
+              }}
+              type="button"
+              title="Atualizar"
+            >
               Atualizar
             </button>
           </div>
@@ -1120,8 +1161,6 @@ return (
 
         <div className="pp_body">
           <div className="pp_center" ref={centerRef}>
-            
-
             {loading ? (
               <div className="pp_state">Carregando…</div>
             ) : error ? (
@@ -1141,7 +1180,10 @@ return (
                     <button
                       className="pp_btn"
                       type="button"
-                      onClick={() => setShowAll((v) => !v)}
+                      onClick={(e) => {
+                        stopEvt(e);
+                        setShowAll((v) => !v);
+                      }}
                       title={showAll ? "Ver menos" : "Ver mais"}
                     >
                       {showAll ? "Ver menos" : "Ver mais"}
