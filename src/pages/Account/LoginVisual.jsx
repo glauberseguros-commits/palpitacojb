@@ -277,14 +277,12 @@ export default function LoginVisual({ onEnter, onSkip }) {
                   />
                 </div>
               ) : (
-                <div style={ui.brandFallback}>
-                  <div style={ui.markFallback}>PJ</div>
-                  <div style={ui.titleWrap}>
-                    <h1 style={ui.title}>Palpitaco JB</h1>
-                    <p style={ui.subtitle}>Acesso ao painel</p>
-                  </div>
-                </div>
+                <div style={ui.markFallback}>PJ</div>
               )}
+
+              <div style={ui.titleWrap}>
+                <p style={ui.subtitle}>Resultados • Estatística • Insights</p>
+              </div>
             </div>
           </div>
 
@@ -304,3 +302,4 @@ export default function LoginVisual({ onEnter, onSkip }) {
     </div>
   );
 }
+
