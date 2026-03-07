@@ -50,7 +50,6 @@ export default function LoginVisual({ onEnter, onSkip, onRegister }) {
     const GOLD = "rgba(202,166,75,1)";
     const WHITE = "rgba(255,255,255,0.94)";
     const WHITE_72 = "rgba(255,255,255,0.72)";
-    const WHITE_60 = "rgba(255,255,255,0.60)";
     const BORDER = "rgba(255,255,255,0.12)";
     const BORDER_GOLD = "rgba(202,166,75,0.30)";
     const BG = "#050505";
@@ -107,7 +106,7 @@ export default function LoginVisual({ onEnter, onSkip, onRegister }) {
       },
 
       header: {
-        padding: "clamp(24px, 3vw, 34px) clamp(22px, 3vw, 30px) 18px",
+        padding: "clamp(22px, 3vw, 30px) clamp(22px, 3vw, 30px) 14px",
         borderBottom: "1px solid rgba(255,255,255,0.07)",
         background: "linear-gradient(180deg, rgba(202,166,75,0.09), rgba(0,0,0,0.02) 70%)",
       },
@@ -118,7 +117,7 @@ export default function LoginVisual({ onEnter, onSkip, onRegister }) {
       },
 
       logoBox: {
-        width: "min(380px, 82vw)",
+        width: "min(350px, 78vw)",
         display: "grid",
         placeItems: "center",
       },
@@ -149,7 +148,7 @@ export default function LoginVisual({ onEnter, onSkip, onRegister }) {
 
       titleWrap: {
         textAlign: "center",
-        marginTop: 8,
+        marginTop: -2,
       },
 
       subtitle: {
@@ -157,7 +156,7 @@ export default function LoginVisual({ onEnter, onSkip, onRegister }) {
         color: WHITE,
         fontWeight: 700,
         letterSpacing: 0.4,
-        margin: "4px 0 0 0",
+        margin: 0,
       },
 
       body: {
@@ -171,14 +170,6 @@ export default function LoginVisual({ onEnter, onSkip, onRegister }) {
         fontSize: 18,
         fontWeight: 900,
         letterSpacing: 0.2,
-        textAlign: "center",
-      },
-
-      sectionText: {
-        margin: 0,
-        fontSize: 13,
-        lineHeight: 1.45,
-        color: WHITE_72,
         textAlign: "center",
       },
 
@@ -211,14 +202,6 @@ export default function LoginVisual({ onEnter, onSkip, onRegister }) {
         fontWeight: 700,
       },
 
-      hint: {
-        margin: 0,
-        fontSize: 12,
-        lineHeight: 1.4,
-        color: WHITE_60,
-        textAlign: "center",
-      },
-
       errorBox: {
         border: "1px solid rgba(255,110,110,0.30)",
         background: "rgba(255,110,110,0.08)",
@@ -233,6 +216,7 @@ export default function LoginVisual({ onEnter, onSkip, onRegister }) {
       btnRow: {
         display: "grid",
         gap: 12,
+        marginTop: 6,
       },
 
       btnPrimary: {
@@ -343,8 +327,16 @@ export default function LoginVisual({ onEnter, onSkip, onRegister }) {
     await handleRealLogin();
   }
 
-  function onCadastrar() {
+  async function onEntrarCadastrar() {
     setErrorMsg("");
+
+    const hasLogin = String(loginValue || "").trim().length > 0;
+    const hasPassword = String(passwordValue || "").length > 0;
+
+    if (hasLogin && hasPassword) {
+      await handleRealLogin();
+      return;
+    }
 
     if (typeof onRegister === "function") {
       onRegister();
@@ -384,9 +376,6 @@ export default function LoginVisual({ onEnter, onSkip, onRegister }) {
 
           <div style={ui.body}>
             <h2 style={ui.sectionTitle}>Acesso ao painel</h2>
-            <p style={ui.sectionText}>
-              Login e senha precisam passar pelo fluxo real do Firebase. Convidado é acesso visual local.
-            </p>
 
             {errorMsg ? <div style={ui.errorBox}>{errorMsg}</div> : null}
 
@@ -423,32 +412,17 @@ export default function LoginVisual({ onEnter, onSkip, onRegister }) {
                 />
               </div>
 
-              <p style={ui.hint}>
-                Este formulário não cria sessão local fake de usuário. A autenticação deve ser feita no componente pai.
-              </p>
-
               <div style={ui.btnRow}>
                 <button
-                  type="submit"
+                  type="button"
                   style={{
                     ...ui.btnPrimary,
                     ...(submitting ? ui.btnDisabled : null),
                   }}
+                  onClick={onEntrarCadastrar}
                   disabled={submitting}
                 >
-                  {submitting ? "ENTRANDO..." : "ENTRAR"}
-                </button>
-
-                <button
-                  type="button"
-                  style={{
-                    ...ui.btnSecondary,
-                    ...(submitting ? ui.btnDisabled : null),
-                  }}
-                  onClick={onCadastrar}
-                  disabled={submitting}
-                >
-                  CADASTRAR
+                  {submitting ? "PROCESSANDO..." : "ENTRAR / CADASTRAR"}
                 </button>
 
                 <button
