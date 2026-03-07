@@ -7,6 +7,7 @@
  * Campos:
  * - name: string
  * - phone: string (apenas dígitos)
+ * - phoneDigits: string (apenas dígitos; compat/login)
  * - photoURL: string
  * - createdAt: ISO
  * - updatedAt: ISO
@@ -32,21 +33,19 @@ export async function ensureUserDoc(db, uid, user) {
     const r = doc(db, "users", u);
     const snap = await getDoc(r);
 
-    const createdAtIso =
-      user?.metadata?.creationTime
-        ? new Date(user.metadata.creationTime).toISOString()
-        : new Date().toISOString();
+    const createdAtIso = user?.metadata?.creationTime
+      ? new Date(user.metadata.creationTime).toISOString()
+      : new Date().toISOString();
 
     // Se não existe, cria doc inicial com trial
     if (!snap.exists()) {
-    const trialStartAt = createdAtIso;
+      const trialStartAt = createdAtIso;
       const trialEndAt = isoPlusDays(trialStartAt, TRIAL_DAYS);
 
       await setDoc(
         r,
         {
           createdAt: createdAtIso,
-          
           createdAtMs: Date.parse(createdAtIso) || Date.now(),
           updatedAt: new Date().toISOString(),
           updatedAtMs: Date.now(),
@@ -54,6 +53,7 @@ export async function ensureUserDoc(db, uid, user) {
 
           name: String(user?.displayName || "").trim(),
           phone: "",
+          phoneDigits: "",
           photoURL: "",
 
           trialStartAt,
@@ -82,14 +82,17 @@ export async function ensureUserDoc(db, uid, user) {
       patch.createdAt = createdAtIso;
       needPatch = true;
     }
+
     if (!String(data.email || "").trim() && user?.email) {
       patch.email = String(user.email).trim().toLowerCase();
       needPatch = true;
     }
+
     if (!String(data.trialStartAt || "").trim()) {
       patch.trialStartAt = trialStartAt;
       needPatch = true;
     }
+
     if (!String(data.trialEndAt || "").trim()) {
       patch.trialEndAt = trialEndAt;
       needPatch = true;
@@ -104,6 +107,15 @@ export async function ensureUserDoc(db, uid, user) {
         patch.trialActive = active;
         needPatch = true;
       }
+    }
+
+    // Compat: se existir phone mas não existir phoneDigits
+    const phone = String(data.phone || "").trim();
+    const phoneDigits = String(data.phoneDigits || "").trim();
+
+    if (phone && !phoneDigits) {
+      patch.phoneDigits = phone;
+      needPatch = true;
     }
 
     if (needPatch) {
@@ -137,11 +149,12 @@ export async function loadUserProfile(db, uid) {
 
     const phone =
       String(data.phone || "").trim() ||
-      String(data.phoneDigits || "").trim(); // compat
+      String(data.phoneDigits || "").trim();
 
     const photoURL =
       String(data.photoURL || "").trim() ||
-      String(data.photoUrl || "").trim(); // compat
+      String(data.photoUrl || "").trim();
+
     const trialStartAt = String(data.trialStartAt || "").trim();
     const trialEndAt = String(data.trialEndAt || "").trim();
 
@@ -156,7 +169,6 @@ export async function loadUserProfile(db, uid) {
       name,
       phone,
       photoURL,
-
       trialStartAt,
       trialEndAt,
       trialActive,
@@ -176,12 +188,15 @@ export async function saveUserProfile(db, uid, payload) {
   if (!u) return false;
 
   try {
+    const phoneDigits = String(payload?.phone || "").trim();
+
     const r = doc(db, "users", u);
     await setDoc(
       r,
       {
         name: String(payload?.name || "").trim(),
-        phone: String(payload?.phone || "").trim(),
+        phone: phoneDigits,
+        phoneDigits,
         photoURL: String(payload?.photoURL || "").trim(),
         updatedAt: new Date().toISOString(),
         updatedAtMs: Date.now(),
@@ -193,13 +208,3 @@ export async function saveUserProfile(db, uid, payload) {
     return false;
   }
 }
-
-
-
-
-
-
-
-
-
-

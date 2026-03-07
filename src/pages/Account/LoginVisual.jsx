@@ -259,7 +259,7 @@ export default function LoginVisual({ onEnter, onSkip, onRegister }) {
     const password = String(passwordValue || "");
 
     if (!login || !password) {
-      setErrorMsg("Preencha login e senha.");
+      setErrorMsg("Preencha e-mail/telefone e senha.");
       return;
     }
 
@@ -375,14 +375,14 @@ export default function LoginVisual({ onEnter, onSkip, onRegister }) {
             <form style={ui.formGrid} onSubmit={onSubmitLogin}>
               <div style={ui.fieldWrap}>
                 <label style={ui.label} htmlFor="pp-login">
-                  Login
+                  E-mail ou telefone
                 </label>
                 <input
                   id="pp-login"
                   type="text"
                   value={loginValue}
                   onChange={(e) => setLoginValue(e.target.value)}
-                  placeholder="Digite seu login"
+                  placeholder="Digite seu e-mail ou telefone"
                   style={ui.input}
                   autoComplete="username"
                   disabled={submitting}

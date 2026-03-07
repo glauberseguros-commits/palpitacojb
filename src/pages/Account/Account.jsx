@@ -6,7 +6,15 @@ import AccountView from "./AccountView";
 // Firebase (real)
 import { auth, db, storage } from "../../services/firebase";
 import { onAuthStateChanged, deleteUser, signInWithEmailAndPassword } from "firebase/auth";
-import { doc, deleteDoc } from "firebase/firestore";
+import {
+  doc,
+  deleteDoc,
+  collection,
+  query,
+  where,
+  limit,
+  getDocs,
+} from "firebase/firestore";
 
 // Module pieces
 import { normalizePhoneDigits, isPhoneBRValidDigits } from "./account.formatters";
@@ -36,7 +44,9 @@ import {
  * - Estados válidos:
  *   1) Firebase real autenticado
  *   2) Guest local
- * - NÃO existe mais "user visual fake"
+ * - Login aceita:
+ *   - e-mail
+ *   - telefone (+55 / com máscara / só dígitos)
  */
 
 export default function Account({ onClose = null, onAuthenticated = null }) {
@@ -94,9 +104,86 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
     clearPreview();
   }
 
+  function isEmailLogin(v) {
+    const s = String(v || "").trim();
+    return s.includes("@");
+  }
+
   function normalizeLoginToEmail(loginRaw) {
-    const login = String(loginRaw || "").trim().toLowerCase();
-    return login;
+    return String(loginRaw || "").trim().toLowerCase();
+  }
+
+  function normalizeLoginToPhoneCandidates(loginRaw) {
+    const rawDigits = normalizePhoneDigits(loginRaw);
+    const digits = String(rawDigits || "").trim();
+
+    if (!digits) return [];
+
+    const variants = new Set();
+    variants.add(digits);
+
+    // Se vier com +55 / 55 na frente e total BR internacional
+    if (digits.length >= 12 && digits.startsWith("55")) {
+      variants.add(digits.slice(2));
+    }
+
+    // Se vier sem +55, adiciona com 55 na frente
+    if (!digits.startsWith("55")) {
+      variants.add(`55${digits}`);
+    }
+
+    return Array.from(variants).filter(Boolean);
+  }
+
+  async function resolveEmailFromPhone(loginRaw) {
+    const candidates = normalizeLoginToPhoneCandidates(loginRaw);
+
+    if (!candidates.length) return "";
+
+    for (const phoneCandidate of candidates) {
+      try {
+        const qRef = query(
+          collection(db, "users"),
+          where("phone", "==", phoneCandidate),
+          limit(1)
+        );
+        const snap = await getDocs(qRef);
+
+        if (!snap.empty) {
+          const data = snap.docs[0]?.data() || {};
+          const foundEmail = String(data.email || "").trim().toLowerCase();
+          if (foundEmail) return foundEmail;
+        }
+      } catch {}
+    }
+
+    // compat com base antiga usando phoneDigits
+    for (const phoneCandidate of candidates) {
+      try {
+        const qRef = query(
+          collection(db, "users"),
+          where("phoneDigits", "==", phoneCandidate),
+          limit(1)
+        );
+        const snap = await getDocs(qRef);
+
+        if (!snap.empty) {
+          const data = snap.docs[0]?.data() || {};
+          const foundEmail = String(data.email || "").trim().toLowerCase();
+          if (foundEmail) return foundEmail;
+        }
+      } catch {}
+    }
+
+    return "";
+  }
+
+  async function resolveLoginToEmail(loginRaw) {
+    if (isEmailLogin(loginRaw)) {
+      return normalizeLoginToEmail(loginRaw);
+    }
+
+    return await resolveEmailFromPhone(loginRaw);
   }
 
   function buildFirebaseLoginError(error) {
@@ -471,7 +558,11 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
       throw new Error("Preencha login e senha.");
     }
 
-    const emailForAuth = normalizeLoginToEmail(login);
+    const emailForAuth = await resolveLoginToEmail(login);
+
+    if (!emailForAuth) {
+      throw new Error("Login ou senha inválidos.");
+    }
 
     // mata estado guest antes do login real
     setGuestActive(false);
