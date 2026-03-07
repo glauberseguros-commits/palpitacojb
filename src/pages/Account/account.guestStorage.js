@@ -1,21 +1,9 @@
-// src/pages/Account/account.guestStorage.js
-
-/**
- * Guest profile (localStorage)
- * - Mantém dados locais (name/phone/photoURL)
- * - Mantém flag de "guest ativo" para o app (pp_guest_active_v1)
- */
-
 import {
   LS_GUEST_PROFILE_KEY,
   LS_GUEST_ACTIVE_KEY,
 } from "./account.constants";
 import { normalizePhoneDigits } from "./account.formatters";
 import { dispatchSessionChanged } from "./account.session";
-
-/* =========================
-   Guest profile
-========================= */
 
 export function loadGuestProfile() {
   try {
@@ -55,16 +43,16 @@ export function clearGuestProfile() {
   } catch {}
 }
 
-/* =========================
-   Guest active flag
-========================= */
+export function setGuestActive(v, opts = {}) {
+  const silent = opts?.silent === true;
 
-export function setGuestActive(v) {
   try {
     localStorage.setItem(LS_GUEST_ACTIVE_KEY, v ? "1" : "0");
   } catch {}
-  // 🔔 importante: App.jsx precisa reagir no mesmo tab
-  dispatchSessionChanged();
+
+  if (!silent) {
+    dispatchSessionChanged();
+  }
 }
 
 export function isGuestActive() {

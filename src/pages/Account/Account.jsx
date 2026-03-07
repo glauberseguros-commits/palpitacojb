@@ -1,4 +1,4 @@
-﻿// src/pages/Account/Account.jsx
+// src/pages/Account/Account.jsx
 import React, { useEffect, useState } from "react";
 import LoginVisual from "./LoginVisual";
 import AccountView from "./AccountView";
@@ -682,10 +682,11 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
     setErr("");
 
     safeRemoveSession();
-    setGuestActive(true);
-    setIsGuest(true);
+
+    setGuestActive(true, { silent: true });
 
     markSessionGuest();
+    setIsGuest(true);
 
     resetAuthedState();
 
