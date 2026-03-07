@@ -2,10 +2,11 @@
  * ============================================================
  * DASHBOARD — BASELINE CONGELADA (freeze)
  * ============================================================
- * ✅ Ajuste temporário:
- * - Enquanto o login real não estiver 100%, guest/demo funciona
- *   como acesso liberado no painel.
- * - Sem bloqueio de filtros, período, cliques ou ações locais.
+ * ✅ Ajuste temporário corrigido:
+ * - guest/demo continua com acesso liberado no painel
+ * - login visual "ENTRAR" (sessão local type:user) NÃO aparece mais
+ *   como convidado/demonstração
+ * - sem bloqueio de filtros, período, cliques ou ações locais
  * ============================================================
  */
 
@@ -44,7 +45,7 @@ const DASH_STATE_KEY_V1 = "pp_dash_state_v1";
 const DASH_STATE_KEY_BASE = "pp_dash_state_v2"; // versionado + por UF
 
 /* =========================
-   Sessão / Guest (demo)
+   Sessão / Guest / User
 ========================= */
 const ACCOUNT_SESSION_KEY = "pp_session_v1";
 const SESSION_POLL_MS = 1500;
@@ -70,16 +71,38 @@ function loadSessionObj() {
   }
 }
 
-function isGuestSession(sess) {
+function getSessionKind(sess) {
   const s = sess || loadSessionObj();
-  if (!s || s.ok !== true) return false;
+  if (!s || s.ok !== true) return "anon";
 
-  const t2 = String(s.type || "").toLowerCase();
-  if (t2 === "guest") return true;
+  const type = String(s.type || "").trim().toLowerCase();
+  if (type === "guest") return "guest";
+  if (type === "user") return "user";
 
-  const t = String(s.loginType || "").toLowerCase();
-  const id = String(s.loginId || "").toLowerCase();
-  return t === "guest" || id === "guest" || s.skipped === true || String(s.mode || "") === "skip";
+  const loginType = String(s.loginType || "").trim().toLowerCase();
+  const loginId = String(s.loginId || "").trim().toLowerCase();
+  const mode = String(s.mode || "").trim().toLowerCase();
+
+  if (
+    loginType === "guest" ||
+    loginId === "guest" ||
+    s.skipped === true ||
+    mode === "skip"
+  ) {
+    return "guest";
+  }
+
+  if (loginType === "user" || loginId === "user") {
+    return "user";
+  }
+
+  if (s.uid || s.email) return "user";
+
+  return "anon";
+}
+
+function isGuestSession(sess) {
+  return getSessionKind(sess) === "guest";
 }
 
 /* =========================
@@ -639,10 +662,11 @@ export default function Dashboard(props) {
     []
   );
 
-  const [isGuest, setIsGuest] = useState(() => isGuestSession(loadSessionObj()));
+  const [sessionKind, setSessionKind] = useState(() => getSessionKind(loadSessionObj()));
+  const isGuest = sessionKind === "guest";
 
   useEffect(() => {
-    const refresh = () => setIsGuest(isGuestSession(loadSessionObj()));
+    const refresh = () => setSessionKind(getSessionKind(loadSessionObj()));
 
     const onStorage = (e) => {
       if (e && e.key && e.key !== ACCOUNT_SESSION_KEY) return;
@@ -653,7 +677,10 @@ export default function Dashboard(props) {
       if (document.visibilityState === "visible") refresh();
     };
 
+    const onSessionChanged = () => refresh();
+
     window.addEventListener("storage", onStorage);
+    window.addEventListener("pp_session_changed", onSessionChanged);
     document.addEventListener("visibilitychange", onVisibility);
 
     const t = setInterval(() => {
@@ -663,6 +690,7 @@ export default function Dashboard(props) {
 
     return () => {
       window.removeEventListener("storage", onStorage);
+      window.removeEventListener("pp_session_changed", onSessionChanged);
       document.removeEventListener("visibilitychange", onVisibility);
       clearInterval(t);
     };
