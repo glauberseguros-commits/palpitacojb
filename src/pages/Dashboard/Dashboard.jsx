@@ -48,6 +48,7 @@ const DASH_STATE_KEY_BASE = "pp_dash_state_v2"; // versionado + por UF
    Sessão / Guest / User
 ========================= */
 const ACCOUNT_SESSION_KEY = "pp_session_v1";
+const LS_GUEST_ACTIVE_KEY = "pp_guest_active_v1";
 const SESSION_POLL_MS = 1500;
 
 function safeParseJSON(s) {
@@ -102,7 +103,24 @@ function getSessionKind(sess) {
 }
 
 function isGuestSession(sess) {
-  return getSessionKind(sess) === "guest";
+  const s = sess || loadSessionObj();
+
+  try {
+    const guestFlag = localStorage.getItem(LS_GUEST_ACTIVE_KEY);
+    if (guestFlag === "1") return true;
+  } catch {}
+
+  if (!s || s.ok !== true) return false;
+
+  const type = String(s.type || "").trim().toLowerCase();
+  if (type === "guest") return true;
+  if (type === "user") return false;
+
+  const loginType = String(s.loginType || "").trim().toLowerCase();
+  if (loginType === "guest") return true;
+  if (loginType === "user") return false;
+
+  return false;
 }
 
 /* =========================
