@@ -50,6 +50,7 @@ export default function LoginVisual({ onEnter, onSkip, onRegister }) {
     const GOLD = "rgba(202,166,75,1)";
     const WHITE = "rgba(255,255,255,0.94)";
     const WHITE_72 = "rgba(255,255,255,0.72)";
+    const WHITE_82 = "rgba(255,255,255,0.82)";
     const BORDER = "rgba(255,255,255,0.12)";
     const BORDER_GOLD = "rgba(202,166,75,0.30)";
     const BG = "#050505";
@@ -106,7 +107,7 @@ export default function LoginVisual({ onEnter, onSkip, onRegister }) {
       },
 
       header: {
-        padding: "clamp(22px, 3vw, 30px) clamp(22px, 3vw, 30px) 14px",
+        padding: "clamp(18px, 2.4vw, 24px) clamp(22px, 3vw, 30px) 10px",
         borderBottom: "1px solid rgba(255,255,255,0.07)",
         background: "linear-gradient(180deg, rgba(202,166,75,0.09), rgba(0,0,0,0.02) 70%)",
       },
@@ -114,10 +115,11 @@ export default function LoginVisual({ onEnter, onSkip, onRegister }) {
       logoWrap: {
         display: "grid",
         placeItems: "center",
+        gap: 4,
       },
 
       logoBox: {
-        width: "min(350px, 78vw)",
+        width: "min(330px, 74vw)",
         display: "grid",
         placeItems: "center",
       },
@@ -148,21 +150,21 @@ export default function LoginVisual({ onEnter, onSkip, onRegister }) {
 
       titleWrap: {
         textAlign: "center",
-        marginTop: -2,
+        marginTop: -8,
       },
 
       subtitle: {
-        fontSize: "clamp(14px, 1.6vw, 16px)",
+        fontSize: "clamp(14px, 1.5vw, 15px)",
         color: WHITE,
         fontWeight: 700,
-        letterSpacing: 0.4,
+        letterSpacing: 0.35,
         margin: 0,
       },
 
       body: {
-        padding: "14px 22px 22px",
+        padding: "10px 22px 22px",
         display: "grid",
-        gap: 12,
+        gap: 10,
       },
 
       fieldWrap: {
@@ -172,8 +174,8 @@ export default function LoginVisual({ onEnter, onSkip, onRegister }) {
 
       label: {
         fontSize: 13,
-        fontWeight: 800,
-        color: WHITE_72,
+        fontWeight: 900,
+        color: WHITE_82,
         letterSpacing: 0.2,
       },
 
@@ -198,6 +200,7 @@ export default function LoginVisual({ onEnter, onSkip, onRegister }) {
         fontSize: 13,
         fontWeight: 700,
         textAlign: "center",
+        marginBottom: 2,
       },
 
       formGrid: {
@@ -208,7 +211,7 @@ export default function LoginVisual({ onEnter, onSkip, onRegister }) {
       btnRow: {
         display: "grid",
         gap: 12,
-        marginTop: 6,
+        marginTop: 4,
       },
 
       btnPrimary: {
