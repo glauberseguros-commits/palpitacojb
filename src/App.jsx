@@ -1,4 +1,3 @@
-// src/App.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -37,7 +36,6 @@ const DASH_FILTERS_KEY = "pp_dashboard_filters_v1";
 
 /* =========================
    ✅ Build stamp (Vercel)
-   - CRA só expõe env vars com prefixo REACT_APP_
 ========================= */
 const BUILD_SHA = String(process.env.REACT_APP_BUILD_SHA || "").trim();
 const BUILD_REF = String(process.env.REACT_APP_BUILD_REF || "").trim();
@@ -46,7 +44,6 @@ const BUILD_TIME = String(process.env.REACT_APP_BUILD_TIME || "").trim();
 /* =========================
    Admin (hash gate)
 ========================= */
-
 const ADMIN_HASH = "#admin";
 
 const ROUTES = {
@@ -94,7 +91,7 @@ function normalizeRoute(saved) {
 }
 
 /**
- * ✅ Resolve default/named de forma robusta:
+ * ✅ Resolve default/named de forma robusta
  */
 function resolveComponent(mod, name) {
   const c = mod?.default ?? mod;
@@ -104,13 +101,7 @@ function resolveComponent(mod, name) {
     (c && typeof c === "object" && String(c.$$typeof || "").includes("react."));
 
   if (!isProbablyReactComponent) {
-    // eslint-disable-next-line no-console
-    console.error(
-      `[IMPORT INVALID] ${name} veio inválido:`,
-      c,
-      " | import raw:",
-      mod
-    );
+    console.error(`[IMPORT INVALID] ${name} veio inválido:`, c, " | import raw:", mod);
   }
 
   return c;
@@ -127,7 +118,6 @@ function loadSessionObj() {
   const s = String(raw || "").trim();
   if (!s) return null;
 
-  // se não é JSON, ignora (outra versão)
   if (!s.startsWith("{")) return null;
 
   const obj = safeParseJson(s);
@@ -138,7 +128,6 @@ function loadSessionObj() {
     obj.ok === true ||
     type === "user" ||
     type === "guest" ||
-    // fallback: se tiver uid, é user
     !!obj.uid;
 
   if (!ok) return null;
@@ -153,7 +142,6 @@ function loadSessionObj() {
 }
 
 function hasActiveSession() {
-  // ✅ convidado ativo conta como sessão
   if (safeReadLS(LS_GUEST_ACTIVE_KEY) === "1") return true;
   return !!loadSessionObj();
 }
@@ -164,11 +152,8 @@ function hasActiveSession() {
 
 function normalizeLoteriaInput(v) {
   const raw = String(v ?? "").trim();
-
-  // ✅ default só quando realmente não veio nada
   if (!raw) return "PT_RIO";
 
-  // base para comparar aliases (minúsculo, sem acento)
   const key = raw
     .toLowerCase()
     .normalize("NFD")
@@ -176,7 +161,6 @@ function normalizeLoteriaInput(v) {
     .replace(/\s+/g, " ")
     .trim();
 
-  // ✅ aliases conhecidos
   if (key === "federal" || key === "fed" || key === "br" || key === "brasil") {
     return "FEDERAL";
   }
@@ -185,7 +169,6 @@ function normalizeLoteriaInput(v) {
     return "PT_RIO";
   }
 
-  // ✅ qualquer outra loteria: retorna canônico (UPPER + underscore)
   const out = key
     .toUpperCase()
     .replace(/[^A-Z0-9]+/g, "_")
@@ -193,6 +176,7 @@ function normalizeLoteriaInput(v) {
 
   return out || "PT_RIO";
 }
+
 function loteriaToLotteryKey(loteria) {
   return normalizeLoteriaInput(loteria);
 }
@@ -219,15 +203,14 @@ function loadDashboardFilters() {
   const base = getDefaultDashboardFilters();
   const loteria = normalizeLoteriaInput(obj.loteria);
 
-  // ✅ coerência: FEDERAL => horário deve ser 19h ou 20h (default 20h)
   const horario =
     loteria === "FEDERAL"
       ? obj.horario === "Todos" || obj.horario === "19h" || obj.horario === "20h"
         ? obj.horario
         : "Todos"
       : typeof obj.horario === "string"
-        ? obj.horario
-        : base.horario;
+      ? obj.horario
+      : base.horario;
 
   return {
     loteria,
@@ -241,7 +224,7 @@ function loadDashboardFilters() {
 }
 
 /* =========================
-   Admin helpers (hash + Firestore role)
+   Admin helpers
 ========================= */
 
 function isAdminHashNow() {
@@ -253,7 +236,6 @@ function isAdminHashNow() {
   }
 }
 
-// ✅ Regra Admin: existe /admins/{uid} e active !== false
 async function isUidAdmin(uid) {
   const u = String(uid || "").trim();
   if (!u) return false;
@@ -262,15 +244,12 @@ async function isUidAdmin(uid) {
     const snap = await getDoc(ref);
     if (!snap.exists()) return false;
     const data = snap.data() || {};
-    return data.active !== false; // default true
+    return data.active !== false;
   } catch {
     return false;
   }
 }
 
-/**
- * ✅ ErrorBoundary simples
- */
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -282,7 +261,6 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, info) {
-    // eslint-disable-next-line no-console
     console.error("App ErrorBoundary caught:", error, info);
   }
 
@@ -306,10 +284,6 @@ class ErrorBoundary extends React.Component {
           </div>
           <div style={{ opacity: 0.85, whiteSpace: "pre-wrap", lineHeight: 1.35 }}>
             {msg}
-          </div>
-          <div style={{ marginTop: 12, opacity: 0.7, fontSize: 12 }}>
-            Dica: abra o Console (F12). Se aparecer “[IMPORT INVALID] …”, o import
-            desse componente está errado (default vs named).
           </div>
         </div>
       );
@@ -361,7 +335,6 @@ function pathToScreen(pathname) {
 
   if (p === "/" || p === "/dashboard") return ROUTES.DASHBOARD;
   if (p === "/login") return ROUTES.LOGIN;
-
   if (p === "/account") return ROUTES.ACCOUNT;
   if (p === "/results") return ROUTES.RESULTS;
   if (p === "/top3") return ROUTES.TOP3;
@@ -413,7 +386,6 @@ export default function App() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // ✅ trava de boot para evitar "screen -> URL" atropelar deep-link (/centenas etc.)
   const bootRef = useRef(false);
   const [routerBooted, setRouterBooted] = useState(false);
 
@@ -432,19 +404,15 @@ export default function App() {
   const Admin = useMemo(() => resolveComponent(AdminMod, "Admin"), []);
   const AdminLogin = useMemo(() => resolveComponent(AdminLoginMod, "AdminLogin"), []);
 
-  // ✅ log de build (uma vez)
   useEffect(() => {
-    // eslint-disable-next-line no-console
     console.log("[PALPITACO BUILD]", {
       sha: BUILD_SHA || "(none)",
       ref: BUILD_REF || "(none)",
       time: BUILD_TIME || "(none)",
       href: typeof window !== "undefined" ? window.location.href : "",
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ✅ hash gate isolado
   const [adminMode, setAdminMode] = useState(() => isAdminHashNow());
 
   useEffect(() => {
@@ -453,11 +421,9 @@ export default function App() {
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
 
-  // ✅ fonte de verdade: Firebase Auth + /admins/{uid}
   const [adminAuthed, setAdminAuthed] = useState(false);
   const [adminBooting, setAdminBooting] = useState(false);
 
-  // ✅ re-hidrata automaticamente quando entrar no #admin
   useEffect(() => {
     if (!adminMode) return;
 
@@ -496,14 +462,11 @@ export default function App() {
     };
   }, [adminMode]);
 
-  // ✅ Blindagem: pós-login => sempre Dashboard (nunca cai em ACCOUNT automaticamente)
   const [screen, setScreen] = useState(() => {
     const sessionOn = hasActiveSession();
     const saved = normalizeRoute(safeReadLS(STORAGE_KEY));
 
     if (!sessionOn) return ROUTES.LOGIN;
-
-    // ✅ se tiver salvo, respeita EXCETO login/account
     if (saved && saved !== ROUTES.LOGIN && saved !== ROUTES.ACCOUNT) return saved;
 
     return ROUTES.DASHBOARD;
@@ -515,7 +478,6 @@ export default function App() {
 
   const [dashboardFilters, setDashboardFilters] = useState(() => loadDashboardFilters());
 
-  // ✅ garante coerência FEDERAL
   useEffect(() => {
     const lot = normalizeLoteriaInput(dashboardFilters?.loteria);
 
@@ -532,7 +494,6 @@ export default function App() {
     if (dashboardFilters?.loteria !== lot) {
       setDashboardFilters((prev) => ({ ...prev, loteria: lot }));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dashboardFilters?.loteria, dashboardFilters?.horario]);
 
   useEffect(() => {
@@ -550,9 +511,15 @@ export default function App() {
     } catch {}
 
     setScreen(ROUTES.LOGIN);
+    navigate("/login", { replace: true });
   };
 
-  // ✅ Enquanto estiver no LOGIN: quando existir sessão, entra no Dashboard
+  const forceGoDashboard = useRef(() => {
+    setScreen(ROUTES.DASHBOARD);
+    safeWriteLS(STORAGE_KEY, ROUTES.DASHBOARD);
+    navigate("/", { replace: true });
+  }).current;
+
   useEffect(() => {
     if (adminMode) return;
     if (screen !== ROUTES.LOGIN) return;
@@ -560,6 +527,7 @@ export default function App() {
     const goDashboard = () => {
       setScreen(ROUTES.DASHBOARD);
       safeWriteLS(STORAGE_KEY, ROUTES.DASHBOARD);
+      navigate("/", { replace: true });
     };
 
     const check = () => {
@@ -588,11 +556,8 @@ export default function App() {
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVis);
     };
-  }, [screen, adminMode]);
+  }, [screen, adminMode, navigate]);
 
-  /* =========================
-     ✅ URL -> screen (somente app normal)
-  ========================= */
   useEffect(() => {
     if (adminMode) return;
 
@@ -615,13 +580,8 @@ export default function App() {
     }
 
     if (wanted !== screen) setScreen(wanted);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location?.pathname, adminMode, screen]);
 
-  /* =========================
-     ✅ screen -> URL (somente app normal)
-     ✅ FIX: não bloquear navegação quando a rota atual é conhecida
-  ========================= */
   useEffect(() => {
     if (adminMode) return;
     if (!routerBooted) return;
@@ -637,7 +597,7 @@ export default function App() {
   const PageRouter = ({ s }) => {
     switch (s) {
       case ROUTES.ACCOUNT:
-        return <Account />;
+        return <Account onAuthenticated={forceGoDashboard} />;
       case ROUTES.RESULTS:
         return <Results />;
       case ROUTES.TOP3:
@@ -665,9 +625,6 @@ export default function App() {
     }
   };
 
-  /* =========================
-     ✅ Admin Router (isolado)
-  ========================= */
   if (adminMode) {
     return (
       <ErrorBoundary>
@@ -721,10 +678,6 @@ export default function App() {
     );
   }
 
-  /* =========================
-     App normal
-     ✅ LOGIN agora é o Account (ele renderiza LoginVisual internamente)
-  ========================= */
   if (screen === ROUTES.LOGIN) {
     return (
       <ErrorBoundary>
@@ -732,6 +685,7 @@ export default function App() {
           onClose={() => {
             setScreen(ROUTES.LOGIN);
           }}
+          onAuthenticated={forceGoDashboard}
         />
         <BuildStamp />
       </ErrorBoundary>
