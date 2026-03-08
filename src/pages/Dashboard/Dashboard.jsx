@@ -691,7 +691,7 @@ export default function Dashboard(props) {
     []
   );
 
-  const [sessionObj, setSessionObj] = useState(() => loadSessionObj());
+  const [_sessionObj, setSessionObj] = useState(() => loadSessionObj());
   const [sessionKind, setSessionKind] = useState(() => getSessionKind(loadSessionObj()));
   const [sessionPlan, setSessionPlan] = useState(() => getSessionPlan(loadSessionObj()));
 
@@ -1364,6 +1364,7 @@ export default function Dashboard(props) {
     positionsLocal,
     selectedGrupo,
     isHydrating,
+    isAggregatedOnly,
   ]);
 
   const hasAnyDrawsView = drawsForView.length > 0;
@@ -1932,5 +1933,3 @@ export default function Dashboard(props) {
     </div>
   );
 }
-
-

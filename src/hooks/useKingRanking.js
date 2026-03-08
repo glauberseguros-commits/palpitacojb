@@ -39,7 +39,7 @@ function ymdToNumber(ymd) {
   if (!ymd) return NaN;
   const m = String(ymd).match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!m) return NaN;
-  return Number("$($m[1])$($m[2])$($m[3])");
+  return Number(`${m[1]}${m[2]}${m[3]}`);
 }
 
 function dayDiffInclusiveUTC(ymdFrom, ymdTo) {
@@ -389,10 +389,7 @@ export function useKingRanking({
   const ymdFromRaw = useMemo(() => normalizeToYMD(dateFrom), [dateFrom]);
   const ymdToRaw = useMemo(() => normalizeToYMD(dateTo), [dateTo]);
 
-  const bucketNorm = useMemo(
-    () => normalizeBucketInput(closeHourBucket),
-    [closeHourBucket]
-  );
+  const bucketNorm = useMemo(() => normalizeBucketInput(closeHourBucket), [closeHourBucket]);
 
   const positionsEffective = useMemo(() => {
     return Array.isArray(positions) && positions.length ? positions : null;
@@ -615,9 +612,7 @@ export function useKingRanking({
 
         setDrawsRaw(unique);
 
-        const hasAnyPrize = unique.some(
-          (d) => Array.isArray(d?.prizes) && d.prizes.length
-        );
+        const hasAnyPrize = unique.some((d) => Array.isArray(d?.prizes) && d.prizes.length);
 
         if (serviceMode === "detailed") {
           if (hasAnyPrize) {
