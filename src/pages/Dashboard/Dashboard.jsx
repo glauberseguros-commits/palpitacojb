@@ -702,8 +702,23 @@ export default function Dashboard(props) {
   const isVipPlan = sessionPlan === "VIP";
 
   useEffect(() => {
+    const serializeSession = (sess) => {
+      try {
+        return JSON.stringify(sess || null);
+      } catch {
+        return "__SERIALIZE_ERROR__";
+      }
+    };
+
+    let lastSig = serializeSession(loadSessionObj());
+
     const refresh = () => {
       const sess = loadSessionObj();
+      const nextSig = serializeSession(sess);
+
+      if (nextSig === lastSig) return;
+
+      lastSig = nextSig;
       setSessionObj(sess);
       setSessionKind(getSessionKind(sess));
       setSessionPlan(getSessionPlan(sess));
@@ -1917,4 +1932,5 @@ export default function Dashboard(props) {
     </div>
   );
 }
+
 
