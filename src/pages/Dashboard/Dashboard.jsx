@@ -1275,14 +1275,15 @@ export default function Dashboard(props) {
 
     const wantBucket = closeHourBucketLocal;
 
+    const wantsPositionFilter = String(filters.posicao || "").trim().toLowerCase() !== "todos";
+
     const posSet =
-      Array.isArray(positionsLocal) && positionsLocal.length
+      wantsPositionFilter && Array.isArray(positionsLocal) && positionsLocal.length
         ? new Set(positionsLocal.map((n) => Number(n)).filter((n) => Number.isFinite(n)))
         : null;
 
     const grupoTarget = Number.isFinite(Number(selectedGrupo)) ? Number(selectedGrupo) : null;
 
-    const wantsPositionFilter = String(filters.posicao || "").trim().toLowerCase() !== "todos";
     const wantsGrupoFilter = !!grupoTarget;
     const requiresPrizes = wantsPositionFilter || wantsGrupoFilter;
 
@@ -1916,3 +1917,4 @@ export default function Dashboard(props) {
     </div>
   );
 }
+
