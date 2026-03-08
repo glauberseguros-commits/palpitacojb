@@ -3,7 +3,6 @@ import {
   getKingResultsByDate,
   getKingResultsByRange,
   getKingBoundsByUf,
-  hydrateKingDrawsWithPrizes,
   AGGREGATED_AUTO_DAYS,
 } from "../services/kingResultsService";
 import { buildRanking } from "../utils/buildRanking";
@@ -40,7 +39,7 @@ function ymdToNumber(ymd) {
   if (!ymd) return NaN;
   const m = String(ymd).match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!m) return NaN;
-  return Number(`${m[1]}${m[2]}${m[3]}`);
+  return Number("$($m[1])$($m[2])$($m[3])");
 }
 
 function dayDiffInclusiveUTC(ymdFrom, ymdTo) {
@@ -129,11 +128,6 @@ function getDrawLotteryCodeRaw(d) {
     .toUpperCase();
 }
 
-/**
- * ✅ DEDUPE ALINHADO AO SERVICE
- * - chave lógica: ymd + hhmm + lottery_code (quando existir)
- * - evita colapsar draws distintos do mesmo dia/hora
- */
 function dedupeDrawsLogicalPreferBest(draws) {
   const arr = Array.isArray(draws) ? draws : [];
   if (!arr.length) return arr;
@@ -147,7 +141,7 @@ function dedupeDrawsLogicalPreferBest(draws) {
     const ymd = normalizeToYMD(getDrawDateRaw(d));
     const hhmm = normHHMM(getDrawHourRaw(d));
     const hasLogical = !!(ymd && hhmm);
-    return prizesLen * 1_000_000 + pc * 1_000 + (hasLogical ? 10 : 0);
+    return prizesLen * 1000000 + pc * 1000 + (hasLogical ? 10 : 0);
   };
 
   for (let i = 0; i < arr.length; i += 1) {
@@ -199,10 +193,6 @@ function normalizeDrawForCharts(d) {
     prizes,
   };
 }
-
-/* =========================
-   Auto-refresh
-========================= */
 
 function clampMs(n, min, max) {
   const x = Number(n);
@@ -258,10 +248,6 @@ function decideRangeServiceMode(rangeDays) {
   if (!Number.isFinite(rangeDays) || rangeDays <= 0) return "detailed";
   return rangeDays >= THRESHOLD ? "aggregated" : "detailed";
 }
-
-/* =========================
-   Bounds cache
-========================= */
 
 const BOUNDS_TTL_MS = 10 * 60 * 1000;
 
@@ -500,7 +486,6 @@ export function useKingRanking({
 
   const [refreshTick, setRefreshTick] = useState(0);
   const refreshSeqRef = useRef(0);
-  const hydrateSeqRef = useRef(0);
 
   const boundsKey = useMemo(
     () => `${bounds.minYmd || ""}|${bounds.maxYmd || ""}`,
@@ -570,9 +555,6 @@ export function useKingRanking({
 
     async function load({ hard = false } = {}) {
       const mySeq = ++refreshSeqRef.current;
-
-      hydrateSeqRef.current += 1;
-      const myHydrateSeq = hydrateSeqRef.current;
 
       try {
         if (hard) setLoading(true);
@@ -700,13 +682,20 @@ export function useKingRanking({
           return;
         }
 
+        setData([]);
         setMeta((prev) => ({
           ...prev,
+          top3: [],
+          totalOcorrencias: 0,
           totalDraws: unique.length,
           mode,
           date: null,
           dateFrom: mode === "range" ? ymdFrom : null,
           dateTo: mode === "range" ? ymdTo : null,
+
+          palpitesByGrupo: {},
+          palpiteSampleDrawsUsed: 0,
+          palpiteUsedBucket: null,
 
           bounds: boundsSnapshot,
           suggestedRange: {
@@ -714,83 +703,9 @@ export function useKingRanking({
             to: boundsSnapshot?.maxYmd || null,
           },
 
-          serviceMode,
-          hydrating: mode === "range" && serviceMode === "aggregated",
+          serviceMode: "aggregated",
+          hydrating: false,
         }));
-
-        if (mode === "range" && serviceMode === "aggregated") {
-          (async () => {
-            try {
-              if (!mounted) return;
-              if (mySeq !== refreshSeqRef.current) return;
-              if (myHydrateSeq !== hydrateSeqRef.current) return;
-
-              const hydrated = await hydrateKingDrawsWithPrizes({
-                draws: unique,
-                positions: positionsArrStable,
-              });
-
-              if (!mounted) return;
-              if (mySeq !== refreshSeqRef.current) return;
-              if (myHydrateSeq !== hydrateSeqRef.current) return;
-
-              let hydratedFiltered = hydrated;
-
-              if (bucketNorm) {
-                hydratedFiltered = hydratedFiltered.filter(
-                  (d) => toHourBucketLabel(d?.close_hour) === bucketNorm
-                );
-              }
-
-              hydratedFiltered = dedupeDrawsLogicalPreferBest(hydratedFiltered).map(
-                normalizeDrawForCharts
-              );
-
-              const built = buildRanking(hydratedFiltered);
-
-              setDrawsRaw(hydratedFiltered);
-              setData(built.ranking || []);
-
-              const palpiteBuilt = buildPalpite(hydratedFiltered, {
-                minDraws: 400,
-                maxDraws: 2000,
-              });
-
-              setMeta((prev) => ({
-                ...prev,
-                top3: built.top3 || [],
-                totalOcorrencias: Number(built.totalOcorrencias || 0),
-                totalDraws: hydratedFiltered.length,
-                mode,
-                date: null,
-                dateFrom: ymdFrom,
-                dateTo: ymdTo,
-
-                palpitesByGrupo: palpiteBuilt?.palpitesByGrupo || {},
-                palpiteSampleDrawsUsed: Number(palpiteBuilt?.sampleDrawsUsed || 0),
-                palpiteUsedBucket: palpiteBuilt?.usedBucket ?? null,
-
-                bounds: boundsSnapshot,
-                suggestedRange: {
-                  from: boundsSnapshot?.minYmd || null,
-                  to: boundsSnapshot?.maxYmd || null,
-                },
-
-                serviceMode: "detailed",
-                hydrating: false,
-              }));
-            } catch {
-              if (!mounted) return;
-              if (mySeq !== refreshSeqRef.current) return;
-              if (myHydrateSeq !== hydrateSeqRef.current) return;
-
-              setMeta((prev) => ({
-                ...prev,
-                hydrating: false,
-              }));
-            }
-          })();
-        }
       } catch (e) {
         if (!mounted) return;
         if (refreshSeqRef.current && mySeq !== refreshSeqRef.current) return;

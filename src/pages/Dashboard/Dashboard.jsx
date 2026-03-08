@@ -1150,6 +1150,15 @@ export default function Dashboard(props) {
     return !!fsRankingMeta?.hydrating;
   }, [fsRankingMeta]);
 
+  const serviceModeEffective = useMemo(() => {
+    if (DATA_MODE !== "firestore") return "json";
+    return String(fsRankingMeta?.serviceMode || "detailed");
+  }, [fsRankingMeta]);
+
+  const isAggregatedOnly = useMemo(() => {
+    return DATA_MODE === "firestore" && serviceModeEffective === "aggregated";
+  }, [serviceModeEffective]);
+
   const rankingLoading = DATA_MODE === "json" ? jsonState.loading : fsLoading;
   const rankingError = DATA_MODE === "json" ? jsonState.error : fsError;
   const rankingMeta = DATA_MODE === "json" ? jsonState.rankingMeta : fsRankingMeta;
@@ -1304,6 +1313,7 @@ export default function Dashboard(props) {
         const prizes = Array.isArray(d?.prizes) ? d.prizes : null;
 
         if (!prizes) {
+          if (isAggregatedOnly && requiresPrizes) return null;
           if (requiresPrizes && !isHydrating) return null;
           return d;
         }
@@ -1343,7 +1353,9 @@ export default function Dashboard(props) {
   const hasAnyDrawsView = drawsForView.length > 0;
 
   const rankingDataGlobalForLabels = useMemo(() => {
+    if (isAggregatedOnly) return rankingRowsFromMeta;
     if (!Array.isArray(drawsForUi) || !drawsForUi.length) return rankingRowsFromMeta;
+
     try {
       const built = buildRanking(drawsForUi);
       const arr = Array.isArray(built?.byGrupo)
@@ -1362,10 +1374,12 @@ export default function Dashboard(props) {
     } catch {
       return rankingRowsFromMeta;
     }
-  }, [drawsForUi, rankingRowsFromMeta]);
+  }, [drawsForUi, rankingRowsFromMeta, isAggregatedOnly]);
 
   const rankingDataForLeftTable = useMemo(() => {
+    if (isAggregatedOnly) return [];
     if (!Array.isArray(drawsForView) || !drawsForView.length) return rankingRowsFromMeta;
+
     try {
       const built = buildRanking(drawsForView);
       const arr = Array.isArray(built?.byGrupo)
@@ -1384,9 +1398,11 @@ export default function Dashboard(props) {
     } catch {
       return rankingRowsFromMeta;
     }
-  }, [drawsForView, rankingRowsFromMeta]);
+  }, [drawsForView, rankingRowsFromMeta, isAggregatedOnly]);
 
   const rankingDataForCharts = useMemo(() => {
+    if (isAggregatedOnly) return [];
+
     try {
       const built = buildRanking(drawsForView);
       const arr = Array.isArray(built?.ranking) ? built.ranking : [];
@@ -1399,9 +1415,10 @@ export default function Dashboard(props) {
       apar: r.total,
       total: r.total,
     }));
-  }, [drawsForView, rankingRowsFromMeta]);
+  }, [drawsForView, rankingRowsFromMeta, isAggregatedOnly]);
 
   const palpitesByGrupo = useMemo(() => {
+    if (isAggregatedOnly) return {};
     if (!dataReady || !hasAnyDrawsView) return {};
     try {
       const out = buildPalpiteV2(drawsForView, { closeHourBucket: null });
@@ -1409,7 +1426,7 @@ export default function Dashboard(props) {
     } catch {
       return {};
     }
-  }, [drawsForView, dataReady, hasAnyDrawsView]);
+  }, [drawsForView, dataReady, hasAnyDrawsView, isAggregatedOnly]);
 
   const options = useMemo(() => {
     const animais = ["Todos"];
@@ -1604,8 +1621,9 @@ export default function Dashboard(props) {
 
   const emptyForRange = useMemo(() => {
     if (!dataReady) return false;
+    if (isAggregatedOnly) return false;
     return !hasAnyDrawsView;
-  }, [dataReady, hasAnyDrawsView]);
+  }, [dataReady, hasAnyDrawsView, isAggregatedOnly]);
 
   const indexErrorHint = useMemo(() => {
     return (
@@ -1736,6 +1754,33 @@ export default function Dashboard(props) {
     return null;
   }, [isGuest, isUser, isFreePlan, isPremiumPlan, isVipPlan, MIN_DATE, MAX_DATE]);
 
+  const aggregatedInfoBox = useMemo(() => {
+    if (!isAggregatedOnly) return null;
+
+    const from = dateFrom || queryDate || MIN_DATE || "—";
+    const to = dateTo || queryDate || MAX_DATE || "—";
+
+    return (
+      <PremiumInfoBox
+        title="Modo resumo para período grande"
+        description="O período atual foi carregado em modo agregado para evitar hidratação massiva de prizes e reduzir custo/latência."
+        extra={`Intervalo: ${from} → ${to}\nKPIs gerais continuam disponíveis.\nRanking, Top 3, gráficos analíticos e palpites exigem detalhamento completo. Para isso, reduza o período ou aplique filtros mais específicos.`}
+      />
+    );
+  }, [isAggregatedOnly, dateFrom, dateTo, queryDate, MIN_DATE, MAX_DATE]);
+
+  const aggregatedNeedsDetailBox = useMemo(() => {
+    if (!isAggregatedOnly) return null;
+
+    return (
+      <PremiumInfoBox
+        title="Detalhamento desativado neste recorte"
+        description="Neste intervalo grande, o Dashboard não hidrata prizes automaticamente."
+        extra="Para liberar ranking, Top 3, palpites por grupo e gráficos analíticos, reduza o período selecionado."
+      />
+    );
+  }, [isAggregatedOnly]);
+
   return (
     <div className="dashRoot">
       <aside className="dashLeft">
@@ -1795,6 +1840,19 @@ export default function Dashboard(props) {
 
                 {isHydrating ? (
                   hydratingBox
+                ) : isAggregatedOnly ? (
+                  <>
+                    {aggregatedInfoBox}
+                    <KpiCards
+                      items={kpiItems}
+                      drawsRaw={dataReady ? drawsForView : []}
+                      drawsRawGlobal={dataReady ? drawsForUi : []}
+                      showGlobalAparicoes={true}
+                      selectedGrupo={selectedGrupo}
+                      selectedAnimalLabel={filters.animal}
+                      selectedPosition={selectedPosition}
+                    />
+                  </>
                 ) : (
                   <KpiCards
                     items={kpiItems}
@@ -1832,6 +1890,8 @@ export default function Dashboard(props) {
             />
           ) : isHydrating ? (
             hydratingBox
+          ) : isAggregatedOnly ? (
+            aggregatedNeedsDetailBox
           ) : emptyForRange ? (
             <PremiumInfoBox
               title="Sem registros no período / filtro atual"
