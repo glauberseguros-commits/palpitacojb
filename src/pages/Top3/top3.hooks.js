@@ -335,6 +335,32 @@ export function useTop3Controller() {
       setTargetYmd(nextSlot.ymd||"");
       setTargetHourBucket(nextSlot.hour||"");
 
+      /* FIX 09h — encontrar draw anterior robusto */
+      const prev = await getPreviousDrawRobust({
+        getKingResultsByDate,
+        lotteryKey: lKey,
+        ymdTarget: nextSlot.ymd,
+        targetHourBucket: nextSlot.hour,
+        todayDraws: today,
+        schedule,
+        PT_RIO_SCHEDULE_NORMAL,
+        PT_RIO_SCHEDULE_WED_SAT,
+        FEDERAL_SCHEDULE
+      });
+
+      if (prev?.draw) {
+        const gPrev = pickPrize1GrupoFromDraw(prev.draw);
+
+        setPrevInfo({
+          prevYmd: prev.ymd,
+          prevHour: prev.hour,
+          prevGrupo: gPrev,
+          prevAnimal: gPrev ? safeStr(getAnimalLabel(gPrev)) : "",
+          source: prev.source
+        });
+      }
+
+
       let rangeTo = ymdSafe;
 
       if(nextSlot?.ymd && nextSlot.ymd>rangeTo) rangeTo = nextSlot.ymd;

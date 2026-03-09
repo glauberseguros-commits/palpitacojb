@@ -16,7 +16,7 @@ function readEnvApiBase() {
   // Vite (sem warning no CRA: acesso direto)
   try {
     // eslint-disable-next-line no-undef
-    const v = stripTrailingSlashes(import.meta.env.VITE_API_BASE);
+    const v = stripTrailingSlashes((process.env.VITE_API_BASE || ""));
     if (v) return v;
   } catch {
     // ignore

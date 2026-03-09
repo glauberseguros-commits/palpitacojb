@@ -846,6 +846,10 @@ export function computeConditionalNextTop3({
   const targetH = toHourBucket(nextSlot?.hour);
   const targetDow = getDowKey(targetY);
   const targetDayOfMonth = getDayOfMonth(targetY);
+  const transition = `${lastH}->${targetH}`;
+  const useFirstFocusedRanking =
+    transition === "11h->14h" ||
+    transition === "14h->16h";
 
   if (!isYMD(targetY) || !targetH || !Number.isFinite(targetDow)) {
     return { top: [], meta: null };
@@ -891,21 +895,33 @@ export function computeConditionalNextTop3({
           ? Math.max(0, nowTs - lastSeenTs)
           : 0;
 
+      const taxaPrimeiro = samples > 0 ? primeiros / samples : 0;
+
       return {
         grupo,
         aparicoes,
         primeiros,
+        taxaPrimeiro,
         prob: p,
-        score: p,
+        score: (primeiros * 1000) + (taxaPrimeiro * 100) + aparicoes + p,
         lastSeenTs,
         gapMs,
       };
     }
   )
     .sort((a, b) => {
-      if (b.aparicoes !== a.aparicoes) return b.aparicoes - a.aparicoes;
-      if (b.primeiros !== a.primeiros) return b.primeiros - a.primeiros;
-      if (b.prob !== a.prob) return b.prob - a.prob;
+
+      if (useFirstFocusedRanking) {
+        if (b.primeiros !== a.primeiros) return b.primeiros - a.primeiros;
+        if (b.taxaPrimeiro !== a.taxaPrimeiro) return b.taxaPrimeiro - a.taxaPrimeiro;
+        if (b.aparicoes !== a.aparicoes) return b.aparicoes - a.aparicoes;
+        if (b.prob !== a.prob) return b.prob - a.prob;
+      } else {
+        if (b.aparicoes !== a.aparicoes) return b.aparicoes - a.aparicoes;
+        if (b.primeiros !== a.primeiros) return b.primeiros - a.primeiros;
+        if (b.prob !== a.prob) return b.prob - a.prob;
+      }
+
       return a.grupo - b.grupo;
     })
     .slice(0, Math.max(1, Number(topN || 3)));
@@ -1153,3 +1169,4 @@ export function build16MilharesForGrupo(args) {
 export function build20MilharesForGrupo(args) {
   return buildMilharesForGrupo({ ...(args || {}), count: 20 });
 }
+
