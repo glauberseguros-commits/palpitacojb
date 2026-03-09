@@ -302,7 +302,15 @@ export function useTop3Controller() {
         readPolicy:"server"
       }) || [];
 
-      const last = findLastDrawInList(today,schedule);
+      const scheduleToday = getScheduleForLottery({
+        lotteryKey: lKey,
+        ymd: ymdSafe,
+        PT_RIO_SCHEDULE_NORMAL,
+        PT_RIO_SCHEDULE_WED_SAT,
+        FEDERAL_SCHEDULE
+      });
+
+      const last = findLastDrawInList(today, scheduleToday);
 
       const lastBucket = last ? toHourBucket(pickDrawHour(last)) : "";
 
@@ -597,3 +605,5 @@ export function useTop3Controller() {
   };
 
 }
+
+
