@@ -499,7 +499,13 @@ export default function Top3View(props) {
         }}
       >
         <div style={{ display: "grid", gap: 10 }}>
-          <div style={{ fontWeight: 900, fontSize: 18 }}>TOP3 (Próximo sorteio)</div>
+          <div style={{ fontWeight: 900, fontSize: 18 }}>
+  TOP3 — Próximo sorteio
+</div>
+
+<div style={{ color: t.muted, fontSize: 13, marginTop: 2 }}>
+  Previsão baseada na transição: <b>{meta.prev}</b> → <b>{meta.last}</b>
+</div>
 
           <div className="pp-tabs">
             {lotOptions.map((op) => {
