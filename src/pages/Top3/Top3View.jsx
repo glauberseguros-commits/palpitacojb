@@ -501,6 +501,12 @@ export default function Top3View(props) {
         <div style={{ display: "grid", gap: 10 }}>
           <div style={{ fontWeight: 900, fontSize: 18 }}>
   TOP3 — Próximo sorteio
+
+<div className="top3-context">
+  <div><b>Base:</b> {lastLabel}</div>
+  <div><b>Previsão:</b> {analysisYmd ? `${ymdToBR(analysisYmd)} ${analysisHourBucket}` : "—"}</div>
+  <div><b>Transição:</b> {lastHourBucket} → {analysisHourBucket}</div>
+</div>
 </div>
 
 <div style={{ color: t.muted, fontSize: 13, marginTop: 2 }}>
@@ -872,3 +878,4 @@ export default function Top3View(props) {
     </div>
   );
 }
+
