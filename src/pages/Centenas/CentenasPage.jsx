@@ -1,11 +1,11 @@
+// src/pages/Centenas/CentenasPage.jsx
 import React from "react";
-import Centenas from "./Centenas.jsx";
+import CentenasView from "./CentenasView";
 
 /**
- * Wrapper de compatibilidade:
- * - Mantém o Centenas.jsx atual funcionando
- * - Permite refatorar aos poucos para CentenasView.jsx sem quebrar rotas/imports
+ * Wrapper de compatibilidade.
+ * Mantido para não quebrar rotas/imports antigos.
  */
 export default function CentenasPage() {
-  return <Centenas />;
+  return <CentenasView />;
 }
