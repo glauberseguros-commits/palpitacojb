@@ -1,4 +1,4 @@
-﻿"use strict";
+"use strict";
 
 const fs = require("fs");
 const path = require("path");
@@ -360,7 +360,19 @@ function isAllDoneHardOnly(state, statusMap) {
  * Gera closes candidatos (tolerância de minutos)
  */
 function closeCandidates(hhmm) {
-  const parsed = parseHH(hhmm);
+  const s = String(hhmm || "").trim();
+
+  // PT_RIO 21h pode sair como fechamento de 21:30.
+  // Mantém os closes históricos e adiciona a faixa 21:29~21:32.
+  if (LOTTERY === "PT_RIO" && s === "21:00") {
+    return [
+      "21:00", "21:01", "21:02",
+      "21:09", "21:10", "21:11",
+      "21:29", "21:30", "21:31", "21:32"
+    ];
+  }
+
+  const parsed = parseHH(s);
   if (!parsed) return [];
   const { h } = parsed;
 

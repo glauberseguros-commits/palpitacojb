@@ -17,7 +17,7 @@ function safeRemoveLS(key) {
   } catch {}
 }
 
-export default function LoginVisual({ onEnter, onSkip, onRegister }) {
+export default function LoginVisual({ onEnter, onSkip }) {
   const [logoOk, setLogoOk] = useState(true);
   const [loginValue, setLoginValue] = useState("");
   const [passwordValue, setPasswordValue] = useState("");
@@ -43,7 +43,6 @@ export default function LoginVisual({ onEnter, onSkip, onRegister }) {
   const ui = useMemo(() => {
     const GOLD = "rgba(202,166,75,1)";
     const WHITE = "rgba(255,255,255,0.94)";
-    const WHITE_72 = "rgba(255,255,255,0.72)";
     const WHITE_82 = "rgba(255,255,255,0.82)";
     const BORDER = "rgba(255,255,255,0.12)";
     const BORDER_GOLD = "rgba(202,166,75,0.30)";
@@ -275,7 +274,7 @@ export default function LoginVisual({ onEnter, onSkip, onRegister }) {
       });
 
       if (result === false) {
-        throw new Error("Login inválido.");
+        throw new Error("Não foi possível concluir o acesso.");
       }
     } catch (err) {
       const msg =
@@ -309,25 +308,6 @@ export default function LoginVisual({ onEnter, onSkip, onRegister }) {
     e.preventDefault();
     if (submitting) return;
     await handleRealLogin();
-  }
-
-  async function onEntrarCadastrar() {
-    setErrorMsg("");
-
-    const hasLogin = String(loginValue || "").trim().length > 0;
-    const hasPassword = String(passwordValue || "").length > 0;
-
-    if (hasLogin && hasPassword) {
-      await handleRealLogin();
-      return;
-    }
-
-    if (typeof onRegister === "function") {
-      onRegister();
-      return;
-    }
-
-    window.alert("Fluxo de cadastro ainda não foi conectado.");
   }
 
   return (
@@ -364,7 +344,7 @@ export default function LoginVisual({ onEnter, onSkip, onRegister }) {
             <form style={ui.formGrid} onSubmit={onSubmitLogin}>
               <div style={ui.fieldWrap}>
                 <label style={ui.label} htmlFor="pp-login">
-                  E-mail ou telefone
+                  Login
                 </label>
                 <input
                   id="pp-login"
@@ -396,12 +376,11 @@ export default function LoginVisual({ onEnter, onSkip, onRegister }) {
 
               <div style={ui.btnRow}>
                 <button
-                  type="button"
+                  type="submit"
                   style={{
                     ...ui.btnPrimary,
                     ...(submitting ? ui.btnDisabled : null),
                   }}
-                  onClick={onEntrarCadastrar}
                   disabled={submitting}
                 >
                   {submitting ? "PROCESSANDO..." : "ENTRAR / CADASTRAR"}

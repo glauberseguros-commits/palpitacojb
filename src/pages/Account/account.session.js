@@ -64,9 +64,7 @@ export function safeRemoveSession() {
 ========================= */
 
 function normalizePlan(plan) {
-  const raw = String(plan ?? "")
-    .trim()
-    .toUpperCase();
+  const raw = String(plan ?? "").trim().toUpperCase();
 
   if (raw === "VIP") return "VIP";
   if (raw === "PREMIUM") return "PREMIUM";
@@ -91,9 +89,9 @@ function resolveUserPlan(user) {
     if (normalized) return normalized;
   }
 
-  // fallback seguro para usuário autenticado:
-  // evita cair como FREE por ausência de plan no objeto local
-  return "PREMIUM";
+  // fallback seguro:
+  // ausência de plano confirmado NUNCA deve escalar para PREMIUM
+  return "FREE";
 }
 
 /* =========================

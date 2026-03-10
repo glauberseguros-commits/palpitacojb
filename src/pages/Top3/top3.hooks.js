@@ -9,7 +9,6 @@ import {
   addDaysYMD,
   toHourBucket,
   getCentena3,
-  getDowKey,
 } from "./top3.formatters";
 
 import {
@@ -88,11 +87,9 @@ function build4ColsFromEngineOut(out, expectedCols = 4, perCol = 5) {
 }
 
 export function useTop3Controller() {
-
   const DEFAULT_LOTTERY = "PT_RIO";
 
   const requestIdRef = useRef(0);
-
   const boundsCacheRef = useRef(new Map());
   const analyticsCacheRef = useRef({ key: "", value: { top: [], meta: null } });
 
@@ -101,30 +98,29 @@ export function useTop3Controller() {
   const [lookback, setLookback] = useState(LOOKBACK_ALL);
 
   const [loading, setLoading] = useState(false);
-  const [loadingStage, setLoadingStage] = useState({ today:false, range:false });
+  const [loadingStage, setLoadingStage] = useState({ today: false, range: false });
   const [error, setError] = useState("");
 
-  const [rangeDraws,setRangeDraws] = useState([]);
-  const [bounds,setBounds] = useState({minDate:"",maxDate:""});
-  const [rangeInfo,setRangeInfo] = useState({from:"",to:""});
+  const [rangeDraws, setRangeDraws] = useState([]);
+  const [rangeInfo, setRangeInfo] = useState({ from: "", to: "" });
 
-  const [lastHourBucket,setLastHourBucket] = useState("");
-  const [targetHourBucket,setTargetHourBucket] = useState("");
-  const [targetYmd,setTargetYmd] = useState("");
+  const [lastHourBucket, setLastHourBucket] = useState("");
+  const [targetHourBucket, setTargetHourBucket] = useState("");
+  const [targetYmd, setTargetYmd] = useState("");
 
-  const [lastInfo,setLastInfo] = useState({
-    lastYmd:"",
-    lastHour:"",
-    lastGrupo:null,
-    lastAnimal:""
+  const [lastInfo, setLastInfo] = useState({
+    lastYmd: "",
+    lastHour: "",
+    lastGrupo: null,
+    lastAnimal: "",
   });
 
-  const [prevInfo,setPrevInfo] = useState({
-    prevYmd:"",
-    prevHour:"",
-    prevGrupo:null,
-    prevAnimal:"",
-    source:"none"
+  const [prevInfo, setPrevInfo] = useState({
+    prevYmd: "",
+    prevHour: "",
+    prevGrupo: null,
+    prevAnimal: "",
+    source: "none",
   });
 
   const lotteryKeySafe = useMemo(
@@ -132,17 +128,14 @@ export function useTop3Controller() {
     [lotteryKey]
   );
 
-  const ymdSafe = useMemo(()=>{
+  const ymdSafe = useMemo(() => {
     const y = normalizeToYMD(ymd);
     return y && isYMD(y) ? y : todayYMDLocal();
-  },[ymd]);
+  }, [ymd]);
 
-  const dateBR = useMemo(()=> ymdToBR(ymdSafe),[ymdSafe]);
+  const dateBR = useMemo(() => ymdToBR(ymdSafe), [ymdSafe]);
 
-  /* CORREÇÃO IMPORTANTE
-     schedule agora depende do targetYmd */
-  const schedule = useMemo(()=>{
-
+  const schedule = useMemo(() => {
     const y = safeStr(targetYmd) || ymdSafe;
 
     return getScheduleForLottery({
@@ -150,292 +143,355 @@ export function useTop3Controller() {
       ymd: y,
       PT_RIO_SCHEDULE_NORMAL,
       PT_RIO_SCHEDULE_WED_SAT,
-      FEDERAL_SCHEDULE
+      FEDERAL_SCHEDULE,
     });
+  }, [lotteryKeySafe, ymdSafe, targetYmd]);
 
-  },[lotteryKeySafe,ymdSafe,targetYmd]);
+  const isFederalNonDrawDay = useMemo(() => {
+    return lotteryKeySafe === "FEDERAL" && !schedule.length;
+  }, [lotteryKeySafe, schedule]);
 
-  const isFederalNonDrawDay = useMemo(()=>{
-    return lotteryKeySafe==="FEDERAL" && !schedule.length;
-  },[lotteryKeySafe,schedule]);
+  const analysisHourBucket = useMemo(
+    () => safeStr(targetHourBucket) || "",
+    [targetHourBucket]
+  );
 
-  const analysisHourBucket = useMemo(()=> safeStr(targetHourBucket)||"",[targetHourBucket]);
-  const analysisYmd = useMemo(()=> safeStr(targetYmd)||"",[targetYmd]);
+  const analysisYmd = useMemo(() => safeStr(targetYmd) || "", [targetYmd]);
 
-  const lookbackLabel = useMemo(()=>{
-
-    if(lookback===LOOKBACK_ALL) return "Toda a base";
-
-    const n = Number(lookback||0);
-
-    if(!Number.isFinite(n)||n<=0) return "—";
-
-    return `${n} dias`;
-
-  },[lookback]);
-
-  const rangeLabel = useMemo(()=>{
-
+  const rangeLabel = useMemo(() => {
     const f = safeStr(rangeInfo?.from);
     const t = safeStr(rangeInfo?.to);
 
-    if(isYMD(f)&&isYMD(t)) return `${ymdToBR(f)} → ${ymdToBR(t)}`;
+    if (isYMD(f) && isYMD(t)) return `${ymdToBR(f)} → ${ymdToBR(t)}`;
 
     return "—";
+  }, [rangeInfo]);
 
-  },[rangeInfo]);
-
-  const prevLabel = useMemo(()=>{
-
-    if(!prevInfo?.prevGrupo) return "—";
+  const prevLabel = useMemo(() => {
+    if (!prevInfo?.prevGrupo) return "—";
 
     const g = Number(prevInfo.prevGrupo);
-
-    const animal = safeStr(prevInfo.prevAnimal || getAnimalLabel?.(g)||"");
+    const animal = safeStr(prevInfo.prevAnimal || getAnimalLabel?.(g) || "");
 
     const when =
       prevInfo?.prevYmd && prevInfo?.prevHour
         ? `${ymdToBR(prevInfo.prevYmd)} ${prevInfo.prevHour}`
         : "";
 
-    return `G${String(g).padStart(2,"0")}${animal?" • "+animal.toUpperCase():""}${when?" • "+when:""}`;
+    return `G${String(g).padStart(2, "0")}${animal ? " • " + animal.toUpperCase() : ""}${when ? " • " + when : ""}`;
+  }, [prevInfo]);
 
-  },[prevInfo]);
-
-  const lastLabel = useMemo(()=>{
-
-    if(!lastInfo?.lastGrupo) return "—";
+  const lastLabel = useMemo(() => {
+    if (!lastInfo?.lastGrupo) return "—";
 
     const g = Number(lastInfo.lastGrupo);
-
-    const animal = safeStr(lastInfo.lastAnimal || getAnimalLabel?.(g)||"");
+    const animal = safeStr(lastInfo.lastAnimal || getAnimalLabel?.(g) || "");
 
     const when =
       lastInfo?.lastYmd && lastInfo?.lastHour
         ? `${ymdToBR(lastInfo.lastYmd)} ${lastInfo.lastHour}`
         : "";
 
-    return `G${String(g).padStart(2,"0")}${animal?" • "+animal.toUpperCase():""}${when?" • "+when:""}`;
+    return `G${String(g).padStart(2, "0")}${animal ? " • " + animal.toUpperCase() : ""}${when ? " • " + when : ""}`;
+  }, [lastInfo]);
 
-  },[lastInfo]);
+  const resetStateForNoData = useCallback(() => {
+    setLastHourBucket("");
+    setTargetHourBucket("");
+    setTargetYmd("");
 
-  /* =========================
-     LOAD
-  ========================= */
+    setLastInfo({
+      lastYmd: "",
+      lastHour: "",
+      lastGrupo: null,
+      lastAnimal: "",
+    });
 
-  const load = useCallback(async()=>{
+    setPrevInfo({
+      prevYmd: "",
+      prevHour: "",
+      prevGrupo: null,
+      prevAnimal: "",
+      source: "none",
+    });
 
+    setRangeInfo({ from: "", to: "" });
+    setRangeDraws([]);
+  }, []);
+
+  const load = useCallback(async () => {
     const lKey = safeStr(lotteryKeySafe);
-
-    if(!lKey||!isYMD(ymdSafe)) return;
+    if (!lKey || !isYMD(ymdSafe)) return;
 
     setLoading(true);
-    setLoadingStage({today:true,range:false});
+    setLoadingStage({ today: true, range: false });
     setError("");
 
     const currentRequestId = ++requestIdRef.current;
 
-    if(lKey==="FEDERAL" && !isFederalDrawDay(ymdSafe)){
-
-      if(requestIdRef.current===currentRequestId){
-
-        setLastHourBucket("");
-        setTargetHourBucket("");
-        setTargetYmd("");
-
-        setLastInfo({
-          lastYmd:"",
-          lastHour:"",
-          lastGrupo:null,
-          lastAnimal:""
-        });
-
-        setPrevInfo({
-          prevYmd:"",
-          prevHour:"",
-          prevGrupo:null,
-          prevAnimal:"",
-          source:"none"
-        });
-
-        setRangeInfo({from:"",to:""});
-        setLoading(false);
-
+    if (lKey === "FEDERAL" && !isFederalDrawDay(ymdSafe)) {
+      if (requestIdRef.current === currentRequestId) {
+        resetStateForNoData();
         setError(
           `Loteria Federal só tem resultado às 20h nas quartas e sábados. (${dateBR} não é dia de concurso)`
         );
+        setLoading(false);
       }
-
       return;
     }
 
-    try{
-
+    try {
       const ufResolved = lKey;
 
-      let minDate = safeStr(bounds?.minDate);
-      let maxDate = safeStr(bounds?.maxDate);
+      let minDate = "";
+      let maxDate = "";
 
       const cached = boundsCacheRef.current.get(ufResolved);
 
-      if(cached){
-
+      if (cached) {
         minDate = cached.minDate;
         maxDate = cached.maxDate;
-
       } else {
-
-        const b = await getKingBoundsByUf({uf:ufResolved});
+        const b = await getKingBoundsByUf({ uf: ufResolved });
 
         const bMin = safeStr(b?.minYmd || b?.minDate || "");
         const bMax = safeStr(b?.maxYmd || b?.maxDate || "");
 
-        if(isYMD(bMin)) minDate=bMin;
-        if(isYMD(bMax)) maxDate=bMax;
+        if (isYMD(bMin)) minDate = bMin;
+        if (isYMD(bMax)) maxDate = bMax;
 
-        boundsCacheRef.current.set(ufResolved,{minDate,maxDate});
+        boundsCacheRef.current.set(ufResolved, { minDate, maxDate });
       }
 
-      const today = await getKingResultsByDate({
-        uf:ufResolved,
-        date:ymdSafe,
-        readPolicy:"server"
-      }) || [];
+      const today =
+        (await getKingResultsByDate({
+          uf: ufResolved,
+          date: ymdSafe,
+          readPolicy: "server",
+        })) || [];
 
-      const scheduleToday = getScheduleForLottery({
+      const todaySchedule = getScheduleForLottery({
         lotteryKey: lKey,
         ymd: ymdSafe,
         PT_RIO_SCHEDULE_NORMAL,
         PT_RIO_SCHEDULE_WED_SAT,
-        FEDERAL_SCHEDULE
+        FEDERAL_SCHEDULE,
       });
 
-      const last = findLastDrawInList(today, scheduleToday);
+      const todayLast = findLastDrawInList(today, todaySchedule);
 
-      const lastBucket = last ? toHourBucket(pickDrawHour(last)) : "";
+      let baseDraw = null;
+      let baseY = "";
+      let baseH = "";
+      let baseGrupo = null;
+      let baseAnimal = "";
 
-      const lastY = last ? pickDrawYMD(last)||ymdSafe : "";
+      let resolvedTargetY = "";
+      let resolvedTargetH = "";
 
-      const lastGrupo = last ? pickPrize1GrupoFromDraw(last) : null;
+      let resolvedPrev = {
+        draw: null,
+        ymd: "",
+        hour: "",
+        source: "none",
+      };
 
-      const lastAnimal = lastGrupo ? safeStr(getAnimalLabel(lastGrupo)) : "";
+      if (todayLast) {
+        baseDraw = todayLast;
+        baseY = pickDrawYMD(todayLast) || ymdSafe;
+        baseH = toHourBucket(pickDrawHour(todayLast));
+        baseGrupo = pickPrize1GrupoFromDraw(todayLast);
+        baseAnimal = baseGrupo ? safeStr(getAnimalLabel(baseGrupo)) : "";
 
-      setLastHourBucket(lastBucket);
+        const nextSlot = getNextSlotForLottery({
+          lotteryKey: lKey,
+          ymd: baseY,
+          hourBucket: baseH,
+          PT_RIO_SCHEDULE_NORMAL,
+          PT_RIO_SCHEDULE_WED_SAT,
+          FEDERAL_SCHEDULE,
+        });
 
-      setLastInfo({
-        lastYmd:lastY,
-        lastHour:lastBucket,
-        lastGrupo,
-        lastAnimal
-      });
+        resolvedTargetY = safeStr(nextSlot?.ymd);
+        resolvedTargetH = toHourBucket(nextSlot?.hour);
 
-      const nextSlot = last
-        ? getNextSlotForLottery({
-            lotteryKey:lKey,
-            ymd:lastY,
-            hourBucket:lastBucket,
+        if (isYMD(baseY) && baseH) {
+          resolvedPrev = await getPreviousDrawRobust({
+            getKingResultsByDate,
+            lotteryKey: lKey,
+            ymdTarget: baseY,
+            targetHourBucket: baseH,
+            todayDraws: today,
+            schedule: todaySchedule,
             PT_RIO_SCHEDULE_NORMAL,
             PT_RIO_SCHEDULE_WED_SAT,
-            FEDERAL_SCHEDULE
-          })
-        : {ymd:"",hour:""};
+            FEDERAL_SCHEDULE,
+          });
+        }
+      } else {
+        const firstHourToday = toHourBucket(todaySchedule?.[0]);
 
-      setTargetYmd(nextSlot.ymd||"");
-      setTargetHourBucket(nextSlot.hour||"");
+        if (!firstHourToday) {
+          resetStateForNoData();
+          setError("Não foi possível determinar o primeiro horário válido para esta loteria.");
+          return;
+        }
 
-      /* FIX 09h — encontrar draw anterior robusto */
-      const prev = await getPreviousDrawRobust({
-        getKingResultsByDate,
-        lotteryKey: lKey,
-        ymdTarget: nextSlot.ymd,
-        targetHourBucket: nextSlot.hour,
-        todayDraws: today,
-        schedule,
-        PT_RIO_SCHEDULE_NORMAL,
-        PT_RIO_SCHEDULE_WED_SAT,
-        FEDERAL_SCHEDULE
+        resolvedTargetY = ymdSafe;
+        resolvedTargetH = firstHourToday;
+
+        const previousForFirstSlot = await getPreviousDrawRobust({
+          getKingResultsByDate,
+          lotteryKey: lKey,
+          ymdTarget: ymdSafe,
+          targetHourBucket: firstHourToday,
+          todayDraws: today,
+          schedule: todaySchedule,
+          PT_RIO_SCHEDULE_NORMAL,
+          PT_RIO_SCHEDULE_WED_SAT,
+          FEDERAL_SCHEDULE,
+        });
+
+        if (!previousForFirstSlot?.draw) {
+          resetStateForNoData();
+          setError("Não foi possível localizar a base anterior ao primeiro sorteio do dia.");
+          return;
+        }
+
+        baseDraw = previousForFirstSlot.draw;
+        baseY = safeStr(previousForFirstSlot.ymd);
+        baseH = toHourBucket(previousForFirstSlot.hour);
+        baseGrupo = pickPrize1GrupoFromDraw(baseDraw);
+        baseAnimal = baseGrupo ? safeStr(getAnimalLabel(baseGrupo)) : "";
+
+        const baseDayDraws =
+          baseY === ymdSafe
+            ? today
+            : (await getKingResultsByDate({
+                uf: ufResolved,
+                date: baseY,
+                readPolicy: "server",
+              })) || [];
+
+        const baseDaySchedule = getScheduleForLottery({
+          lotteryKey: lKey,
+          ymd: baseY,
+          PT_RIO_SCHEDULE_NORMAL,
+          PT_RIO_SCHEDULE_WED_SAT,
+          FEDERAL_SCHEDULE,
+        });
+
+        if (isYMD(baseY) && baseH) {
+          resolvedPrev = await getPreviousDrawRobust({
+            getKingResultsByDate,
+            lotteryKey: lKey,
+            ymdTarget: baseY,
+            targetHourBucket: baseH,
+            todayDraws: baseDayDraws,
+            schedule: baseDaySchedule,
+            PT_RIO_SCHEDULE_NORMAL,
+            PT_RIO_SCHEDULE_WED_SAT,
+            FEDERAL_SCHEDULE,
+          });
+        }
+      }
+
+      if (requestIdRef.current !== currentRequestId) return;
+
+      setLastHourBucket(baseH);
+      setTargetYmd(resolvedTargetY || "");
+      setTargetHourBucket(resolvedTargetH || "");
+
+      setLastInfo({
+        lastYmd: baseY || "",
+        lastHour: baseH || "",
+        lastGrupo: baseGrupo,
+        lastAnimal: baseAnimal,
       });
 
-      if (prev?.draw) {
-        const gPrev = pickPrize1GrupoFromDraw(prev.draw);
+      if (resolvedPrev?.draw) {
+        const gPrev = pickPrize1GrupoFromDraw(resolvedPrev.draw);
 
         setPrevInfo({
-          prevYmd: prev.ymd,
-          prevHour: prev.hour,
+          prevYmd: resolvedPrev.ymd,
+          prevHour: resolvedPrev.hour,
           prevGrupo: gPrev,
           prevAnimal: gPrev ? safeStr(getAnimalLabel(gPrev)) : "",
-          source: prev.source
+          source: resolvedPrev.source,
+        });
+      } else {
+        setPrevInfo({
+          prevYmd: "",
+          prevHour: "",
+          prevGrupo: null,
+          prevAnimal: "",
+          source: "none",
         });
       }
 
-
       let rangeTo = ymdSafe;
 
-      if(nextSlot?.ymd && nextSlot.ymd>rangeTo) rangeTo = nextSlot.ymd;
+      if (resolvedTargetY && resolvedTargetY > rangeTo) {
+        rangeTo = resolvedTargetY;
+      }
 
       let rangeFrom;
 
-      if(lookback===LOOKBACK_ALL){
-
-        rangeFrom = minDate || addDaysYMD(ymdSafe,-180);
-
+      if (lookback === LOOKBACK_ALL) {
+        rangeFrom = minDate || addDaysYMD(ymdSafe, -180);
       } else {
-
-        const days = Math.max(1,Number(lookback||30));
-
-        rangeFrom = addDaysYMD(ymdSafe,-(days-1));
+        const days = Math.max(1, Number(lookback || 30));
+        rangeFrom = addDaysYMD(ymdSafe, -(days - 1));
       }
 
-      setRangeInfo({from:rangeFrom,to:rangeTo});
+      setRangeInfo({ from: rangeFrom, to: rangeTo });
 
-      const hist = await getKingResultsByRange({
-        uf:ufResolved,
-        dateFrom:rangeFrom,
-        dateTo:addDaysYMD(rangeTo,1),
-        mode:"detailed",
-        readPolicy:"server"
-      }) || [];
+      setLoadingStage({ today: false, range: true });
+
+      const hist =
+        (await getKingResultsByRange({
+          uf: ufResolved,
+          dateFrom: rangeFrom,
+          dateTo: addDaysYMD(rangeTo, 1),
+          mode: "detailed",
+          readPolicy: "server",
+        })) || [];
+
+      if (requestIdRef.current !== currentRequestId) return;
 
       setRangeDraws(hist);
-
-    } catch(e){
-
-      setError(String(e?.message||e||"Falha ao carregar dados do TOP3."));
-
-    } finally{
-
-      setLoadingStage({today:false,range:false});
-      setLoading(false);
-
+    } catch (e) {
+      if (requestIdRef.current === currentRequestId) {
+        setError(String(e?.message || e || "Falha ao carregar dados do TOP3."));
+      }
+    } finally {
+      if (requestIdRef.current === currentRequestId) {
+        setLoadingStage({ today: false, range: false });
+        setLoading(false);
+      }
     }
-
-  },[
+  }, [
     lotteryKeySafe,
     ymdSafe,
-    schedule,
     lookback,
-    bounds?.minDate,
-    bounds?.maxDate,
-    dateBR
+    dateBR,
+    resetStateForNoData,
   ]);
 
-  useEffect(()=>{ load(); },[load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
-  /* =========================
-     ANALYTICS
-  ========================= */
-
-  const analytics = useMemo(()=>{
-
+  const analytics = useMemo(() => {
     const list = Array.isArray(rangeDraws) ? rangeDraws : [];
 
     const lastG = lastInfo?.lastGrupo;
     const lastY = safeStr(lastInfo?.lastYmd);
     const lastH = safeStr(lastInfo?.lastHour);
 
-    if(!list.length || !lastG || !isYMD(lastY) || !safeStr(lastH)){
-      const empty = {top:[],meta:null};
-      analyticsCacheRef.current={key:"",value:empty};
+    if (!list.length || !lastG || !isYMD(lastY) || !safeStr(lastH)) {
+      const empty = { top: [], meta: null };
+      analyticsCacheRef.current = { key: "", value: empty };
       return empty;
     }
 
@@ -445,122 +501,113 @@ export function useTop3Controller() {
       list.length,
       lastY,
       toHourBucket(lastH),
-      Number(lastG)
+      Number(lastG),
     ].join("|");
 
-    if(analyticsCacheRef.current.key===cacheKey)
+    if (analyticsCacheRef.current.key === cacheKey) {
       return analyticsCacheRef.current.value;
+    }
 
-    const drawLast = list.find(d=>{
+    const drawLast = list.find((d) => {
       const y = pickDrawYMD(d);
       const h = toHourBucket(pickDrawHour(d));
-      return y===lastY && h===toHourBucket(lastH);
+      return y === lastY && h === toHourBucket(lastH);
     });
 
-    if(!drawLast){
-      return {top:[],meta:null};
+    if (!drawLast) {
+      return { top: [], meta: null };
     }
 
     const computed = computeConditionalNextTop3({
-      lotteryKey:lotteryKeySafe,
-      drawsRange:list,
+      lotteryKey: lotteryKeySafe,
+      drawsRange: list,
       drawLast,
       PT_RIO_SCHEDULE_NORMAL,
       PT_RIO_SCHEDULE_WED_SAT,
       FEDERAL_SCHEDULE,
-      topN:3
+      topN: 3,
     });
 
-    analyticsCacheRef.current={key:cacheKey,value:computed};
-
+    analyticsCacheRef.current = { key: cacheKey, value: computed };
     return computed;
-
-  },[
+  }, [
     rangeDraws,
     lotteryKeySafe,
     lookback,
     lastInfo?.lastGrupo,
     lastInfo?.lastYmd,
-    lastInfo?.lastHour
+    lastInfo?.lastHour,
   ]);
 
-  const build20 = useCallback((grupo2)=>{
+  const build20 = useCallback(
+    (grupo2) => {
+      return buildMilharesForGrupo({
+        rangeDraws,
+        analysisHourBucket,
+        schedule,
+        grupo2,
+        count: 20,
+      });
+    },
+    [rangeDraws, analysisHourBucket, schedule]
+  );
 
-    return buildMilharesForGrupo({
-      rangeDraws,
-      analysisHourBucket,
-      schedule,
-      grupo2,
-      count:20
-    });
-
-  },[rangeDraws,analysisHourBucket,schedule]);
-
-  const top3 = useMemo(()=>{
-
+  const top3 = useMemo(() => {
     const arr = Array.isArray(analytics?.top) ? analytics.top : [];
 
-    const samplesMeta = Number(analytics?.meta?.samples||0);
+    const samplesMeta = Number(analytics?.meta?.samples || 0);
 
-    const alpha = Number(TOP3_SMOOTH_ALPHA)||1;
-    const groupsK = Number(TOP3_GROUPS_K)||25;
+    const alpha = Number(TOP3_SMOOTH_ALPHA) || 1;
+    const groupsK = Number(TOP3_GROUPS_K) || 25;
 
-    const denomRaw = Math.max(0,samplesMeta)*7;
-    const denom = denomRaw + alpha*groupsK;
+    const denomRaw = Math.max(0, samplesMeta) * 7;
+    const denom = denomRaw + alpha * groupsK;
 
     const milharesCache = new Map();
 
-    return arr.map(x=>{
-
+    return arr.map((x) => {
       const g = Number(x.grupo);
-
-      const animal = safeStr(getAnimalLabel(g)||"");
+      const animal = safeStr(getAnimalLabel(g) || "");
 
       let out = milharesCache.get(g);
 
-      if(!out){
+      if (!out) {
         out = build20(g);
-        milharesCache.set(g,out);
+        milharesCache.set(g, out);
       }
 
-      let milharesCols = build4ColsFromEngineOut(out,4,5);
+      const milharesCols = build4ColsFromEngineOut(out, 4, 5);
+      const milhares20 = milharesCols.flatMap((c) => c.items).slice(0, 20);
 
-      const milhares20 = milharesCols.flatMap(c=>c.items).slice(0,20);
-
-      const freq = Number(x.freq||0);
-
-      const prob = denom>0 ? (freq+alpha)/denom : 0;
-
-      const probPct = prob*100;
+      const freq = Number(x.freq || 0);
+      const prob = denom > 0 ? (freq + alpha) / denom : 0;
+      const probPct = prob * 100;
 
       const bgPrimary = normalizeImgSrc(
-        safeStr(getImgFromGrupo?.(g,512)||getImgFromGrupo?.(g)||"")
+        safeStr(getImgFromGrupo?.(g, 512) || getImgFromGrupo?.(g) || "")
       );
 
       const iconVariants = makeImgVariantsFromGrupo({
-        grupo:g,
-        size:96,
+        grupo: g,
+        size: 96,
         getImgFromGrupo,
-        getAnimalLabel
+        getAnimalLabel,
       });
 
-      return{
+      return {
         ...x,
         animal,
-        imgBg:[bgPrimary],
-        imgIcon:iconVariants,
+        imgBg: [bgPrimary],
+        imgIcon: iconVariants,
         prob,
         probPct,
         milharesCols,
-        milhares20
+        milhares20,
       };
-
     });
+  }, [analytics, build20]);
 
-  },[analytics,build20]);
-
-  return{
-
+  return {
     LOOKBACK_ALL,
     LOOKBACK_OPTIONS,
     LOTTERY_OPTIONS,
@@ -591,19 +638,16 @@ export function useTop3Controller() {
 
     safeStr,
     lotteryLabel,
-    build16:(grupo2)=>build16MilharesForGrupo({
-      rangeDraws,
-      analysisHourBucket,
-      schedule,
-      grupo2
-    }),
+    build16: (grupo2) =>
+      build16MilharesForGrupo({
+        rangeDraws,
+        analysisHourBucket,
+        schedule,
+        grupo2,
+      }),
 
     build20,
     getCentena3,
-    normalizeImgSrc
-
+    normalizeImgSrc,
   };
-
 }
-
-

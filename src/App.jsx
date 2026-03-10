@@ -572,10 +572,7 @@ export default function App() {
     };
   }, []);
 
-  const sessionObj = useMemo(() => {
-    cleanupLegacyGuestFlagIfNeeded();
-    return loadSessionObj();
-  }, [sessionTick]);
+  const sessionObj = loadSessionObj();
 
   const sessionKind = useMemo(() => getSessionKind(sessionObj), [sessionObj]);
 
@@ -654,10 +651,10 @@ export default function App() {
     navigate("/", { replace: true });
   };
 
-  const PageRouter = ({ s }) => {
+  const renderScreen = (s) => {
     switch (s) {
       case ROUTES.ACCOUNT:
-        return <Account onAuthenticated={handleAuthenticated} />;
+        return <Account onAuthenticated={() => {}} />;
       case ROUTES.RESULTS:
         return <Results />;
       case ROUTES.TOP3:
@@ -762,7 +759,7 @@ export default function App() {
             setFilters={setDashboardFilters}
           />
         ) : (
-          <PageRouter s={currentScreen} />
+          renderScreen(currentScreen)
         )}
       </AppShell>
       <BuildStamp />

@@ -217,4 +217,3 @@ function InfoRow({ ui, label, value }) {
     </div>
   );
 }
-

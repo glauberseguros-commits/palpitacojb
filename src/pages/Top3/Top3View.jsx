@@ -861,10 +861,6 @@ export default function Top3View(props) {
                   <div className="pp-m20hdr">
                     <div style={{ display: "grid", gap: 2 }}>
                       <div style={{ fontWeight: 950 }}>
-                        📌 20 MILHARES RECOMENDADAS
-                      </div>
-                      <div className="pp-miniNote">
-                        Clique em uma milhar para copiar • Grade por dezena fixa
                       </div>
                     </div>
 
@@ -872,7 +868,7 @@ export default function Top3View(props) {
                       type="button"
                       onClick={doCopyAll}
                       className="pp-btn"
-                      title="Copiar as 20 milhares"
+                      title="Apostar"
                     >
                       {copiedAllKey === key ? "✅ Copiado" : "Copiar 20"}
                     </button>

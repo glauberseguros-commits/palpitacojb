@@ -1,4 +1,4 @@
-﻿// src/pages/Account/Account.jsx
+// src/pages/Account/Account.jsx
 import React, { useEffect, useRef, useState } from "react";
 import LoginVisual from "./LoginVisual";
 import AccountView from "./AccountView";
@@ -46,6 +46,7 @@ import {
   blobToDataURL,
   uploadAvatarJpegToStorage,
   resizeImageToJpegBlob,
+  deleteAvatarFromStorage,
 } from "./account.avatar.service";
 
 /**
@@ -272,8 +273,13 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
         return { type: "user_not_found", msg: "Usuário não encontrado." };
 
       case "auth/wrong-password":
-      case "auth/invalid-credential":
         return { type: "wrong_password", msg: "Login ou senha inválidos." };
+
+      case "auth/invalid-credential":
+        // no Firebase isso pode significar:
+        // - senha errada
+        // - usuário inexistente (com proteção de enumeração)
+        return { type: "invalid_credential", msg: "Login ou senha inválidos." };
 
       case "auth/email-already-in-use":
         return { type: "email_in_use", msg: "Este e-mail já possui cadastro." };
@@ -768,9 +774,27 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
 
       const parsed = buildFirebaseLoginError(error);
 
-      // e-mail não encontrado => cria conta automaticamente
-      if (parsed.type === "user_not_found" && isEmail) {
-        return await onRegister({ login: emailForAuth, password });
+      // Para e-mail, o Firebase pode mascarar "usuário não encontrado"
+      // como invalid-credential. Então tentamos criar a conta.
+      if (
+        isEmail &&
+        (parsed.type === "user_not_found" ||
+          parsed.type === "invalid_credential" ||
+          parsed.type === "wrong_password")
+      ) {
+        try {
+          return await onRegister({ login: emailForAuth, password });
+        } catch (registerError) {
+          const registerParsed = buildFirebaseLoginError(registerError);
+
+          // Se ao tentar cadastrar disser que o e-mail já existe,
+          // então o login falhou porque a senha está errada.
+          if (registerParsed.type === "email_in_use") {
+            throw new Error("Login ou senha inválidos.");
+          }
+
+          throw registerError;
+        }
       }
 
       throw new Error(parsed.msg);

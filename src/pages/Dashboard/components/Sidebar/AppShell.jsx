@@ -31,27 +31,56 @@ const safeReadLS = (k) => {
     return null;
   }
 };
-const safeWriteLS = (k, v) => {
-  try {
-    localStorage.setItem(k, v);
-  } catch {}
-};
+
 const safeRemoveLS = (k) => {
   try {
     localStorage.removeItem(k);
   } catch {}
 };
 
+function normalizePlan(plan) {
+  const p = String(plan || "").trim().toUpperCase();
+  if (p === "VIP") return "VIP";
+  if (p === "PREMIUM") return "PREMIUM";
+  if (p === "FREE") return "FREE";
+  return "";
+}
+
 function readSession() {
   const raw = safeReadLS(ACCOUNT_SESSION_KEY);
-  if (!raw) return { ok: false };
+  if (!raw) {
+    return {
+      ok: false,
+      type: "anon",
+      plan: "",
+      uid: "",
+      email: "",
+      raw: null,
+    };
+  }
 
   try {
     const obj = JSON.parse(raw);
-    return { ok: true, ...obj };
+    const type = String(obj?.type || "").trim().toLowerCase();
+    const plan = normalizePlan(obj?.plan);
+
+    return {
+      ok: obj?.ok === true,
+      type: type || "anon",
+      plan: type === "guest" ? "FREE" : plan || (type === "user" ? "FREE" : ""),
+      uid: String(obj?.uid || "").trim(),
+      email: String(obj?.email || "").trim().toLowerCase(),
+      raw: obj,
+    };
   } catch {
-    // fallback conservador (não quebra UI)
-    return { ok: true, type: "user", plan: "FREE" };
+    return {
+      ok: true,
+      type: "user",
+      plan: "FREE",
+      uid: "",
+      email: "",
+      raw: null,
+    };
   }
 }
 
@@ -93,40 +122,66 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
       if (user?.uid) {
-        safeWriteLS(
-          ACCOUNT_SESSION_KEY,
-          JSON.stringify({ ok: true, type: "user", plan: "FREE", uid: user.uid })
-        );
+        // Não sobrescreve plano/sessão aqui.
+        // O módulo Account já consolida a sessão correta.
         setSession(readSession());
         return;
       }
 
       // sem user -> se guest ativo, mantém preview
       if (safeReadLS(LS_GUEST_ACTIVE_KEY) === "1") {
-        safeWriteLS(
-          ACCOUNT_SESSION_KEY,
-          JSON.stringify({ ok: true, type: "guest", plan: "FREE" })
-        );
-        setSession(readSession());
+        setSession({
+          ok: true,
+          type: "guest",
+          plan: "FREE",
+          uid: "",
+          email: "",
+          raw: null,
+        });
         return;
       }
 
-      // ✅ sem user e sem guest: limpa (evita sessão stale)
-      safeRemoveLS(ACCOUNT_SESSION_KEY);
-      setSession({ ok: false });
+      // ✅ sem user e sem guest: limpa estado local
+      setSession({
+        ok: false,
+        type: "anon",
+        plan: "",
+        uid: "",
+        email: "",
+        raw: null,
+      });
     });
 
     return () => unsub();
   }, []);
 
+  // acompanha mudanças externas de sessão
+  useEffect(() => {
+    const refresh = () => setSession(readSession());
+
+    const onStorage = (e) => {
+      if (!e) return;
+      if (e.key === ACCOUNT_SESSION_KEY || e.key === LS_GUEST_ACTIVE_KEY) {
+        refresh();
+      }
+    };
+
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("pp_session_changed", refresh);
+    window.addEventListener("focus", refresh);
+
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("pp_session_changed", refresh);
+      window.removeEventListener("focus", refresh);
+    };
+  }, []);
+
   const isGuest = session?.type === "guest";
+  const planLabel = isGuest ? "PREVIEW" : normalizePlan(session?.plan) || "FREE";
 
   /* ======================
      Travar scroll do DOCUMENTO (html/body)
-     ✅ Regra correta:
-     - Desktop + Dashboard: trava (layout “1 tela”)
-     - Mobile: NÃO trava no Dashboard (senão mata o scroll)
-     - Mobile menu aberto: trava (overlay)
   ====================== */
   useEffect(() => {
     const isDashboard = active === ROUTES.DASHBOARD;
@@ -135,8 +190,8 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
     const prevBodyOverflow = document?.body?.style?.overflow;
 
     const mustLock =
-      (!isMobile && isDashboard) || // desktop: dashboard travado
-      (isMobile && sidebarOpen); // mobile: trava só quando menu aberto
+      (!isMobile && isDashboard) ||
+      (isMobile && sidebarOpen);
 
     if (mustLock) {
       document.documentElement.style.overflow = "hidden";
@@ -172,7 +227,6 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
   const handleNavigate = async (key) => {
     if (!key) return;
 
-    // ✅ fecha menu no mobile após navegar
     if (isMobile) setSidebarOpen(false);
 
     if (key === "__LOGOUT__") {
@@ -191,7 +245,7 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
   };
 
   /* ======================
-     UI (premium + mobile-first)
+     UI
   ====================== */
   const UI = useMemo(() => {
     const GOLD = "rgba(202,166,75,1)";
@@ -200,19 +254,18 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
     const BORDER = "rgba(255,255,255,0.10)";
     const BG = "#050505";
 
-    // ✅ safe-area (iOS notch)
     const SAFE_TOP = "env(safe-area-inset-top, 0px)";
 
     const sidebarW = isMobile ? 84 : 92;
     const isDashboard = active === ROUTES.DASHBOARD;
 
     const shell = {
-      minHeight: "100dvh", // ✅ FIX: era "minheight" (ignorado). Agora aplica.
+      minHeight: "100dvh",
       maxHeight: "100dvh",
       height: "100dvh",
       background: BG,
       position: "relative",
-      overflow: "hidden", // ✅ a shell nunca rola
+      overflow: "hidden",
       display: "flex",
       flexDirection: "row",
     };
@@ -294,7 +347,7 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
       paddingTop: 10,
       alignItems: "center",
       overflow: "auto",
-      flex: 1, // ✅ scroll só dentro da coluna de botões
+      flex: 1,
       WebkitOverflowScrolling: "touch",
     };
 
@@ -313,10 +366,6 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
       boxShadow: isActive ? "0 14px 36px rgba(0,0,0,0.55)" : "none",
     });
 
-    // ✅ Regra correta:
-    // - Desktop + Dashboard: main NÃO rola (layout travado)
-    // - Mobile: main rola (inclusive Dashboard)
-    // - Outras páginas: main rola
     const main = {
       flex: 1,
       minWidth: 0,
@@ -327,7 +376,6 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
       zIndex: 1,
     };
 
-    // ✅ Topbar sticky no mobile (deixa o menu “integrado”, não flutuando)
     const mobileTopBar = isMobile
       ? {
           position: "sticky",
@@ -341,7 +389,6 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
         }
       : { display: "none" };
 
-    // ✅ Botão hambúrguer premium no mobile (agora “dentro” do topbar)
     const mobileMenuBtn = isMobile
       ? {
           width: 48,
@@ -357,9 +404,6 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
         }
       : { display: "none" };
 
-    // ✅ Inner:
-    // - Desktop + Dashboard: mantém 100% (a grade interna controla)
-    // - Mobile: deixa crescer (pra rolar no main)
     const mainInner =
       !isMobile && isDashboard
         ? { minWidth: 0, height: "100%", overflow: "hidden" }
@@ -380,7 +424,6 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
     };
   }, [isMobile, sidebarOpen, active]);
 
-  // ✅ MENU
   const menu = [
     { key: ROUTES.DASHBOARD, icon: "home", title: "Dashboard" },
     { key: ROUTES.RESULTS, icon: "calendar", title: "Resultados" },
@@ -394,7 +437,6 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
 
   return (
     <div style={UI.shell}>
-      {/* ✅ Overlay mobile */}
       <div
         style={UI.overlay}
         onClick={() => setSidebarOpen(false)}
@@ -404,7 +446,7 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
       <aside style={UI.sidebar} aria-label="Menu lateral">
         <div style={UI.brand}>
           <MiniLogo />
-          <div style={UI.plan}>{isGuest ? "PREVIEW" : "FREE"}</div>
+          <div style={UI.plan}>{planLabel}</div>
         </div>
 
         <nav style={UI.nav} role="navigation" aria-label="Navegação principal">
@@ -438,7 +480,6 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
       </aside>
 
       <main style={UI.main}>
-        {/* ✅ Topbar sticky no mobile (botão fica “integrado”) */}
         <div style={UI.mobileTopBar}>
           <button
             type="button"
