@@ -4,9 +4,18 @@
  * Avatar service
  * - Preview (ObjectURL) fica no componente
  * - Aqui fica: resize/compress + upload no Firebase Storage
+ * - Estratégia de storage:
+ *   - usa caminho fixo: users/{uid}/avatar/avatar.jpg
+ *   - sobrescreve sempre a foto anterior
+ *   - evita lixo/custo por acumular arquivos antigos
  */
 
-import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
+import {
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject,
+} from "firebase/storage";
 
 /* =========================
    Utils
@@ -38,6 +47,10 @@ function safeCloseBitmap(bitmap) {
     // ignore
   }
 }
+
+/* =========================
+   Resize / Compress
+========================= */
 
 /**
  * Resize/compress image client-side (mobile-friendly)
@@ -138,9 +151,28 @@ export async function resizeImageToJpegBlob(
   }
 }
 
+/* =========================
+   Storage paths
+========================= */
+
+function getAvatarStoragePath(uid) {
+  const u = String(uid || "").trim();
+  if (!u) throw new Error("UID inválido.");
+  return `users/${u}/avatar/avatar.jpg`;
+}
+
+/* =========================
+   Upload / Remove
+========================= */
+
 /**
  * Upload do avatar (jpeg) e retorno da URL pública.
  * Retorna { ok, url, error? }.
+ *
+ * Estratégia:
+ * - usa caminho fixo avatar.jpg
+ * - sobrescreve o arquivo anterior
+ * - evita acumular arquivos no Storage
  */
 export async function uploadAvatarJpegToStorage(storage, uid, file) {
   const u = String(uid || "").trim();
@@ -154,13 +186,12 @@ export async function uploadAvatarJpegToStorage(storage, uid, file) {
       background: "#FFFFFF",
     });
 
-    const objName = `${Date.now()}.jpg`;
-    const path = `users/${u}/avatar/${objName}`;
+    const path = getAvatarStoragePath(u);
     const sref = storageRef(storage, path);
 
     await uploadBytes(sref, blob, {
       contentType: "image/jpeg",
-      cacheControl: "public,max-age=31536000,immutable",
+      cacheControl: "no-store",
     });
 
     const url = await getDownloadURL(sref);
@@ -168,5 +199,30 @@ export async function uploadAvatarJpegToStorage(storage, uid, file) {
     return { ok: true, url: String(url || "") };
   } catch (e) {
     return { ok: false, url: "", error: e?.message || "Falha no upload do avatar." };
+  }
+}
+
+/**
+ * Remove o avatar fixo do usuário no Storage.
+ * Retorna { ok, error? }.
+ *
+ * Observação:
+ * - se o arquivo não existir, considera ok
+ */
+export async function deleteAvatarFromStorage(storage, uid) {
+  const u = String(uid || "").trim();
+  if (!u) return { ok: false, error: "UID inválido." };
+
+  try {
+    const path = getAvatarStoragePath(u);
+    const sref = storageRef(storage, path);
+    await deleteObject(sref);
+    return { ok: true };
+  } catch (e) {
+    const code = String(e?.code || "").trim();
+    if (code === "storage/object-not-found") {
+      return { ok: true };
+    }
+    return { ok: false, error: e?.message || "Falha ao remover avatar do Storage." };
   }
 }
