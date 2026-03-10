@@ -32,6 +32,26 @@ function dezenaFromMilhar(m4) {
   return s ? s.slice(-2) : "";
 }
 
+function isYMD(s) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
+}
+
+function ymdToBR(ymd) {
+  const s = String(ymd || "").trim();
+  if (!isYMD(s)) return s || "—";
+  const [y, m, d] = s.split("-");
+  return `${d}/${m}/${y}`;
+}
+
+function formatYmdHour(ymd, hour) {
+  const y = String(ymd || "").trim();
+  const h = String(hour || "").trim();
+  if (y && h) return `${ymdToBR(y)} ${h}`;
+  if (y) return ymdToBR(y);
+  if (h) return h;
+  return "—";
+}
+
 /**
  * Wrap cíclico apenas para montar as 4 dezenas fixas do grupo.
  * NÃO é regra geral de transformação de centena em dezena.
@@ -238,6 +258,10 @@ export default function Top3View(props) {
     build16,
     buildMilhares,
     build20,
+
+    analysisYmd,
+    analysisHourBucket,
+    lastHourBucket,
   } = props || {};
 
   const list = Array.isArray(top3) ? top3.slice(0, 3) : [];
@@ -248,6 +272,19 @@ export default function Top3View(props) {
     const layer = cleanLayerText(layerMetaText || "—");
     return { last, prev, layer };
   }, [lastLabel, prevLabel, layerMetaText]);
+
+  const headerBase = useMemo(() => meta.last || "—", [meta.last]);
+
+  const headerForecast = useMemo(() => {
+    return formatYmdHour(analysisYmd, analysisHourBucket);
+  }, [analysisYmd, analysisHourBucket]);
+
+  const headerTransition = useMemo(() => {
+    const from = String(lastHourBucket || "").trim();
+    const to = String(analysisHourBucket || "").trim();
+    if (from && to) return `${from} → ${to}`;
+    return "—";
+  }, [lastHourBucket, analysisHourBucket]);
 
   const t = theme || {
     bg: "#050505",
@@ -487,6 +524,15 @@ export default function Top3View(props) {
           font-size: 12px;
           font-weight: 800;
         }
+
+        .top3-context{
+          display:grid;
+          gap:6px;
+          margin-top:10px;
+          color: rgba(255,255,255,0.92);
+          font-size: 13px;
+          line-height: 1.35;
+        }
       `}</style>
 
       <div
@@ -500,18 +546,18 @@ export default function Top3View(props) {
       >
         <div style={{ display: "grid", gap: 10 }}>
           <div style={{ fontWeight: 900, fontSize: 18 }}>
-  TOP3 — Próximo sorteio
+            TOP3 — Próximo sorteio
+          </div>
 
-<div className="top3-context">
-  <div><b>Base:</b> {lastLabel}</div>
-  <div><b>Previsão:</b> {analysisYmd ? `${ymdToBR(analysisYmd)} ${analysisHourBucket}` : "—"}</div>
-  <div><b>Transição:</b> {lastHourBucket} → {analysisHourBucket}</div>
-</div>
-</div>
+          <div className="top3-context">
+            <div><b>Base:</b> {headerBase}</div>
+            <div><b>Previsão:</b> {headerForecast}</div>
+            <div><b>Transição:</b> {headerTransition}</div>
+          </div>
 
-<div style={{ color: t.muted, fontSize: 13, marginTop: 2 }}>
-  Previsão baseada na transição: <b>{meta.prev}</b> → <b>{meta.last}</b>
-</div>
+          <div style={{ color: t.muted, fontSize: 13, marginTop: 2 }}>
+            Previsão baseada na transição: <b>{meta.prev}</b> → <b>{meta.last}</b>
+          </div>
 
           <div className="pp-tabs">
             {lotOptions.map((op) => {
@@ -878,4 +924,3 @@ export default function Top3View(props) {
     </div>
   );
 }
-
