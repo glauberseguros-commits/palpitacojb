@@ -9,6 +9,7 @@ import {
   onAuthStateChanged,
   deleteUser,
   signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
 } from "firebase/auth";
 import {
   doc,
@@ -265,17 +266,32 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
 
     switch (code) {
       case "auth/invalid-email":
-        return "E-mail inválido.";
+        return { type: "invalid_email", msg: "E-mail inválido." };
+
       case "auth/user-not-found":
+        return { type: "user_not_found", msg: "Usuário não encontrado." };
+
       case "auth/wrong-password":
       case "auth/invalid-credential":
-        return "Login ou senha inválidos.";
+        return { type: "wrong_password", msg: "Login ou senha inválidos." };
+
+      case "auth/email-already-in-use":
+        return { type: "email_in_use", msg: "Este e-mail já possui cadastro." };
+
+      case "auth/weak-password":
+        return { type: "weak_password", msg: "A senha precisa ter pelo menos 6 caracteres." };
+
       case "auth/too-many-requests":
-        return "Muitas tentativas. Aguarde e tente novamente.";
+        return { type: "too_many_requests", msg: "Muitas tentativas. Aguarde e tente novamente." };
+
       case "auth/network-request-failed":
-        return "Falha de rede. Verifique sua conexão.";
+        return { type: "network", msg: "Falha de rede. Verifique sua conexão." };
+
       default:
-        return String(error?.message || "").trim() || "Falha ao autenticar no Firebase.";
+        return {
+          type: "unknown",
+          msg: String(error?.message || "").trim() || "Falha ao autenticar no Firebase.",
+        };
     }
   }
 
@@ -678,6 +694,39 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
      Login / Guest
   ========================= */
 
+  const onRegister = async ({ login, password }) => {
+    setMsg("");
+    setErr("");
+
+    const emailCandidate = normalizeLoginToEmail(login);
+
+    if (!isEmailLogin(emailCandidate)) {
+      throw new Error("Para criar conta, informe um e-mail válido.");
+    }
+
+    if (String(password || "").length < 6) {
+      throw new Error("A senha precisa ter pelo menos 6 caracteres.");
+    }
+
+    // trava guest enquanto cadastra
+    loginInFlightRef.current = true;
+    authNotifiedRef.current = false;
+
+    // mata estado guest antes do cadastro real
+    setGuestActive(false);
+    setIsGuest(false);
+    safeRemoveSession();
+
+    try {
+      await createUserWithEmailAndPassword(auth, emailCandidate, password);
+      return true;
+    } catch (error) {
+      loginInFlightRef.current = false;
+      const parsed = buildFirebaseLoginError(error);
+      throw new Error(parsed.msg);
+    }
+  };
+
   const onEnter = async (payload) => {
     setMsg("");
     setErr("");
@@ -694,10 +743,12 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
       throw new Error("Preencha login e senha.");
     }
 
-    const emailForAuth = await resolveLoginToEmail(login);
+    const isEmail = isEmailLogin(login);
+    const emailForAuth = isEmail ? normalizeLoginToEmail(login) : await resolveLoginToEmail(login);
 
-    if (!emailForAuth) {
-      throw new Error("Login ou senha inválidos.");
+    // telefone sem vínculo => não dá para cadastrar sem e-mail
+    if (!emailForAuth && !isEmail) {
+      throw new Error("Telefone não localizado. Para criar conta, entre com um e-mail.");
     }
 
     // trava guest enquanto autentica
@@ -714,7 +765,15 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
       return true;
     } catch (error) {
       loginInFlightRef.current = false;
-      throw new Error(buildFirebaseLoginError(error));
+
+      const parsed = buildFirebaseLoginError(error);
+
+      // e-mail não encontrado => cria conta automaticamente
+      if (parsed.type === "user_not_found" && isEmail) {
+        return await onRegister({ login: emailForAuth, password });
+      }
+
+      throw new Error(parsed.msg);
     }
   };
 
@@ -743,11 +802,6 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
     if (typeof onAuthenticated === "function") {
       onAuthenticated();
     }
-  };
-
-  const onRegister = () => {
-    setMsg("");
-    setErr("Cadastro ainda não foi conectado ao Firebase.");
   };
 
   /* =========================
