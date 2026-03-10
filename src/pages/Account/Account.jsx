@@ -1,11 +1,15 @@
-// src/pages/Account/Account.jsx
-import React, { useEffect, useState } from "react";
+﻿// src/pages/Account/Account.jsx
+import React, { useEffect, useRef, useState } from "react";
 import LoginVisual from "./LoginVisual";
 import AccountView from "./AccountView";
 
 // Firebase (real)
 import { auth, db, storage } from "../../services/firebase";
-import { onAuthStateChanged, deleteUser, signInWithEmailAndPassword } from "firebase/auth";
+import {
+  onAuthStateChanged,
+  deleteUser,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
 import {
   doc,
   deleteDoc,
@@ -32,7 +36,11 @@ import {
   saveGuestProfile,
   clearGuestProfile,
 } from "./account.guestStorage";
-import { ensureUserDoc, loadUserProfile, saveUserProfile } from "./account.profile.service";
+import {
+  ensureUserDoc,
+  loadUserProfile,
+  saveUserProfile,
+} from "./account.profile.service";
 import {
   blobToDataURL,
   uploadAvatarJpegToStorage,
@@ -100,6 +108,10 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
   // viewport + ui
   const vw = useViewportWidth();
   const ui = useAccountUI(vw);
+
+  // trava de fluxo: impede guest durante login real
+  const loginInFlightRef = useRef(false);
+  const authNotifiedRef = useRef(false);
 
   // auth state
   const [authReady, setAuthReady] = useState(false);
@@ -276,6 +288,13 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
 
       setMsg("");
       setErr("");
+
+      // durante login real em andamento, não hidrate guest
+      if (!user?.uid && loginInFlightRef.current) {
+        setAuthReady(false);
+        return;
+      }
+
       setAuthReady(true);
 
       // sem Firebase user => pode ser guest local
@@ -311,6 +330,8 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
           setPhotoURL(g.photoURL);
           setPhotoFile(null);
           clearPreview();
+
+          authNotifiedRef.current = false;
           return;
         }
 
@@ -318,10 +339,13 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
         resetAuthedState();
         resetGuestState();
         safeRemoveSession();
+        authNotifiedRef.current = false;
         return;
       }
 
-      // auth real
+      // auth real consolidado
+      loginInFlightRef.current = false;
+
       setGuestActive(false);
       setIsGuest(false);
 
@@ -329,7 +353,9 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
       setEmail(String(user.email || "").trim().toLowerCase());
 
       const created =
-        user?.metadata?.creationTime ? new Date(user.metadata.creationTime).toISOString() : "";
+        user?.metadata?.creationTime
+          ? new Date(user.metadata.creationTime).toISOString()
+          : "";
       setCreatedAtIso(created);
 
       await ensureUserDoc(db, user.uid, user);
@@ -363,7 +389,7 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
       setPhotoFile(null);
       clearPreview();
 
-      // ✅ grava sessão somente depois de conhecer o plano real
+      // grava sessão somente depois de conhecer o plano real
       markSessionAuth({
         uid: user.uid,
         email: String(user.email || "").trim().toLowerCase(),
@@ -375,7 +401,8 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
         metadata: user?.metadata || {},
       });
 
-      if (typeof onAuthenticated === "function") {
+      if (typeof onAuthenticated === "function" && !authNotifiedRef.current) {
+        authNotifiedRef.current = true;
         onAuthenticated();
       }
     });
@@ -470,7 +497,10 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
         let finalPhoto = String(photoURL || "");
 
         if (photoFile) {
-          const blob = await resizeImageToJpegBlob(photoFile, { maxSide: 768, quality: 0.82 });
+          const blob = await resizeImageToJpegBlob(photoFile, {
+            maxSide: 768,
+            quality: 0.82,
+          });
           const dataUrl = await blobToDataURL(blob);
           finalPhoto = dataUrl;
         }
@@ -583,9 +613,13 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
       return;
     }
 
-    const ok1 = window.confirm("ATENÇÃO: Isso vai excluir sua conta e seus dados. Deseja continuar?");
+    const ok1 = window.confirm(
+      "ATENÇÃO: Isso vai excluir sua conta e seus dados. Deseja continuar?"
+    );
     if (!ok1) return;
-    const ok2 = window.confirm("Última confirmação: EXCLUIR CONTA definitivamente?");
+    const ok2 = window.confirm(
+      "Última confirmação: EXCLUIR CONTA definitivamente?"
+    );
     if (!ok2) return;
 
     setBusy(true);
@@ -603,6 +637,7 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
 
         setMsg("Dados locais removidos.");
         setIsGuest(false);
+        authNotifiedRef.current = false;
         return;
       }
 
@@ -631,6 +666,7 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
       setIsGuest(false);
       setGuestActive(false);
       resetAuthedState();
+      authNotifiedRef.current = false;
 
       if (typeof onClose === "function") onClose();
     } finally {
@@ -664,6 +700,10 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
       throw new Error("Login ou senha inválidos.");
     }
 
+    // trava guest enquanto autentica
+    loginInFlightRef.current = true;
+    authNotifiedRef.current = false;
+
     // mata estado guest antes do login real
     setGuestActive(false);
     setIsGuest(false);
@@ -673,6 +713,7 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
       await signInWithEmailAndPassword(auth, emailForAuth, password);
       return true;
     } catch (error) {
+      loginInFlightRef.current = false;
       throw new Error(buildFirebaseLoginError(error));
     }
   };
@@ -681,10 +722,12 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
     setMsg("");
     setErr("");
 
+    loginInFlightRef.current = false;
+    authNotifiedRef.current = false;
+
     safeRemoveSession();
 
     setGuestActive(true, { silent: true });
-
     markSessionGuest();
     setIsGuest(true);
 
@@ -712,11 +755,21 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
   ========================= */
 
   if (!authReady) {
-    return <div style={{ padding: 18, color: "rgba(255,255,255,0.78)" }}>Carregando...</div>;
+    return (
+      <div style={{ padding: 18, color: "rgba(255,255,255,0.78)" }}>
+        Carregando...
+      </div>
+    );
   }
 
   if (!isLogged && !isGuest) {
-    return <LoginVisual onEnter={onEnter} onSkip={onSkip} onRegister={onRegister} />;
+    return (
+      <LoginVisual
+        onEnter={onEnter}
+        onSkip={onSkip}
+        onRegister={onRegister}
+      />
+    );
   }
 
   return (
