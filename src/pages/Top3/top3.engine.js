@@ -525,21 +525,33 @@ export function indexDrawsByYmdHour(draws) {
 export function computeLastSeenByGrupo(draws) {
   const last = new Map();
   const list = Array.isArray(draws) ? draws : [];
+
   for (const d of list) {
     const y = pickDrawYMD(d);
     const h = toHourBucket(pickDrawHour(d));
     if (!isYMD(y) || !h) continue;
-    const ts = ymdHourToTs(y, h);
 
+    const ts = ymdHourToTs(y, h);
     const ps = Array.isArray(d?.prizes) ? d.prizes : [];
+
     for (const p of ps) {
+      const pos = guessPrizePos(p);
+      if (!Number.isFinite(Number(pos)) || Number(pos) < 1 || Number(pos) > 5) {
+        continue;
+      }
+
       const g = guessPrizeGrupo(p);
       if (!Number.isFinite(Number(g)) || Number(g) <= 0) continue;
+
       const gg = Number(g);
       const prev = last.get(gg);
-      if (!Number.isFinite(prev) || ts > prev) last.set(gg, ts);
+
+      if (!Number.isFinite(prev) || ts > prev) {
+        last.set(gg, ts);
+      }
     }
   }
+
   return last;
 }
 
@@ -618,34 +630,54 @@ function probFromFreq(freq, samples, groupsK = TOP3_GROUPS_K) {
   return out;
 }
 
-function computeStructuralBaseDistribution(draws, targetHour, groupsK = TOP3_GROUPS_K) {
+function computeStructuralBaseDistribution(
+  draws,
+  lotteryKey,
+  targetHour,
+  targetDow,
+  groupsK = TOP3_GROUPS_K
+) {
   const list = Array.isArray(draws) ? draws : [];
+  const key = safeStr(lotteryKey).toUpperCase();
   const target = toHourBucket(targetHour);
   const k = safeInt(groupsK, 25);
 
-  const firstCounts = new Map();
-  let total = 0;
+  const freq = new Map();
+  let totalSamples = 0;
 
   for (const d of list) {
     const h = toHourBucket(pickDrawHour(d));
-    if (!h || h !== target) continue;
+    const y = pickDrawYMD(d);
+    if (!h || !y) continue;
 
-    const g = getFirstGrupoFromDraw(d);
-    if (!Number.isFinite(Number(g)) || Number(g) < 1 || Number(g) > k) continue;
+    if (key === "FEDERAL") {
+      if (!isFederalDrawDay(y)) continue;
+      if (Number(getDowKey(y)) !== Number(targetDow)) continue;
+    } else {
+      if (h !== target) continue;
+    }
 
-    firstCounts.set(Number(g), Number(firstCounts.get(Number(g)) || 0) + 1);
-    total += 1;
+    const items = getAllTop5Groups(d);
+    if (!items.length) continue;
+
+    totalSamples += 1;
+
+    for (const it of items) {
+      const g = Number(it.grupo);
+      if (!Number.isFinite(g) || g < 1 || g > k) continue;
+      freq.set(g, Number(freq.get(g) || 0) + 1);
+    }
   }
 
   const out = new Map();
-  const denom = Math.max(1, total);
+  const denom = Math.max(1, totalSamples * 5);
 
   for (let g = 1; g <= k; g += 1) {
-    const n = Number(firstCounts.get(g) || 0);
+    const n = Number(freq.get(g) || 0);
     out.set(g, n / denom);
   }
 
-  return { prob: out, totalSamples: total };
+  return { prob: out, totalSamples };
 }
 
 /* =========================
@@ -659,15 +691,54 @@ const LAYER_MIN_SAMPLES = {
   DOM_TARGET: 8,
   DOW_TARGET: 12,
   TARGET_ONLY: 20,
+
+  FED_DOW_PREVG: 3,
+  FED_PREVG: 4,
+  FED_DOW_ONLY: 6,
+  FED_ONLY: 10,
 };
 
 function buildLayerConfigs({
+  lotteryKey,
   targetDayOfMonth,
   targetDow,
   prevHour,
   prevGrupo,
   targetHour,
 }) {
+  const key = safeStr(lotteryKey).toUpperCase();
+
+  if (key === "FEDERAL") {
+    return [
+      {
+        key: "FED_DOW_PREVG",
+        label: "Federal: dia da semana + grupo anterior",
+        minSamples: LAYER_MIN_SAMPLES.FED_DOW_PREVG,
+        match: (ctx) =>
+          ctx.targetDow === targetDow &&
+          ctx.prevGrupo === prevGrupo,
+      },
+      {
+        key: "FED_PREVG",
+        label: "Federal: grupo anterior",
+        minSamples: LAYER_MIN_SAMPLES.FED_PREVG,
+        match: (ctx) => ctx.prevGrupo === prevGrupo,
+      },
+      {
+        key: "FED_DOW_ONLY",
+        label: "Federal: dia da semana",
+        minSamples: LAYER_MIN_SAMPLES.FED_DOW_ONLY,
+        match: (ctx) => ctx.targetDow === targetDow,
+      },
+      {
+        key: "FED_ONLY",
+        label: "Federal: histórico geral",
+        minSamples: LAYER_MIN_SAMPLES.FED_ONLY,
+        match: () => true,
+      },
+    ];
+  }
+
   return [
     {
       key: "DOM_DOW_PREVH_PREVG_TO_TARGET",
@@ -740,6 +811,7 @@ function buildConditionalLayerDistribution({
   const drawsIndex = indexDrawsByYmdHour(list);
 
   const layers = buildLayerConfigs({
+    lotteryKey,
     targetDayOfMonth,
     targetDow,
     prevHour,
@@ -850,6 +922,8 @@ export function computeConditionalNextTop3({
     return { top: [], meta: null };
   }
 
+  const key = safeStr(lotteryKey).toUpperCase();
+
   const lastY = pickDrawYMD(drawLast);
   const lastH = toHourBucket(pickDrawHour(drawLast));
   const prevGrupo = getFirstGrupoFromDraw(drawLast);
@@ -877,9 +951,10 @@ export function computeConditionalNextTop3({
   const targetDow = getDowKey(targetY);
   const targetDayOfMonth = getDayOfMonth(targetY);
   const transition = `${lastH}->${targetH}`;
+
   const useFirstFocusedRanking =
-    transition === "11h->14h" ||
-    transition === "14h->16h";
+    key !== "FEDERAL" &&
+    (transition === "11h->14h" || transition === "14h->16h");
 
   if (!isYMD(targetY) || !targetH || !Number.isFinite(targetDow)) {
     return { top: [], meta: null };
@@ -904,10 +979,28 @@ export function computeConditionalNextTop3({
   const firstFreq = chosen?.firstFreq || new Map();
   const probCond = probFromFreq(freq, samples, TOP3_GROUPS_K);
 
-  const structural = computeStructuralBaseDistribution(list, targetH, TOP3_GROUPS_K);
+  const structural = computeStructuralBaseDistribution(
+    list,
+    key,
+    targetH,
+    targetDow,
+    TOP3_GROUPS_K
+  );
   const probBase = structural?.prob || new Map();
 
-  const condWeight = samples >= 12 ? 0.65 : samples >= 6 ? 0.55 : 0.45;
+  const condWeight =
+    key === "FEDERAL"
+      ? samples >= 8
+        ? 0.55
+        : samples >= 4
+          ? 0.40
+          : 0.25
+      : samples >= 12
+        ? 0.65
+        : samples >= 6
+          ? 0.55
+          : 0.45;
+
   const baseWeight = 1 - condWeight;
 
   const lastSeen = computeLastSeenByGrupo(list);
@@ -946,16 +1039,23 @@ export function computeConditionalNextTop3({
       const lateBonusRaw = Math.max(0, gapMs) / Math.max(1, maxGapMsBase);
       const lateBonus = Math.max(0, Math.min(1, lateBonusRaw));
 
-      const score = useFirstFocusedRanking
-        ? (primeiros * 1000) +
-          (taxaPrimeiro * 100) +
-          (aparicoes * 10) +
-          (lateBonus * 12) +
-          (pFinal * 100)
-        : (aparicoes * 100) +
-          (primeiros * 40) +
-          (lateBonus * 20) +
-          (pFinal * 100);
+      const score =
+        key === "FEDERAL"
+          ? (pFinal * 140) +
+            (pBase * 80) +
+            (primeiros * 45) +
+            (aparicoes * 20) +
+            (lateBonus * 10)
+          : useFirstFocusedRanking
+            ? (primeiros * 1000) +
+              (taxaPrimeiro * 100) +
+              (aparicoes * 10) +
+              (lateBonus * 12) +
+              (pFinal * 100)
+            : (aparicoes * 100) +
+              (primeiros * 40) +
+              (lateBonus * 20) +
+              (pFinal * 100);
 
       return {
         grupo,
@@ -975,7 +1075,13 @@ export function computeConditionalNextTop3({
     .sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score;
 
-      if (useFirstFocusedRanking) {
+      if (key === "FEDERAL") {
+        if (b.probBase !== a.probBase) return b.probBase - a.probBase;
+        if (b.primeiros !== a.primeiros) return b.primeiros - a.primeiros;
+        if (b.aparicoes !== a.aparicoes) return b.aparicoes - a.aparicoes;
+        if (b.lateBonus !== a.lateBonus) return b.lateBonus - a.lateBonus;
+        if (b.prob !== a.prob) return b.prob - a.prob;
+      } else if (useFirstFocusedRanking) {
         if (b.primeiros !== a.primeiros) return b.primeiros - a.primeiros;
         if (b.taxaPrimeiro !== a.taxaPrimeiro) return b.taxaPrimeiro - a.taxaPrimeiro;
         if (b.aparicoes !== a.aparicoes) return b.aparicoes - a.aparicoes;
@@ -995,7 +1101,7 @@ export function computeConditionalNextTop3({
   const reasonsBase = [
     `Camada usada: ${chosen?.label || "—"}`,
     `Amostra histórica condicional: ${samples}`,
-    `Amostra estrutural do horário: ${Number(structural?.totalSamples || 0)}`,
+    `Amostra estrutural: ${Number(structural?.totalSamples || 0)}`,
     `Pesos: condicional=${(condWeight * 100).toFixed(0)}% | estrutural=${(baseWeight * 100).toFixed(0)}%`,
     `Estado atual: prev=${String(prevGrupo).padStart(2, "0")} @ ${lastH} → alvo ${targetH}`,
     `Data alvo: ${targetY} | DOW=${targetDow} | dia=${String(targetDayOfMonth).padStart(2, "0")}`,

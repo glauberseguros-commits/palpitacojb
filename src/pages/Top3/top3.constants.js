@@ -58,6 +58,12 @@ export const FEDERAL_SCHEDULE = ["20:00"];
    Parâmetros do motor TOP3
 ========================= */
 
+/**
+ * OBS:
+ * Estes parâmetros só têm efeito se forem realmente usados no motor.
+ * Se o engine não aplicar smoothing/shrinkage, eles são apenas declarativos.
+ */
+
 // Suavização Laplace/Dirichlet
 export const TOP3_SMOOTH_ALPHA = 1;
 

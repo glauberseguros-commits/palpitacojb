@@ -86,6 +86,82 @@ function build4ColsFromEngineOut(out, expectedCols = 4, perCol = 5) {
   return cols.slice(0, expectedCols);
 }
 
+function drawTs(draw) {
+  const y = pickDrawYMD(draw);
+  const h = toHourBucket(pickDrawHour(draw));
+
+  if (!isYMD(y) || !h) return Number.NEGATIVE_INFINITY;
+
+  const [Y, M, D] = String(y).split("-").map(Number);
+  const hh = Number(String(h).slice(0, 2));
+  const mm = Number(String(h).slice(3, 5));
+
+  return Date.UTC(Y, M - 1, D, hh, mm, 0, 0);
+}
+
+function isDrawValidForLotterySchedule(draw, lotteryKey) {
+  const y = pickDrawYMD(draw);
+  const h = toHourBucket(pickDrawHour(draw));
+
+  if (!isYMD(y) || !h) return false;
+
+  const schedule = getScheduleForLottery({
+    lotteryKey,
+    ymd: y,
+    PT_RIO_SCHEDULE_NORMAL,
+    PT_RIO_SCHEDULE_WED_SAT,
+    FEDERAL_SCHEDULE,
+  });
+
+  return Array.isArray(schedule) && schedule.map(toHourBucket).includes(h);
+}
+
+function findLatestHistoricalBaseDraw({
+  draws,
+  lotteryKey,
+  targetYmd,
+  targetHourBucket,
+}) {
+  const list = Array.isArray(draws) ? draws : [];
+  const targetHour = toHourBucket(targetHourBucket);
+
+  if (!isYMD(targetYmd) || !targetHour) {
+    return { draw: null, ymd: "", hour: "", source: "none" };
+  }
+
+  const [tY, tM, tD] = String(targetYmd).split("-").map(Number);
+  const th = Number(String(targetHour).slice(0, 2));
+  const tm = Number(String(targetHour).slice(3, 5));
+  const targetTs = Date.UTC(tY, tM - 1, tD, th, tm, 0, 0);
+
+  let best = null;
+  let bestTs = Number.NEGATIVE_INFINITY;
+
+  for (const d of list) {
+    if (!isDrawValidForLotterySchedule(d, lotteryKey)) continue;
+
+    const ts = drawTs(d);
+    if (!Number.isFinite(ts)) continue;
+    if (ts >= targetTs) continue;
+
+    if (ts > bestTs) {
+      best = d;
+      bestTs = ts;
+    }
+  }
+
+  if (!best) {
+    return { draw: null, ymd: "", hour: "", source: "none" };
+  }
+
+  return {
+    draw: best,
+    ymd: pickDrawYMD(best) || "",
+    hour: toHourBucket(pickDrawHour(best)) || "",
+    source: "history_range",
+  };
+}
+
 export function useTop3Controller() {
   const DEFAULT_LOTTERY = "PT_RIO";
 
@@ -235,6 +311,7 @@ export function useTop3Controller() {
         setError(
           `Loteria Federal só tem resultado às 20h nas quartas e sábados. (${dateBR} não é dia de concurso)`
         );
+        setLoadingStage({ today: false, range: false });
         setLoading(false);
       }
       return;
@@ -296,6 +373,28 @@ export function useTop3Controller() {
         source: "none",
       };
 
+      const fallbackBaseSearch = async (targetY, targetH) => {
+        const searchFrom =
+          minDate ||
+          (lKey === "FEDERAL" ? addDaysYMD(targetY, -180) : addDaysYMD(targetY, -60));
+
+        const histBase =
+          (await getKingResultsByRange({
+            uf: ufResolved,
+            dateFrom: searchFrom,
+            dateTo: addDaysYMD(targetY, 1),
+            mode: "detailed",
+            readPolicy: "server",
+          })) || [];
+
+        return findLatestHistoricalBaseDraw({
+          draws: histBase,
+          lotteryKey: lKey,
+          targetYmd: targetY,
+          targetHourBucket: targetH,
+        });
+      };
+
       if (todayLast) {
         baseDraw = todayLast;
         baseY = pickDrawYMD(todayLast) || ymdSafe;
@@ -327,6 +426,10 @@ export function useTop3Controller() {
             PT_RIO_SCHEDULE_WED_SAT,
             FEDERAL_SCHEDULE,
           });
+
+          if (!resolvedPrev?.draw) {
+            resolvedPrev = await fallbackBaseSearch(baseY, baseH);
+          }
         }
       } else {
         const firstHourToday = toHourBucket(todaySchedule?.[0]);
@@ -352,15 +455,19 @@ export function useTop3Controller() {
           FEDERAL_SCHEDULE,
         });
 
-        if (!previousForFirstSlot?.draw) {
+        const previousResolved = previousForFirstSlot?.draw
+          ? previousForFirstSlot
+          : await fallbackBaseSearch(ymdSafe, firstHourToday);
+
+        if (!previousResolved?.draw) {
           resetStateForNoData();
           setError("Não foi possível localizar a base anterior ao primeiro sorteio do dia.");
           return;
         }
 
-        baseDraw = previousForFirstSlot.draw;
-        baseY = safeStr(previousForFirstSlot.ymd);
-        baseH = toHourBucket(previousForFirstSlot.hour);
+        baseDraw = previousResolved.draw;
+        baseY = safeStr(previousResolved.ymd);
+        baseH = toHourBucket(previousResolved.hour);
         baseGrupo = pickPrize1GrupoFromDraw(baseDraw);
         baseAnimal = baseGrupo ? safeStr(getAnimalLabel(baseGrupo)) : "";
 
@@ -393,6 +500,10 @@ export function useTop3Controller() {
             PT_RIO_SCHEDULE_WED_SAT,
             FEDERAL_SCHEDULE,
           });
+
+          if (!resolvedPrev?.draw) {
+            resolvedPrev = await fallbackBaseSearch(baseY, baseH);
+          }
         }
       }
 
@@ -495,10 +606,19 @@ export function useTop3Controller() {
       return empty;
     }
 
+    const firstDraw = list[0];
+    const lastDrawInRange = list[list.length - 1];
+
     const cacheKey = [
       lotteryKeySafe,
       lookback,
+      rangeInfo?.from || "",
+      rangeInfo?.to || "",
       list.length,
+      pickDrawYMD(firstDraw) || "",
+      toHourBucket(pickDrawHour(firstDraw)) || "",
+      pickDrawYMD(lastDrawInRange) || "",
+      toHourBucket(pickDrawHour(lastDrawInRange)) || "",
       lastY,
       toHourBucket(lastH),
       Number(lastG),
@@ -532,6 +652,8 @@ export function useTop3Controller() {
     return computed;
   }, [
     rangeDraws,
+    rangeInfo?.from,
+    rangeInfo?.to,
     lotteryKeySafe,
     lookback,
     lastInfo?.lastGrupo,
