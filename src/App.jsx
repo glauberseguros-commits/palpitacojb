@@ -519,7 +519,7 @@ export default function App() {
   }, [adminMode]);
 
   const [dashboardFilters, setDashboardFilters] = useState(() => loadDashboardFilters());
-  const [sessionTick, setSessionTick] = useState(0);
+  const [, setSessionTick] = useState(0);
 
   useEffect(() => {
     const lot = normalizeLoteriaInput(dashboardFilters?.loteria);
