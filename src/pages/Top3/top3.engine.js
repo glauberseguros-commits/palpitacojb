@@ -618,6 +618,36 @@ function probFromFreq(freq, samples, groupsK = TOP3_GROUPS_K) {
   return out;
 }
 
+function computeStructuralBaseDistribution(draws, targetHour, groupsK = TOP3_GROUPS_K) {
+  const list = Array.isArray(draws) ? draws : [];
+  const target = toHourBucket(targetHour);
+  const k = safeInt(groupsK, 25);
+
+  const firstCounts = new Map();
+  let total = 0;
+
+  for (const d of list) {
+    const h = toHourBucket(pickDrawHour(d));
+    if (!h || h !== target) continue;
+
+    const g = getFirstGrupoFromDraw(d);
+    if (!Number.isFinite(Number(g)) || Number(g) < 1 || Number(g) > k) continue;
+
+    firstCounts.set(Number(g), Number(firstCounts.get(Number(g)) || 0) + 1);
+    total += 1;
+  }
+
+  const out = new Map();
+  const denom = Math.max(1, total);
+
+  for (let g = 1; g <= k; g += 1) {
+    const n = Number(firstCounts.get(g) || 0);
+    out.set(g, n / denom);
+  }
+
+  return { prob: out, totalSamples: total };
+}
+
 /* =========================
    Motor condicional puro por camadas
 ========================= */
@@ -872,10 +902,25 @@ export function computeConditionalNextTop3({
   const samples = Number(chosen?.samples || 0);
   const freq = chosen?.freq || new Map();
   const firstFreq = chosen?.firstFreq || new Map();
-  const prob = probFromFreq(freq, samples, TOP3_GROUPS_K);
+  const probCond = probFromFreq(freq, samples, TOP3_GROUPS_K);
+
+  const structural = computeStructuralBaseDistribution(list, targetH, TOP3_GROUPS_K);
+  const probBase = structural?.prob || new Map();
+
+  const condWeight = samples >= 12 ? 0.65 : samples >= 6 ? 0.55 : 0.45;
+  const baseWeight = 1 - condWeight;
 
   const lastSeen = computeLastSeenByGrupo(list);
   const nowTs = ymdHourToTs(lastY, lastH);
+
+  const finiteLastSeen = Array.from(lastSeen.values()).filter((v) =>
+    Number.isFinite(Number(v))
+  );
+  const minLastSeenTs = finiteLastSeen.length ? Math.min(...finiteLastSeen) : nowTs;
+  const maxGapMsBase =
+    Number.isFinite(nowTs) && Number.isFinite(minLastSeenTs)
+      ? Math.max(1, nowTs - minLastSeenTs)
+      : 1;
 
   const ranked = Array.from(
     { length: safeInt(TOP3_GROUPS_K, 25) },
@@ -883,7 +928,9 @@ export function computeConditionalNextTop3({
       const grupo = idx + 1;
       const aparicoes = Number(freq.get(grupo) || 0);
       const primeiros = Number(firstFreq.get(grupo) || 0);
-      const p = Number(prob.get(grupo) || 0);
+      const pCond = Number(probCond.get(grupo) || 0);
+      const pBase = Number(probBase.get(grupo) || 0);
+      const pFinal = (pCond * condWeight) + (pBase * baseWeight);
 
       const ls = lastSeen.get(grupo);
       const lastSeenTs = Number.isFinite(ls) ? ls : Number.POSITIVE_INFINITY;
@@ -893,32 +940,51 @@ export function computeConditionalNextTop3({
         Number.isFinite(lastSeenTs) &&
         lastSeenTs !== Number.POSITIVE_INFINITY
           ? Math.max(0, nowTs - lastSeenTs)
-          : 0;
+          : maxGapMsBase;
 
       const taxaPrimeiro = samples > 0 ? primeiros / samples : 0;
+      const lateBonusRaw = Math.max(0, gapMs) / Math.max(1, maxGapMsBase);
+      const lateBonus = Math.max(0, Math.min(1, lateBonusRaw));
+
+      const score = useFirstFocusedRanking
+        ? (primeiros * 1000) +
+          (taxaPrimeiro * 100) +
+          (aparicoes * 10) +
+          (lateBonus * 12) +
+          (pFinal * 100)
+        : (aparicoes * 100) +
+          (primeiros * 40) +
+          (lateBonus * 20) +
+          (pFinal * 100);
 
       return {
         grupo,
         aparicoes,
         primeiros,
         taxaPrimeiro,
-        prob: p,
-        score: (primeiros * 1000) + (taxaPrimeiro * 100) + aparicoes + p,
+        prob: pFinal,
+        probCond: pCond,
+        probBase: pBase,
+        score,
+        lateBonus,
         lastSeenTs,
         gapMs,
       };
     }
   )
     .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
 
       if (useFirstFocusedRanking) {
         if (b.primeiros !== a.primeiros) return b.primeiros - a.primeiros;
         if (b.taxaPrimeiro !== a.taxaPrimeiro) return b.taxaPrimeiro - a.taxaPrimeiro;
         if (b.aparicoes !== a.aparicoes) return b.aparicoes - a.aparicoes;
+        if (b.lateBonus !== a.lateBonus) return b.lateBonus - a.lateBonus;
         if (b.prob !== a.prob) return b.prob - a.prob;
       } else {
         if (b.aparicoes !== a.aparicoes) return b.aparicoes - a.aparicoes;
         if (b.primeiros !== a.primeiros) return b.primeiros - a.primeiros;
+        if (b.lateBonus !== a.lateBonus) return b.lateBonus - a.lateBonus;
         if (b.prob !== a.prob) return b.prob - a.prob;
       }
 
@@ -928,7 +994,9 @@ export function computeConditionalNextTop3({
 
   const reasonsBase = [
     `Camada usada: ${chosen?.label || "—"}`,
-    `Amostra histórica: ${samples}`,
+    `Amostra histórica condicional: ${samples}`,
+    `Amostra estrutural do horário: ${Number(structural?.totalSamples || 0)}`,
+    `Pesos: condicional=${(condWeight * 100).toFixed(0)}% | estrutural=${(baseWeight * 100).toFixed(0)}%`,
     `Estado atual: prev=${String(prevGrupo).padStart(2, "0")} @ ${lastH} → alvo ${targetH}`,
     `Data alvo: ${targetY} | DOW=${targetDow} | dia=${String(targetDayOfMonth).padStart(2, "0")}`,
   ];
@@ -936,6 +1004,8 @@ export function computeConditionalNextTop3({
   const top = ranked.map((x, idx) => {
     const g2 = String(x.grupo).padStart(2, "0");
     const pct = (x.prob * 100).toFixed(2);
+    const pctCond = (x.probCond * 100).toFixed(2);
+    const pctBase = (x.probBase * 100).toFixed(2);
 
     return {
       rank: idx + 1,
@@ -947,9 +1017,9 @@ export function computeConditionalNextTop3({
             : "3º mais provável",
       grupo: x.grupo,
       prob: x.prob,
-      probCond: x.prob,
-      probBase: 0,
-      lateBonus: 0,
+      probCond: x.probCond,
+      probBase: x.probBase,
+      lateBonus: Number(x.lateBonus || 0),
       freq: x.aparicoes,
       freqCond: x.aparicoes,
       freqBase: 0,
@@ -961,7 +1031,9 @@ export function computeConditionalNextTop3({
         ...reasonsBase,
         `Grupo G${g2}: aparições=${x.aparicoes} em ${samples} amostras do próximo sorteio`,
         `Grupo G${g2}: primeiros lugares=${x.primeiros}`,
-        `Probabilidade condicional estimada no TOP5: ${pct}%`,
+        `Probabilidade final estimada no TOP5: ${pct}%`,
+        `Composição da probabilidade: condicional=${pctCond}% | estrutural=${pctBase}%`,
+        `Bônus de atraso: ${(Number(x.lateBonus || 0) * 100).toFixed(2)}%`,
       ],
       meta: {
         trigger: {
@@ -979,6 +1051,9 @@ export function computeConditionalNextTop3({
           layerKey: chosen?.key || "NONE",
           layerLabel: chosen?.label || "—",
           layerSamples: samples,
+          baseSamples: Number(structural?.totalSamples || 0),
+          condWeight,
+          baseWeight,
           targetDow,
           targetDayOfMonth,
           prevHour: lastH,
@@ -1012,6 +1087,9 @@ export function computeConditionalNextTop3({
         layerKey: chosen?.key || "NONE",
         layerLabel: chosen?.label || "—",
         layerSamples: samples,
+        baseSamples: Number(structural?.totalSamples || 0),
+        condWeight,
+        baseWeight,
         targetDow,
         targetDayOfMonth,
         prevHour: lastH,
