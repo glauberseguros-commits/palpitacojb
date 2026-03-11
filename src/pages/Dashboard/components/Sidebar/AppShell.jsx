@@ -1,4 +1,3 @@
-// src/pages/Dashboard/components/Sidebar/AppShell.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import Icon from "./Icon";
 import MiniLogo from "./MiniLogo";
@@ -21,9 +20,6 @@ const ROUTES = {
 const ACCOUNT_SESSION_KEY = "pp_session_v1";
 const LS_GUEST_ACTIVE_KEY = "pp_guest_active_v1";
 
-/* ======================
-   Helpers seguros
-====================== */
 const safeReadLS = (k) => {
   try {
     return localStorage.getItem(k);
@@ -103,32 +99,23 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
   const vw = useViewport();
   const isMobile = vw < 980;
 
-  // ✅ Mobile: sidebar vira off-canvas (fechada por padrão)
-  // ✅ Desktop: sidebar aberta por padrão (evita flicker)
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     if (typeof window === "undefined") return true;
     return window.innerWidth >= 980;
   });
 
-  // Se virar desktop, mantém aberto; se voltar pro mobile, fecha
   useEffect(() => {
     if (!isMobile) setSidebarOpen(true);
     else setSidebarOpen(false);
   }, [isMobile]);
 
-  /* ======================
-     Sync Firebase Auth
-  ====================== */
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
       if (user?.uid) {
-        // Não sobrescreve plano/sessão aqui.
-        // O módulo Account já consolida a sessão correta.
         setSession(readSession());
         return;
       }
 
-      // sem user -> se guest ativo, mantém preview
       if (safeReadLS(LS_GUEST_ACTIVE_KEY) === "1") {
         setSession({
           ok: true,
@@ -141,7 +128,6 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
         return;
       }
 
-      // ✅ sem user e sem guest: limpa estado local
       setSession({
         ok: false,
         type: "anon",
@@ -155,7 +141,6 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
     return () => unsub();
   }, []);
 
-  // acompanha mudanças externas de sessão
   useEffect(() => {
     const refresh = () => setSession(readSession());
 
@@ -180,18 +165,13 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
   const isGuest = session?.type === "guest";
   const planLabel = isGuest ? "PREVIEW" : normalizePlan(session?.plan) || "FREE";
 
-  /* ======================
-     Travar scroll do DOCUMENTO (html/body)
-  ====================== */
   useEffect(() => {
     const isDashboard = active === ROUTES.DASHBOARD;
 
     const prevHtmlOverflow = document?.documentElement?.style?.overflow;
     const prevBodyOverflow = document?.body?.style?.overflow;
 
-    const mustLock =
-      (!isMobile && isDashboard) ||
-      (isMobile && sidebarOpen);
+    const mustLock = (!isMobile && isDashboard) || (isMobile && sidebarOpen);
 
     if (mustLock) {
       document.documentElement.style.overflow = "hidden";
@@ -207,9 +187,6 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
     };
   }, [active, isMobile, sidebarOpen]);
 
-  /* ======================
-     Mobile UX: ESC fecha menu
-  ====================== */
   useEffect(() => {
     if (!isMobile) return;
 
@@ -221,9 +198,6 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [isMobile]);
 
-  /* ======================
-     Navegação
-  ====================== */
   const handleNavigate = async (key) => {
     if (!key) return;
 
@@ -244,19 +218,18 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
     onNavigate?.(key);
   };
 
-  /* ======================
-     UI
-  ====================== */
   const UI = useMemo(() => {
     const GOLD = "rgba(202,166,75,1)";
     const GOLD_SOFT = "rgba(202,166,75,0.18)";
+    const GOLD_SOFT_2 = "rgba(202,166,75,0.10)";
     const WHITE = "rgba(255,255,255,0.92)";
+    const MUTED = "rgba(255,255,255,0.58)";
     const BORDER = "rgba(255,255,255,0.10)";
     const BG = "#050505";
 
     const SAFE_TOP = "env(safe-area-inset-top, 0px)";
 
-    const sidebarW = isMobile ? 84 : 92;
+    const sidebarW = isMobile ? 88 : 96;
     const isDashboard = active === ROUTES.DASHBOARD;
 
     const shell = {
@@ -276,12 +249,12 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
       height: "100%",
       borderRight: `1px solid ${BORDER}`,
       background:
-        "radial-gradient(120px 220px at 40% 10%, rgba(202,166,75,0.10), rgba(0,0,0,0)), rgba(0,0,0,0.45)",
+        "linear-gradient(180deg, rgba(12,12,12,0.98) 0%, rgba(8,8,8,0.98) 52%, rgba(5,5,5,1) 100%)",
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
-      gap: 12,
-      padding: "12px 10px",
+      gap: 0,
+      padding: "12px 10px 14px",
       boxSizing: "border-box",
     };
 
@@ -295,7 +268,6 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
           zIndex: 60,
           transform: sidebarOpen ? "translateX(0)" : "translateX(-110%)",
           transition: "transform 220ms ease",
-          borderRight: `1px solid ${BORDER}`,
           boxShadow: "18px 0 48px rgba(0,0,0,0.65)",
         }
       : {
@@ -323,20 +295,34 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
-      gap: 10,
-      paddingBottom: 10,
+      gap: 12,
+      paddingTop: 8,
+      paddingBottom: 14,
+      marginBottom: 10,
       borderBottom: `1px solid ${BORDER}`,
     };
 
+    const logoWrap = {
+      width: "100%",
+      minHeight: 62,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+    };
+
     const plan = {
+      minWidth: 64,
+      textAlign: "center",
       fontSize: 11,
       fontWeight: 900,
-      padding: "6px 10px",
+      padding: "8px 12px",
       borderRadius: 999,
       border: `1px solid ${GOLD_SOFT}`,
       color: GOLD,
-      background: "rgba(0,0,0,0.35)",
-      letterSpacing: 0.2,
+      background:
+        "linear-gradient(180deg, rgba(202,166,75,0.10), rgba(0,0,0,0.22))",
+      letterSpacing: 0.4,
+      boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.03)",
     };
 
     const nav = {
@@ -344,27 +330,72 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
       display: "flex",
       flexDirection: "column",
       gap: 8,
-      paddingTop: 10,
+      paddingTop: 2,
       alignItems: "center",
       overflow: "auto",
       flex: 1,
       WebkitOverflowScrolling: "touch",
     };
 
-    const btn = (isActive) => ({
+    const navDivider = {
       width: "100%",
-      height: 44,
+      height: 1,
+      minHeight: 1,
+      margin: "6px 0 4px",
+      background:
+        "linear-gradient(90deg, rgba(255,255,255,0.00) 0%, rgba(255,255,255,0.10) 18%, rgba(202,166,75,0.18) 50%, rgba(255,255,255,0.10) 82%, rgba(255,255,255,0.00) 100%)",
+      borderRadius: 999,
+    };
+
+    const btn = (isActive) => ({
+      position: "relative",
+      width: "100%",
+      height: 46,
       borderRadius: 14,
       border: `1px solid ${isActive ? "rgba(202,166,75,0.55)" : BORDER}`,
       background: isActive
-        ? "linear-gradient(180deg, rgba(202,166,75,0.16), rgba(0,0,0,0.35))"
-        : "rgba(0,0,0,0.25)",
+        ? "linear-gradient(180deg, rgba(202,166,75,0.16), rgba(0,0,0,0.38))"
+        : "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0.22))",
       color: WHITE,
       cursor: "pointer",
       display: "grid",
       placeItems: "center",
-      boxShadow: isActive ? "0 14px 36px rgba(0,0,0,0.55)" : "none",
+      boxShadow: isActive
+        ? "0 14px 36px rgba(0,0,0,0.55), inset 3px 0 0 rgba(202,166,75,0.95)"
+        : "inset 0 0 0 1px rgba(255,255,255,0.015)",
+      transition:
+        "transform 160ms ease, border-color 160ms ease, background 160ms ease, box-shadow 160ms ease",
+      outline: "none",
     });
+
+    const btnMarker = (isActive) => ({
+      position: "absolute",
+      left: 0,
+      top: 8,
+      bottom: 8,
+      width: 3,
+      borderRadius: "0 999px 999px 0",
+      background: isActive ? GOLD : "transparent",
+      boxShadow: isActive ? `0 0 12px ${GOLD_SOFT}` : "none",
+    });
+
+    const btnHoverHint = {
+      position: "absolute",
+      inset: 0,
+      borderRadius: 14,
+      boxShadow: `inset 0 0 0 1px ${GOLD_SOFT_2}`,
+      pointerEvents: "none",
+    };
+
+    const footerHint = {
+      marginTop: "auto",
+      paddingTop: 10,
+      width: "100%",
+      display: "flex",
+      justifyContent: "center",
+      color: MUTED,
+      fontSize: 10,
+    };
 
     const main = {
       flex: 1,
@@ -414,9 +445,14 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
       sidebar,
       overlay,
       brand,
+      logoWrap,
       plan,
       nav,
+      navDivider,
       btn,
+      btnMarker,
+      btnHoverHint,
+      footerHint,
       main,
       mobileTopBar,
       mobileMenuBtn,
@@ -424,16 +460,58 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
     };
   }, [isMobile, sidebarOpen, active]);
 
-  const menu = [
+  const menuPrimary = [
     { key: ROUTES.DASHBOARD, icon: "home", title: "Dashboard" },
     { key: ROUTES.RESULTS, icon: "calendar", title: "Resultados" },
     { key: ROUTES.TOP3, icon: "trophy", title: "Top 3" },
     { key: ROUTES.LATE, icon: "clock", title: "Atrasados" },
+  ];
+
+  const menuTools = [
     { key: ROUTES.SEARCH, icon: "search", title: "Busca" },
     { key: ROUTES.CENTENAS, icon: "hash", title: "Centenas" },
     { key: ROUTES.DOWNLOADS, icon: "download", title: "Downloads" },
+  ];
+
+  const menuAccount = [
     { key: ROUTES.ACCOUNT, icon: "user", title: "Minha Conta" },
   ];
+
+  const renderMenuButton = (item) => {
+    const isActive = active === item.key;
+
+    return (
+      <button
+        key={item.key}
+        onClick={() => handleNavigate(item.key)}
+        title={item.title}
+        style={UI.btn(isActive)}
+        aria-current={isActive ? "page" : undefined}
+        aria-label={item.title}
+        type="button"
+        onMouseEnter={(e) => {
+          if (!isActive) {
+            e.currentTarget.style.borderColor = "rgba(202,166,75,0.28)";
+            e.currentTarget.style.transform = "translateY(-1px)";
+            e.currentTarget.style.boxShadow =
+              "0 10px 24px rgba(0,0,0,0.34), inset 0 0 0 1px rgba(202,166,75,0.08)";
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!isActive) {
+            e.currentTarget.style.borderColor = "rgba(255,255,255,0.10)";
+            e.currentTarget.style.transform = "translateY(0)";
+            e.currentTarget.style.boxShadow =
+              "inset 0 0 0 1px rgba(255,255,255,0.015)";
+          }
+        }}
+      >
+        <span style={UI.btnMarker(isActive)} />
+        <span style={UI.btnHoverHint} />
+        <Icon name={item.icon} size={22} />
+      </button>
+    );
+  };
 
   return (
     <div style={UI.shell}>
@@ -445,27 +523,22 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
 
       <aside style={UI.sidebar} aria-label="Menu lateral">
         <div style={UI.brand}>
-          <MiniLogo />
+          <div style={UI.logoWrap}>
+            <MiniLogo size={52} />
+          </div>
           <div style={UI.plan}>{planLabel}</div>
         </div>
 
         <nav style={UI.nav} role="navigation" aria-label="Navegação principal">
-          {menu.map((m) => {
-            const isActive = active === m.key;
-            return (
-              <button
-                key={m.key}
-                onClick={() => handleNavigate(m.key)}
-                title={m.title}
-                style={UI.btn(isActive)}
-                aria-current={isActive ? "page" : undefined}
-                aria-label={m.title}
-                type="button"
-              >
-                <Icon name={m.icon} size={24} />
-              </button>
-            );
-          })}
+          {menuPrimary.map(renderMenuButton)}
+
+          <div style={UI.navDivider} />
+
+          {menuTools.map(renderMenuButton)}
+
+          <div style={UI.navDivider} />
+
+          {menuAccount.map(renderMenuButton)}
 
           <button
             onClick={() => handleNavigate("__LOGOUT__")}
@@ -473,9 +546,25 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
             style={UI.btn(false)}
             aria-label={isGuest ? "Sair do Preview" : "Sair"}
             type="button"
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = "rgba(202,166,75,0.28)";
+              e.currentTarget.style.transform = "translateY(-1px)";
+              e.currentTarget.style.boxShadow =
+                "0 10px 24px rgba(0,0,0,0.34), inset 0 0 0 1px rgba(202,166,75,0.08)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = "rgba(255,255,255,0.10)";
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow =
+                "inset 0 0 0 1px rgba(255,255,255,0.015)";
+            }}
           >
-            <Icon name="logout" size={24} />
+            <span style={UI.btnMarker(false)} />
+            <span style={UI.btnHoverHint} />
+            <Icon name="logout" size={22} />
           </button>
+
+          <div style={UI.footerHint}>Palpitaco JB</div>
         </nav>
       </aside>
 

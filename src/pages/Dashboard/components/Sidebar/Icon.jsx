@@ -1,8 +1,15 @@
-// src/pages/Dashboard/components/Sidebar/Icon.jsx
 import React from "react";
 
-export default function Icon({ name = "home" }) {
-  const common = { width: 18, height: 18, viewBox: "0 0 24 24", fill: "none" };
+export default function Icon({ name = "home", size = 18 }) {
+  const s = Math.max(14, Number(size) || 18);
+
+  const common = {
+    width: s,
+    height: s,
+    viewBox: "0 0 24 24",
+    fill: "none",
+  };
+
   const stroke = "rgba(255,255,255,0.88)";
   const gold = "rgba(201,168,62,0.92)";
 
@@ -164,7 +171,6 @@ export default function Icon({ name = "home" }) {
     );
   }
 
-  // ✅ NOVO: menu (hambúrguer)
   if (name === "menu") {
     return (
       <svg {...common}>
@@ -175,7 +181,6 @@ export default function Icon({ name = "home" }) {
     );
   }
 
-  // ✅ NOVO: hash (#) — usado em "Centenas"
   if (name === "hash") {
     return (
       <svg {...common}>
@@ -223,7 +228,6 @@ export default function Icon({ name = "home" }) {
     );
   }
 
-  // fallback
   return (
     <svg {...common}>
       <path d="M12 2v20" stroke={stroke} strokeWidth="2" strokeLinecap="round" />
