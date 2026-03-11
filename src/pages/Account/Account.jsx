@@ -1,4 +1,4 @@
-// src/pages/Account/Account.jsx
+﻿// src/pages/Account/Account.jsx
 import React, { useEffect, useRef, useState } from "react";
 import LoginVisual from "./LoginVisual";
 import AccountView from "./AccountView";
@@ -46,7 +46,6 @@ import {
   blobToDataURL,
   uploadAvatarJpegToStorage,
   resizeImageToJpegBlob,
-  deleteAvatarFromStorage,
 } from "./account.avatar.service";
 
 /**
@@ -122,12 +121,12 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
   const [email, setEmail] = useState("");
   const [createdAtIso, setCreatedAtIso] = useState("");
 
-  // plan (novo)
-  const [plan, setPlan] = useState(PLAN_FREE);
-  const [planStartAt, setPlanStartAt] = useState("");
-  const [planEndAt, setPlanEndAt] = useState("");
-  const [isLifetime, setIsLifetime] = useState(false);
-  const [isActivePlan, setIsActivePlan] = useState(false);
+  // plan (novo) - somente setters são usados neste controller
+  const [, setPlan] = useState(PLAN_FREE);
+  const [, setPlanStartAt] = useState("");
+  const [, setPlanEndAt] = useState("");
+  const [, setIsLifetime] = useState(false);
+  const [, setIsActivePlan] = useState(false);
 
   // compat legado para hooks/view
   const [trialStartAt, setTrialStartAt] = useState("");

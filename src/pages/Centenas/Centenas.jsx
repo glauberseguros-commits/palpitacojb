@@ -1,4 +1,4 @@
-﻿// src/pages/Centenas/Centenas.jsx
+// src/pages/Centenas/Centenas.jsx
 import React from "react";
 import CentenasView from "./CentenasView";
 
