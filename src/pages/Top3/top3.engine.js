@@ -63,12 +63,12 @@ export function guessPrizePos(p) {
   const pos = Number.isFinite(Number(p?.position))
     ? Number(p.position)
     : Number.isFinite(Number(p?.posicao))
-    ? Number(p.posicao)
-    : Number.isFinite(Number(p?.pos))
-    ? Number(p.pos)
-    : Number.isFinite(Number(p?.colocacao))
-    ? Number(p.colocacao)
-    : null;
+      ? Number(p.posicao)
+      : Number.isFinite(Number(p?.pos))
+        ? Number(p.pos)
+        : Number.isFinite(Number(p?.colocacao))
+          ? Number(p.colocacao)
+          : null;
 
   return pos;
 }
@@ -77,14 +77,14 @@ export function guessPrizeGrupo(p) {
   const g = Number.isFinite(Number(p?.grupo2))
     ? Number(p.grupo2)
     : Number.isFinite(Number(p?.group2))
-    ? Number(p.group2)
-    : Number.isFinite(Number(p?.grupo))
-    ? Number(p.grupo)
-    : Number.isFinite(Number(p?.group))
-    ? Number(p.group)
-    : Number.isFinite(Number(p?.animal_grupo))
-    ? Number(p.animal_grupo)
-    : null;
+      ? Number(p.group2)
+      : Number.isFinite(Number(p?.grupo))
+        ? Number(p.grupo)
+        : Number.isFinite(Number(p?.group))
+          ? Number(p.group)
+          : Number.isFinite(Number(p?.animal_grupo))
+            ? Number(p.animal_grupo)
+            : null;
 
   if (Number.isFinite(Number(g)) && Number(g) >= 1 && Number(g) <= 25) {
     return Number(g);
@@ -943,8 +943,8 @@ export function computeConditionalNextTop3({
         idx === 0
           ? "Mais provável"
           : idx === 1
-          ? "2º mais provável"
-          : "3º mais provável",
+            ? "2º mais provável"
+            : "3º mais provável",
       grupo: x.grupo,
       prob: x.prob,
       probCond: x.prob,
@@ -1082,7 +1082,7 @@ export function buildMilharesForGrupo({
   }
 
   const dezenasFixas = getDezenasFixasFromGrupo(grupo2);
-  if (!dezenasFixas.length) return { dezenas: [], slots: [] };
+  if (!dezenasFixas.length) return { dezenas: dezenasFixas, slots: [] };
 
   const collectMilhares = (mode) => {
     const out = [];
@@ -1169,4 +1169,3 @@ export function build16MilharesForGrupo(args) {
 export function build20MilharesForGrupo(args) {
   return buildMilharesForGrupo({ ...(args || {}), count: 20 });
 }
-
