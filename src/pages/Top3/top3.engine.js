@@ -1047,15 +1047,15 @@ export function computeConditionalNextTop3({
             (aparicoes * 20) +
             (lateBonus * 10)
           : useFirstFocusedRanking
-            ? (primeiros * 1000) +
-              (taxaPrimeiro * 100) +
-              (aparicoes * 10) +
-              (lateBonus * 12) +
-              (pFinal * 100)
-            : (aparicoes * 100) +
-              (primeiros * 40) +
-              (lateBonus * 20) +
-              (pFinal * 100);
+            ? (aparicoes * 220) +
+              (primeiros * 90) +
+              (taxaPrimeiro * 40) +
+              (lateBonus * 16) +
+              (pFinal * 120)
+            : (aparicoes * 180) +
+              (primeiros * 70) +
+              (lateBonus * 18) +
+              (pFinal * 120);
 
       return {
         grupo,
@@ -1082,9 +1082,9 @@ export function computeConditionalNextTop3({
         if (b.lateBonus !== a.lateBonus) return b.lateBonus - a.lateBonus;
         if (b.prob !== a.prob) return b.prob - a.prob;
       } else if (useFirstFocusedRanking) {
+        if (b.aparicoes !== a.aparicoes) return b.aparicoes - a.aparicoes;
         if (b.primeiros !== a.primeiros) return b.primeiros - a.primeiros;
         if (b.taxaPrimeiro !== a.taxaPrimeiro) return b.taxaPrimeiro - a.taxaPrimeiro;
-        if (b.aparicoes !== a.aparicoes) return b.aparicoes - a.aparicoes;
         if (b.lateBonus !== a.lateBonus) return b.lateBonus - a.lateBonus;
         if (b.prob !== a.prob) return b.prob - a.prob;
       } else {
