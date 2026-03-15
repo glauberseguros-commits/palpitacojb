@@ -27,9 +27,18 @@ function ymdToBR(ymd) {
   return `${m[3]}/${m[2]}/${m[1]}`;
 }
 
+function nowLocal() {
+  return new Date();
+}
+
 function todayYMDLocal() {
-  const d = new Date();
+  const d = nowLocal();
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+function currentHourNumLocal() {
+  const d = nowLocal();
+  return d.getHours() * 100 + d.getMinutes();
 }
 
 function ymdToDateLocal(ymd) {
@@ -38,27 +47,6 @@ function ymdToDateLocal(ymd) {
     .match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!m) return null;
   return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12, 0, 0);
-}
-
-function weekdayLocal(ymd) {
-  const d = ymdToDateLocal(ymd);
-  if (!d || Number.isNaN(d.getTime())) return null;
-  return d.getDay();
-}
-
-function isWedOrSat(ymd) {
-  const wd = weekdayLocal(ymd);
-  return wd === 3 || wd === 6;
-}
-
-function prevWedOrSatFromYmd(ymd) {
-  const d = ymdToDateLocal(ymd) || new Date();
-  for (let i = 0; i < 8; i += 1) {
-    const y = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-    if (isWedOrSat(y)) return y;
-    d.setDate(d.getDate() - 1);
-  }
-  return ymd;
 }
 
 function normalizeHourLike(value) {
@@ -154,7 +142,8 @@ const FEDERAL_INPUT_ALIASES = new Set([
   "FED_BR",
 ]);
 
-const RJ_EXPECTED_HOURS_DESC = ["21:00", "18:00", "16:00", "14:00", "11:00", "09:00"];
+const RJ_09H_START_YMD = "2024-01-05";
+const RJ_EXPECTED_HOURS_BASE_DESC = ["21:00", "18:00", "16:00", "14:00", "11:00"];
 const FEDERAL_EXPECTED_HOURS_DESC = ["20:00", "19:00"];
 
 function isFederalInput(scope) {
@@ -402,8 +391,7 @@ function drawKeyForDedup(d, scopeKey, ymd) {
 }
 
 function countPrizes(d) {
-  const p = Array.isArray(d?.prizes) ? d.prizes.length : 0;
-  return p;
+  return Array.isArray(d?.prizes) ? d.prizes.length : 0;
 }
 
 function pickBetterDraw(a, b) {
@@ -474,61 +462,68 @@ function stopOnly(e) {
   e.stopPropagation();
 }
 
-function buildExpectedDrawsForScope(scopeKey, orderedDraws) {
+function getExpectedRjHoursDesc(ymd) {
+  const out = [...RJ_EXPECTED_HOURS_BASE_DESC];
+  if (isYMD(ymd) && ymd >= RJ_09H_START_YMD) {
+    out.push("09:00");
+  }
+  return out;
+}
+
+function shouldShowExpectedHour(ymd, hour) {
+  const hNum = hourToNum(hour);
+  if (hNum < 0) return true;
+
+  if (safeStr(ymd) !== todayYMDLocal()) return true;
+
+  return hNum <= currentHourNumLocal();
+}
+
+function buildExpectedDrawsForScope(scopeKey, orderedDraws, ymd) {
   const list = Array.isArray(orderedDraws) ? orderedDraws : [];
+  const byHour = new Map();
 
-  if (scopeKey === SCOPE_RJ) {
-    const byHour = new Map();
-    for (const d of list) {
-      const h = normalizeHourLike(d?.close_hour || d?.closeHour || d?.hour || d?.hora || "");
-      if (!h) continue;
-      if (!byHour.has(h)) byHour.set(h, d);
-    }
-
-    return RJ_EXPECTED_HOURS_DESC.map((hour) => {
-      const found = byHour.get(hour);
-      if (found) return found;
-
-      return {
-        __placeholder: true,
-        __slotHour: hour,
-        drawId: `placeholder_${scopeKey}_${hour}`,
-        id: `placeholder_${scopeKey}_${hour}`,
-        close_hour: hour,
-        closeHour: hour,
-        prizes: [],
-      };
-    });
+  for (const d of list) {
+    const h = normalizeHourLike(d?.close_hour || d?.closeHour || d?.hour || d?.hora || "");
+    if (!h) continue;
+    if (!byHour.has(h)) byHour.set(h, d);
   }
 
-  if (scopeKey === SCOPE_FEDERAL) {
-    const byHour = new Map();
-    for (const d of list) {
-      const h = normalizeHourLike(d?.close_hour || d?.closeHour || d?.hour || d?.hora || "");
-      if (!h) continue;
-      if (!byHour.has(h)) byHour.set(h, d);
-    }
+  const expectedHours =
+    scopeKey === SCOPE_RJ
+      ? getExpectedRjHoursDesc(ymd)
+      : scopeKey === SCOPE_FEDERAL
+      ? FEDERAL_EXPECTED_HOURS_DESC
+      : [];
 
-    const hasAnyKnownFederalHour = FEDERAL_EXPECTED_HOURS_DESC.some((h) => byHour.has(h));
-    if (!hasAnyKnownFederalHour) return list;
+  const visibleExpectedHours = expectedHours.filter((hour) => shouldShowExpectedHour(ymd, hour));
 
-    return FEDERAL_EXPECTED_HOURS_DESC.map((hour) => {
-      const found = byHour.get(hour);
-      if (found) return found;
+  const result = visibleExpectedHours.map((hour) => {
+    const found = byHour.get(hour);
+    if (found) return found;
 
-      return {
-        __placeholder: true,
-        __slotHour: hour,
-        drawId: `placeholder_${scopeKey}_${hour}`,
-        id: `placeholder_${scopeKey}_${hour}`,
-        close_hour: hour,
-        closeHour: hour,
-        prizes: [],
-      };
-    });
-  }
+    return {
+      __placeholder: true,
+      __slotHour: hour,
+      __placeholderKind: "compact",
+      drawId: `placeholder_${scopeKey}_${hour}`,
+      id: `placeholder_${scopeKey}_${hour}`,
+      close_hour: hour,
+      closeHour: hour,
+      prizes: [],
+    };
+  });
 
-  return list;
+  const extraActual = list.filter((d) => {
+    const h = normalizeHourLike(d?.close_hour || d?.closeHour || d?.hour || d?.hora || "");
+    return h && !visibleExpectedHours.includes(h);
+  });
+
+  return [...result, ...extraActual].sort((a, b) => {
+    const ha = hourToNum(a?.__slotHour || a?.close_hour || a?.closeHour || a?.hour || a?.hora);
+    const hb = hourToNum(b?.__slotHour || b?.close_hour || b?.closeHour || b?.hour || b?.hora);
+    return hb - ha;
+  });
 }
 
 /* =========================
@@ -544,6 +539,7 @@ export default function Results() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [draws, setDraws] = useState([]);
+  const [reloadTick, setReloadTick] = useState(0);
 
   const [bounds, setBounds] = useState({ minYmd: null, maxYmd: null, source: "" });
 
@@ -658,7 +654,7 @@ export default function Results() {
     return () => {
       cancelled = true;
     };
-  }, [scopeKey, ymdClamped, isFederal]);
+  }, [scopeKey, ymdClamped, isFederal, reloadTick]);
 
   useEffect(() => {
     setShowAll(true);
@@ -682,8 +678,8 @@ export default function Results() {
   }, [draws]);
 
   const drawsDisplayBase = useMemo(() => {
-    return buildExpectedDrawsForScope(scopeKey, drawsOrdered);
-  }, [scopeKey, drawsOrdered]);
+    return buildExpectedDrawsForScope(scopeKey, drawsOrdered, ymdClamped);
+  }, [scopeKey, drawsOrdered, ymdClamped]);
 
   useEffect(() => {
     setNeedsToggle(drawsDisplayBase.length > 6);
@@ -944,16 +940,31 @@ export default function Results() {
         white-space: nowrap;
       }
 
+      .pp_emptyCompact{
+        padding: 18px 14px 16px;
+      }
+
       .pp_emptyNote{
-        margin: 10px 12px 0;
         border: 1px dashed rgba(201,168,62,0.22);
         background: rgba(255,255,255,0.03);
-        color: rgba(255,255,255,0.72);
-        border-radius: 12px;
-        padding: 10px 12px;
-        font-size: 12px;
-        font-weight: 900;
+        color: rgba(255,255,255,0.84);
+        border-radius: 14px;
+        padding: 14px 14px;
+      }
+
+      .pp_emptyTitle{
+        font-size: 14px;
+        font-weight: 1100;
         letter-spacing: 0.2px;
+        color: rgba(255,255,255,0.92);
+        margin-bottom: 4px;
+      }
+
+      .pp_emptySub{
+        font-size: 12px;
+        font-weight: 850;
+        color: rgba(255,255,255,0.62);
+        line-height: 1.35;
       }
 
       .pp_rows{ display:grid; }
@@ -1147,7 +1158,7 @@ export default function Results() {
                   stopEvt(e);
                   setScopeUi(SCOPE_RJ);
                 }}
-                title="Resultados do Rio (PT_RIO)"
+                title="Resultados do Rio"
               >
                 RJ
               </button>
@@ -1159,7 +1170,7 @@ export default function Results() {
                   stopEvt(e);
                   setScopeUi(SCOPE_FEDERAL);
                 }}
-                title="Loteria Federal (qua/sáb) — tenta 20h e fallback 19h"
+                title="Resultados da Federal"
               >
                 FEDERAL
               </button>
@@ -1193,25 +1204,11 @@ export default function Results() {
               </div>
             </div>
 
-            {isFederal ? (
-              <button
-                className="pp_btn"
-                type="button"
-                onClick={(e) => {
-                  stopEvt(e);
-                  setYmd((prev) => prevWedOrSatFromYmd(prev || todayYMDLocal()));
-                }}
-                title="Ir para a última quarta/sábado"
-              >
-                Último Federal
-              </button>
-            ) : null}
-
             <button
               className="pp_btn"
               onClick={(e) => {
                 stopEvt(e);
-                setYmd((prev) => prev);
+                setReloadTick((v) => v + 1);
               }}
               type="button"
               title="Atualizar"
@@ -1230,7 +1227,7 @@ export default function Results() {
                 <div style={{ fontWeight: 1100, marginBottom: 6 }}>Erro</div>
                 <div style={{ opacity: 0.9, whiteSpace: "pre-wrap" }}>{error}</div>
               </div>
-            ) : drawsOrdered.length === 0 ? (
+            ) : drawsDisplayBase.length === 0 ? (
               <div className="pp_state">
                 Nenhum resultado para <span className="pp_gold">{label || DEFAULT_SCOPE}</span> em{" "}
                 <span className="pp_gold">{dateBR}</span>
@@ -1264,6 +1261,34 @@ export default function Results() {
                     const id = safeStr(d?.drawId || d?.id || `idx_${idx}`);
                     const prizesRaw = Array.isArray(d?.prizes) ? d.prizes : [];
 
+                    const hs = hour ? `${hour.slice(0, 2)}HS` : "—";
+
+                    if (isPlaceholder) {
+                      return (
+                        <div key={`${id}_${idx}`} className="pp_card">
+                          <div className="pp_cardInner">
+                            <div className="pp_cardHead">
+                              <div className="pp_headLeft">
+                                <div className="pp_headTitle">{`Resultado • ${label}`}</div>
+                                <div className="pp_headSub">{dateBR}</div>
+                              </div>
+
+                              <div className="pp_headPill">{hs}</div>
+                            </div>
+
+                            <div className="pp_emptyCompact">
+                              <div className="pp_emptyNote">
+                                <div className="pp_emptyTitle">Sem resultado disponível</div>
+                                <div className="pp_emptySub">
+                                  Este horário não teve sorteio registrado para a data selecionada.
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+
                     const byPos = new Map();
                     for (const p of prizesRaw) {
                       const pos = guessPrizePos(p);
@@ -1290,8 +1315,6 @@ export default function Results() {
                       };
                     });
 
-                    const hs = hour ? `${hour.slice(0, 2)}HS` : "—";
-
                     return (
                       <div key={`${id}_${idx}`} className="pp_card">
                         <div className="pp_cardInner">
@@ -1303,8 +1326,6 @@ export default function Results() {
 
                             <div className="pp_headPill">{hs}</div>
                           </div>
-
-                          {isPlaceholder ? <div className="pp_emptyNote">Sem resultado registrado para este horário.</div> : null}
 
                           <div className="pp_rows">
                             {rows.map((r) => {
