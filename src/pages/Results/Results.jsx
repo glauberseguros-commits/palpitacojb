@@ -1,5 +1,5 @@
 // src/pages/Results/Results.jsx
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { getKingBoundsByUf, getKingResultsByDate } from "../../services/kingResultsService";
 import { getAnimalLabel, getImgFromGrupo, getSlugByGrupo } from "../../constants/bichoMap";
 
@@ -153,6 +153,9 @@ const FEDERAL_INPUT_ALIASES = new Set([
   "LT_FEDERAL",
   "FED_BR",
 ]);
+
+const RJ_EXPECTED_HOURS_DESC = ["21:00", "18:00", "16:00", "14:00", "11:00", "09:00"];
+const FEDERAL_EXPECTED_HOURS_DESC = ["20:00", "19:00"];
 
 function isFederalInput(scope) {
   const up = safeStr(scope).toUpperCase();
@@ -471,6 +474,63 @@ function stopOnly(e) {
   e.stopPropagation();
 }
 
+function buildExpectedDrawsForScope(scopeKey, orderedDraws) {
+  const list = Array.isArray(orderedDraws) ? orderedDraws : [];
+
+  if (scopeKey === SCOPE_RJ) {
+    const byHour = new Map();
+    for (const d of list) {
+      const h = normalizeHourLike(d?.close_hour || d?.closeHour || d?.hour || d?.hora || "");
+      if (!h) continue;
+      if (!byHour.has(h)) byHour.set(h, d);
+    }
+
+    return RJ_EXPECTED_HOURS_DESC.map((hour) => {
+      const found = byHour.get(hour);
+      if (found) return found;
+
+      return {
+        __placeholder: true,
+        __slotHour: hour,
+        drawId: `placeholder_${scopeKey}_${hour}`,
+        id: `placeholder_${scopeKey}_${hour}`,
+        close_hour: hour,
+        closeHour: hour,
+        prizes: [],
+      };
+    });
+  }
+
+  if (scopeKey === SCOPE_FEDERAL) {
+    const byHour = new Map();
+    for (const d of list) {
+      const h = normalizeHourLike(d?.close_hour || d?.closeHour || d?.hour || d?.hora || "");
+      if (!h) continue;
+      if (!byHour.has(h)) byHour.set(h, d);
+    }
+
+    const hasAnyKnownFederalHour = FEDERAL_EXPECTED_HOURS_DESC.some((h) => byHour.has(h));
+    if (!hasAnyKnownFederalHour) return list;
+
+    return FEDERAL_EXPECTED_HOURS_DESC.map((hour) => {
+      const found = byHour.get(hour);
+      if (found) return found;
+
+      return {
+        __placeholder: true,
+        __slotHour: hour,
+        drawId: `placeholder_${scopeKey}_${hour}`,
+        id: `placeholder_${scopeKey}_${hour}`,
+        close_hour: hour,
+        closeHour: hour,
+        prizes: [],
+      };
+    });
+  }
+
+  return list;
+}
+
 /* =========================
    Page
 ========================= */
@@ -535,60 +595,70 @@ export default function Results() {
     };
   }, [scopeKey]);
 
-  const load = useCallback(async () => {
-    const sKey = safeStr(scopeKey);
-    const d = safeStr(ymdClamped);
-
-    if (!sKey || !isYMD(d)) {
-      setDraws([]);
-      setLoading(false);
-      setError("");
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-
-    try {
-      const tryFetch = async ({ hour, bucket }) => {
-        const out = await getKingResultsByDate({
-          uf: sKey,
-          date: d,
-          closeHour: isFederal ? hour : null,
-          closeHourBucket: isFederal ? bucket : null,
-          positions: "1-7",
-        });
-        const list = unwrapDraws(out);
-        return { out, list };
-      };
-
-      if (!isFederal) {
-        const { list } = await tryFetch({ hour: null, bucket: null });
-        const deduped = dedupeDraws(list, sKey, d);
-        setDraws(deduped);
-      } else {
-        let listFinal = [];
-        for (const cand of FEDERAL_CLOSE_CANDIDATES) {
-          const { list } = await tryFetch({ hour: cand.hour, bucket: cand.bucket });
-          if (list && list.length) {
-            listFinal = list;
-            break;
-          }
-        }
-        const deduped = dedupeDraws(listFinal, sKey, d);
-        setDraws(deduped);
-      }
-    } catch (e) {
-      setDraws([]);
-      setError(String(e?.message || e || "Falha ao carregar resultados."));
-    } finally {
-      setLoading(false);
-    }
-  }, [scopeKey, ymdClamped, isFederal]);
-
   useEffect(() => {
-    load();
-  }, [load]);
+    let cancelled = false;
+
+    async function run() {
+      const sKey = safeStr(scopeKey);
+      const d = safeStr(ymdClamped);
+
+      if (!sKey || !isYMD(d)) {
+        if (!cancelled) {
+          setDraws([]);
+          setLoading(false);
+          setError("");
+        }
+        return;
+      }
+
+      setLoading(true);
+      setError("");
+
+      try {
+        const tryFetch = async ({ hour, bucket }) => {
+          const out = await getKingResultsByDate({
+            uf: sKey,
+            date: d,
+            closeHour: isFederal ? hour : null,
+            closeHourBucket: isFederal ? bucket : null,
+            positions: "1-7",
+          });
+          const list = unwrapDraws(out);
+          return { out, list };
+        };
+
+        if (!isFederal) {
+          const { list } = await tryFetch({ hour: null, bucket: null });
+          const deduped = dedupeDraws(list, sKey, d);
+          if (!cancelled) setDraws(deduped);
+        } else {
+          let listFinal = [];
+          for (const cand of FEDERAL_CLOSE_CANDIDATES) {
+            const { list } = await tryFetch({ hour: cand.hour, bucket: cand.bucket });
+            if (list && list.length) {
+              listFinal = list;
+              break;
+            }
+          }
+          const deduped = dedupeDraws(listFinal, sKey, d);
+          if (!cancelled) setDraws(deduped);
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setDraws([]);
+          setError(String(e?.message || e || "Falha ao carregar resultados."));
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [scopeKey, ymdClamped, isFederal]);
 
   useEffect(() => {
     setShowAll(true);
@@ -611,41 +681,20 @@ export default function Results() {
     });
   }, [draws]);
 
+  const drawsDisplayBase = useMemo(() => {
+    return buildExpectedDrawsForScope(scopeKey, drawsOrdered);
+  }, [scopeKey, drawsOrdered]);
+
   useEffect(() => {
-    setNeedsToggle(drawsOrdered.length > 6);
-  }, [drawsOrdered.length]);
+    setNeedsToggle(drawsDisplayBase.length > 6);
+  }, [drawsDisplayBase.length]);
 
   const drawsForView = useMemo(() => {
-    if (!drawsOrdered.length) return [];
-    if (!needsToggle) return drawsOrdered;
-    if (showAll) return drawsOrdered;
-    return drawsOrdered.slice(0, 6);
-  }, [drawsOrdered, needsToggle, showAll]);
-
-  const openDatePicker = useCallback((e) => {
-    stopEvt(e);
-    const el = dateInputRef.current;
-    if (!el) return;
-
-    try {
-      if (typeof el.showPicker === "function") {
-        el.showPicker();
-        return;
-      }
-    } catch {}
-
-    try {
-      el.focus({ preventScroll: true });
-    } catch {
-      try {
-        el.focus();
-      } catch {}
-    }
-
-    try {
-      el.click();
-    } catch {}
-  }, []);
+    if (!drawsDisplayBase.length) return [];
+    if (!needsToggle) return drawsDisplayBase;
+    if (showAll) return drawsDisplayBase;
+    return drawsDisplayBase.slice(0, 6);
+  }, [drawsDisplayBase, needsToggle, showAll]);
 
   const styles = useMemo(() => {
     return `
@@ -895,6 +944,18 @@ export default function Results() {
         white-space: nowrap;
       }
 
+      .pp_emptyNote{
+        margin: 10px 12px 0;
+        border: 1px dashed rgba(201,168,62,0.22);
+        background: rgba(255,255,255,0.03);
+        color: rgba(255,255,255,0.72);
+        border-radius: 12px;
+        padding: 10px 12px;
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: 0.2px;
+      }
+
       .pp_rows{ display:grid; }
 
       .pp_row{
@@ -1026,15 +1087,18 @@ export default function Results() {
 
       .pp_dateWrap{
         position: relative;
+        min-width: 150px;
       }
 
       .pp_dateHidden{
         position: absolute;
         inset: 0;
-        width: 1px;
-        height: 1px;
+        width: 100%;
+        height: 100%;
         opacity: 0;
-        pointer-events: none;
+        cursor: pointer;
+        z-index: 2;
+        pointer-events: auto;
       }
 
       .pp_dateBtn{
@@ -1043,6 +1107,9 @@ export default function Results() {
         align-items: center;
         justify-content: center;
         gap: 8px;
+        position: relative;
+        z-index: 1;
+        pointer-events: none;
       }
 
       @media (max-width: 980px){
@@ -1052,7 +1119,7 @@ export default function Results() {
       @media (max-width: 620px){
         .pp_header{ flex-direction: column; align-items: stretch; }
         .pp_controls{ justify-content:flex-start; }
-        .pp_input, .pp_btn{ width:100%; min-width:0; }
+        .pp_input, .pp_btn, .pp_dateWrap{ width:100%; min-width:0; }
         .pp_dateBtn{ width: 100%; }
 
         .pp_row{ grid-template-columns: 56px 1fr 104px; padding: 10px 10px; }
@@ -1114,21 +1181,16 @@ export default function Results() {
                 onMouseDown={stopOnly}
                 onTouchStart={stopOnly}
                 aria-label="Data"
-                tabIndex={-1}
               />
 
-              <button
-                type="button"
+              <div
                 className="pp_btn pp_dateBtn"
-                onClick={openDatePicker}
-                onMouseDown={stopOnly}
-                onTouchStart={stopOnly}
                 title="Calendário"
                 aria-label={`Selecionar data. Atual: ${dateBR}`}
               >
                 <span aria-hidden="true">📅</span>
                 <span>{dateBR}</span>
-              </button>
+              </div>
             </div>
 
             {isFederal ? (
@@ -1149,7 +1211,7 @@ export default function Results() {
               className="pp_btn"
               onClick={(e) => {
                 stopEvt(e);
-                load();
+                setYmd((prev) => prev);
               }}
               type="button"
               title="Atualizar"
@@ -1195,7 +1257,10 @@ export default function Results() {
 
                 <div className="pp_grid2">
                   {drawsForView.map((d, idx) => {
-                    const hour = normalizeHourLike(d?.close_hour || d?.closeHour || d?.hour || d?.hora || "");
+                    const isPlaceholder = !!d?.__placeholder;
+                    const hour = normalizeHourLike(
+                      d?.__slotHour || d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+                    );
                     const id = safeStr(d?.drawId || d?.id || `idx_${idx}`);
                     const prizesRaw = Array.isArray(d?.prizes) ? d.prizes : [];
 
@@ -1238,6 +1303,8 @@ export default function Results() {
 
                             <div className="pp_headPill">{hs}</div>
                           </div>
+
+                          {isPlaceholder ? <div className="pp_emptyNote">Sem resultado registrado para este horário.</div> : null}
 
                           <div className="pp_rows">
                             {rows.map((r) => {

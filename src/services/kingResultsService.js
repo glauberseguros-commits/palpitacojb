@@ -34,13 +34,15 @@ export const AGGREGATED_AUTO_DAYS = 60;
  * - "cache": tenta cache do SDK primeiro (getDocs); se vier vazio, tenta server
  * - "server": tenta server primeiro; se falhar, cai no cache
  *
- * (mantém compat e evita custo desnecessário)
+ * ✅ CORREÇÃO:
+ * Resultado diário precisa priorizar frescor. Cache-first estava escondendo
+ * horários recém gravados, como o 21h.
  */
-const DEFAULT_READ_POLICY = "cache"; // "cache" | "server"
+const DEFAULT_READ_POLICY = "server"; // "cache" | "server"
 
 function pad2(n) {
   return String(n).padStart(2, "0");
-} // "cache" | "server"
+}
 
 function nowMs() {
   return Date.now();
@@ -63,8 +65,6 @@ function cacheSet(map, key, data) {
 /* =========================
    ✅ REGRA DE NEGÓCIO (RJ x Federal)
 ========================= */
-
-
 
 const RJ_STATE_CODE = "RJ";
 const RJ_LOTTERY_KEY = "PT_RIO";
@@ -197,8 +197,6 @@ function normalizeValueForField(fieldName, valueInput) {
 /* =========================
    Utils
 ========================= */
-
-// pad2 já foi definido acima (mantido)
 
 function isYMD(s) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
@@ -429,7 +427,6 @@ function sortDrawsLocal(draws) {
     const hb = toNum(b?.close_hour);
     if (ha !== hb) return ha - hb;
 
-    // ✅ estabilidade: lottery_code
     const la = normalizeLotteryCodeAny(a);
     const lb = normalizeLotteryCodeAny(b);
     if (la !== lb) return la.localeCompare(lb);
@@ -457,7 +454,6 @@ function sortDrawsLocalDesc(draws) {
     const hb = toNum(b?.close_hour);
     if (ha !== hb) return hb - ha;
 
-    // ✅ estabilidade: lottery_code
     const la = normalizeLotteryCodeAny(a);
     const lb = normalizeLotteryCodeAny(b);
     if (la !== lb) return lb.localeCompare(la);
@@ -495,14 +491,13 @@ function dedupeDrawsLocal(draws) {
     const ymd = raw.ymd || normalizeToYMD(raw.date) || "";
     const hour = normalizeHourLike(raw.close_hour || raw.closeHour || "");
 
-    const lotCode = normalizeLotteryCodeAny(raw); // ✅ PT, PTM, etc.
+    const lotCode = normalizeLotteryCodeAny(raw);
 
     const drawId = raw.drawId ?? raw.id ?? raw.__name__ ?? null;
     const idStr = drawId != null ? String(drawId) : "";
 
     const hasLogical = !!(ymd && hour);
 
-    // ✅ se houver lottery_code, entra na chave lógica
     const key = hasLogical ? (lotCode ? `${ymd}__${hour}__${lotCode}` : `${ymd}__${hour}`) : `id__${idStr || `idx_${i}`}`;
 
     const normalized = {
@@ -537,7 +532,6 @@ async function mapWithConcurrency(items, limitN, mapper) {
   let idx = 0;
 
   async function worker() {
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       const current = idx;
       idx += 1;
@@ -571,9 +565,6 @@ async function safeGetDocsSmart(qRef, { policy = DEFAULT_READ_POLICY } = {}) {
     }
   }
 
-  // ✅ cache-first:
-  // - tenta getDocs (pode vir do cache do SDK)
-  // - se vier vazio, tenta server uma vez (quando possível)
   try {
     const snapCache = await getDocs(qRef);
     if (snapCache?.docs?.length) return { snap: snapCache, error: null, source: "cache" };
@@ -722,7 +713,6 @@ async function fetchPrizesForDraw(drawId, positionsArr, embeddedPrizes) {
 
   const prizesCol = collection(db, "draws", drawKey, "prizes");
 
-  // ✅ prizes: cache-first (custo baixo); se vazio, server fallback
   const { snap, error } = await safeGetDocsSmart(prizesCol, { policy: "cache" });
   if (error) throw error;
 
@@ -775,7 +765,6 @@ function mapDrawDoc(doc) {
     uf: ufRaw,
     lottery_key: lotteryKeyRaw,
 
-    // ✅ exposto no draw mapeado
     lottery_code: lotteryCodeRaw ? String(lotteryCodeRaw).toUpperCase() : null,
 
     prizesCount: d.prizesCount,
@@ -840,7 +829,6 @@ async function fetchDrawDocsPreferUf({
   const ufTrim = String(extractUfParam(uf) || "").trim();
   const ufUp = ufTrim.toUpperCase();
 
-  // FEDERAL: consulta somente lottery_key
   if (isFederalInput(ufUp)) {
     for (const lk of FEDERAL_LOTTERY_KEYS) {
       const { snap, error } = await queryDrawsByField({
@@ -859,7 +847,6 @@ async function fetchDrawDocsPreferUf({
     return { docs: [], usedField: "lottery_key", error: null };
   }
 
-  // tentativa por UF
   {
     const { snap, error } = await queryDrawsByField({
       fieldName: "uf",
@@ -874,7 +861,6 @@ async function fetchDrawDocsPreferUf({
     if (error) return { docs: [], usedField: "uf", error };
   }
 
-  // fallback lottery_key
   {
     const lotteryKey = ufUp === RJ_STATE_CODE ? RJ_LOTTERY_KEY : resolveLotteryKeyForQuery(ufTrim);
 
@@ -911,7 +897,6 @@ function pickMinMaxFromMapped(mapped) {
   return { minYmd, maxYmd };
 }
 
-// ✅ bounds (robusto) — evita “maxYmd preso” por fallback baseado em docId
 function utcTodayYmd() {
   const d = new Date();
   const y = d.getUTCFullYear();
@@ -936,7 +921,6 @@ function addDaysUTCLocal(ymd, days) {
 /**
  * ✅ “Prova de vida” do maxYmd sem depender de índice composto nem de docId:
  * tenta dias recentes (==) desc até achar pelo menos 1 draw.
- * (where ymd == dia) usa índice single-field e é MUITO estável.
  */
 async function probeRecentMaxYmd(uf, lookbackDays = 45) {
   const base = utcTodayYmd();
@@ -958,23 +942,12 @@ async function probeRecentMaxYmd(uf, lookbackDays = 45) {
 }
 
 /**
- * ✅ COMPAT:
- * - aceita getKingBoundsByUf("RJ")
- * - aceita getKingBoundsByUf({ uf: "RJ" })
- * - aceita getKingBoundsByUf("FEDERAL") (se existir no Firestore)
- */
-/**
  * ✅ API bounds (backend) — fonte única preferencial
- * - usa /api/bounds?lottery=...
- * - valida min/max
- * - retorna também minDocId/maxDocId quando existir
  */
 async function fetchBoundsFromApi(ufOrObj) {
   const uf = String(extractUfParam(ufOrObj) || "").trim();
   if (!uf) return { ok: false, error: new Error("uf vazio") };
 
-  // backend aceita ?lottery= e normaliza RJ/FEDERAL/aliases
-  // aqui mandamos chave canônica (evita ambiguidade)
   const lot = canonicalScopeKey(uf) || String(uf).trim().toUpperCase();
   const url = apiUrl(`/api/bounds?lottery=${encodeURIComponent(lot)}`);
   try {
@@ -1017,7 +990,6 @@ export async function getKingBoundsByUf(ufOrObj) {
   const uf = String(extractUfParam(ufOrObj) || "").trim();
   if (!uf) throw new Error("Parâmetro obrigatório: uf");
 
-  // ✅ 0) Preferencial: backend /api/bounds (mais barato e confiável)
   const apiTry = await fetchBoundsFromApi(ufOrObj);
   if (apiTry?.ok) {
     const scopeKey = canonicalScopeKey(uf);
@@ -1030,12 +1002,9 @@ export async function getKingBoundsByUf(ufOrObj) {
       minYmd: floored.minYmd,
       maxYmd: floored.maxYmd,
 
-
-      // ✅ compat: UI antiga espera minDate/maxDate
       minDate: floored.minYmd,
       maxDate: floored.maxYmd,
 
-      // extras (debug/auditoria)
       minDocId: apiTry.minDocId || null,
       maxDocId: apiTry.maxDocId || null,
 
@@ -1051,7 +1020,6 @@ export async function getKingBoundsByUf(ufOrObj) {
   const DOC_ID = documentId();
 
   async function sampleEdgesByDocId(fieldName, ufValue) {
-    // ✅ bounds: server-first (frescor > custo)
     const asc = await queryDrawsByField({
       fieldName,
       uf: ufValue,
@@ -1081,7 +1049,6 @@ export async function getKingBoundsByUf(ufOrObj) {
     };
   }
 
-  // 1) tenta min/max via orderBy(ymd) + docId
   {
     const orderAsc = [orderBy("ymd", "asc"), orderBy(DOC_ID)];
     const orderDesc = [orderBy("ymd", "desc"), orderBy(DOC_ID)];
@@ -1117,24 +1084,18 @@ export async function getKingBoundsByUf(ufOrObj) {
           uf,
           minYmd,
           maxYmd,
-
-          // ✅ compat: UI antiga espera minDate/maxDate
           minDate: minYmd,
           maxDate: maxYmd,
-
           source: `ymd_scan${SCAN_LIMIT}:${usedMin}/${usedMax}`,
         };
       }
     }
   }
 
-  // ✅ 1.5) “anti-trava”: acha maxYmd recente via probe (mesmo se índice faltar)
   const recentProbe = await probeRecentMaxYmd(uf, 60);
   const recentMaxYmd = recentProbe?.ok ? recentProbe.maxYmd : null;
 
-  
   const scopeKeyBounds = canonicalScopeKey(uf);
-// 2) fallback robusto: bordas via documentId (para min) + correção de max via probe
   {
     const idxInfo = (() => {
       const code = String(firstTryError?.code || "");
@@ -1147,7 +1108,6 @@ export async function getKingBoundsByUf(ufOrObj) {
 
     const ufUp = String(uf || "").trim().toUpperCase();
 
-    // ✅ Para Federal: tenta bordas por lottery_key em cascata
     if (!a.ok && isFederalInput(ufUp)) {
       for (const lk of FEDERAL_LOTTERY_KEYS) {
         const b = await sampleEdgesByDocId("lottery_key", lk);
@@ -1168,7 +1128,6 @@ export async function getKingBoundsByUf(ufOrObj) {
             minYmd: floored.minYmd,
             maxYmd: floored.maxYmd,
 
-            // ✅ compat: UI antiga espera minDate/maxDate
             minDate: floored.minYmd,
             maxDate: floored.maxYmd,
 
@@ -1201,7 +1160,6 @@ export async function getKingBoundsByUf(ufOrObj) {
       minYmd: floored.minYmd,
       maxYmd: floored.maxYmd,
 
-      // ✅ compat: UI antiga espera minDate/maxDate
       minDate: floored.minYmd,
       maxDate: floored.maxYmd,
 
@@ -1210,7 +1168,7 @@ export async function getKingBoundsByUf(ufOrObj) {
       }${recentMaxYmd ? ":max_probe" : ""}${idxInfo}`,
     };
   }
-}/* =========================
+} /* =========================
    API: Day
 ========================= */
 
@@ -1243,12 +1201,21 @@ export async function getKingResultsByDate({
   const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
 
   const dayKey = drawsCacheKeyDay({ scopeKey, ymd: ymdDate, positionsArr, hourFilter });
-  const cached = cacheGet(DRAWS_CACHE, dayKey);
-  if (cached) return cached;
+
+  // ✅ CORREÇÃO:
+  // não usar cache em memória para hoje e ontem.
+  // Isso evita "congelar" o dia antes de sair o último horário.
+  const today = utcTodayYmd();
+  const diffToToday = daysDiffUTC(ymdDate, today);
+  const allowMemoryCache = Number.isFinite(diffToToday) && diffToToday > 1;
+
+  if (allowMemoryCache) {
+    const cached = cacheGet(DRAWS_CACHE, dayKey);
+    if (cached) return cached;
+  }
 
   const docCandidates = [];
 
-  // 1) tenta por ymd (melhor)
   {
     const { docs: found, error } = await fetchDrawDocsPreferUf({
       uf,
@@ -1259,7 +1226,6 @@ export async function getKingResultsByDate({
     if (found.length) docCandidates.push(...found);
   }
 
-  // 2) fallback por date (tenta o original)
   if (!docCandidates.length) {
     const rawDate = String(date || "").trim();
     if (rawDate) {
@@ -1273,7 +1239,6 @@ export async function getKingResultsByDate({
     }
   }
 
-  // 3) fallback por date usando ymdDate
   if (!docCandidates.length) {
     const { docs: found, error } = await fetchDrawDocsPreferUf({
       uf,
@@ -1284,7 +1249,6 @@ export async function getKingResultsByDate({
     if (found.length) docCandidates.push(...found);
   }
 
-  // 4) fallback BR dd/mm/yyyy
   if (!docCandidates.length) {
     const brDate = ymdToBR(ymdDate);
     if (brDate) {
@@ -1313,7 +1277,13 @@ export async function getKingResultsByDate({
   });
 
   const out = dedupeDrawsLocal(results);
-  cacheSet(DRAWS_CACHE, dayKey, out);
+
+  // ✅ CORREÇÃO:
+  // só cachear em memória datas antigas. Hoje e ontem precisam ficar frescos.
+  if (allowMemoryCache) {
+    cacheSet(DRAWS_CACHE, dayKey, out);
+  }
+
   return out;
 }
 
@@ -1365,7 +1335,6 @@ function drawsCacheKeyRange({ scopeKey, from, to, positionsArr, hourFilter, mode
   return `range::${scopeKey}::${from}..${to}::pos=${p}::h=${h}::mode=${m}`;
 }
 
-// ✅ mais estável no browser (evita flood/timeout)
 function chooseRangeConcurrency(drawCount) {
   if (!Number.isFinite(drawCount)) return 6;
   if (drawCount <= 50) return 4;
@@ -1405,7 +1374,6 @@ async function fetchDrawsDayNoPrizes({ uf, dayYmd }) {
 
   const ordered = sortDrawsLocal(baseAll);
 
-  // ✅ prizesCount coerente no aggregated
   return ordered.map((d) => {
     const embedded = Array.isArray(d?.prizes) ? d.prizes : [];
     return { ...d, prizes: [], prizesCount: embedded.length || 0, __mode: "aggregated" };
@@ -1667,7 +1635,7 @@ function lateCacheKey({ scopeKey, fromYmd, toYmd, baseYmd, prizePosition, hourFi
 function hourToNumSafe(hhmm) {
   const s = normalizeHourLike(hhmm);
   const m = s.match(/^(\d{2}):(\d{2})$/);
-  if (!m) return Number.POSITIVE_INFINITY; // null/invalid vai pro fim (ASC)
+  if (!m) return Number.POSITIVE_INFINITY;
   return Number(m[1]) * 100 + Number(m[2]);
 }
 
@@ -1713,7 +1681,7 @@ export async function getKingLateByRange({
 
   const posNum = Number(prizePosition) || 1;
 
-  const lastSeen = new Map(); // grupo -> { ymd, hour, drawId, lottery_code }
+  const lastSeen = new Map();
 
   let cursorTo = toYmd;
   const chunk = Math.max(3, Math.min(60, Number(chunkDays) || 15));
@@ -1797,10 +1765,6 @@ export async function getKingLateByRange({
     });
   }
 
-  // ✅ CRITÉRIO DE DESEMPATE:
-  // - atrasoDias DESC
-  // - empate: lastHour ASC (09:00 antes de 21:00)
-  // - depois: grupo ASC
   const sorted = [...rows].sort((a, b) => {
     const aa = Number.isFinite(Number(a?.atrasoDias)) ? Number(a.atrasoDias) : -1;
     const bb = Number.isFinite(Number(b?.atrasoDias)) ? Number(b.atrasoDias) : -1;
@@ -1818,18 +1782,3 @@ export async function getKingLateByRange({
   cacheSet(LATE_CACHE, cacheKey, out);
   return out;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
