@@ -459,7 +459,7 @@ function buildPosAnimalRanking(draws, expectedPositions, selectedPosOrNull) {
     }
 
     const base = String(label || animal || grupo || "").trim();
-    return base ? base.toUpperCase() : "";
+    return base ? base : "";
   };
 
   for (const d of safeDraws) {
@@ -550,7 +550,7 @@ function buildGlobalAparicoes25(drawsAll) {
 
     const label = String(labelPremium || `Grupo ${String(g).padStart(2, "0")}`)
       .trim()
-      .toUpperCase();
+      .trim();
 
     items.push({ grupo: g, label, value: map.get(g) || 0 });
   }
@@ -591,8 +591,8 @@ const PP = {
     "0 0 0 1px rgba(200,178,90,0.10), 0 18px 50px rgba(0,0,0,0.55)",
 
   // ✅ TIPOGRAFIA MAIS LEGÍVEL
-  titleSize: 18,
-  titleWeight: 800,
+  titleSize: 15,
+  titleWeight: 700,
 
   gap: 14,
 
@@ -666,8 +666,8 @@ function BarChartHorizontalMonthPremium({ data }) {
 
   const max = Math.max(0, ...safeData.map((d) => safeNumber(d.value)));
 
-  const fontLabel = 18;
-  const fontVal = 18;
+  const fontLabel = 14;
+  const fontVal = 14;
 
   return (
     <div style={{ ...ui.svgFill, height: "100%" }}>
@@ -785,8 +785,8 @@ function BarChartHorizontalBasic({
   const clickable = typeof onBarClick === "function";
 
   // ✅ FONTE MAIS LEGÍVEL
-  const fontLabel = 20;
-  const fontVal = 20;
+  const fontLabel = 14;
+  const fontVal = 14;
 
   return (
     <div style={{ ...ui.svgFill, height: "100%" }}>
@@ -893,8 +893,8 @@ function WaterfallHourChart({ data }) {
   const max = Math.max(1, ...safeData.map((d) => safeNumber(d.value)));
   const scaleMax = max;
 
-  const fontValue = 20;
-  const fontLabel = 20;
+  const fontValue = 14;
+  const fontLabel = 14;
 
   return (
     <div style={{ ...ui.svgFill, height: "100%" }}>
@@ -1312,7 +1312,7 @@ function computeStats({ drawsRawView, drawsRawGlobal, filters, selectedGrupo }) 
     posRankingModel = {
       mode: "dist",
       header: "Aparições do animal por posição",
-      animalLabel: String(selectedAnimalLabel || "").toUpperCase(),
+      animalLabel: String(selectedAnimalLabel || "").trim(),
       items: grpCount.byPos,
     };
   } else {
@@ -1474,7 +1474,7 @@ const ui = {
   grid: {
     display: "grid",
     gap: PP.gap,
-    gridTemplateColumns: "5fr 4fr 3fr",
+    gridTemplateColumns: "4.2fr 4.2fr 2.8fr",
     gridTemplateRows: "minmax(0, 1fr) minmax(0, 1fr)",
     gridTemplateAreas: `
       "month aparicoes horario"
@@ -1569,13 +1569,13 @@ const ui = {
     display: "inline-flex",
     alignItems: "center",
     height: 26,
-    padding: "0 12px",
+    padding: "0 10px",
     borderRadius: 999,
     border: "1px solid " + PP.stroke,
     background: "rgba(0,0,0,0.35)",
     color: PP.text2,
-    fontWeight: 900,
-    fontSize: 15,
+    fontWeight: 700,
+    fontSize: 12,
     letterSpacing: 0.2,
     whiteSpace: "nowrap",
   },
@@ -1618,7 +1618,7 @@ const ui = {
     padding: 12,
   },
 
-  apList: { display: "grid", gap: 12, minWidth: 0 },
+  apList: { display: "grid", gap: 6, minWidth: 0 },
 
   apRow: {
     display: "grid",
@@ -1629,7 +1629,7 @@ const ui = {
   },
 
   apName: {
-    fontWeight: 900,
+    fontWeight: 700,
     fontSize: 20,
     letterSpacing: 0.12,
     color: PP.text,
@@ -1642,7 +1642,7 @@ const ui = {
 
   apBarWrap: {
     position: "relative",
-    height: 18,
+    height: 12,
     borderRadius: 12,
     overflow: "hidden",
     minWidth: 0,
@@ -1713,7 +1713,7 @@ const ui = {
   },
 
   posHdrSub: {
-    fontWeight: 900,
+    fontWeight: 700,
     fontSize: 14,
     letterSpacing: 0.14,
     color: PP.text2,
@@ -1770,7 +1770,7 @@ const ui = {
   posMid: { minWidth: 0, display: "grid", gap: 6 },
 
   posAnimal: {
-    fontWeight: 900,
+    fontWeight: 700,
     fontSize: 20,
     letterSpacing: 0.16,
     color: PP.text,
@@ -1782,7 +1782,7 @@ const ui = {
 
   posBarWrap: {
     position: "relative",
-    height: 16,
+    height: 12,
     borderRadius: 12,
     overflow: "hidden",
     minWidth: 0,
@@ -1852,9 +1852,9 @@ const ui = {
     position: "absolute",
     left: 12,
     bottom: 10,
-    fontWeight: 900,
+    fontWeight: 700,
     opacity: 0.86,
-    fontSize: 15,
+    fontSize: 12,
     letterSpacing: 0.2,
     color: PP.text,
     textShadow: "0 2px 10px rgba(0,0,0,0.55)",

@@ -691,15 +691,11 @@ export default function Dashboard(props) {
     []
   );
 
-  const [_sessionObj, setSessionObj] = useState(() => loadSessionObj());
+  const [, setSessionObj] = useState(() => loadSessionObj());
   const [sessionKind, setSessionKind] = useState(() => getSessionKind(loadSessionObj()));
-  const [sessionPlan, setSessionPlan] = useState(() => getSessionPlan(loadSessionObj()));
+  const [, setSessionPlan] = useState(() => getSessionPlan(loadSessionObj()));
 
   const isGuest = sessionKind === "guest";
-  const isUser = sessionKind === "user";
-  const isFreePlan = sessionPlan === "FREE";
-  const isPremiumPlan = sessionPlan === "PREMIUM";
-  const isVipPlan = sessionPlan === "VIP";
 
   useEffect(() => {
     const serializeSession = (sess) => {
@@ -1724,53 +1720,6 @@ export default function Dashboard(props) {
     );
   }, [isHydrating, dateFrom, dateTo, queryDate, MIN_DATE, MAX_DATE]);
 
-  const accessBox = useMemo(() => {
-    const from = MIN_DATE || "2022-01-01";
-    const to = MAX_DATE || "—";
-
-    if (isGuest) {
-      return (
-        <PremiumInfoBox
-          title="Modo Demonstração"
-          description="O painel está liberado para navegação completa."
-          extra={`Plano: FREE\nPeríodo atual da base: ${from} → ${to}\nFiltros, período e interações estão liberados temporariamente.`}
-        />
-      );
-    }
-
-    if (isUser && isVipPlan) {
-      return (
-        <PremiumInfoBox
-          title="Conta VIP"
-          description="Sessão reconhecida com acesso completo."
-          extra={`Plano: VIP\nPeríodo atual da base: ${from} → ${to}`}
-        />
-      );
-    }
-
-    if (isUser && isPremiumPlan) {
-      return (
-        <PremiumInfoBox
-          title="Conta Premium"
-          description="Sessão reconhecida com acesso completo."
-          extra={`Plano: PREMIUM\nPeríodo atual da base: ${from} → ${to}`}
-        />
-      );
-    }
-
-    if (isUser && isFreePlan) {
-      return (
-        <PremiumInfoBox
-          title="Conta Free"
-          description="Sessão reconhecida. O painel segue liberado nesta fase."
-          extra={`Plano: FREE\nPeríodo atual da base: ${from} → ${to}\nNenhuma função local está bloqueada nesta baseline.`}
-        />
-      );
-    }
-
-    return null;
-  }, [isGuest, isUser, isFreePlan, isPremiumPlan, isVipPlan, MIN_DATE, MAX_DATE]);
-
   const aggregatedInfoBox = useMemo(() => {
     if (!isAggregatedOnly) return null;
 
@@ -1830,7 +1779,6 @@ export default function Dashboard(props) {
               <PremiumTopRightSkeleton message={boundsMessage} />
             ) : (
               <>
-                {accessBox}
 
                 {MIN_DATE && MAX_DATE && dateRange ? (
                   <div style={{ position: "relative", zIndex: 10, pointerEvents: "auto" }}>
@@ -1933,3 +1881,9 @@ export default function Dashboard(props) {
     </div>
   );
 }
+
+
+
+
+
+
