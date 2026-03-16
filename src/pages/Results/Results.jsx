@@ -610,7 +610,7 @@ export default function Results() {
     if (ymd !== bounds.maxYmd) {
       setYmd(bounds.maxYmd);
     }
-  }, [isFederal, bounds?.maxYmd]);
+  }, [isFederal, bounds?.maxYmd, ymd]);
 
   useEffect(() => {
     if (ymdClamped && ymdClamped !== ymdSafe) {
