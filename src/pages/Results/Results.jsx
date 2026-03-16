@@ -558,12 +558,18 @@ export default function Results() {
     return isYMD(s) ? s : todayYMDLocal();
   }, [ymd]);
 
+  const effectiveBounds = useMemo(() => {
+    const minYmd = bounds?.minYmd || null;
+    const maxYmd = isFederal ? todayYMDLocal() : bounds?.maxYmd || null;
+    return { minYmd, maxYmd };
+  }, [bounds?.minYmd, bounds?.maxYmd, isFederal]);
+
   const ymdClamped = useMemo(() => {
-    const minYmd = bounds?.minYmd;
-    const maxYmd = bounds?.maxYmd;
-    if (!isYMD(minYmd) || !isYMD(maxYmd)) return ymdSafe;
+    const minYmd = effectiveBounds?.minYmd;
+    const maxYmd = effectiveBounds?.maxYmd;
+    if (!isYMD(minYmd) && !isYMD(maxYmd)) return ymdSafe;
     return normalizeSingleDateWithBounds(ymdSafe, minYmd, maxYmd);
-  }, [ymdSafe, bounds?.minYmd, bounds?.maxYmd]);
+  }, [ymdSafe, effectiveBounds?.minYmd, effectiveBounds?.maxYmd]);
 
   useEffect(() => {
     if (ymdClamped && ymdClamped !== ymdSafe) {
@@ -628,15 +634,16 @@ export default function Results() {
           const deduped = dedupeDraws(list, sKey, d);
           if (!cancelled) setDraws(deduped);
         } else {
-          let listFinal = [];
+          const allFederalDraws = [];
+
           for (const cand of FEDERAL_CLOSE_CANDIDATES) {
             const { list } = await tryFetch({ hour: cand.hour, bucket: cand.bucket });
-            if (list && list.length) {
-              listFinal = list;
-              break;
+            if (Array.isArray(list) && list.length) {
+              allFederalDraws.push(...list);
             }
           }
-          const deduped = dedupeDraws(listFinal, sKey, d);
+
+          const deduped = dedupeDraws(allFederalDraws, sKey, d);
           if (!cancelled) setDraws(deduped);
         }
       } catch (e) {
@@ -1182,8 +1189,8 @@ export default function Results() {
                 className="pp_dateHidden"
                 type="date"
                 value={ymdClamped}
-                min={bounds?.minYmd || undefined}
-                max={bounds?.maxYmd || undefined}
+                min={effectiveBounds?.minYmd || undefined}
+                max={effectiveBounds?.maxYmd || undefined}
                 onChange={(e) => {
                   e.stopPropagation();
                   setYmd(e.target.value);
