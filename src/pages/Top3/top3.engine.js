@@ -366,6 +366,7 @@ export function getNextSlotForLottery({
   const sch0 = getScheduleForLottery({
     lotteryKey: key,
     ymd: y0,
+    hourBucket: h0,
     PT_RIO_SCHEDULE_NORMAL,
     PT_RIO_SCHEDULE_WED_SAT,
     FEDERAL_SCHEDULE,
@@ -681,6 +682,111 @@ function computeStructuralBaseDistribution(
 }
 
 /* =========================
+   Recência / pressão estrutural
+========================= */
+
+function sortDrawsAsc(draws) {
+  const list = Array.isArray(draws) ? draws : [];
+  return [...list].sort((a, b) => {
+    const ya = pickDrawYMD(a);
+    const yb = pickDrawYMD(b);
+    const ha = toHourBucket(pickDrawHour(a));
+    const hb = toHourBucket(pickDrawHour(b));
+    const tsa = ymdHourToTs(ya, ha);
+    const tsb = ymdHourToTs(yb, hb);
+    return tsa - tsb;
+  });
+}
+
+function getRecentDrawsBefore(draws, drawLast, count = 6) {
+  const list = sortDrawsAsc(draws);
+  const lastY = pickDrawYMD(drawLast);
+  const lastH = toHourBucket(pickDrawHour(drawLast));
+  const lastTs = ymdHourToTs(lastY, lastH);
+
+  const prev = list.filter((d) => {
+    const y = pickDrawYMD(d);
+    const h = toHourBucket(pickDrawHour(d));
+    const ts = ymdHourToTs(y, h);
+    return Number.isFinite(ts) && ts < lastTs;
+  });
+
+  return prev.slice(-Math.max(1, Number(count || 6)));
+}
+
+function computeRecentPressureMetrics(recentDraws, groupsK = TOP3_GROUPS_K) {
+  const k = safeInt(groupsK, 25);
+  const out = new Map();
+
+  for (let g = 1; g <= k; g += 1) {
+    out.set(g, {
+      recentTop5: 0,
+      recentIndirect: 0,
+      recentFirst: 0,
+      recentLast1First: 0,
+      recentLast2Top5: 0,
+    });
+  }
+
+  const list = Array.isArray(recentDraws) ? recentDraws : [];
+  const last1 = list.length ? [list[list.length - 1]] : [];
+  const last2 = list.slice(-2);
+
+  for (const d of list) {
+    const items = getAllTop5Groups(d);
+
+    for (const it of items) {
+      const g = Number(it.grupo);
+      const pos = Number(it.pos);
+      if (!Number.isFinite(g) || g < 1 || g > k) continue;
+
+      const row = out.get(g);
+      row.recentTop5 += 1;
+
+      if (pos >= 2 && pos <= 4) {
+        row.recentIndirect += 1;
+      }
+      if (pos === 1) {
+        row.recentFirst += 1;
+      }
+    }
+  }
+
+  for (const d of last1) {
+    const items = getAllTop5Groups(d);
+    for (const it of items) {
+      const g = Number(it.grupo);
+      const pos = Number(it.pos);
+      if (!Number.isFinite(g) || g < 1 || g > k) continue;
+      if (pos === 1) {
+        out.get(g).recentLast1First += 1;
+      }
+    }
+  }
+
+  for (const d of last2) {
+    const items = getAllTop5Groups(d);
+    const seen = new Set();
+    for (const it of items) {
+      const g = Number(it.grupo);
+      if (!Number.isFinite(g) || g < 1 || g > k) continue;
+      if (seen.has(g)) continue;
+      seen.add(g);
+      out.get(g).recentLast2Top5 += 1;
+    }
+  }
+
+  return out;
+}
+
+function normalizeMetric(value, maxValue) {
+  const v = Number(value || 0);
+  const m = Number(maxValue || 0);
+  if (!Number.isFinite(v) || !Number.isFinite(m) || m <= 0) return 0;
+  return Math.max(0, Math.min(1, v / m));
+}
+
+/* =========================
    Motor condicional puro por camadas
 ========================= */
 
@@ -905,7 +1011,7 @@ function buildConditionalLayerDistribution({
 }
 
 /* =========================
-   Motor principal
+   Motor principal V1
 ========================= */
 
 export function computeConditionalNextTop3({
@@ -1015,6 +1121,22 @@ export function computeConditionalNextTop3({
       ? Math.max(1, nowTs - minLastSeenTs)
       : 1;
 
+  const recentDraws = getRecentDrawsBefore(list, drawLast, 6);
+  const recentMetrics = computeRecentPressureMetrics(recentDraws, TOP3_GROUPS_K);
+
+  const recentMaxTop5 = Math.max(
+    1,
+    ...Array.from(recentMetrics.values()).map((x) => Number(x.recentTop5 || 0))
+  );
+  const recentMaxIndirect = Math.max(
+    1,
+    ...Array.from(recentMetrics.values()).map((x) => Number(x.recentIndirect || 0))
+  );
+  const recentMaxFirst = Math.max(
+    1,
+    ...Array.from(recentMetrics.values()).map((x) => Number(x.recentFirst || 0))
+  );
+
   const ranked = Array.from(
     { length: safeInt(TOP3_GROUPS_K, 25) },
     (_, idx) => {
@@ -1039,23 +1161,63 @@ export function computeConditionalNextTop3({
       const lateBonusRaw = Math.max(0, gapMs) / Math.max(1, maxGapMsBase);
       const lateBonus = Math.max(0, Math.min(1, lateBonusRaw));
 
-      const score =
+      const rm = recentMetrics.get(grupo) || {
+        recentTop5: 0,
+        recentIndirect: 0,
+        recentFirst: 0,
+        recentLast1First: 0,
+        recentLast2Top5: 0,
+      };
+
+      const recentTop5Norm = normalizeMetric(rm.recentTop5, recentMaxTop5);
+      const recentIndirectNorm = normalizeMetric(rm.recentIndirect, recentMaxIndirect);
+      const recentFirstNorm = normalizeMetric(rm.recentFirst, recentMaxFirst);
+
+      const persistenceShort =
+        (recentTop5Norm * 0.65) + (normalizeMetric(rm.recentLast2Top5, 2) * 0.35);
+
+      const indirectPressure =
+        (recentIndirectNorm * 0.75) + (recentTop5Norm * 0.25);
+
+      const explosionPenalty =
+        rm.recentLast1First > 0
+          ? 0.72
+          : rm.recentFirst >= 2
+            ? 0.84
+            : 1.0;
+
+      const smartLateBoost =
+        lateBonus * (0.45 + (indirectPressure * 0.35) + (persistenceShort * 0.20));
+
+      const recentComposite =
+        (indirectPressure * 0.45) +
+        (persistenceShort * 0.35) +
+        (recentFirstNorm * 0.20);
+
+      const baseScore =
         key === "FEDERAL"
-          ? (pFinal * 140) +
-            (pBase * 80) +
-            (primeiros * 45) +
-            (aparicoes * 20) +
-            (lateBonus * 10)
+          ? (pFinal * 145) +
+            (pBase * 85) +
+            (primeiros * 42) +
+            (aparicoes * 18) +
+            (recentComposite * 26) +
+            (smartLateBoost * 10)
           : useFirstFocusedRanking
-            ? (aparicoes * 220) +
-              (primeiros * 90) +
-              (taxaPrimeiro * 40) +
-              (lateBonus * 16) +
-              (pFinal * 120)
-            : (aparicoes * 180) +
+            ? (pFinal * 125) +
+              (aparicoes * 155) +
               (primeiros * 70) +
-              (lateBonus * 18) +
-              (pFinal * 120);
+              (taxaPrimeiro * 34) +
+              (indirectPressure * 55) +
+              (persistenceShort * 45) +
+              (smartLateBoost * 16)
+            : (pFinal * 125) +
+              (aparicoes * 135) +
+              (primeiros * 62) +
+              (indirectPressure * 60) +
+              (persistenceShort * 48) +
+              (smartLateBoost * 18);
+
+      const score = baseScore * explosionPenalty;
 
       return {
         grupo,
@@ -1067,6 +1229,16 @@ export function computeConditionalNextTop3({
         probBase: pBase,
         score,
         lateBonus,
+        smartLateBoost,
+        recentTop5: rm.recentTop5,
+        recentIndirect: rm.recentIndirect,
+        recentFirst: rm.recentFirst,
+        recentLast1First: rm.recentLast1First,
+        recentLast2Top5: rm.recentLast2Top5,
+        indirectPressure,
+        persistenceShort,
+        explosionPenalty,
+        recentComposite,
         lastSeenTs,
         gapMs,
       };
@@ -1074,26 +1246,11 @@ export function computeConditionalNextTop3({
   )
     .sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score;
-
-      if (key === "FEDERAL") {
-        if (b.probBase !== a.probBase) return b.probBase - a.probBase;
-        if (b.primeiros !== a.primeiros) return b.primeiros - a.primeiros;
-        if (b.aparicoes !== a.aparicoes) return b.aparicoes - a.aparicoes;
-        if (b.lateBonus !== a.lateBonus) return b.lateBonus - a.lateBonus;
-        if (b.prob !== a.prob) return b.prob - a.prob;
-      } else if (useFirstFocusedRanking) {
-        if (b.aparicoes !== a.aparicoes) return b.aparicoes - a.aparicoes;
-        if (b.primeiros !== a.primeiros) return b.primeiros - a.primeiros;
-        if (b.taxaPrimeiro !== a.taxaPrimeiro) return b.taxaPrimeiro - a.taxaPrimeiro;
-        if (b.lateBonus !== a.lateBonus) return b.lateBonus - a.lateBonus;
-        if (b.prob !== a.prob) return b.prob - a.prob;
-      } else {
-        if (b.aparicoes !== a.aparicoes) return b.aparicoes - a.aparicoes;
-        if (b.primeiros !== a.primeiros) return b.primeiros - a.primeiros;
-        if (b.lateBonus !== a.lateBonus) return b.lateBonus - a.lateBonus;
-        if (b.prob !== a.prob) return b.prob - a.prob;
-      }
-
+      if (b.indirectPressure !== a.indirectPressure) return b.indirectPressure - a.indirectPressure;
+      if (b.persistenceShort !== a.persistenceShort) return b.persistenceShort - a.persistenceShort;
+      if (b.prob !== a.prob) return b.prob - a.prob;
+      if (b.primeiros !== a.primeiros) return b.primeiros - a.primeiros;
+      if (b.aparicoes !== a.aparicoes) return b.aparicoes - a.aparicoes;
       return a.grupo - b.grupo;
     })
     .slice(0, Math.max(1, Number(topN || 3)));
@@ -1139,7 +1296,10 @@ export function computeConditionalNextTop3({
         `Grupo G${g2}: primeiros lugares=${x.primeiros}`,
         `Probabilidade final estimada no TOP5: ${pct}%`,
         `Composição da probabilidade: condicional=${pctCond}% | estrutural=${pctBase}%`,
-        `Bônus de atraso: ${(Number(x.lateBonus || 0) * 100).toFixed(2)}%`,
+        `Presença indireta recente (2º-4º): ${x.recentIndirect}`,
+        `Persistência curta recente: ${x.recentTop5}`,
+        `Penalidade de explosão recente: ${x.explosionPenalty.toFixed(2)}`,
+        `Bônus de atraso ajustado: ${(Number(x.smartLateBoost || 0) * 100).toFixed(2)}%`,
       ],
       meta: {
         trigger: {
@@ -1164,11 +1324,18 @@ export function computeConditionalNextTop3({
           targetDayOfMonth,
           prevHour: lastH,
           prevGrupo: Number(prevGrupo),
-          allLayers: (layerOut?.layers || []).map((x) => ({
-            key: x.key,
-            label: x.label,
-            samples: x.samples,
-            minSamples: x.minSamples,
+          recentTop5: x.recentTop5,
+          recentIndirect: x.recentIndirect,
+          recentFirst: x.recentFirst,
+          recentLast1First: x.recentLast1First,
+          persistenceShort: x.persistenceShort,
+          indirectPressure: x.indirectPressure,
+          explosionPenalty: x.explosionPenalty,
+          allLayers: (layerOut?.layers || []).map((layer) => ({
+            key: layer.key,
+            label: layer.label,
+            samples: layer.samples,
+            minSamples: layer.minSamples,
           })),
         },
       },
@@ -1200,11 +1367,632 @@ export function computeConditionalNextTop3({
         targetDayOfMonth,
         prevHour: lastH,
         prevGrupo: Number(prevGrupo),
-        allLayers: (layerOut?.layers || []).map((x) => ({
-          key: x.key,
-          label: x.label,
-          samples: x.samples,
-          minSamples: x.minSamples,
+        allLayers: (layerOut?.layers || []).map((layer) => ({
+          key: layer.key,
+          label: layer.label,
+          samples: layer.samples,
+          minSamples: layer.minSamples,
+        })),
+      },
+    },
+  };
+}
+
+/* =========================
+   V2 — estado curto + regime explícito
+========================= */
+
+function computeStructuralFirstDistribution(
+  draws,
+  lotteryKey,
+  targetHour,
+  targetDow,
+  groupsK = TOP3_GROUPS_K
+) {
+  const list = Array.isArray(draws) ? draws : [];
+  const key = safeStr(lotteryKey).toUpperCase();
+  const target = toHourBucket(targetHour);
+  const k = safeInt(groupsK, 25);
+
+  const firstFreq = new Map();
+  let totalSamples = 0;
+
+  for (const d of list) {
+    const y = pickDrawYMD(d);
+    const h = toHourBucket(pickDrawHour(d));
+    if (!isYMD(y) || !h) continue;
+
+    if (key === "FEDERAL") {
+      if (!isFederalDrawDay(y)) continue;
+      if (Number(getDowKey(y)) !== Number(targetDow)) continue;
+    } else {
+      if (h !== target) continue;
+    }
+
+    const g = getFirstGrupoFromDraw(d);
+    if (!Number.isFinite(Number(g)) || Number(g) < 1 || Number(g) > k) continue;
+
+    totalSamples += 1;
+    firstFreq.set(Number(g), Number(firstFreq.get(Number(g)) || 0) + 1);
+  }
+
+  const prob = new Map();
+  const denom = Math.max(1, totalSamples);
+
+  for (let g = 1; g <= k; g += 1) {
+    prob.set(g, Number(firstFreq.get(g) || 0) / denom);
+  }
+
+  return { prob, firstFreq, totalSamples };
+}
+
+function getComparableDrawsForTargetContext(
+  draws,
+  lotteryKey,
+  targetHour,
+  targetDow
+) {
+  const list = sortDrawsAsc(draws);
+  const key = safeStr(lotteryKey).toUpperCase();
+  const target = toHourBucket(targetHour);
+
+  return list.filter((d) => {
+    const y = pickDrawYMD(d);
+    const h = toHourBucket(pickDrawHour(d));
+    if (!isYMD(y) || !h) return false;
+
+    if (key === "FEDERAL") {
+      return isFederalDrawDay(y) && Number(getDowKey(y)) === Number(targetDow);
+    }
+
+    return h === target;
+  });
+}
+
+function buildComparableFirstSequence(
+  draws,
+  lotteryKey,
+  targetHour,
+  targetDow
+) {
+  return getComparableDrawsForTargetContext(
+    draws,
+    lotteryKey,
+    targetHour,
+    targetDow
+  )
+    .map((d) => {
+      const y = pickDrawYMD(d);
+      const h = toHourBucket(pickDrawHour(d));
+      const grupo = getFirstGrupoFromDraw(d);
+      return {
+        draw: d,
+        ymd: y,
+        hour: h,
+        ts: ymdHourToTs(y, h),
+        grupo: Number(grupo),
+      };
+    })
+    .filter((x) =>
+      isYMD(x.ymd) &&
+      x.hour &&
+      Number.isFinite(Number(x.ts)) &&
+      Number.isFinite(Number(x.grupo)) &&
+      Number(x.grupo) >= 1 &&
+      Number(x.grupo) <= 25
+    );
+}
+
+function getStateFromComparableSequenceBeforeTs(seq, beforeTs, count = 3) {
+  const list = Array.isArray(seq) ? seq : [];
+  const n = Math.max(1, Number(count || 3));
+
+  return list
+    .filter((x) => Number.isFinite(Number(x.ts)) && Number(x.ts) < Number(beforeTs))
+    .slice(-n)
+    .reverse()
+    .map((x) => Number(x.grupo))
+    .filter((g) => Number.isFinite(g) && g >= 1 && g <= 25);
+}
+
+function getComparableRecentDrawsBeforeTs(seq, beforeTs, count = 6) {
+  const list = Array.isArray(seq) ? seq : [];
+  return list
+    .filter((x) => Number.isFinite(Number(x.ts)) && Number(x.ts) < Number(beforeTs))
+    .slice(-Math.max(1, Number(count || 6)));
+}
+
+function countLeadingStateMatches(currentState, histState) {
+  const a = Array.isArray(currentState) ? currentState : [];
+  const b = Array.isArray(histState) ? histState : [];
+  const len = Math.min(a.length, b.length);
+
+  let matched = 0;
+  for (let i = 0; i < len; i += 1) {
+    if (Number(a[i]) !== Number(b[i])) break;
+    matched += 1;
+  }
+  return matched;
+}
+
+function buildMemoryStateDistribution({
+  drawsRange,
+  lotteryKey,
+  targetHour,
+  targetDow,
+  currentState,
+  groupsK = TOP3_GROUPS_K,
+}) {
+  const seq = buildComparableFirstSequence(
+    drawsRange,
+    lotteryKey,
+    targetHour,
+    targetDow
+  );
+
+  const k = safeInt(groupsK, 25);
+  const freq = new Map();
+
+  for (let g = 1; g <= k; g += 1) {
+    freq.set(g, 0);
+  }
+
+  let totalWeight = 0;
+  let matchedSamples = 0;
+
+  for (let i = 0; i < seq.length; i += 1) {
+    const target = seq[i];
+    const histState = [];
+
+    for (let j = i - 1; j >= 0 && histState.length < 3; j -= 1) {
+      histState.push(Number(seq[j].grupo));
+    }
+
+    const matchDepth = countLeadingStateMatches(currentState, histState);
+    if (matchDepth <= 0) continue;
+
+    const weight =
+      matchDepth >= 3 ? 3.5 :
+      matchDepth === 2 ? 2.2 :
+      1.0;
+
+    const g = Number(target.grupo);
+    if (!Number.isFinite(g) || g < 1 || g > k) continue;
+
+    freq.set(g, Number(freq.get(g) || 0) + weight);
+    totalWeight += weight;
+    matchedSamples += 1;
+  }
+
+  const prob = new Map();
+  const denom = Math.max(1, totalWeight);
+
+  for (let g = 1; g <= k; g += 1) {
+    prob.set(g, Number(freq.get(g) || 0) / denom);
+  }
+
+  return {
+    prob,
+    freq,
+    totalWeight,
+    matchedSamples,
+    state: Array.isArray(currentState) ? currentState : [],
+    sequenceSamples: seq.length,
+  };
+}
+
+function detectRegimeFromComparableSequence(seqRecent) {
+  const list = Array.isArray(seqRecent) ? seqRecent : [];
+  const groups = list
+    .map((x) => Number(x?.grupo))
+    .filter((g) => Number.isFinite(g) && g >= 1 && g <= 25);
+
+  if (groups.length <= 1) {
+    return {
+      regime: "neutral",
+      repeatRate: 0,
+      uniqueRate: groups.length ? 1 : 0,
+      samples: groups.length,
+    };
+  }
+
+  let repeats = 0;
+  for (let i = 1; i < groups.length; i += 1) {
+    if (groups[i] === groups[i - 1]) repeats += 1;
+  }
+
+  const repeatRate = repeats / Math.max(1, groups.length - 1);
+  const uniqueRate = new Set(groups).size / Math.max(1, groups.length);
+
+  let regime = "neutral";
+
+  if (repeatRate >= 0.34 || uniqueRate <= 0.50) {
+    regime = "repeat";
+  } else if (repeatRate === 0 && uniqueRate >= 0.84) {
+    regime = "spread";
+  }
+
+  return {
+    regime,
+    repeatRate,
+    uniqueRate,
+    samples: groups.length,
+  };
+}
+
+function getRegimeWeights(regime) {
+  if (regime === "repeat") {
+    return {
+      transition: 0.46,
+      structural: 0.24,
+      memory: 0.22,
+      late: 0.08,
+    };
+  }
+
+  if (regime === "spread") {
+    return {
+      transition: 0.26,
+      structural: 0.46,
+      memory: 0.18,
+      late: 0.10,
+    };
+  }
+
+  return {
+    transition: 0.36,
+    structural: 0.34,
+    memory: 0.20,
+    late: 0.10,
+  };
+}
+
+function computeComparableLastSeenByGrupo(
+  draws,
+  lotteryKey,
+  targetHour,
+  targetDow,
+  groupsK = TOP3_GROUPS_K
+) {
+  const list = getComparableDrawsForTargetContext(
+    draws,
+    lotteryKey,
+    targetHour,
+    targetDow
+  );
+
+  const k = safeInt(groupsK, 25);
+  const last = new Map();
+
+  for (let g = 1; g <= k; g += 1) {
+    last.set(g, Number.NEGATIVE_INFINITY);
+  }
+
+  for (const d of list) {
+    const y = pickDrawYMD(d);
+    const h = toHourBucket(pickDrawHour(d));
+    const ts = ymdHourToTs(y, h);
+    const items = getAllTop5Groups(d);
+
+    for (const it of items) {
+      const g = Number(it.grupo);
+      if (!Number.isFinite(g) || g < 1 || g > k) continue;
+
+      const prev = Number(last.get(g));
+      if (!Number.isFinite(prev) || ts > prev) {
+        last.set(g, ts);
+      }
+    }
+  }
+
+  return last;
+}
+
+/* =========================
+   Motor principal V2
+========================= */
+
+export function computeConditionalNextTop3V2({
+  lotteryKey,
+  drawsRange,
+  drawLast,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+  topN = 3,
+}) {
+  const list = Array.isArray(drawsRange) ? drawsRange : [];
+  if (!list.length || !drawLast) {
+    return { top: [], meta: null };
+  }
+
+  const key = safeStr(lotteryKey).toUpperCase();
+
+  const lastY = pickDrawYMD(drawLast);
+  const lastH = toHourBucket(pickDrawHour(drawLast));
+  const prevGrupo = getFirstGrupoFromDraw(drawLast);
+
+  if (
+    !isYMD(lastY) ||
+    !lastH ||
+    !Number.isFinite(Number(prevGrupo)) ||
+    Number(prevGrupo) <= 0
+  ) {
+    return { top: [], meta: null };
+  }
+
+  const nextSlot = getNextSlotForLottery({
+    lotteryKey,
+    ymd: lastY,
+    hourBucket: lastH,
+    PT_RIO_SCHEDULE_NORMAL,
+    PT_RIO_SCHEDULE_WED_SAT,
+    FEDERAL_SCHEDULE,
+  });
+
+  const targetY = safeStr(nextSlot?.ymd);
+  const targetH = toHourBucket(nextSlot?.hour);
+  const targetDow = getDowKey(targetY);
+  const targetDayOfMonth = getDayOfMonth(targetY);
+
+  if (!isYMD(targetY) || !targetH || !Number.isFinite(Number(targetDow))) {
+    return { top: [], meta: null };
+  }
+
+  const targetTs = ymdHourToTs(targetY, targetH);
+
+  const layerOut = buildConditionalLayerDistribution({
+    lotteryKey,
+    drawsRange: list,
+    targetHour: targetH,
+    targetDow,
+    targetDayOfMonth,
+    prevHour: lastH,
+    prevGrupo: Number(prevGrupo),
+    PT_RIO_SCHEDULE_NORMAL,
+    PT_RIO_SCHEDULE_WED_SAT,
+    FEDERAL_SCHEDULE,
+  });
+
+  const chosen = layerOut?.chosen || null;
+  const condSamples = Number(chosen?.samples || 0);
+  const condFirstFreq = chosen?.firstFreq || new Map();
+
+  const pTransition = new Map();
+  for (let g = 1; g <= safeInt(TOP3_GROUPS_K, 25); g += 1) {
+    pTransition.set(g, Number(condFirstFreq.get(g) || 0) / Math.max(1, condSamples));
+  }
+
+  const structural = computeStructuralFirstDistribution(
+    list,
+    key,
+    targetH,
+    targetDow,
+    TOP3_GROUPS_K
+  );
+  const pStructural = structural?.prob || new Map();
+
+  const comparableSeq = buildComparableFirstSequence(
+    list,
+    key,
+    targetH,
+    targetDow
+  );
+
+  const currentState = getStateFromComparableSequenceBeforeTs(comparableSeq, targetTs, 3);
+
+  const memoryOut = buildMemoryStateDistribution({
+    drawsRange: list,
+    lotteryKey: key,
+    targetHour: targetH,
+    targetDow,
+    currentState,
+    groupsK: TOP3_GROUPS_K,
+  });
+
+  const pMemory = memoryOut?.prob || new Map();
+
+  const regimeInfo = detectRegimeFromComparableSequence(
+    getComparableRecentDrawsBeforeTs(comparableSeq, targetTs, 6)
+  );
+
+  const regime = safeStr(regimeInfo?.regime || "neutral");
+  const weights = getRegimeWeights(regime);
+
+  const lateSeen = computeComparableLastSeenByGrupo(
+    list,
+    key,
+    targetH,
+    targetDow,
+    TOP3_GROUPS_K
+  );
+
+  const finiteSeen = Array.from(lateSeen.values()).filter((x) => Number.isFinite(Number(x)));
+  const minSeenTs = finiteSeen.length ? Math.min(...finiteSeen) : targetTs;
+  const maxGapMsBase =
+    Number.isFinite(targetTs) && Number.isFinite(minSeenTs)
+      ? Math.max(1, targetTs - minSeenTs)
+      : 1;
+
+  const ranked = Array.from(
+    { length: safeInt(TOP3_GROUPS_K, 25) },
+    (_, idx) => {
+      const grupo = idx + 1;
+
+      const pT = Number(pTransition.get(grupo) || 0);
+      const pS = Number(pStructural.get(grupo) || 0);
+      const pM = Number(pMemory.get(grupo) || 0);
+
+      const seenTs = Number(lateSeen.get(grupo));
+      const gapMs =
+        Number.isFinite(targetTs) && Number.isFinite(seenTs)
+          ? Math.max(0, targetTs - seenTs)
+          : maxGapMsBase;
+
+      const lateNorm = Math.max(
+        0,
+        Math.min(1, gapMs / Math.max(1, maxGapMsBase))
+      );
+
+      const prob =
+        (pT * weights.transition) +
+        (pS * weights.structural) +
+        (pM * weights.memory) +
+        (lateNorm * weights.late * 0.18);
+
+      const score =
+        (pT * 1000 * weights.transition) +
+        (pS * 1000 * weights.structural) +
+        (pM * 1000 * weights.memory) +
+        (lateNorm * 100 * weights.late);
+
+      return {
+        grupo,
+        prob,
+        score,
+        probTransition: pT,
+        probStructural: pS,
+        probMemory: pM,
+        lateNorm,
+        gapMs,
+        condFirstCount: Number(condFirstFreq.get(grupo) || 0),
+        structuralFirstCount: Number(structural?.firstFreq?.get(grupo) || 0),
+        memoryWeight: Number(memoryOut?.freq?.get(grupo) || 0),
+      };
+    }
+  )
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      if (b.probTransition !== a.probTransition) return b.probTransition - a.probTransition;
+      if (b.probMemory !== a.probMemory) return b.probMemory - a.probMemory;
+      if (b.probStructural !== a.probStructural) return b.probStructural - a.probStructural;
+      return a.grupo - b.grupo;
+    })
+    .slice(0, Math.max(1, Number(topN || 3)));
+
+  const reasonsBase = [
+    `Motor: V2`,
+    `Regime detectado: ${regime}`,
+    `RepeatRate=${Number(regimeInfo?.repeatRate || 0).toFixed(2)} | UniqueRate=${Number(regimeInfo?.uniqueRate || 0).toFixed(2)}`,
+    `Pesos V2: transição=${(weights.transition * 100).toFixed(0)}% | estrutural=${(weights.structural * 100).toFixed(0)}% | memória=${(weights.memory * 100).toFixed(0)}% | atraso=${(weights.late * 100).toFixed(0)}%`,
+    `Estado atual: prev=${String(prevGrupo).padStart(2, "0")} @ ${lastH} → alvo ${targetH}`,
+    `Estado curto comparável: [${currentState.map((g) => String(g).padStart(2, "0")).join(", ")}]`,
+    `Camada condicional V1 reaproveitada: ${chosen?.label || "—"} | amostras=${condSamples}`,
+    `Amostra estrutural 1º lugar: ${Number(structural?.totalSamples || 0)}`,
+    `Amostra de memória: matches=${Number(memoryOut?.matchedSamples || 0)} | peso=${Number(memoryOut?.totalWeight || 0).toFixed(2)}`,
+    `Data alvo: ${targetY} | DOW=${targetDow} | dia=${String(targetDayOfMonth).padStart(2, "0")}`,
+  ];
+
+  const top = ranked.map((x, idx) => {
+    const g2 = String(x.grupo).padStart(2, "0");
+
+    return {
+      rank: idx + 1,
+      title:
+        idx === 0
+          ? "Mais provável"
+          : idx === 1
+            ? "2º mais provável"
+            : "3º mais provável",
+      grupo: x.grupo,
+      prob: x.prob,
+      probCond: x.probTransition,
+      probBase: x.probStructural,
+      lateBonus: x.lateNorm,
+      freq: x.condFirstCount,
+      freqCond: x.condFirstCount,
+      freqBase: x.structuralFirstCount,
+      freqZeroWhy:
+        x.condFirstCount <= 0
+          ? `Sem 1º lugar nesta camada (${chosen?.label || "—"}).`
+          : "",
+      reasons: [
+        ...reasonsBase,
+        `Grupo G${g2}: transição=${(x.probTransition * 100).toFixed(2)}%`,
+        `Grupo G${g2}: estrutural=${(x.probStructural * 100).toFixed(2)}%`,
+        `Grupo G${g2}: memória curta=${(x.probMemory * 100).toFixed(2)}%`,
+        `Grupo G${g2}: atraso normalizado=${(x.lateNorm * 100).toFixed(2)}%`,
+        `Grupo G${g2}: 1ºs na camada=${x.condFirstCount}`,
+        `Grupo G${g2}: 1ºs estruturais=${x.structuralFirstCount}`,
+        `Grupo G${g2}: peso de memória=${Number(x.memoryWeight || 0).toFixed(2)}`,
+        `Probabilidade final V2=${(x.prob * 100).toFixed(2)}%`,
+      ],
+      meta: {
+        trigger: {
+          ymd: lastY,
+          hour: lastH,
+          grupo: Number(prevGrupo),
+        },
+        next: {
+          ymd: safeStr(targetY),
+          hour: safeStr(targetH),
+        },
+        samples: condSamples,
+        scenario: `V2_${safeStr(regime).toUpperCase()}`,
+        explain: {
+          engine: "V2",
+          regime,
+          repeatRate: Number(regimeInfo?.repeatRate || 0),
+          uniqueRate: Number(regimeInfo?.uniqueRate || 0),
+          weights,
+          layerKey: chosen?.key || "NONE",
+          layerLabel: chosen?.label || "—",
+          layerSamples: condSamples,
+          structuralSamples: Number(structural?.totalSamples || 0),
+          memoryMatchedSamples: Number(memoryOut?.matchedSamples || 0),
+          memoryTotalWeight: Number(memoryOut?.totalWeight || 0),
+          currentState,
+          targetDow,
+          targetDayOfMonth,
+          prevHour: lastH,
+          prevGrupo: Number(prevGrupo),
+          allLayers: (layerOut?.layers || []).map((layer) => ({
+            key: layer.key,
+            label: layer.label,
+            samples: layer.samples,
+            minSamples: layer.minSamples,
+          })),
+        },
+      },
+    };
+  });
+
+  return {
+    top,
+    meta: {
+      trigger: {
+        ymd: lastY,
+        hour: lastH,
+        grupo: Number(prevGrupo),
+      },
+      next: {
+        ymd: safeStr(targetY),
+        hour: safeStr(targetH),
+      },
+      samples: condSamples,
+      scenario: `V2_${safeStr(regime).toUpperCase()}`,
+      explain: {
+        engine: "V2",
+        regime,
+        repeatRate: Number(regimeInfo?.repeatRate || 0),
+        uniqueRate: Number(regimeInfo?.uniqueRate || 0),
+        weights,
+        layerKey: chosen?.key || "NONE",
+        layerLabel: chosen?.label || "—",
+        layerSamples: condSamples,
+        structuralSamples: Number(structural?.totalSamples || 0),
+        memoryMatchedSamples: Number(memoryOut?.matchedSamples || 0),
+        memoryTotalWeight: Number(memoryOut?.totalWeight || 0),
+        currentState,
+        targetDow,
+        targetDayOfMonth,
+        prevHour: lastH,
+        prevGrupo: Number(prevGrupo),
+        allLayers: (layerOut?.layers || []).map((layer) => ({
+          key: layer.key,
+          label: layer.label,
+          samples: layer.samples,
+          minSamples: layer.minSamples,
         })),
       },
     },
