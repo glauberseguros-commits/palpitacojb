@@ -375,13 +375,9 @@ function resolveAnimalUI(prize) {
 
 function drawKeyForDedup(d, scopeKey, ymd) {
   const hour = normalizeHourLike(d?.close_hour || d?.closeHour || d?.hour || d?.hora || "");
-  const lot =
-    safeStr(d?.lottery_code || d?.lotteryCode || d?.lottery_id || d?.lotteryId || "") || "?";
-
-  if (hour) return `HOUR:${scopeKey}|${ymd}|${hour}|${lot}`;
-
+  if (hour) return `HOUR:${scopeKey}|${ymd}|${hour}`;
   const id = safeStr(d?.drawId || d?.id || "");
-  return `ID:${scopeKey}|${ymd}|${id || "?"}|${lot}`;
+  return `ID:${scopeKey}|${ymd}|${id || "?"}`;
 }
 
 function countPrizes(d) {
@@ -554,9 +550,9 @@ export default function Results() {
 
   const effectiveBounds = useMemo(() => {
     const minYmd = bounds?.minYmd || null;
-    const maxYmd = isFederal ? todayYMDLocal() : bounds?.maxYmd || null;
+    const maxYmd = bounds?.maxYmd || null;
     return { minYmd, maxYmd };
-  }, [bounds?.minYmd, bounds?.maxYmd, isFederal]);
+  }, [bounds?.minYmd, bounds?.maxYmd]);
 
   const ymdClamped = useMemo(() => {
     const minYmd = effectiveBounds?.minYmd;
@@ -565,20 +561,35 @@ export default function Results() {
     return normalizeSingleDateWithBounds(ymdSafe, minYmd, maxYmd);
   }, [ymdSafe, effectiveBounds?.minYmd, effectiveBounds?.maxYmd]);
 
-  useEffect(() => {
-    if (ymdClamped && ymdClamped !== ymdSafe) {
-      setYmd(ymdClamped);
-    }
-  }, [ymdClamped, ymdSafe]);
-
   const dateBR = useMemo(() => ymdToBR(ymdClamped), [ymdClamped]);
+
+  function openDatePicker(e) {
+    stopEvt(e);
+
+    const input = dateInputRef.current;
+    if (!input) return;
+
+    try {
+      if (typeof input.showPicker === "function") {
+        input.showPicker();
+        return;
+      }
+    } catch {}
+
+    try {
+      input.focus();
+      input.click();
+    } catch {}
+  }
 
   useEffect(() => {
     let alive = true;
+
     (async () => {
       try {
         const b = await getKingBoundsByUf({ uf: scopeKey });
         if (!alive) return;
+
         const nb = normalizeBoundsResponse(b);
         setBounds(nb);
       } catch {
@@ -586,10 +597,26 @@ export default function Results() {
         setBounds({ minYmd: null, maxYmd: null, source: "" });
       }
     })();
+
     return () => {
       alive = false;
     };
   }, [scopeKey]);
+
+  useEffect(() => {
+    if (!isFederal) return;
+    if (!isYMD(bounds?.maxYmd)) return;
+
+    if (ymd !== bounds.maxYmd) {
+      setYmd(bounds.maxYmd);
+    }
+  }, [isFederal, bounds?.maxYmd]);
+
+  useEffect(() => {
+    if (ymdClamped && ymdClamped !== ymdSafe) {
+      setYmd(ymdClamped);
+    }
+  }, [ymdClamped, ymdSafe]);
 
   useEffect(() => {
     let cancelled = false;
@@ -617,7 +644,7 @@ export default function Results() {
             date: d,
             closeHour: isFederal ? hour : null,
             closeHourBucket: isFederal ? bucket : null,
-            positions: [1, 2, 3, 4, 5, 6, 7],
+            positions: "1-7",
           });
           const list = unwrapDraws(out);
           return { out, list };
@@ -668,8 +695,8 @@ export default function Results() {
       const hb = hourToNum(b?.close_hour || b?.closeHour || b?.hour || b?.hora);
       if (ha !== hb) return hb - ha;
 
-      const la = safeStr(a?.lottery_code || a?.lotteryCode || a?.lottery_id || a?.lotteryId || "");
-      const lb = safeStr(b?.lottery_code || b?.lotteryCode || b?.lottery_id || b?.lotteryId || "");
+      const la = safeStr(a?.lottery_code || a?.lotteryCode || "");
+      const lb = safeStr(b?.lottery_code || b?.lotteryCode || "");
       if (la !== lb) return lb.localeCompare(la);
 
       const ia = safeStr(a?.drawId || a?.id || "");
@@ -692,32 +719,6 @@ export default function Results() {
     if (showAll) return drawsDisplayBase;
     return drawsDisplayBase.slice(0, 6);
   }, [drawsDisplayBase, needsToggle, showAll]);
-
-  function openDatePicker(e) {
-    stopEvt(e);
-
-    const el = dateInputRef.current;
-    if (!el) return;
-
-    try {
-      if (typeof el.showPicker === "function") {
-        el.showPicker();
-        return;
-      }
-    } catch {}
-
-    try {
-      el.focus({ preventScroll: true });
-    } catch {
-      try {
-        el.focus();
-      } catch {}
-    }
-
-    try {
-      el.click();
-    } catch {}
-  }
 
   const styles = useMemo(() => {
     return `
@@ -1126,16 +1127,16 @@ export default function Results() {
       .pp_dateWrap{
         position: relative;
         min-width: 150px;
+        display: inline-flex;
+        align-items: center;
       }
 
       .pp_dateNative{
         position: absolute;
-        left: 0;
-        top: 0;
-        width: 1px;
-        height: 1px;
         opacity: 0;
         pointer-events: none;
+        width: 1px;
+        height: 1px;
       }
 
       .pp_dateBtn{
@@ -1209,7 +1210,8 @@ export default function Results() {
                 max={effectiveBounds?.maxYmd || undefined}
                 onChange={(e) => {
                   e.stopPropagation();
-                  setYmd(e.target.value);
+                  const next = safeStr(e.target.value);
+                  if (isYMD(next)) setYmd(next);
                 }}
                 aria-label="Data"
                 tabIndex={-1}
@@ -1283,7 +1285,6 @@ export default function Results() {
                     );
                     const id = safeStr(d?.drawId || d?.id || `idx_${idx}`);
                     const prizesRaw = Array.isArray(d?.prizes) ? d.prizes : [];
-
                     const hs = hour ? `${hour.slice(0, 2)}HS` : "—";
 
                     if (isPlaceholder) {
