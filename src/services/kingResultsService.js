@@ -29,86 +29,77 @@ const LATE_CACHE = new Map(); // key -> { ts, data: lateRows[] }
 // ✅ corte seguro (modo auto) — acima disso, tende a ser "agregado" (sem prizes)
 export const AGGREGATED_AUTO_DAYS = 60;
 
-/**
- * ✅ Política padrão de leitura (custo vs frescor)
- * - "cache": tenta cache do SDK primeiro (getDocs); se vier vazio, tenta server
- * - "server": tenta server primeiro; se falhar, cai no cache
- *
- * ✅ CORREÇÃO:
- * Resultado diário precisa priorizar frescor. Cache-first estava escondendo
- * horários recém gravados, como o 21h.
- */
-const DEFAULT_READ_POLICY = "server"; // "cache" | "server"
+/* =========================
+   Constantes / helpers base
+========================= */
+
+const DEFAULT_READ_POLICY = "cache";
+
+const RJ_STATE_CODE = "RJ";
+const RJ_LOTTERY_KEY = "PT_RIO";
+
+export const FEDERAL_SCOPE_CODE = "FEDERAL";
+export const FEDERAL_19H_TO_20H_CHANGE_YMD = "2025-11-03";
+
+const FEDERAL_LOTTERY_KEYS = [
+  "FEDERAL",
+  "LOTERIA_FEDERAL",
+  "LT_FEDERAL",
+  "FED",
+];
+
+const FEDERAL_INPUT_ALIASES = new Set([
+  "FEDERAL",
+  "LOTERIA FEDERAL",
+  "LOTERIA_FEDERAL",
+  "LT FEDERAL",
+  "LT_FEDERAL",
+  "FED",
+]);
+
+export const FEDERAL_DRAW_DOW = ["WEDNESDAY", "SATURDAY"]; // referência (UI)
 
 function pad2(n) {
   return String(n).padStart(2, "0");
 }
 
-function nowMs() {
-  return Date.now();
-}
-
 function cacheGet(map, key) {
-  const hit = map.get(key);
-  if (!hit) return null;
-  if (nowMs() - hit.ts > CACHE_TTL_MS) {
+  const entry = map.get(key);
+  if (!entry) return null;
+
+  const ts = Number(entry?.ts || 0);
+  if (!Number.isFinite(ts) || Date.now() - ts > CACHE_TTL_MS) {
     map.delete(key);
     return null;
   }
-  return hit.data;
+
+  return entry.data ?? null;
 }
 
 function cacheSet(map, key, data) {
-  map.set(key, { ts: nowMs(), data });
+  map.set(key, { ts: Date.now(), data });
 }
 
-/* =========================
-   ✅ REGRA DE NEGÓCIO (RJ x Federal)
-========================= */
-
-const RJ_STATE_CODE = "RJ";
-const RJ_LOTTERY_KEY = "PT_RIO";
-
-// ✅ chão histórico oficial do PT_RIO (NUNCA pode passar disso)
-function applyBoundsFloor(scopeKey, boundsLike) {
-  const min = String(boundsLike?.minYmd || "").trim();
-  const max = String(boundsLike?.maxYmd || "").trim();
-
-  const isYMDLocal = (s) => /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
-
-  const today = utcTodayYmd();
-
-  const safeMin = isYMDLocal(min) ? min : today;
-  const safeMax = isYMDLocal(max) ? max : today;
-
-  return { minYmd: safeMin, maxYmd: safeMax };
+function applyBoundsFloor(_scopeKey, { minYmd, maxYmd }) {
+  return { minYmd: minYmd || null, maxYmd: maxYmd || null };
 }
-// ✅ Escopo canônico para Federal no app
-const FEDERAL_SCOPE_CODE = "FEDERAL";
 
 /**
- * ✅ Aliases tolerados (input do usuário / UI)
+ * ✅ Regra histórica da Federal
+ * - até 2025-11-02: 19h
+ * - a partir de 2025-11-03: 20h
  */
-const FEDERAL_INPUT_ALIASES = new Set([
-  "FEDERAL",
-  "FED",
-  "LOT FEDERAL",
-  "LOTERIA FEDERAL",
-  "LOTERIA_FEDERAL",
-  "LT_FEDERAL",
-  "FED_BR",
-]);
+export function getFederalPreferredHourForYmd(ymd) {
+  const y = String(ymd || "").trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(y) && y >= FEDERAL_19H_TO_20H_CHANGE_YMD) {
+    return "20:00";
+  }
+  return "19:00";
+}
 
-// ✅ Possíveis lottery_key no Firestore (tentativa em cascata)
-const FEDERAL_LOTTERY_KEYS = ["FEDERAL", "LOTERIA_FEDERAL", "LT_FEDERAL", "FED"];
-
-/**
- * (Opcional para UI) — regra de calendário do Federal
- * - 20h: quarta e sábado
- */
-export const FEDERAL_DRAW_HOUR = "20:00";
-export const FEDERAL_DRAW_BUCKET = "20h";
-export const FEDERAL_DRAW_DOW = ["WEDNESDAY", "SATURDAY"]; // referência (UI)
+export function getFederalPreferredBucketForYmd(ymd) {
+  return getFederalPreferredHourForYmd(ymd) === "20:00" ? "20h" : "19h";
+}
 
 /**
  * Detecta se o usuário está pedindo Federal (por input/alias).
@@ -121,7 +112,10 @@ function isFederalInput(scopeInput) {
 
   // normaliza espaços/underscores pra captar variações
   const compact = up.replace(/[\s_]+/g, " ").trim();
-  return FEDERAL_INPUT_ALIASES.has(compact) || FEDERAL_INPUT_ALIASES.has(up.replace(/[\s_]+/g, "_"));
+  return (
+    FEDERAL_INPUT_ALIASES.has(compact) ||
+    FEDERAL_INPUT_ALIASES.has(up.replace(/[\s_]+/g, "_"))
+  );
 }
 
 /**
@@ -203,7 +197,9 @@ function isYMD(s) {
 }
 
 function ymdToBR(ymd) {
-  const m = String(ymd || "").trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const m = String(ymd || "")
+    .trim()
+    .match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (!m) return null;
   return `${m[3]}/${m[2]}/${m[1]}`;
 }
@@ -288,7 +284,8 @@ function resolveHourFilter({ closeHour = null, closeHourBucket = null }) {
 function drawPassesHourFilter(draw, hourFilter) {
   if (!hourFilter || !hourFilter.kind) return true;
 
-  const raw = draw?.close_hour ?? draw?.closeHour ?? draw?.hour ?? draw?.hora ?? "";
+  const raw =
+    draw?.close_hour ?? draw?.closeHour ?? draw?.hour ?? draw?.hora ?? "";
   const norm = normalizeHourLike(raw);
 
   if (hourFilter.kind === "exact") {
@@ -312,7 +309,11 @@ function normalizeToYMD(input) {
 
 function normalizePositions(positions) {
   const arr =
-    Array.isArray(positions) && positions.length ? positions.map(Number).filter((n) => Number.isFinite(n) && n > 0) : null;
+    Array.isArray(positions) && positions.length
+      ? positions
+          .map(Number)
+          .filter((n) => Number.isFinite(n) && n > 0)
+      : null;
 
   if (!arr || !arr.length) return null;
   return Array.from(new Set(arr)).sort((a, b) => a - b);
@@ -480,7 +481,9 @@ function dedupeDrawsLocal(draws) {
 
   function score(d) {
     const prizesLen = Array.isArray(d?.prizes) ? d.prizes.length : 0;
-    const pc = Number.isFinite(Number(d?.prizesCount)) ? Number(d.prizesCount) : 0;
+    const pc = Number.isFinite(Number(d?.prizesCount))
+      ? Number(d.prizesCount)
+      : 0;
     const hasLogical = !!(d?.ymd && d?.close_hour);
     return prizesLen * 1_000_000 + pc * 1_000 + (hasLogical ? 10 : 0);
   }
@@ -498,7 +501,11 @@ function dedupeDrawsLocal(draws) {
 
     const hasLogical = !!(ymd && hour);
 
-    const key = hasLogical ? (lotCode ? `${ymd}__${hour}__${lotCode}` : `${ymd}__${hour}`) : `id__${idStr || `idx_${i}`}`;
+    const key = hasLogical
+      ? lotCode
+        ? `${ymd}__${hour}__${lotCode}`
+        : `${ymd}__${hour}`
+      : `id__${idStr || `idx_${i}`}`;
 
     const normalized = {
       ...raw,
@@ -540,7 +547,9 @@ async function mapWithConcurrency(items, limitN, mapper) {
     }
   }
 
-  await Promise.all(Array.from({ length: Math.min(concurrency, arr.length) }, () => worker()));
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, arr.length) }, () => worker())
+  );
   return results;
 }
 
@@ -567,7 +576,9 @@ async function safeGetDocsSmart(qRef, { policy = DEFAULT_READ_POLICY } = {}) {
 
   try {
     const snapCache = await getDocs(qRef);
-    if (snapCache?.docs?.length) return { snap: snapCache, error: null, source: "cache" };
+    if (snapCache?.docs?.length) {
+      return { snap: snapCache, error: null, source: "cache" };
+    }
 
     try {
       const snapServer = await getDocsFromServer(qRef);
@@ -697,9 +708,13 @@ async function fetchPrizesForDraw(drawId, positionsArr, embeddedPrizes) {
   if (!drawKey) return [];
 
   if (Array.isArray(embeddedPrizes) && embeddedPrizes.length) {
-    const normalized = embeddedPrizes.map((p, idx) => normalizePrize(p, p?.prizeId ?? `emb_${idx}`));
+    const normalized = embeddedPrizes.map((p, idx) =>
+      normalizePrize(p, p?.prizeId ?? `emb_${idx}`)
+    );
 
-    const cleaned = normalized.filter((x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position));
+    const cleaned = normalized.filter(
+      (x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position)
+    );
 
     if (cleaned.length) {
       const allSorted = sortPrizesByPosition(cleaned);
@@ -718,7 +733,9 @@ async function fetchPrizesForDraw(drawId, positionsArr, embeddedPrizes) {
 
   const allRaw = snap.docs.map((d) => normalizePrize(d.data(), d.id));
 
-  const all = allRaw.filter((x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position));
+  const all = allRaw.filter(
+    (x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position)
+  );
 
   const allSorted = sortPrizesByPosition(all);
   cacheSet(PRIZES_CACHE, allKey, allSorted);
@@ -734,7 +751,9 @@ function mapDrawDoc(doc) {
   const d = doc.data();
 
   const ymd = d.ymd || normalizeToYMD(getDocDateRaw(d));
-  const hourNorm = normalizeHourLike(d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? "");
+  const hourNorm = normalizeHourLike(
+    d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? ""
+  );
 
   const embeddedPrizes = Array.isArray(d.prizes) ? d.prizes : null;
 
@@ -783,7 +802,9 @@ function buildUfWhereClauses(fieldName, uf) {
 
 function normalizeOrderBys(extraOrderBy) {
   if (!extraOrderBy) return [];
-  return Array.isArray(extraOrderBy) ? extraOrderBy.filter(Boolean) : [extraOrderBy];
+  return Array.isArray(extraOrderBy)
+    ? extraOrderBy.filter(Boolean)
+    : [extraOrderBy];
 }
 
 async function queryDrawsByField({
@@ -815,7 +836,9 @@ async function queryDrawsByField({
 function extractUfParam(maybeUfOrObj) {
   if (!maybeUfOrObj) return "";
   if (typeof maybeUfOrObj === "string") return maybeUfOrObj;
-  if (typeof maybeUfOrObj === "object" && typeof maybeUfOrObj.uf === "string") return maybeUfOrObj.uf;
+  if (typeof maybeUfOrObj === "object" && typeof maybeUfOrObj.uf === "string") {
+    return maybeUfOrObj.uf;
+  }
   return String(maybeUfOrObj || "");
 }
 
@@ -841,7 +864,9 @@ async function fetchDrawDocsPreferUf({
       });
 
       if (error) return { docs: [], usedField: "lottery_key", error };
-      if (snap?.docs?.length) return { docs: snap.docs, usedField: "lottery_key", error: null };
+      if (snap?.docs?.length) {
+        return { docs: snap.docs, usedField: "lottery_key", error: null };
+      }
     }
 
     return { docs: [], usedField: "lottery_key", error: null };
@@ -857,12 +882,15 @@ async function fetchDrawDocsPreferUf({
       policy,
     });
 
-    if (!error && snap?.docs?.length) return { docs: snap.docs, usedField: "uf", error: null };
+    if (!error && snap?.docs?.length) {
+      return { docs: snap.docs, usedField: "uf", error: null };
+    }
     if (error) return { docs: [], usedField: "uf", error };
   }
 
   {
-    const lotteryKey = ufUp === RJ_STATE_CODE ? RJ_LOTTERY_KEY : resolveLotteryKeyForQuery(ufTrim);
+    const lotteryKey =
+      ufUp === RJ_STATE_CODE ? RJ_LOTTERY_KEY : resolveLotteryKeyForQuery(ufTrim);
 
     const { snap, error } = await queryDrawsByField({
       fieldName: "lottery_key",
@@ -873,12 +901,15 @@ async function fetchDrawDocsPreferUf({
       policy,
     });
 
-    if (!error && snap?.docs?.length) return { docs: snap.docs, usedField: "lottery_key", error: null };
+    if (!error && snap?.docs?.length) {
+      return { docs: snap.docs, usedField: "lottery_key", error: null };
+    }
     if (error) return { docs: [], usedField: "lottery_key", error };
   }
 
   return { docs: [], usedField: "none", error: null };
 }
+
 /* =========================
    Bounds (min/max reais)
 ========================= */
@@ -915,7 +946,9 @@ function addDaysUTCLocal(ymd, days) {
   const dt = ymdToUTCDateLocal(ymd);
   if (!dt) return ymd;
   dt.setUTCDate(dt.getUTCDate() + Number(days || 0));
-  return `${dt.getUTCFullYear()}-${pad2(dt.getUTCMonth() + 1)}-${pad2(dt.getUTCDate())}`;
+  return `${dt.getUTCFullYear()}-${pad2(dt.getUTCMonth() + 1)}-${pad2(
+    dt.getUTCDate()
+  )}`;
 }
 
 /**
@@ -986,6 +1019,7 @@ async function fetchBoundsFromApi(ufOrObj) {
     return { ok: false, error: e };
   }
 }
+
 export async function getKingBoundsByUf(ufOrObj) {
   const uf = String(extractUfParam(ufOrObj) || "").trim();
   if (!uf) throw new Error("Parâmetro obrigatório: uf");
@@ -993,7 +1027,10 @@ export async function getKingBoundsByUf(ufOrObj) {
   const apiTry = await fetchBoundsFromApi(ufOrObj);
   if (apiTry?.ok) {
     const scopeKey = canonicalScopeKey(uf);
-    const floored = applyBoundsFloor(scopeKey, { minYmd: apiTry.minYmd, maxYmd: apiTry.maxYmd });
+    const floored = applyBoundsFloor(scopeKey, {
+      minYmd: apiTry.minYmd,
+      maxYmd: apiTry.maxYmd,
+    });
 
     return {
       ok: true,
@@ -1053,14 +1090,22 @@ export async function getKingBoundsByUf(ufOrObj) {
     const orderAsc = [orderBy("ymd", "asc"), orderBy(DOC_ID)];
     const orderDesc = [orderBy("ymd", "desc"), orderBy(DOC_ID)];
 
-    const { docs: minDocs, usedField: usedMin, error: eMin } = await fetchDrawDocsPreferUf({
+    const {
+      docs: minDocs,
+      usedField: usedMin,
+      error: eMin,
+    } = await fetchDrawDocsPreferUf({
       uf,
       extraOrderBy: orderAsc,
       extraLimit: limit(SCAN_LIMIT),
       policy: "server",
     });
 
-    const { docs: maxDocs, usedField: usedMax, error: eMax } = await fetchDrawDocsPreferUf({
+    const {
+      docs: maxDocs,
+      usedField: usedMax,
+      error: eMax,
+    } = await fetchDrawDocsPreferUf({
       uf,
       extraOrderBy: orderDesc,
       extraLimit: limit(SCAN_LIMIT),
@@ -1114,7 +1159,10 @@ export async function getKingBoundsByUf(ufOrObj) {
         if (b.ok) {
           const mm = pickMinMaxFromMapped(b.merged);
 
-          const maxFixed = recentMaxYmd && (!mm.maxYmd || recentMaxYmd > mm.maxYmd) ? recentMaxYmd : mm.maxYmd;
+          const maxFixed =
+            recentMaxYmd && (!mm.maxYmd || recentMaxYmd > mm.maxYmd)
+              ? recentMaxYmd
+              : mm.maxYmd;
 
           const floored = applyBoundsFloor(scopeKeyBounds, {
             minYmd: mm.minYmd || null,
@@ -1139,14 +1187,20 @@ export async function getKingBoundsByUf(ufOrObj) {
       }
     }
 
-    const lotteryKey = ufUp === RJ_STATE_CODE ? RJ_LOTTERY_KEY : resolveLotteryKeyForQuery(uf);
+    const lotteryKey =
+      ufUp === RJ_STATE_CODE ? RJ_LOTTERY_KEY : resolveLotteryKeyForQuery(uf);
 
-    const b = a.ok ? null : await sampleEdgesByDocId("lottery_key", String(lotteryKey).toUpperCase());
+    const b = a.ok
+      ? null
+      : await sampleEdgesByDocId("lottery_key", String(lotteryKey).toUpperCase());
 
     const merged = a.ok ? a.merged : b?.merged || [];
     const mm = pickMinMaxFromMapped(merged);
 
-    const maxFixed = recentMaxYmd && (!mm.maxYmd || recentMaxYmd > mm.maxYmd) ? recentMaxYmd : mm.maxYmd;
+    const maxFixed =
+      recentMaxYmd && (!mm.maxYmd || recentMaxYmd > mm.maxYmd)
+        ? recentMaxYmd
+        : mm.maxYmd;
 
     const floored = applyBoundsFloor(scopeKeyBounds, {
       minYmd: mm.minYmd || null,
@@ -1163,12 +1217,14 @@ export async function getKingBoundsByUf(ufOrObj) {
       minDate: floored.minYmd,
       maxDate: floored.maxYmd,
 
-      source: `fallback_edges_docId_limit=${FALLBACK_EDGE_LIMIT}:${a.ok ? "uf" : "lottery_key"}:sampleCount=${
-        merged.length
-      }${recentMaxYmd ? ":max_probe" : ""}${idxInfo}`,
+      source: `fallback_edges_docId_limit=${FALLBACK_EDGE_LIMIT}:${
+        a.ok ? "uf" : "lottery_key"
+      }:sampleCount=${merged.length}${recentMaxYmd ? ":max_probe" : ""}${idxInfo}`,
     };
   }
-} /* =========================
+}
+
+/* =========================
    API: Day
 ========================= */
 
@@ -1195,21 +1251,37 @@ function buildPrizeSignature(draw) {
 }
 
 function federalHourPriority(draw) {
-  const h = normalizeHourLike(draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || "");
+  const h = normalizeHourLike(
+    draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+  );
+  const ymd = String(draw?.ymd || normalizeToYMD(draw?.date) || "").trim();
   const n = hourToNumSafe(h);
-  if (h === "20:00") return 200000 + n;
-  if (h === "19:00") return 190000 + n;
+
+  const prefer20h = getFederalPreferredHourForYmd(ymd) === "20:00";
+
+  if (prefer20h) {
+    if (h === "20:00") return 200000 + n;
+    if (h === "19:00") return 190000 + n;
+    return 100000 + n;
+  }
+
+  if (h === "19:00") return 200000 + n;
+  if (h === "20:00") return 190000 + n;
   return 100000 + n;
 }
 
 function pickBetterFederalClone(a, b) {
   const pa = Number.isFinite(Number(a?.prizesCount))
     ? Number(a.prizesCount)
-    : (Array.isArray(a?.prizes) ? a.prizes.length : 0);
+    : Array.isArray(a?.prizes)
+    ? a.prizes.length
+    : 0;
 
   const pb = Number.isFinite(Number(b?.prizesCount))
     ? Number(b.prizesCount)
-    : (Array.isArray(b?.prizes) ? b.prizes.length : 0);
+    : Array.isArray(b?.prizes)
+    ? b.prizes.length
+    : 0;
 
   if (pa !== pb) return pb > pa ? b : a;
 
@@ -1231,7 +1303,9 @@ function collapseFederalDailyCloneDraws(draws) {
     const sig = buildPrizeSignature(d);
 
     if (!ymd || !sig) {
-      const fallbackKey = `id::${String(d?.drawId || d?.id || Math.random())}`;
+      const fallbackKey = `id::${String(
+        d?.drawId || d?.id || Math.random()
+      )}`;
       if (!byKey.has(fallbackKey)) byKey.set(fallbackKey, d);
       continue;
     }
@@ -1245,6 +1319,7 @@ function collapseFederalDailyCloneDraws(draws) {
 
   return sortDrawsLocal(Array.from(byKey.values()));
 }
+
 function drawsCacheKeyDay({ scopeKey, ymd, positionsArr, hourFilter }) {
   const p = positionsArr && positionsArr.length ? positionsArr.join(",") : "all";
   const h =
@@ -1273,7 +1348,12 @@ export async function getKingResultsByDate({
 
   const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
 
-  const dayKey = drawsCacheKeyDay({ scopeKey, ymd: ymdDate, positionsArr, hourFilter });
+  const dayKey = drawsCacheKeyDay({
+    scopeKey,
+    ymd: ymdDate,
+    positionsArr,
+    hourFilter,
+  });
 
   // ✅ CORREÇÃO:
   // não usar cache em memória para hoje e ontem.
@@ -1354,7 +1434,9 @@ export async function getKingResultsByDate({
     dayAll = collapseFederalDailyCloneDraws(dayAll);
   }
 
-  const base = hourFilter?.kind ? dayAll.filter((d) => drawPassesHourFilter(d, hourFilter)) : dayAll;
+  const base = hourFilter?.kind
+    ? dayAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+    : dayAll;
   const out = dedupeDrawsLocal(sortDrawsLocal(base));
 
   // ✅ CORREÇÃO:
@@ -1402,7 +1484,14 @@ function daysDiffUTC(fromYmd, toYmd) {
   return Math.floor(ms / 86400000);
 }
 
-function drawsCacheKeyRange({ scopeKey, from, to, positionsArr, hourFilter, mode }) {
+function drawsCacheKeyRange({
+  scopeKey,
+  from,
+  to,
+  positionsArr,
+  hourFilter,
+  mode,
+}) {
   const p = positionsArr && positionsArr.length ? positionsArr.join(",") : "all";
   const h =
     hourFilter?.kind === "bucket"
@@ -1455,7 +1544,12 @@ async function fetchDrawsDayNoPrizes({ uf, dayYmd }) {
 
   return ordered.map((d) => {
     const embedded = Array.isArray(d?.prizes) ? d.prizes : [];
-    return { ...d, prizes: [], prizesCount: embedded.length || 0, __mode: "aggregated" };
+    return {
+      ...d,
+      prizes: [],
+      prizesCount: embedded.length || 0,
+      __mode: "aggregated",
+    };
   });
 }
 
@@ -1524,7 +1618,9 @@ export async function getKingResultsByRange({
           }
 
           const baseAll = dedupeDrawsLocal(all);
-          const base = hourFilter?.kind ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter)) : baseAll;
+          const base = hourFilter?.kind
+            ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+            : baseAll;
 
           const out = dedupeDrawsLocal(sortDrawsLocal(base));
           cacheSet(DRAWS_CACHE, rangeKey, out);
@@ -1545,7 +1641,9 @@ export async function getKingResultsByRange({
         }
 
         const baseAll = dedupeDrawsLocal(all);
-        const base = hourFilter?.kind ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter)) : baseAll;
+        const base = hourFilter?.kind
+          ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+          : baseAll;
 
         const out = dedupeDrawsLocal(sortDrawsLocal(base));
         cacheSet(DRAWS_CACHE, rangeKey, out);
@@ -1556,12 +1654,9 @@ export async function getKingResultsByRange({
       const rawMsg = String(error?.message || "");
 
       throw new Error(
-        `Firestore: falta índice composto para RANGE (campo ${usedField} + ymd).
-` +
-          `Crie/valide o índice no console (Collection: draws | Fields: ${usedField} ASC, ymd ASC, __name__ (documentId) ASC).
-` +
-          `Obs: fallback automático só é aplicado para ranges até ${MAX_FALLBACK_DAYS} dias.
-` +
+        `Firestore: falta índice composto para RANGE (campo ${usedField} + ymd).\n` +
+          `Crie/valide o índice no console (Collection: draws | Fields: ${usedField} ASC, ymd ASC, __name__ (documentId) ASC).\n` +
+          `Obs: fallback automático só é aplicado para ranges até ${MAX_FALLBACK_DAYS} dias.\n` +
           (rawCode || rawMsg ? `Detalhe: ${rawCode} ${rawMsg}` : "")
       );
     }
@@ -1573,7 +1668,11 @@ export async function getKingResultsByRange({
     const days = daysBetweenInclusiveUTC(ymdFrom, ymdTo);
     const MAX_EMPTY_RANGE_FALLBACK_DAYS = 120;
 
-    if (Number.isFinite(days) && days > 0 && days <= MAX_EMPTY_RANGE_FALLBACK_DAYS) {
+    if (
+      Number.isFinite(days) &&
+      days > 0 &&
+      days <= MAX_EMPTY_RANGE_FALLBACK_DAYS
+    ) {
       if (effectiveMode === "aggregated") {
         const all = [];
         for (let i = 0; i < days; i += 1) {
@@ -1583,7 +1682,9 @@ export async function getKingResultsByRange({
         }
 
         const baseAll = dedupeDrawsLocal(all);
-        const base = hourFilter?.kind ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter)) : baseAll;
+        const base = hourFilter?.kind
+          ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+          : baseAll;
 
         const out = dedupeDrawsLocal(sortDrawsLocal(base));
         cacheSet(DRAWS_CACHE, rangeKey, out);
@@ -1604,7 +1705,9 @@ export async function getKingResultsByRange({
       }
 
       const baseAll = dedupeDrawsLocal(all);
-      const base = hourFilter?.kind ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter)) : baseAll;
+      const base = hourFilter?.kind
+        ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+        : baseAll;
 
       const ordered = sortDrawsLocal(base);
 
@@ -1624,7 +1727,9 @@ export async function getKingResultsByRange({
   }
 
   const baseAll = dedupeDrawsLocal(docs.map(mapDrawDoc));
-  const base = hourFilter?.kind ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter)) : baseAll;
+  const base = hourFilter?.kind
+    ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+    : baseAll;
 
   const ordered = sortDrawsLocal(base);
 
@@ -1635,7 +1740,9 @@ export async function getKingResultsByRange({
         return {
           ...d,
           prizes: Array.isArray(d?.prizes) ? d.prizes : [],
-          prizesCount: Number.isFinite(Number(d?.prizesCount)) ? Number(d.prizesCount) : embedded.length || 0,
+          prizesCount: Number.isFinite(Number(d?.prizesCount))
+            ? Number(d.prizesCount)
+            : embedded.length || 0,
           __mode: "aggregated",
         };
       })
@@ -1661,7 +1768,11 @@ export async function getKingResultsByRange({
    ✅ Hidratação de prizes (para UX no "Todos")
 ========================= */
 
-export async function hydrateKingDrawsWithPrizes({ draws, positions = null, concurrency = null }) {
+export async function hydrateKingDrawsWithPrizes({
+  draws,
+  positions = null,
+  concurrency = null,
+}) {
   const arr = Array.isArray(draws) ? draws : [];
   if (!arr.length) return [];
 
@@ -1687,7 +1798,9 @@ export async function hydrateKingDrawsWithPrizes({ draws, positions = null, conc
 
 function normalizeLotteriesList(lotteries) {
   const arr = Array.isArray(lotteries) ? lotteries : [];
-  const cleaned = arr.map((x) => String(x ?? "").trim().toUpperCase()).filter(Boolean);
+  const cleaned = arr
+    .map((x) => String(x ?? "").trim().toUpperCase())
+    .filter(Boolean);
   return cleaned.length ? Array.from(new Set(cleaned)) : null;
 }
 
@@ -1698,7 +1811,16 @@ function drawPassesLotteriesFilter(draw, lotteriesArr) {
   return lotteriesArr.includes(code);
 }
 
-function lateCacheKey({ scopeKey, fromYmd, toYmd, baseYmd, prizePosition, hourFilter, lotteriesArr, chunkDays }) {
+function lateCacheKey({
+  scopeKey,
+  fromYmd,
+  toYmd,
+  baseYmd,
+  prizePosition,
+  hourFilter,
+  lotteriesArr,
+  chunkDays,
+}) {
   const h =
     hourFilter?.kind === "bucket"
       ? `bucket:${hourFilter.bucket}`
@@ -1805,7 +1927,9 @@ export async function getKingLateByRange({
       if (!ymd || !isYMD(ymd)) continue;
 
       const p = Array.isArray(d.prizes)
-        ? d.prizes.find((x) => Number(x?.position) === posNum && isValidGrupo(x?.grupo))
+        ? d.prizes.find(
+            (x) => Number(x?.position) === posNum && isValidGrupo(x?.grupo)
+          )
         : null;
 
       const g = p?.grupo;
@@ -1831,7 +1955,8 @@ export async function getKingLateByRange({
     const seen = lastSeen.get(g) || null;
     const lastYmd = seen?.ymd || null;
     const diff = lastYmd ? daysDiffUTC(lastYmd, baseYmd) : NaN;
-    const atrasoDias = lastYmd && Number.isFinite(diff) ? Math.max(0, diff) : null;
+    const atrasoDias =
+      lastYmd && Number.isFinite(diff) ? Math.max(0, diff) : null;
 
     rows.push({
       pos: 0,

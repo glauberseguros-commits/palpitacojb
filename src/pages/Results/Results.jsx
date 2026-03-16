@@ -5,7 +5,11 @@ import {
   getKingResultsByDate,
   getKingResultsByRange,
 } from "../../services/kingResultsService";
-import { getAnimalLabel, getImgFromGrupo, getSlugByGrupo } from "../../constants/bichoMap";
+import {
+  getAnimalLabel,
+  getImgFromGrupo,
+  getSlugByGrupo,
+} from "../../constants/bichoMap";
 
 /* =========================
    Helpers (locais e robustos)
@@ -57,7 +61,6 @@ function dateToYMDLocal(d) {
   if (!(d instanceof Date) || Number.isNaN(d.getTime())) return "";
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
-
 
 function startOfMonthYMD(ymd) {
   const d = ymdToDateLocal(ymd);
@@ -201,7 +204,6 @@ const FEDERAL_INPUT_ALIASES = new Set([
 
 const RJ_09H_START_YMD = "2024-01-05";
 const RJ_EXPECTED_HOURS_BASE_DESC = ["21:00", "18:00", "16:00", "14:00", "11:00"];
-const FEDERAL_EXPECTED_HOURS_DESC = ["20:00", "19:00"];
 
 function isFederalInput(scope) {
   const up = safeStr(scope).toUpperCase();
@@ -229,11 +231,6 @@ function scopeDisplayName(scope) {
   if (isFederalInput(up)) return "FEDERAL";
   return up;
 }
-
-const FEDERAL_CLOSE_CANDIDATES = [
-  { bucket: "20h", hour: "20:00" },
-  { bucket: "19h", hour: "19:00" },
-];
 
 /* =========================
    prizeNumber
@@ -313,7 +310,10 @@ function safeGetAnimalLabel(grupo, animalFallback) {
   if (!Number.isFinite(g)) return safeStr(animalFallback || "");
 
   try {
-    const a1 = getAnimalLabel({ grupo: g, animal: safeStr(animalFallback || "") });
+    const a1 = getAnimalLabel({
+      grupo: g,
+      animal: safeStr(animalFallback || ""),
+    });
     const s1 = safeStr(a1);
     if (s1) return s1;
   } catch {}
@@ -333,7 +333,8 @@ function safeGetAnimalLabel(grupo, animalFallback) {
 
 function publicBase() {
   try {
-    const viteBase = typeof import.meta !== "undefined" ? import.meta.env?.BASE_URL : "";
+    const viteBase =
+      typeof import.meta !== "undefined" ? import.meta.env?.BASE_URL : "";
     const vb = String(viteBase || "").trim();
     if (vb) return vb.endsWith("/") ? vb.slice(0, -1) : vb;
   } catch {}
@@ -439,7 +440,9 @@ function resolveAnimalUI(prize) {
 ========================= */
 
 function drawKeyForDedup(d, scopeKey, ymd) {
-  const hour = normalizeHourLike(d?.close_hour || d?.closeHour || d?.hour || d?.hora || "");
+  const hour = normalizeHourLike(
+    d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+  );
   if (hour) return `HOUR:${scopeKey}|${ymd}|${hour}`;
   const id = safeStr(d?.drawId || d?.id || "");
   return `ID:${scopeKey}|${ymd}|${id || "?"}`;
@@ -539,19 +542,33 @@ function buildExpectedDrawsForScope(scopeKey, orderedDraws, ymd) {
   const byHour = new Map();
 
   for (const d of list) {
-    const h = normalizeHourLike(d?.close_hour || d?.closeHour || d?.hour || d?.hora || "");
+    const h = normalizeHourLike(
+      d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+    );
     if (!h) continue;
     if (!byHour.has(h)) byHour.set(h, d);
   }
 
-  const expectedHours =
-    scopeKey === SCOPE_RJ
-      ? getExpectedRjHoursDesc(ymd)
-      : scopeKey === SCOPE_FEDERAL
-      ? FEDERAL_EXPECTED_HOURS_DESC
-      : [];
+  // ✅ FEDERAL: não usar regra fixa de horários na UI.
+  // Mostra apenas o que veio da base.
+  if (scopeKey === SCOPE_FEDERAL) {
+    return [...list].sort((a, b) => {
+      const ha = hourToNum(
+        a?.__slotHour || a?.close_hour || a?.closeHour || a?.hour || a?.hora
+      );
+      const hb = hourToNum(
+        b?.__slotHour || b?.close_hour || b?.closeHour || b?.hour || b?.hora
+      );
+      return hb - ha;
+    });
+  }
 
-  const visibleExpectedHours = expectedHours.filter((hour) => shouldShowExpectedHour(ymd, hour));
+  const expectedHours =
+    scopeKey === SCOPE_RJ ? getExpectedRjHoursDesc(ymd) : [];
+
+  const visibleExpectedHours = expectedHours.filter((hour) =>
+    shouldShowExpectedHour(ymd, hour)
+  );
 
   const result = visibleExpectedHours.map((hour) => {
     const found = byHour.get(hour);
@@ -570,13 +587,19 @@ function buildExpectedDrawsForScope(scopeKey, orderedDraws, ymd) {
   });
 
   const extraActual = list.filter((d) => {
-    const h = normalizeHourLike(d?.close_hour || d?.closeHour || d?.hour || d?.hora || "");
+    const h = normalizeHourLike(
+      d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+    );
     return h && !visibleExpectedHours.includes(h);
   });
 
   return [...result, ...extraActual].sort((a, b) => {
-    const ha = hourToNum(a?.__slotHour || a?.close_hour || a?.closeHour || a?.hour || a?.hora);
-    const hb = hourToNum(b?.__slotHour || b?.close_hour || b?.closeHour || b?.hour || b?.hora);
+    const ha = hourToNum(
+      a?.__slotHour || a?.close_hour || a?.closeHour || a?.hour || a?.hora
+    );
+    const hb = hourToNum(
+      b?.__slotHour || b?.close_hour || b?.closeHour || b?.hour || b?.hora
+    );
     return hb - ha;
   });
 }
@@ -605,13 +628,19 @@ export default function Results() {
   const [draws, setDraws] = useState([]);
   const [reloadTick, setReloadTick] = useState(0);
 
-  const [bounds, setBounds] = useState({ minYmd: null, maxYmd: null, source: "" });
+  const [bounds, setBounds] = useState({
+    minYmd: null,
+    maxYmd: null,
+    source: "",
+  });
 
   const [showAll, setShowAll] = useState(true);
   const [needsToggle, setNeedsToggle] = useState(false);
 
   const [calendarOpen, setCalendarOpen] = useState(false);
-  const [calendarMonthYmd, setCalendarMonthYmd] = useState(() => startOfMonthYMD(todayYMDLocal()));
+  const [calendarMonthYmd, setCalendarMonthYmd] = useState(() =>
+    startOfMonthYMD(todayYMDLocal())
+  );
   const [calendarMarkedYmds, setCalendarMarkedYmds] = useState([]);
   const [calendarLoading, setCalendarLoading] = useState(false);
 
@@ -643,9 +672,18 @@ export default function Results() {
 
   const dateBR = useMemo(() => ymdToBR(ymdClamped), [ymdClamped]);
 
-  const calendarMarkedSet = useMemo(() => new Set(calendarMarkedYmds), [calendarMarkedYmds]);
-  const calendarCells = useMemo(() => buildCalendarCells(calendarMonthYmd), [calendarMonthYmd]);
-  const calendarTitle = useMemo(() => monthTitleBR(calendarMonthYmd), [calendarMonthYmd]);
+  const calendarMarkedSet = useMemo(
+    () => new Set(calendarMarkedYmds),
+    [calendarMarkedYmds]
+  );
+  const calendarCells = useMemo(
+    () => buildCalendarCells(calendarMonthYmd),
+    [calendarMonthYmd]
+  );
+  const calendarTitle = useMemo(
+    () => monthTitleBR(calendarMonthYmd),
+    [calendarMonthYmd]
+  );
 
   useEffect(() => {
     let alive = true;
@@ -686,7 +724,11 @@ export default function Results() {
       return;
     }
 
-    const normalized = normalizeSingleDateWithBounds(ymdSafe, bounds?.minYmd, bounds?.maxYmd);
+    const normalized = normalizeSingleDateWithBounds(
+      ymdSafe,
+      bounds?.minYmd,
+      bounds?.maxYmd
+    );
     if (normalized && normalized !== ymd) {
       setYmd(normalized);
     }
@@ -715,7 +757,7 @@ export default function Results() {
           uf: scopeKey,
           dateFrom: from,
           dateTo: to,
-          positions: "1-7",
+          positions: [1, 2, 3, 4, 5, 6, 7],
           mode: "aggregated",
         });
 
@@ -778,35 +820,19 @@ export default function Results() {
       setError("");
 
       try {
-        const tryFetch = async ({ hour, bucket }) => {
-          const out = await getKingResultsByDate({
-            uf: sKey,
-            date: d,
-            closeHour: isFederal ? hour : null,
-            closeHourBucket: isFederal ? bucket : null,
-            positions: "1-7",
-          });
-          const list = unwrapDraws(out);
-          return { list };
-        };
+        // ✅ Sem regra fixa na UI para Federal.
+        const out = await getKingResultsByDate({
+          uf: sKey,
+          date: d,
+          closeHour: null,
+          closeHourBucket: null,
+          positions: [1, 2, 3, 4, 5, 6, 7],
+        });
 
-        if (!isFederal) {
-          const { list } = await tryFetch({ hour: null, bucket: null });
-          const deduped = dedupeDraws(list, sKey, d);
-          if (!cancelled) setDraws(deduped);
-        } else {
-          const allFederalDraws = [];
+        const list = unwrapDraws(out);
+        const deduped = dedupeDraws(list, sKey, d);
 
-          for (const cand of FEDERAL_CLOSE_CANDIDATES) {
-            const { list } = await tryFetch({ hour: cand.hour, bucket: cand.bucket });
-            if (Array.isArray(list) && list.length) {
-              allFederalDraws.push(...list);
-            }
-          }
-
-          const deduped = dedupeDraws(allFederalDraws, sKey, d);
-          if (!cancelled) setDraws(deduped);
-        }
+        if (!cancelled) setDraws(deduped);
       } catch (e) {
         if (!cancelled) {
           setDraws([]);
@@ -822,7 +848,7 @@ export default function Results() {
     return () => {
       cancelled = true;
     };
-  }, [scopeKey, ymdClamped, isFederal, reloadTick]);
+  }, [scopeKey, ymdClamped, reloadTick]);
 
   useEffect(() => {
     setShowAll(true);
@@ -846,34 +872,8 @@ export default function Results() {
   }, [draws]);
 
   const drawsDisplayBase = useMemo(() => {
-    const base = buildExpectedDrawsForScope(scopeKey, drawsOrdered, ymdClamped);
-
-    if (scopeKey === SCOPE_FEDERAL) {
-      const actuals = base.filter((d) => !d?.__placeholder);
-      if (actuals.length) return actuals;
-    }
-
-    return base;
+    return buildExpectedDrawsForScope(scopeKey, drawsOrdered, ymdClamped);
   }, [scopeKey, drawsOrdered, ymdClamped]);
-
-  const federalMissingHoursLabel = useMemo(() => {
-    if (!isFederal) return "";
-    if (!drawsOrdered.length) return "";
-
-    const actualHours = new Set(
-      drawsOrdered
-        .map((d) => normalizeHourLike(d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""))
-        .filter(Boolean)
-    );
-
-    const missing = FEDERAL_EXPECTED_HOURS_DESC.filter((h) => {
-      if (!shouldShowExpectedHour(ymdClamped, h)) return false;
-      return !actualHours.has(h);
-    });
-
-    if (!missing.length) return "";
-    return missing.map((h) => `${h.slice(0, 2)}HS`).join(" • ");
-  }, [isFederal, drawsOrdered, ymdClamped]);
 
   useEffect(() => {
     setNeedsToggle(drawsDisplayBase.length > 6);
@@ -888,17 +888,27 @@ export default function Results() {
 
   const canGoPrevMonth = useMemo(() => {
     if (!isYMD(effectiveBounds?.minYmd)) return true;
-    return shiftMonthYMD(calendarMonthYmd, -1) >= startOfMonthYMD(effectiveBounds.minYmd);
+    return (
+      shiftMonthYMD(calendarMonthYmd, -1) >=
+      startOfMonthYMD(effectiveBounds.minYmd)
+    );
   }, [calendarMonthYmd, effectiveBounds?.minYmd]);
 
   const canGoNextMonth = useMemo(() => {
     if (!isYMD(effectiveBounds?.maxYmd)) return true;
-    return shiftMonthYMD(calendarMonthYmd, 1) <= startOfMonthYMD(effectiveBounds.maxYmd);
+    return (
+      shiftMonthYMD(calendarMonthYmd, 1) <=
+      startOfMonthYMD(effectiveBounds.maxYmd)
+    );
   }, [calendarMonthYmd, effectiveBounds?.maxYmd]);
 
   function handleSelectYmd(nextYmd) {
     if (!isYMD(nextYmd)) return;
-    const bounded = normalizeSingleDateWithBounds(nextYmd, effectiveBounds?.minYmd, effectiveBounds?.maxYmd);
+    const bounded = normalizeSingleDateWithBounds(
+      nextYmd,
+      effectiveBounds?.minYmd,
+      effectiveBounds?.maxYmd
+    );
     setYmd(bounded);
     setCalendarOpen(false);
   }
@@ -1041,20 +1051,9 @@ export default function Results() {
       .pp_topbar{
         display:flex;
         align-items:center;
-        justify-content:space-between;
+        justify-content:flex-end;
         gap: 10px;
         min-width:0;
-      }
-
-      .pp_hint{
-        border: 1px solid rgba(201,168,62,0.20);
-        background: rgba(201,168,62,0.08);
-        color: rgba(255,255,255,0.86);
-        border-radius: 12px;
-        padding: 8px 12px;
-        font-size: 12px;
-        font-weight: 900;
-        letter-spacing: 0.2px;
       }
 
       .pp_grid2{
@@ -1313,7 +1312,7 @@ export default function Results() {
         color: rgba(255,255,255,0.94);
         font-weight: 1100;
         letter-spacing: 0.2px;
-        text-transform: none;
+        text-transform: capitalize;
         font-size: 14px;
       }
 
@@ -1380,10 +1379,9 @@ export default function Results() {
       }
 
       .pp_calDay.isMarked{
-        border-color: rgba(201,168,62,0.52);
-        background: linear-gradient(180deg, rgba(201,168,62,0.24), rgba(201,168,62,0.12));
-        color: rgba(255,248,220,0.99);
-        box-shadow: inset 0 0 0 1px rgba(201,168,62,0.12);
+        border-color: rgba(201,168,62,0.34);
+        background: rgba(201,168,62,0.10);
+        color: rgba(255,244,207,0.98);
       }
 
       .pp_calDay.isSelected{
@@ -1408,11 +1406,10 @@ export default function Results() {
         left:50%;
         bottom:4px;
         transform:translateX(-50%);
-        width: 7px;
-        height: 7px;
+        width: 6px;
+        height: 6px;
         border-radius: 999px;
-        background: rgba(201,168,62,0.98);
-        box-shadow: 0 0 8px rgba(201,168,62,0.45);
+        background: rgba(201,168,62,0.96);
       }
 
       .pp_calFoot{
@@ -1476,7 +1473,12 @@ export default function Results() {
             <div className="pp_title">Resultados</div>
           </div>
 
-          <div className="pp_controls" onClick={stopOnly} onMouseDown={stopOnly} onTouchStart={stopOnly}>
+          <div
+            className="pp_controls"
+            onClick={stopOnly}
+            onMouseDown={stopOnly}
+            onTouchStart={stopOnly}
+          >
             <div className="pp_pills" aria-label="Escopo">
               <button
                 type="button"
@@ -1519,7 +1521,11 @@ export default function Results() {
               </button>
 
               {calendarOpen ? (
-                <div className="pp_calendarPop" onClick={stopOnly} onMouseDown={stopOnly}>
+                <div
+                  className="pp_calendarPop"
+                  onClick={stopOnly}
+                  onMouseDown={stopOnly}
+                >
                   <div className="pp_calHead">
                     <button
                       type="button"
@@ -1527,7 +1533,9 @@ export default function Results() {
                       disabled={!canGoPrevMonth}
                       onClick={(e) => {
                         stopEvt(e);
-                        if (canGoPrevMonth) setCalendarMonthYmd((v) => shiftMonthYMD(v, -1));
+                        if (canGoPrevMonth) {
+                          setCalendarMonthYmd((v) => shiftMonthYMD(v, -1));
+                        }
                       }}
                       aria-label="Mês anterior"
                     >
@@ -1542,7 +1550,9 @@ export default function Results() {
                       disabled={!canGoNextMonth}
                       onClick={(e) => {
                         stopEvt(e);
-                        if (canGoNextMonth) setCalendarMonthYmd((v) => shiftMonthYMD(v, 1));
+                        if (canGoNextMonth) {
+                          setCalendarMonthYmd((v) => shiftMonthYMD(v, 1));
+                        }
                       }}
                       aria-label="Próximo mês"
                     >
@@ -1551,8 +1561,8 @@ export default function Results() {
                   </div>
 
                   <div className="pp_calWeek">
-                    {["D", "S", "T", "Q", "Q", "S", "S"].map((w) => (
-                      <div key={w} className="pp_calWeekItem">
+                    {["D", "S", "T", "Q", "Q", "S", "S"].map((w, idx) => (
+                      <div key={`${w}_${idx}`} className="pp_calWeekItem">
                         {w}
                       </div>
                     ))}
@@ -1561,8 +1571,10 @@ export default function Results() {
                   <div className="pp_calGrid">
                     {calendarCells.map((cell) => {
                       const disabled =
-                        (isYMD(effectiveBounds?.minYmd) && cell.ymd < effectiveBounds.minYmd) ||
-                        (isYMD(effectiveBounds?.maxYmd) && cell.ymd > effectiveBounds.maxYmd);
+                        (isYMD(effectiveBounds?.minYmd) &&
+                          cell.ymd < effectiveBounds.minYmd) ||
+                        (isYMD(effectiveBounds?.maxYmd) &&
+                          cell.ymd > effectiveBounds.maxYmd);
 
                       const isMarked = calendarMarkedSet.has(cell.ymd);
                       const isSelected = cell.ymd === ymdClamped;
@@ -1594,7 +1606,9 @@ export default function Results() {
                           title={ymdToBR(cell.ymd)}
                         >
                           {cell.day}
-                          {isMarked ? <span className="pp_calDot" aria-hidden="true" /> : null}
+                          {isMarked ? (
+                            <span className="pp_calDot" aria-hidden="true" />
+                          ) : null}
                         </button>
                       );
                     })}
@@ -1605,7 +1619,11 @@ export default function Results() {
                       <strong>•</strong> dia com sorteio
                     </div>
                     <div className="pp_calMini">
-                      {calendarLoading ? "Lendo mês…" : isFederal && isYMD(bounds?.maxYmd) ? `Último: ${ymdToBR(bounds.maxYmd)}` : ""}
+                      {calendarLoading
+                        ? "Lendo mês…"
+                        : isFederal && isYMD(bounds?.maxYmd)
+                        ? `Último: ${ymdToBR(bounds.maxYmd)}`
+                        : ""}
                     </div>
                   </div>
                 </div>
@@ -1637,18 +1655,13 @@ export default function Results() {
               </div>
             ) : drawsDisplayBase.length === 0 ? (
               <div className="pp_state">
-                Nenhum resultado para <span className="pp_gold">{label || DEFAULT_SCOPE}</span> em{" "}
+                Nenhum resultado para{" "}
+                <span className="pp_gold">{label || DEFAULT_SCOPE}</span> em{" "}
                 <span className="pp_gold">{dateBR}</span>
               </div>
             ) : (
               <>
                 <div className="pp_topbar">
-                  {federalMissingHoursLabel ? (
-                    <div className="pp_hint">{`Sem sorteio neste dia: ${federalMissingHoursLabel}`}</div>
-                  ) : (
-                    <div />
-                  )}
-
                   {needsToggle ? (
                     <button
                       className="pp_btn"
@@ -1664,14 +1677,7 @@ export default function Results() {
                   ) : null}
                 </div>
 
-                <div
-                  className="pp_grid2"
-                  style={
-                    isFederal && drawsForView.length === 1
-                      ? { gridTemplateColumns: "minmax(0, 460px)", justifyContent: "center" }
-                      : undefined
-                  }
-                >
+                <div className="pp_grid2">
                   {drawsForView.map((d, idx) => {
                     const hour = normalizeHourLike(
                       d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
@@ -1721,17 +1727,25 @@ export default function Results() {
                           <div className="pp_rows">
                             {rows.map((r) => {
                               const gtxt = r.grupo ? `G${pad2(r.grupo)}` : "—";
-                              const numFmt = r.numero ? formatPrizeNumberByPos(r.numero, r.pos) : "";
+                              const numFmt = r.numero
+                                ? formatPrizeNumberByPos(r.numero, r.pos)
+                                : "";
 
                               return (
                                 <div key={`${id}_pos_${r.pos}`} className="pp_row">
-                                  <div className={`pp_posBadge ${prizeRankClass(r.pos)}`}>{`${r.pos}º`}</div>
+                                  <div className={`pp_posBadge ${prizeRankClass(r.pos)}`}>
+                                    {`${r.pos}º`}
+                                  </div>
 
                                   <div className="pp_mid">
                                     <div className="pp_imgFrame" aria-hidden="true">
                                       <RowImg
                                         variants={r.imgVariants || []}
-                                        alt={r.animalLabel ? `Bicho ${r.animalLabel}` : "Bicho"}
+                                        alt={
+                                          r.animalLabel
+                                            ? `Bicho ${r.animalLabel}`
+                                            : "Bicho"
+                                        }
                                         fallbackText={gtxt}
                                       />
                                     </div>
@@ -1741,7 +1755,9 @@ export default function Results() {
                                         {r.grupo ? `GRUPO ${pad2(r.grupo)}` : "GRUPO —"}
                                       </div>
                                       <div className="pp_animal">
-                                        {r.animalLabel ? r.animalLabel.toUpperCase() : "—"}
+                                        {r.animalLabel
+                                          ? r.animalLabel.toUpperCase()
+                                          : "—"}
                                       </div>
                                     </div>
                                   </div>
@@ -1749,11 +1765,16 @@ export default function Results() {
                                   <div className="pp_num">
                                     {r.numero ? (
                                       <>
-                                        <span className="pp_numHint">{prizeLabelByPos(r.pos)}</span>
+                                        <span className="pp_numHint">
+                                          {prizeLabelByPos(r.pos)}
+                                        </span>
                                         <span className="pp_numValue">{numFmt}</span>
                                       </>
                                     ) : (
-                                      <span className="pp_numValue" style={{ opacity: 0.55 }}>
+                                      <span
+                                        className="pp_numValue"
+                                        style={{ opacity: 0.55 }}
+                                      >
                                         —
                                       </span>
                                     )}
@@ -1775,5 +1796,3 @@ export default function Results() {
     </div>
   );
 }
-
-

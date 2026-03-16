@@ -18,8 +18,6 @@ import {
   PT_RIO_SCHEDULE_NORMAL,
   PT_RIO_SCHEDULE_WED_SAT,
   FEDERAL_SCHEDULE,
-  TOP3_SMOOTH_ALPHA,
-  TOP3_GROUPS_K,
 } from "./top3.constants";
 
 import {
@@ -33,7 +31,7 @@ import {
   build16MilharesForGrupo,
   buildMilharesForGrupo,
   getNextSlotForLottery,
-  computeConditionalNextTop3,
+  computeConditionalNextTop3V2,
 } from "./top3.engine";
 
 import {
@@ -382,7 +380,7 @@ export function useTop3Controller() {
           (await getKingResultsByRange({
             uf: ufResolved,
             dateFrom: searchFrom,
-            dateTo: addDaysYMD(targetY, 1),
+            dateTo: targetY,
             mode: "detailed",
             readPolicy: "server",
           })) || [];
@@ -563,7 +561,7 @@ export function useTop3Controller() {
         (await getKingResultsByRange({
           uf: ufResolved,
           dateFrom: rangeFrom,
-          dateTo: addDaysYMD(rangeTo, 1),
+          dateTo: rangeTo,
           mode: "detailed",
           readPolicy: "server",
         })) || [];
@@ -610,6 +608,7 @@ export function useTop3Controller() {
     const lastDrawInRange = list[list.length - 1];
 
     const cacheKey = [
+      "V2",
       lotteryKeySafe,
       lookback,
       rangeInfo?.from || "",
@@ -635,10 +634,12 @@ export function useTop3Controller() {
     });
 
     if (!drawLast) {
-      return { top: [], meta: null };
+      const empty = { top: [], meta: null };
+      analyticsCacheRef.current = { key: cacheKey, value: empty };
+      return empty;
     }
 
-    const computed = computeConditionalNextTop3({
+    const computed = computeConditionalNextTop3V2({
       lotteryKey: lotteryKeySafe,
       drawsRange: list,
       drawLast,
@@ -677,14 +678,6 @@ export function useTop3Controller() {
   const top3 = useMemo(() => {
     const arr = Array.isArray(analytics?.top) ? analytics.top : [];
 
-    const samplesMeta = Number(analytics?.meta?.samples || 0);
-
-    const alpha = Number(TOP3_SMOOTH_ALPHA) || 1;
-    const groupsK = Number(TOP3_GROUPS_K) || 25;
-
-    const denomRaw = Math.max(0, samplesMeta) * 7;
-    const denom = denomRaw + alpha * groupsK;
-
     const milharesCache = new Map();
 
     return arr.map((x) => {
@@ -701,8 +694,7 @@ export function useTop3Controller() {
       const milharesCols = build4ColsFromEngineOut(out, 4, 5);
       const milhares20 = milharesCols.flatMap((c) => c.items).slice(0, 20);
 
-      const freq = Number(x.freq || 0);
-      const prob = denom > 0 ? (freq + alpha) / denom : 0;
+      const prob = Number(x.prob || 0);
       const probPct = prob * 100;
 
       const bgPrimary = normalizeImgSrc(
