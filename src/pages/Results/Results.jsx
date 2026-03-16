@@ -41,14 +41,6 @@ function currentHourNumLocal() {
   return d.getHours() * 100 + d.getMinutes();
 }
 
-function ymdToDateLocal(ymd) {
-  const m = String(ymd || "")
-    .trim()
-    .match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!m) return null;
-  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12, 0, 0);
-}
-
 function normalizeHourLike(value) {
   const s0 = safeStr(value);
   if (!s0) return "";
@@ -383,11 +375,13 @@ function resolveAnimalUI(prize) {
 
 function drawKeyForDedup(d, scopeKey, ymd) {
   const hour = normalizeHourLike(d?.close_hour || d?.closeHour || d?.hour || d?.hora || "");
+  const lot =
+    safeStr(d?.lottery_code || d?.lotteryCode || d?.lottery_id || d?.lotteryId || "") || "?";
 
-  if (hour) return `HOUR:${scopeKey}|${ymd}|${hour}`;
+  if (hour) return `HOUR:${scopeKey}|${ymd}|${hour}|${lot}`;
 
   const id = safeStr(d?.drawId || d?.id || "");
-  return `ID:${scopeKey}|${ymd}|${id || "?"}`;
+  return `ID:${scopeKey}|${ymd}|${id || "?"}|${lot}`;
 }
 
 function countPrizes(d) {
@@ -623,7 +617,7 @@ export default function Results() {
             date: d,
             closeHour: isFederal ? hour : null,
             closeHourBucket: isFederal ? bucket : null,
-            positions: "1-7",
+            positions: [1, 2, 3, 4, 5, 6, 7],
           });
           const list = unwrapDraws(out);
           return { out, list };
@@ -674,8 +668,8 @@ export default function Results() {
       const hb = hourToNum(b?.close_hour || b?.closeHour || b?.hour || b?.hora);
       if (ha !== hb) return hb - ha;
 
-      const la = safeStr(a?.lottery_code || a?.lotteryCode || "");
-      const lb = safeStr(b?.lottery_code || b?.lotteryCode || "");
+      const la = safeStr(a?.lottery_code || a?.lotteryCode || a?.lottery_id || a?.lotteryId || "");
+      const lb = safeStr(b?.lottery_code || b?.lotteryCode || b?.lottery_id || b?.lotteryId || "");
       if (la !== lb) return lb.localeCompare(la);
 
       const ia = safeStr(a?.drawId || a?.id || "");
@@ -698,6 +692,32 @@ export default function Results() {
     if (showAll) return drawsDisplayBase;
     return drawsDisplayBase.slice(0, 6);
   }, [drawsDisplayBase, needsToggle, showAll]);
+
+  function openDatePicker(e) {
+    stopEvt(e);
+
+    const el = dateInputRef.current;
+    if (!el) return;
+
+    try {
+      if (typeof el.showPicker === "function") {
+        el.showPicker();
+        return;
+      }
+    } catch {}
+
+    try {
+      el.focus({ preventScroll: true });
+    } catch {
+      try {
+        el.focus();
+      } catch {}
+    }
+
+    try {
+      el.click();
+    } catch {}
+  }
 
   const styles = useMemo(() => {
     return `
@@ -1108,15 +1128,14 @@ export default function Results() {
         min-width: 150px;
       }
 
-      .pp_dateHidden{
+      .pp_dateNative{
         position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
+        left: 0;
+        top: 0;
+        width: 1px;
+        height: 1px;
         opacity: 0;
-        cursor: pointer;
-        z-index: 2;
-        pointer-events: auto;
+        pointer-events: none;
       }
 
       .pp_dateBtn{
@@ -1125,9 +1144,6 @@ export default function Results() {
         align-items: center;
         justify-content: center;
         gap: 8px;
-        position: relative;
-        z-index: 1;
-        pointer-events: none;
       }
 
       @media (max-width: 980px){
@@ -1186,7 +1202,7 @@ export default function Results() {
             <div className="pp_dateWrap">
               <input
                 ref={dateInputRef}
-                className="pp_dateHidden"
+                className="pp_dateNative"
                 type="date"
                 value={ymdClamped}
                 min={effectiveBounds?.minYmd || undefined}
@@ -1195,20 +1211,20 @@ export default function Results() {
                   e.stopPropagation();
                   setYmd(e.target.value);
                 }}
-                onClick={stopOnly}
-                onMouseDown={stopOnly}
-                onTouchStart={stopOnly}
                 aria-label="Data"
+                tabIndex={-1}
               />
 
-              <div
+              <button
+                type="button"
                 className="pp_btn pp_dateBtn"
                 title="Calendário"
                 aria-label={`Selecionar data. Atual: ${dateBR}`}
+                onClick={openDatePicker}
               >
                 <span aria-hidden="true">📅</span>
                 <span>{dateBR}</span>
-              </div>
+              </button>
             </div>
 
             <button
