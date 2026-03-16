@@ -1313,7 +1313,7 @@ export default function Results() {
         color: rgba(255,255,255,0.94);
         font-weight: 1100;
         letter-spacing: 0.2px;
-        text-transform: capitalize;
+        text-transform: none;
         font-size: 14px;
       }
 
@@ -1380,9 +1380,10 @@ export default function Results() {
       }
 
       .pp_calDay.isMarked{
-        border-color: rgba(201,168,62,0.34);
-        background: rgba(201,168,62,0.10);
-        color: rgba(255,244,207,0.98);
+        border-color: rgba(201,168,62,0.52);
+        background: linear-gradient(180deg, rgba(201,168,62,0.24), rgba(201,168,62,0.12));
+        color: rgba(255,248,220,0.99);
+        box-shadow: inset 0 0 0 1px rgba(201,168,62,0.12);
       }
 
       .pp_calDay.isSelected{
@@ -1407,10 +1408,11 @@ export default function Results() {
         left:50%;
         bottom:4px;
         transform:translateX(-50%);
-        width: 6px;
-        height: 6px;
+        width: 7px;
+        height: 7px;
         border-radius: 999px;
-        background: rgba(201,168,62,0.96);
+        background: rgba(201,168,62,0.98);
+        box-shadow: 0 0 8px rgba(201,168,62,0.45);
       }
 
       .pp_calFoot{
@@ -1662,7 +1664,14 @@ export default function Results() {
                   ) : null}
                 </div>
 
-                <div className="pp_grid2">
+                <div
+                  className="pp_grid2"
+                  style={
+                    isFederal && drawsForView.length === 1
+                      ? { gridTemplateColumns: "minmax(0, 460px)", justifyContent: "center" }
+                      : undefined
+                  }
+                >
                   {drawsForView.map((d, idx) => {
                     const hour = normalizeHourLike(
                       d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
@@ -1766,4 +1775,5 @@ export default function Results() {
     </div>
   );
 }
+
 
