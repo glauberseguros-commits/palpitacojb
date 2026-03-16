@@ -1172,6 +1172,79 @@ export async function getKingBoundsByUf(ufOrObj) {
    API: Day
 ========================= */
 
+function buildPrizeSignature(draw) {
+  const prizes = Array.isArray(draw?.prizes) ? draw.prizes : [];
+  if (!prizes.length) return "";
+
+  const parts = prizes
+    .map((p) => {
+      const pos = Number(p?.position);
+      const grupo = Number(p?.grupo);
+      const numero = toPrizeDigitsByPosition(
+        p?.numero ?? p?.milhar ?? p?.number ?? p?.num ?? p?.valor ?? "",
+        pos
+      );
+
+      if (!Number.isFinite(pos) || !Number.isFinite(grupo) || !numero) return "";
+      return `${pad2(pos)}:${pad2(grupo)}:${numero}`;
+    })
+    .filter(Boolean)
+    .sort();
+
+  return parts.join("|");
+}
+
+function federalHourPriority(draw) {
+  const h = normalizeHourLike(draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || "");
+  const n = hourToNumSafe(h);
+  if (h === "20:00") return 200000 + n;
+  if (h === "19:00") return 190000 + n;
+  return 100000 + n;
+}
+
+function pickBetterFederalClone(a, b) {
+  const pa = Number.isFinite(Number(a?.prizesCount))
+    ? Number(a.prizesCount)
+    : (Array.isArray(a?.prizes) ? a.prizes.length : 0);
+
+  const pb = Number.isFinite(Number(b?.prizesCount))
+    ? Number(b.prizesCount)
+    : (Array.isArray(b?.prizes) ? b.prizes.length : 0);
+
+  if (pa !== pb) return pb > pa ? b : a;
+
+  const ha = federalHourPriority(a);
+  const hb = federalHourPriority(b);
+  if (ha !== hb) return hb > ha ? b : a;
+
+  const ia = String(a?.drawId || a?.id || "");
+  const ib = String(b?.drawId || b?.id || "");
+  return ib.localeCompare(ia) > 0 ? b : a;
+}
+
+function collapseFederalDailyCloneDraws(draws) {
+  const arr = Array.isArray(draws) ? draws : [];
+  const byKey = new Map();
+
+  for (const d of arr) {
+    const ymd = String(d?.ymd || normalizeToYMD(d?.date) || "").trim();
+    const sig = buildPrizeSignature(d);
+
+    if (!ymd || !sig) {
+      const fallbackKey = `id::${String(d?.drawId || d?.id || Math.random())}`;
+      if (!byKey.has(fallbackKey)) byKey.set(fallbackKey, d);
+      continue;
+    }
+
+    const key = `${ymd}__${sig}`;
+    const prev = byKey.get(key);
+
+    if (!prev) byKey.set(key, d);
+    else byKey.set(key, pickBetterFederalClone(prev, d));
+  }
+
+  return sortDrawsLocal(Array.from(byKey.values()));
+}
 function drawsCacheKeyDay({ scopeKey, ymd, positionsArr, hourFilter }) {
   const p = positionsArr && positionsArr.length ? positionsArr.join(",") : "all";
   const h =
@@ -1267,16 +1340,22 @@ export async function getKingResultsByDate({
   let baseAll = dedupeDrawsLocal(docCandidates.map(mapDrawDoc));
   baseAll = baseAll.filter((x) => (x.ymd || normalizeToYMD(x.date)) === ymdDate);
 
-  const base = hourFilter?.kind ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter)) : baseAll;
-  const ordered = sortDrawsLocal(base);
+  const orderedAll = sortDrawsLocal(baseAll);
 
-  const results = await mapWithConcurrency(ordered, 6, async (item) => {
+  const hydratedAll = await mapWithConcurrency(orderedAll, 6, async (item) => {
     const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
     const pc = Array.isArray(prizes) ? prizes.length : 0;
     return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
   });
 
-  const out = dedupeDrawsLocal(results);
+  let dayAll = dedupeDrawsLocal(hydratedAll);
+
+  if (scopeKey === FEDERAL_SCOPE_CODE) {
+    dayAll = collapseFederalDailyCloneDraws(dayAll);
+  }
+
+  const base = hourFilter?.kind ? dayAll.filter((d) => drawPassesHourFilter(d, hourFilter)) : dayAll;
+  const out = dedupeDrawsLocal(sortDrawsLocal(base));
 
   // ✅ CORREÇÃO:
   // só cachear em memória datas antigas. Hoje e ontem precisam ficar frescos.
