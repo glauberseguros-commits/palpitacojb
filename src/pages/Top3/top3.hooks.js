@@ -304,15 +304,9 @@ export function useTop3Controller() {
     const currentRequestId = ++requestIdRef.current;
 
     if (lKey === "FEDERAL" && !isFederalDrawDay(ymdSafe)) {
-      if (requestIdRef.current === currentRequestId) {
-        resetStateForNoData();
-        setError(
-          `Loteria Federal só tem resultado às 20h nas quartas e sábados. (${dateBR} não é dia de concurso)`
-        );
-        setLoadingStage({ today: false, range: false });
-        setLoading(false);
-      }
-      return;
+      setError(
+        `Federal sem concurso hoje (${dateBR}). Exibindo previsão para o próximo sorteio com base no último resultado disponível.`
+      );
     }
 
     try {
