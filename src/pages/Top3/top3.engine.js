@@ -1379,7 +1379,7 @@ export function computeConditionalNextTop3({
 }
 
 /* =========================
-   V2 — estado curto + regime explícito
+   V2 — helpers focados em BICHO
 ========================= */
 
 function computeStructuralFirstDistribution(
@@ -1552,8 +1552,8 @@ function buildMemoryStateDistribution({
     if (matchDepth <= 0) continue;
 
     const weight =
-      matchDepth >= 3 ? 3.5 :
-      matchDepth === 2 ? 2.2 :
+      matchDepth >= 3 ? 4.0 :
+      matchDepth === 2 ? 2.5 :
       1.0;
 
     const g = Number(target.grupo);
@@ -1620,30 +1620,226 @@ function detectRegimeFromComparableSequence(seqRecent) {
   };
 }
 
-function getRegimeWeights(regime) {
+function computeComparableTop5Distribution(
+  draws,
+  lotteryKey,
+  targetHour,
+  targetDow,
+  groupsK = TOP3_GROUPS_K
+) {
+  const list = getComparableDrawsForTargetContext(
+    draws,
+    lotteryKey,
+    targetHour,
+    targetDow
+  );
+
+  const k = safeInt(groupsK, 25);
+  const freq = new Map();
+  let totalSamples = 0;
+
+  for (let g = 1; g <= k; g += 1) {
+    freq.set(g, 0);
+  }
+
+  for (const d of list) {
+    const items = getAllTop5Groups(d);
+    if (!items.length) continue;
+
+    totalSamples += 1;
+
+    for (const it of items) {
+      const g = Number(it.grupo);
+      if (!Number.isFinite(g) || g < 1 || g > k) continue;
+      freq.set(g, Number(freq.get(g) || 0) + 1);
+    }
+  }
+
+  const prob = new Map();
+  const denom = Math.max(1, totalSamples * 5);
+
+  for (let g = 1; g <= k; g += 1) {
+    prob.set(g, Number(freq.get(g) || 0) / denom);
+  }
+
+  return { prob, freq, totalSamples };
+}
+
+function computeComparableDuplicationDistribution(
+  draws,
+  lotteryKey,
+  targetHour,
+  targetDow,
+  groupsK = TOP3_GROUPS_K
+) {
+  const list = getComparableDrawsForTargetContext(
+    draws,
+    lotteryKey,
+    targetHour,
+    targetDow
+  );
+
+  const k = safeInt(groupsK, 25);
+  const freq = new Map();
+  let totalSamples = 0;
+
+  for (let g = 1; g <= k; g += 1) {
+    freq.set(g, 0);
+  }
+
+  for (const d of list) {
+    const counts = countAparicoesByGrupoInDraw(d);
+    if (!counts.size) continue;
+
+    totalSamples += 1;
+
+    for (let g = 1; g <= k; g += 1) {
+      const c = Number(counts.get(g) || 0);
+      if (c >= 2) {
+        freq.set(g, Number(freq.get(g) || 0) + 1);
+      }
+    }
+  }
+
+  const prob = new Map();
+  const denom = Math.max(1, totalSamples);
+
+  for (let g = 1; g <= k; g += 1) {
+    prob.set(g, Number(freq.get(g) || 0) / denom);
+  }
+
+  return { prob, freq, totalSamples };
+}
+
+function getComparableContextDrawsBeforeTs(
+  draws,
+  lotteryKey,
+  targetHour,
+  targetDow,
+  beforeTs,
+  count = 8
+) {
+  return getComparableDrawsForTargetContext(draws, lotteryKey, targetHour, targetDow)
+    .filter((d) => {
+      const y = pickDrawYMD(d);
+      const h = toHourBucket(pickDrawHour(d));
+      const ts = ymdHourToTs(y, h);
+      return Number.isFinite(Number(ts)) && ts < Number(beforeTs);
+    })
+    .slice(-Math.max(1, Number(count || 8)));
+}
+
+function computeRecentBichoMetrics(draws, groupsK = TOP3_GROUPS_K) {
+  const k = safeInt(groupsK, 25);
+  const out = new Map();
+
+  for (let g = 1; g <= k; g += 1) {
+    out.set(g, {
+      recentTop5: 0,
+      recentFirst: 0,
+      recentDupDraws: 0,
+      recentLast1Top5: 0,
+      recentLast2Top5: 0,
+      recentLast3Top5: 0,
+    });
+  }
+
+  const list = Array.isArray(draws) ? draws : [];
+  const last1 = list.length ? [list[list.length - 1]] : [];
+  const last2 = list.slice(-2);
+  const last3 = list.slice(-3);
+
+  for (const d of list) {
+    const items = getAllTop5Groups(d);
+    const perDrawCounts = new Map();
+
+    for (const it of items) {
+      const g = Number(it.grupo);
+      if (!Number.isFinite(g) || g < 1 || g > k) continue;
+
+      const row = out.get(g);
+      row.recentTop5 += 1;
+
+      if (Number(it.pos) === 1) {
+        row.recentFirst += 1;
+      }
+
+      perDrawCounts.set(g, Number(perDrawCounts.get(g) || 0) + 1);
+    }
+
+    for (const [g, c] of perDrawCounts.entries()) {
+      if (Number(c) >= 2) {
+        out.get(Number(g)).recentDupDraws += 1;
+      }
+    }
+  }
+
+  for (const d of last1) {
+    const seen = new Set();
+    for (const it of getAllTop5Groups(d)) {
+      const g = Number(it.grupo);
+      if (!Number.isFinite(g) || g < 1 || g > k || seen.has(g)) continue;
+      seen.add(g);
+      out.get(g).recentLast1Top5 += 1;
+    }
+  }
+
+  for (const d of last2) {
+    const seen = new Set();
+    for (const it of getAllTop5Groups(d)) {
+      const g = Number(it.grupo);
+      if (!Number.isFinite(g) || g < 1 || g > k || seen.has(g)) continue;
+      seen.add(g);
+      out.get(g).recentLast2Top5 += 1;
+    }
+  }
+
+  for (const d of last3) {
+    const seen = new Set();
+    for (const it of getAllTop5Groups(d)) {
+      const g = Number(it.grupo);
+      if (!Number.isFinite(g) || g < 1 || g > k || seen.has(g)) continue;
+      seen.add(g);
+      out.get(g).recentLast3Top5 += 1;
+    }
+  }
+
+  return out;
+}
+
+function getBichoFocusedWeights(regime) {
   if (regime === "repeat") {
     return {
-      transition: 0.46,
-      structural: 0.24,
-      memory: 0.22,
-      late: 0.08,
+      transitionFirst: 0.22,
+      structuralFirst: 0.18,
+      structuralTop5: 0.12,
+      memory: 0.12,
+      duplication: 0.18,
+      recent: 0.14,
+      late: 0.04,
     };
   }
 
   if (regime === "spread") {
     return {
-      transition: 0.26,
-      structural: 0.46,
-      memory: 0.18,
-      late: 0.10,
+      transitionFirst: 0.18,
+      structuralFirst: 0.24,
+      structuralTop5: 0.20,
+      memory: 0.14,
+      duplication: 0.05,
+      recent: 0.15,
+      late: 0.04,
     };
   }
 
   return {
-    transition: 0.36,
-    structural: 0.34,
-    memory: 0.20,
-    late: 0.10,
+    transitionFirst: 0.21,
+    structuralFirst: 0.21,
+    structuralTop5: 0.16,
+    memory: 0.14,
+    duplication: 0.10,
+    recent: 0.14,
+    late: 0.04,
   };
 }
 
@@ -1689,7 +1885,7 @@ function computeComparableLastSeenByGrupo(
 }
 
 /* =========================
-   Motor principal V2
+   Motor principal V2 (FOCO = BICHO)
 ========================= */
 
 export function computeConditionalNextTop3V2({
@@ -1758,19 +1954,40 @@ export function computeConditionalNextTop3V2({
   const condSamples = Number(chosen?.samples || 0);
   const condFirstFreq = chosen?.firstFreq || new Map();
 
-  const pTransition = new Map();
+  const pTransitionFirst = new Map();
   for (let g = 1; g <= safeInt(TOP3_GROUPS_K, 25); g += 1) {
-    pTransition.set(g, Number(condFirstFreq.get(g) || 0) / Math.max(1, condSamples));
+    pTransitionFirst.set(
+      g,
+      Number(condFirstFreq.get(g) || 0) / Math.max(1, condSamples)
+    );
   }
 
-  const structural = computeStructuralFirstDistribution(
+  const structuralFirst = computeStructuralFirstDistribution(
     list,
     key,
     targetH,
     targetDow,
     TOP3_GROUPS_K
   );
-  const pStructural = structural?.prob || new Map();
+  const pStructuralFirst = structuralFirst?.prob || new Map();
+
+  const structuralTop5 = computeComparableTop5Distribution(
+    list,
+    key,
+    targetH,
+    targetDow,
+    TOP3_GROUPS_K
+  );
+  const pStructuralTop5 = structuralTop5?.prob || new Map();
+
+  const duplication = computeComparableDuplicationDistribution(
+    list,
+    key,
+    targetH,
+    targetDow,
+    TOP3_GROUPS_K
+  );
+  const pDuplication = duplication?.prob || new Map();
 
   const comparableSeq = buildComparableFirstSequence(
     list,
@@ -1779,7 +1996,11 @@ export function computeConditionalNextTop3V2({
     targetDow
   );
 
-  const currentState = getStateFromComparableSequenceBeforeTs(comparableSeq, targetTs, 3);
+  const currentState = getStateFromComparableSequenceBeforeTs(
+    comparableSeq,
+    targetTs,
+    3
+  );
 
   const memoryOut = buildMemoryStateDistribution({
     drawsRange: list,
@@ -1797,7 +2018,30 @@ export function computeConditionalNextTop3V2({
   );
 
   const regime = safeStr(regimeInfo?.regime || "neutral");
-  const weights = getRegimeWeights(regime);
+  const weights = getBichoFocusedWeights(regime);
+
+  const recentContextDraws = getComparableContextDrawsBeforeTs(
+    list,
+    key,
+    targetH,
+    targetDow,
+    targetTs,
+    8
+  );
+  const recentMetrics = computeRecentBichoMetrics(recentContextDraws, TOP3_GROUPS_K);
+
+  const recentMaxTop5 = Math.max(
+    1,
+    ...Array.from(recentMetrics.values()).map((x) => Number(x.recentTop5 || 0))
+  );
+  const recentMaxFirst = Math.max(
+    1,
+    ...Array.from(recentMetrics.values()).map((x) => Number(x.recentFirst || 0))
+  );
+  const recentMaxDup = Math.max(
+    1,
+    ...Array.from(recentMetrics.values()).map((x) => Number(x.recentDupDraws || 0))
+  );
 
   const lateSeen = computeComparableLastSeenByGrupo(
     list,
@@ -1807,7 +2051,9 @@ export function computeConditionalNextTop3V2({
     TOP3_GROUPS_K
   );
 
-  const finiteSeen = Array.from(lateSeen.values()).filter((x) => Number.isFinite(Number(x)));
+  const finiteSeen = Array.from(lateSeen.values()).filter((x) =>
+    Number.isFinite(Number(x))
+  );
   const minSeenTs = finiteSeen.length ? Math.min(...finiteSeen) : targetTs;
   const maxGapMsBase =
     Number.isFinite(targetTs) && Number.isFinite(minSeenTs)
@@ -1819,9 +2065,40 @@ export function computeConditionalNextTop3V2({
     (_, idx) => {
       const grupo = idx + 1;
 
-      const pT = Number(pTransition.get(grupo) || 0);
-      const pS = Number(pStructural.get(grupo) || 0);
+      const pT = Number(pTransitionFirst.get(grupo) || 0);
+      const pSF = Number(pStructuralFirst.get(grupo) || 0);
+      const pST = Number(pStructuralTop5.get(grupo) || 0);
       const pM = Number(pMemory.get(grupo) || 0);
+      const pD = Number(pDuplication.get(grupo) || 0);
+
+      const rm = recentMetrics.get(grupo) || {
+        recentTop5: 0,
+        recentFirst: 0,
+        recentDupDraws: 0,
+        recentLast1Top5: 0,
+        recentLast2Top5: 0,
+        recentLast3Top5: 0,
+      };
+
+      const recentTop5Norm = normalizeMetric(rm.recentTop5, recentMaxTop5);
+      const recentFirstNorm = normalizeMetric(rm.recentFirst, recentMaxFirst);
+      const recentDupNorm = normalizeMetric(rm.recentDupDraws, recentMaxDup);
+      const recentLast1Norm = normalizeMetric(rm.recentLast1Top5, 1);
+      const recentLast2Norm = normalizeMetric(rm.recentLast2Top5, 2);
+      const recentLast3Norm = normalizeMetric(rm.recentLast3Top5, 3);
+
+      const recentComposite =
+        (recentFirstNorm * 0.34) +
+        (recentTop5Norm * 0.24) +
+        (recentDupNorm * 0.18) +
+        (recentLast2Norm * 0.14) +
+        (recentLast1Norm * 0.10);
+
+      const dominanceScore =
+        (pT * 0.42) +
+        (pSF * 0.26) +
+        (pST * 0.18) +
+        (pD * 0.14);
 
       const seenTs = Number(lateSeen.get(grupo));
       const gapMs =
@@ -1835,51 +2112,68 @@ export function computeConditionalNextTop3V2({
       );
 
       const prob =
-        (pT * weights.transition) +
-        (pS * weights.structural) +
+        (pT * weights.transitionFirst) +
+        (pSF * weights.structuralFirst) +
+        (pST * weights.structuralTop5) +
         (pM * weights.memory) +
-        (lateNorm * weights.late * 0.18);
+        (pD * weights.duplication) +
+        (recentComposite * weights.recent) +
+        (lateNorm * weights.late);
 
       const score =
-        (pT * 1000 * weights.transition) +
-        (pS * 1000 * weights.structural) +
-        (pM * 1000 * weights.memory) +
-        (lateNorm * 100 * weights.late);
+        (dominanceScore * 1000) +
+        (pM * 220) +
+        (recentComposite * 180) +
+        (lateNorm * 35);
 
       return {
         grupo,
         prob,
         score,
         probTransition: pT,
-        probStructural: pS,
+        probStructuralFirst: pSF,
+        probStructuralTop5: pST,
         probMemory: pM,
+        probDuplication: pD,
+        dominanceScore,
+        recentComposite,
+        recentTop5: rm.recentTop5,
+        recentFirst: rm.recentFirst,
+        recentDupDraws: rm.recentDupDraws,
+        recentLast1Top5: rm.recentLast1Top5,
+        recentLast2Top5: rm.recentLast2Top5,
+        recentLast3Top5: rm.recentLast3Top5,
         lateNorm,
         gapMs,
         condFirstCount: Number(condFirstFreq.get(grupo) || 0),
-        structuralFirstCount: Number(structural?.firstFreq?.get(grupo) || 0),
+        structuralFirstCount: Number(structuralFirst?.firstFreq?.get(grupo) || 0),
+        structuralTop5Count: Number(structuralTop5?.freq?.get(grupo) || 0),
+        duplicationCount: Number(duplication?.freq?.get(grupo) || 0),
         memoryWeight: Number(memoryOut?.freq?.get(grupo) || 0),
       };
     }
   )
     .sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score;
+      if (b.dominanceScore !== a.dominanceScore) return b.dominanceScore - a.dominanceScore;
       if (b.probTransition !== a.probTransition) return b.probTransition - a.probTransition;
-      if (b.probMemory !== a.probMemory) return b.probMemory - a.probMemory;
-      if (b.probStructural !== a.probStructural) return b.probStructural - a.probStructural;
+      if (b.probDuplication !== a.probDuplication) return b.probDuplication - a.probDuplication;
+      if (b.probStructuralFirst !== a.probStructuralFirst) return b.probStructuralFirst - a.probStructuralFirst;
+      if (b.probStructuralTop5 !== a.probStructuralTop5) return b.probStructuralTop5 - a.probStructuralTop5;
       return a.grupo - b.grupo;
     })
     .slice(0, Math.max(1, Number(topN || 3)));
 
   const reasonsBase = [
-    `Motor: V2`,
+    `Motor: V2_BICHO`,
     `Regime detectado: ${regime}`,
     `RepeatRate=${Number(regimeInfo?.repeatRate || 0).toFixed(2)} | UniqueRate=${Number(regimeInfo?.uniqueRate || 0).toFixed(2)}`,
-    `Pesos V2: transição=${(weights.transition * 100).toFixed(0)}% | estrutural=${(weights.structural * 100).toFixed(0)}% | memória=${(weights.memory * 100).toFixed(0)}% | atraso=${(weights.late * 100).toFixed(0)}%`,
+    `Pesos: transição1º=${(weights.transitionFirst * 100).toFixed(0)}% | estrutural1º=${(weights.structuralFirst * 100).toFixed(0)}% | estruturalTOP5=${(weights.structuralTop5 * 100).toFixed(0)}% | memória=${(weights.memory * 100).toFixed(0)}% | duplicação=${(weights.duplication * 100).toFixed(0)}% | recência=${(weights.recent * 100).toFixed(0)}% | atraso=${(weights.late * 100).toFixed(0)}%`,
     `Estado atual: prev=${String(prevGrupo).padStart(2, "0")} @ ${lastH} → alvo ${targetH}`,
     `Estado curto comparável: [${currentState.map((g) => String(g).padStart(2, "0")).join(", ")}]`,
-    `Camada condicional V1 reaproveitada: ${chosen?.label || "—"} | amostras=${condSamples}`,
-    `Amostra estrutural 1º lugar: ${Number(structural?.totalSamples || 0)}`,
-    `Amostra de memória: matches=${Number(memoryOut?.matchedSamples || 0)} | peso=${Number(memoryOut?.totalWeight || 0).toFixed(2)}`,
+    `Camada condicional: ${chosen?.label || "—"} | amostras=${condSamples}`,
+    `Amostra estrutural 1º=${Number(structuralFirst?.totalSamples || 0)} | TOP5=${Number(structuralTop5?.totalSamples || 0)} | duplicação=${Number(duplication?.totalSamples || 0)}`,
+    `Amostra memória: matches=${Number(memoryOut?.matchedSamples || 0)} | peso=${Number(memoryOut?.totalWeight || 0).toFixed(2)}`,
     `Data alvo: ${targetY} | DOW=${targetDow} | dia=${String(targetDayOfMonth).padStart(2, "0")}`,
   ];
 
@@ -1897,7 +2191,7 @@ export function computeConditionalNextTop3V2({
       grupo: x.grupo,
       prob: x.prob,
       probCond: x.probTransition,
-      probBase: x.probStructural,
+      probBase: x.probStructuralFirst,
       lateBonus: x.lateNorm,
       freq: x.condFirstCount,
       freqCond: x.condFirstCount,
@@ -1908,14 +2202,19 @@ export function computeConditionalNextTop3V2({
           : "",
       reasons: [
         ...reasonsBase,
-        `Grupo G${g2}: transição=${(x.probTransition * 100).toFixed(2)}%`,
-        `Grupo G${g2}: estrutural=${(x.probStructural * 100).toFixed(2)}%`,
+        `Grupo G${g2}: transição para 1º=${(x.probTransition * 100).toFixed(2)}%`,
+        `Grupo G${g2}: estrutural de 1º=${(x.probStructuralFirst * 100).toFixed(2)}%`,
+        `Grupo G${g2}: estrutural de TOP5=${(x.probStructuralTop5 * 100).toFixed(2)}%`,
+        `Grupo G${g2}: duplicação histórica=${(x.probDuplication * 100).toFixed(2)}%`,
         `Grupo G${g2}: memória curta=${(x.probMemory * 100).toFixed(2)}%`,
+        `Grupo G${g2}: recência composta=${(x.recentComposite * 100).toFixed(2)}%`,
         `Grupo G${g2}: atraso normalizado=${(x.lateNorm * 100).toFixed(2)}%`,
         `Grupo G${g2}: 1ºs na camada=${x.condFirstCount}`,
         `Grupo G${g2}: 1ºs estruturais=${x.structuralFirstCount}`,
+        `Grupo G${g2}: TOP5 estruturais=${x.structuralTop5Count}`,
+        `Grupo G${g2}: draws com duplicação=${x.duplicationCount}`,
         `Grupo G${g2}: peso de memória=${Number(x.memoryWeight || 0).toFixed(2)}`,
-        `Probabilidade final V2=${(x.prob * 100).toFixed(2)}%`,
+        `Probabilidade final BICHO=${(x.prob * 100).toFixed(2)}%`,
       ],
       meta: {
         trigger: {
@@ -1928,9 +2227,9 @@ export function computeConditionalNextTop3V2({
           hour: safeStr(targetH),
         },
         samples: condSamples,
-        scenario: `V2_${safeStr(regime).toUpperCase()}`,
+        scenario: `V2_BICHO_${safeStr(regime).toUpperCase()}`,
         explain: {
-          engine: "V2",
+          engine: "V2_BICHO",
           regime,
           repeatRate: Number(regimeInfo?.repeatRate || 0),
           uniqueRate: Number(regimeInfo?.uniqueRate || 0),
@@ -1938,7 +2237,9 @@ export function computeConditionalNextTop3V2({
           layerKey: chosen?.key || "NONE",
           layerLabel: chosen?.label || "—",
           layerSamples: condSamples,
-          structuralSamples: Number(structural?.totalSamples || 0),
+          structuralFirstSamples: Number(structuralFirst?.totalSamples || 0),
+          structuralTop5Samples: Number(structuralTop5?.totalSamples || 0),
+          duplicationSamples: Number(duplication?.totalSamples || 0),
           memoryMatchedSamples: Number(memoryOut?.matchedSamples || 0),
           memoryTotalWeight: Number(memoryOut?.totalWeight || 0),
           currentState,
@@ -1946,6 +2247,11 @@ export function computeConditionalNextTop3V2({
           targetDayOfMonth,
           prevHour: lastH,
           prevGrupo: Number(prevGrupo),
+          dominanceScore: x.dominanceScore,
+          recentComposite: x.recentComposite,
+          recentTop5: x.recentTop5,
+          recentFirst: x.recentFirst,
+          recentDupDraws: x.recentDupDraws,
           allLayers: (layerOut?.layers || []).map((layer) => ({
             key: layer.key,
             label: layer.label,
@@ -1970,9 +2276,9 @@ export function computeConditionalNextTop3V2({
         hour: safeStr(targetH),
       },
       samples: condSamples,
-      scenario: `V2_${safeStr(regime).toUpperCase()}`,
+      scenario: `V2_BICHO_${safeStr(regime).toUpperCase()}`,
       explain: {
-        engine: "V2",
+        engine: "V2_BICHO",
         regime,
         repeatRate: Number(regimeInfo?.repeatRate || 0),
         uniqueRate: Number(regimeInfo?.uniqueRate || 0),
@@ -1980,7 +2286,9 @@ export function computeConditionalNextTop3V2({
         layerKey: chosen?.key || "NONE",
         layerLabel: chosen?.label || "—",
         layerSamples: condSamples,
-        structuralSamples: Number(structural?.totalSamples || 0),
+        structuralFirstSamples: Number(structuralFirst?.totalSamples || 0),
+        structuralTop5Samples: Number(structuralTop5?.totalSamples || 0),
+        duplicationSamples: Number(duplication?.totalSamples || 0),
         memoryMatchedSamples: Number(memoryOut?.matchedSamples || 0),
         memoryTotalWeight: Number(memoryOut?.totalWeight || 0),
         currentState,
