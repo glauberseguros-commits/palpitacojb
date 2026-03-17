@@ -1355,17 +1355,15 @@ export async function getKingResultsByDate({
     hourFilter,
   });
 
-  // ✅ CORREÇÃO:
-  // não usar cache em memória para hoje e ontem.
-  // Isso evita "congelar" o dia antes de sair o último horário.
-  const today = utcTodayYmd();
-  const diffToToday = daysDiffUTC(ymdDate, today);
-  const allowMemoryCache = Number.isFinite(diffToToday) && diffToToday > 1;
+  const forceFreshServer = shouldForceFreshServerRead(ymdDate);
+  const allowMemoryCache = !forceFreshServer;
 
   if (allowMemoryCache) {
     const cached = cacheGet(DRAWS_CACHE, dayKey);
     if (cached) return cached;
   }
+
+  const readPolicy = forceFreshServer ? "server" : DEFAULT_READ_POLICY;
 
   const docCandidates = [];
 
@@ -1373,7 +1371,7 @@ export async function getKingResultsByDate({
     const { docs: found, error } = await fetchDrawDocsPreferUf({
       uf,
       extraWheres: [where("ymd", "==", ymdDate)],
-      policy: DEFAULT_READ_POLICY,
+      policy: readPolicy,
     });
     if (error) throw error;
     if (found.length) docCandidates.push(...found);
@@ -1385,7 +1383,7 @@ export async function getKingResultsByDate({
       const { docs: found, error } = await fetchDrawDocsPreferUf({
         uf,
         extraWheres: [where("date", "==", rawDate)],
-        policy: DEFAULT_READ_POLICY,
+        policy: readPolicy,
       });
       if (error) throw error;
       if (found.length) docCandidates.push(...found);
@@ -1396,7 +1394,7 @@ export async function getKingResultsByDate({
     const { docs: found, error } = await fetchDrawDocsPreferUf({
       uf,
       extraWheres: [where("date", "==", ymdDate)],
-      policy: DEFAULT_READ_POLICY,
+      policy: readPolicy,
     });
     if (error) throw error;
     if (found.length) docCandidates.push(...found);
@@ -1408,7 +1406,7 @@ export async function getKingResultsByDate({
       const { docs: found, error } = await fetchDrawDocsPreferUf({
         uf,
         extraWheres: [where("date", "==", brDate)],
-        policy: DEFAULT_READ_POLICY,
+        policy: readPolicy,
       });
       if (error) throw error;
       if (found.length) docCandidates.push(...found);
@@ -1437,10 +1435,9 @@ export async function getKingResultsByDate({
   const base = hourFilter?.kind
     ? dayAll.filter((d) => drawPassesHourFilter(d, hourFilter))
     : dayAll;
+
   const out = dedupeDrawsLocal(sortDrawsLocal(base));
 
-  // ✅ CORREÇÃO:
-  // só cachear em memória datas antigas. Hoje e ontem precisam ficar frescos.
   if (allowMemoryCache) {
     cacheSet(DRAWS_CACHE, dayKey, out);
   }
