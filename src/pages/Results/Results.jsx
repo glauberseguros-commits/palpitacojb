@@ -832,22 +832,6 @@ export default function Results() {
         const list = unwrapDraws(out);
         const deduped = dedupeDraws(list, sKey, d);
 
-        console.log("[RESULTS_DEBUG]", {
-          scope: sKey,
-          date: d,
-          rawLen: Array.isArray(out) ? out.length : null,
-          listLen: Array.isArray(list) ? list.length : null,
-          dedupedLen: Array.isArray(deduped) ? deduped.length : null,
-          hours: deduped.map((x) => ({
-            id: x?.drawId || x?.id || null,
-            hour: x?.close_hour || x?.closeHour || x?.hour || x?.hora || null,
-            ymd: x?.ymd || x?.date || null,
-            prizesLen: Array.isArray(x?.prizes) ? x.prizes.length : null,
-            prizesCount: x?.prizesCount ?? null,
-            placeholder: !!x?.__placeholder,
-          })),
-        });
-
         if (!cancelled) setDraws(deduped);
       } catch (e) {
         if (!cancelled) {
@@ -1812,3 +1796,4 @@ export default function Results() {
     </div>
   );
 }
+
