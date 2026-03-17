@@ -1484,6 +1484,12 @@ function daysDiffUTC(fromYmd, toYmd) {
   return Math.floor(ms / 86400000);
 }
 
+function shouldForceFreshServerRead(ymd) {
+  const today = utcTodayYmd();
+  const diffToToday = daysDiffUTC(ymd, today);
+  return Number.isFinite(diffToToday) && diffToToday <= 1;
+}
+
 function drawsCacheKeyRange({
   scopeKey,
   from,
@@ -1529,10 +1535,12 @@ export function decideKingRangeMode({ dateFrom, dateTo, mode = "detailed" }) {
  * ou quando você quer aggregated sem custo de hidratar.
  */
 async function fetchDrawsDayNoPrizes({ uf, dayYmd }) {
+  const readPolicy = shouldForceFreshServerRead(dayYmd) ? "server" : DEFAULT_READ_POLICY;
+
   const { docs, error } = await fetchDrawDocsPreferUf({
     uf,
     extraWheres: [where("ymd", "==", dayYmd)],
-    policy: DEFAULT_READ_POLICY,
+    policy: readPolicy,
   });
   if (error) throw error;
   if (!docs || !docs.length) return [];
