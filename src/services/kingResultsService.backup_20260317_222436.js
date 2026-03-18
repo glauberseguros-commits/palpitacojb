@@ -730,18 +730,14 @@ async function fetchPrizesForDraw(drawId, positionsArr, embeddedPrizes) {
 
   const prizesCol = collection(db, "draws", drawKey, "prizes");
 
-  const { snap, error } = await safeGetDocsSmart(prizesCol, { policy: "server" });
+  const { snap, error } = await safeGetDocsSmart(prizesCol, { policy: "cache" });
   if (error) throw error;
 
   const allRaw = snap.docs.map((d) => normalizePrize(d.data(), d.id));
 
-  console.log("DEBUG allRaw:", allRaw);
-
-const all = allRaw.filter(
-  (x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position)
-);
-
-console.log("DEBUG allFiltered:", all);
+  const all = allRaw.filter(
+    (x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position)
+  );
 
   const allSorted = sortPrizesByPosition(all);
   cacheSet(PRIZES_CACHE, allKey, allSorted);
@@ -761,7 +757,7 @@ function mapDrawDoc(doc) {
     d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? ""
   );
 
-  const embeddedPrizes = Array.isArray(d.prizes) && d.prizes.length > 0 ? d.prizes : null;
+  const embeddedPrizes = Array.isArray(d.prizes) ? d.prizes : null;
 
   const ufRaw = d.uf ?? null;
   const lotteryKeyRaw = d.lottery_key ?? d.lotteryKey ?? d.lottery ?? null;
@@ -1448,7 +1444,7 @@ export async function getKingResultsByDate({
     cacheSet(DRAWS_CACHE, dayKey, out);
   }
 
-  console.log("DEBUG getKingResultsByDate OUT:", JSON.stringify(out, null, 2)); return out;
+  return out;
 }
 
 /* =========================
@@ -1635,7 +1631,7 @@ export async function getKingResultsByRange({
 
           const out = dedupeDrawsLocal(sortDrawsLocal(base));
           cacheSet(DRAWS_CACHE, rangeKey, out);
-          console.log("DEBUG getKingResultsByDate OUT:", JSON.stringify(out, null, 2)); return out;
+          return out;
         }
 
         const all = [];
@@ -1658,7 +1654,7 @@ export async function getKingResultsByRange({
 
         const out = dedupeDrawsLocal(sortDrawsLocal(base));
         cacheSet(DRAWS_CACHE, rangeKey, out);
-        console.log("DEBUG getKingResultsByDate OUT:", JSON.stringify(out, null, 2)); return out;
+        return out;
       }
 
       const rawCode = String(error?.code || "");
@@ -1699,7 +1695,7 @@ export async function getKingResultsByRange({
 
         const out = dedupeDrawsLocal(sortDrawsLocal(base));
         cacheSet(DRAWS_CACHE, rangeKey, out);
-        console.log("DEBUG getKingResultsByDate OUT:", JSON.stringify(out, null, 2)); return out;
+        return out;
       }
 
       const all = [];
@@ -1731,7 +1727,7 @@ export async function getKingResultsByRange({
 
       const out = dedupeDrawsLocal(results);
       cacheSet(DRAWS_CACHE, rangeKey, out);
-      console.log("DEBUG getKingResultsByDate OUT:", JSON.stringify(out, null, 2)); return out;
+      return out;
     }
 
     return [];
@@ -1759,7 +1755,7 @@ export async function getKingResultsByRange({
       })
     );
     cacheSet(DRAWS_CACHE, rangeKey, out);
-    console.log("DEBUG getKingResultsByDate OUT:", JSON.stringify(out, null, 2)); return out;
+    return out;
   }
 
   const conc = chooseRangeConcurrency(ordered.length);
@@ -1772,7 +1768,7 @@ export async function getKingResultsByRange({
 
   const out = dedupeDrawsLocal(results);
   cacheSet(DRAWS_CACHE, rangeKey, out);
-  console.log("DEBUG getKingResultsByDate OUT:", JSON.stringify(out, null, 2)); return out;
+  return out;
 }
 
 /* =========================
@@ -1995,13 +1991,8 @@ export async function getKingLateByRange({
   const out = sorted.map((r, idx) => ({ ...r, pos: idx + 1 }));
 
   cacheSet(LATE_CACHE, cacheKey, out);
-  console.log("DEBUG getKingResultsByDate OUT:", JSON.stringify(out, null, 2)); return out;
+  return out;
 }
-
-
-
-
-
 
 
 

@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@tanstack/react-query": "^5.91.0",
     "axios": "^1.13.2",
     "crypto-js": "^4.2.0",
     "firebase": "^12.7.0",
@@ -53,4 +54,3 @@
   },
   "proxy": "http://127.0.0.1:3333"
 }
-
