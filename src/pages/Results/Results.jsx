@@ -1,5 +1,6 @@
 // src/pages/Results/Results.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   getKingBoundsByUf,
   getKingResultsByDate,
@@ -549,8 +550,6 @@ function buildExpectedDrawsForScope(scopeKey, orderedDraws, ymd) {
     if (!byHour.has(h)) byHour.set(h, d);
   }
 
-  // ✅ FEDERAL: não usar regra fixa de horários na UI.
-  // Mostra apenas o que veio da base.
   if (scopeKey === SCOPE_FEDERAL) {
     return [...list].sort((a, b) => {
       const ha = hourToNum(
@@ -623,17 +622,6 @@ export default function Results() {
   const [scopeUi, setScopeUi] = useState(DEFAULT_SCOPE);
   const [ymd, setYmd] = useState(() => todayYMDLocal());
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [draws, setDraws] = useState([]);
-  const [reloadTick, setReloadTick] = useState(0);
-
-  const [bounds, setBounds] = useState({
-    minYmd: null,
-    maxYmd: null,
-    source: "",
-  });
-
   const [showAll, setShowAll] = useState(true);
   const [needsToggle, setNeedsToggle] = useState(false);
 
@@ -641,8 +629,6 @@ export default function Results() {
   const [calendarMonthYmd, setCalendarMonthYmd] = useState(() =>
     startOfMonthYMD(todayYMDLocal())
   );
-  const [calendarMarkedYmds, setCalendarMarkedYmds] = useState([]);
-  const [calendarLoading, setCalendarLoading] = useState(false);
 
   const centerRef = useRef(null);
   const calendarRef = useRef(null);
@@ -657,11 +643,24 @@ export default function Results() {
     return isYMD(s) ? s : todayYMDLocal();
   }, [ymd]);
 
+  const boundsQuery = useQuery({
+    queryKey: ["results", "bounds", scopeKey],
+    queryFn: async () => {
+      const b = await getKingBoundsByUf({ uf: scopeKey });
+      return normalizeBoundsResponse(b);
+    },
+    staleTime: 30 * 60 * 1000,
+    gcTime: 2 * 60 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
+
   const effectiveBounds = useMemo(() => {
-    const minYmd = bounds?.minYmd || null;
-    const maxYmd = bounds?.maxYmd || null;
+    const minYmd = boundsQuery.data?.minYmd || null;
+    const maxYmd = boundsQuery.data?.maxYmd || null;
     return { minYmd, maxYmd };
-  }, [bounds?.minYmd, bounds?.maxYmd]);
+  }, [boundsQuery.data?.minYmd, boundsQuery.data?.maxYmd]);
 
   const ymdClamped = useMemo(() => {
     const minYmd = effectiveBounds?.minYmd;
@@ -672,38 +671,15 @@ export default function Results() {
 
   const dateBR = useMemo(() => ymdToBR(ymdClamped), [ymdClamped]);
 
-  const calendarMarkedSet = useMemo(
-    () => new Set(calendarMarkedYmds),
-    [calendarMarkedYmds]
-  );
   const calendarCells = useMemo(
     () => buildCalendarCells(calendarMonthYmd),
     [calendarMonthYmd]
   );
+
   const calendarTitle = useMemo(
     () => monthTitleBR(calendarMonthYmd),
     [calendarMonthYmd]
   );
-
-  useEffect(() => {
-    let alive = true;
-
-    (async () => {
-      try {
-        const b = await getKingBoundsByUf({ uf: scopeKey });
-        if (!alive) return;
-        const nb = normalizeBoundsResponse(b);
-        setBounds(nb);
-      } catch {
-        if (!alive) return;
-        setBounds({ minYmd: null, maxYmd: null, source: "" });
-      }
-    })();
-
-    return () => {
-      alive = false;
-    };
-  }, [scopeKey]);
 
   useEffect(() => {
     const previousScope = previousScopeRef.current;
@@ -715,67 +691,132 @@ export default function Results() {
       setShowAll(true);
     }
 
-    if (!isYMD(bounds?.minYmd) && !isYMD(bounds?.maxYmd)) return;
+    if (!isYMD(effectiveBounds?.minYmd) && !isYMD(effectiveBounds?.maxYmd)) return;
 
-    if (changedScope && isFederal && isYMD(bounds?.maxYmd)) {
-      if (ymd !== bounds.maxYmd) {
-        setYmd(bounds.maxYmd);
+    if (changedScope && isFederal && isYMD(effectiveBounds?.maxYmd)) {
+      if (ymd !== effectiveBounds.maxYmd) {
+        setYmd(effectiveBounds.maxYmd);
       }
       return;
     }
 
     const normalized = normalizeSingleDateWithBounds(
       ymdSafe,
-      bounds?.minYmd,
-      bounds?.maxYmd
+      effectiveBounds?.minYmd,
+      effectiveBounds?.maxYmd
     );
+
     if (normalized && normalized !== ymd) {
       setYmd(normalized);
     }
-  }, [scopeKey, isFederal, bounds?.minYmd, bounds?.maxYmd, ymd, ymdSafe]);
+  }, [
+    scopeKey,
+    isFederal,
+    effectiveBounds?.minYmd,
+    effectiveBounds?.maxYmd,
+    ymd,
+    ymdSafe,
+  ]);
 
   useEffect(() => {
     setCalendarMonthYmd(startOfMonthYMD(ymdClamped));
   }, [ymdClamped]);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadCalendarMarks() {
+  const calendarMarksQuery = useQuery({
+    queryKey: ["results", "calendar-marks", scopeKey, calendarMonthYmd],
+    enabled:
+      isYMD(startOfMonthYMD(calendarMonthYmd)) &&
+      isYMD(endOfMonthYMD(calendarMonthYmd)),
+    queryFn: async () => {
       const from = startOfMonthYMD(calendarMonthYmd);
       const to = endOfMonthYMD(calendarMonthYmd);
 
-      if (!isYMD(from) || !isYMD(to)) {
-        if (!cancelled) setCalendarMarkedYmds([]);
-        return;
-      }
+      const out = await getKingResultsByRange({
+        uf: scopeKey,
+        dateFrom: from,
+        dateTo: to,
+        positions: [1, 2, 3, 4, 5, 6, 7],
+        mode: "aggregated",
+      });
 
-      setCalendarLoading(true);
+      return Array.from(monthDaysWithDraws(out)).sort();
+    },
+    staleTime: 30 * 60 * 1000,
+    gcTime: 2 * 60 * 60 * 1000,
+    placeholderData: (prev) => prev ?? [],
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
 
-      try {
-        const out = await getKingResultsByRange({
-          uf: scopeKey,
-          dateFrom: from,
-          dateTo: to,
-          positions: [1, 2, 3, 4, 5, 6, 7],
-          mode: "aggregated",
-        });
+  const dayResultsQuery = useQuery({
+    queryKey: ["results", "day", scopeKey, ymdClamped],
+    enabled: !!safeStr(scopeKey) && isYMD(ymdClamped),
+    queryFn: async () => {
+      const sKey = safeStr(scopeKey);
+      const d = safeStr(ymdClamped);
 
-        const marks = Array.from(monthDaysWithDraws(out)).sort();
-        if (!cancelled) setCalendarMarkedYmds(marks);
-      } catch {
-        if (!cancelled) setCalendarMarkedYmds([]);
-      } finally {
-        if (!cancelled) setCalendarLoading(false);
-      }
-    }
+      const out = await getKingResultsByDate({
+        uf: sKey,
+        date: d,
+        closeHour: null,
+        closeHourBucket: null,
+        positions: [1, 2, 3, 4, 5, 6, 7],
+      });
 
-    loadCalendarMarks();
+      const list = unwrapDraws(out);
+      const deduped = dedupeDraws(list, sKey, d);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [scopeKey, calendarMonthYmd]);
+      console.log("[RESULTS_DEBUG]", {
+        scope: sKey,
+        date: d,
+        rawLen: Array.isArray(out) ? out.length : null,
+        listLen: Array.isArray(list) ? list.length : null,
+        dedupedLen: Array.isArray(deduped) ? deduped.length : null,
+        hours: deduped.map((x) => ({
+          id: x?.drawId || x?.id || null,
+          hour: x?.close_hour || x?.closeHour || x?.hour || x?.hora || null,
+          ymd: x?.ymd || x?.date || null,
+          prizesLen: Array.isArray(x?.prizes) ? x.prizes.length : null,
+          prizesCount: x?.prizesCount ?? null,
+          placeholder: !!x?.__placeholder,
+        })),
+      });
+
+      return deduped;
+    },
+    staleTime: ymdClamped === todayYMDLocal() ? 60 * 1000 : 10 * 60 * 1000,
+    gcTime: 2 * 60 * 60 * 1000,
+    placeholderData: (prev) => prev ?? [],
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
+
+  const loading = dayResultsQuery.isLoading && !Array.isArray(dayResultsQuery.data);
+
+  const error = safeStr(
+    dayResultsQuery.error?.message ||
+      boundsQuery.error?.message ||
+      calendarMarksQuery.error?.message ||
+      ""
+  );
+
+  const draws = useMemo(() => {
+    return Array.isArray(dayResultsQuery.data) ? dayResultsQuery.data : [];
+  }, [dayResultsQuery.data]);
+
+  const calendarMarkedYmds = useMemo(() => {
+    return Array.isArray(calendarMarksQuery.data) ? calendarMarksQuery.data : [];
+  }, [calendarMarksQuery.data]);
+
+  const calendarMarkedSet = useMemo(
+    () => new Set(calendarMarkedYmds),
+    [calendarMarkedYmds]
+  );
+
+  const calendarLoading =
+    calendarMarksQuery.isFetching && !Array.isArray(calendarMarksQuery.data);
 
   useEffect(() => {
     function onDocPointerDown(e) {
@@ -799,56 +840,6 @@ export default function Results() {
       document.removeEventListener("keydown", onDocKeyDown);
     };
   }, [calendarOpen]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function run() {
-      const sKey = safeStr(scopeKey);
-      const d = safeStr(ymdClamped);
-
-      if (!sKey || !isYMD(d)) {
-        if (!cancelled) {
-          setDraws([]);
-          setLoading(false);
-          setError("");
-        }
-        return;
-      }
-
-      setLoading(true);
-      setError("");
-
-      try {
-        // ✅ Sem regra fixa na UI para Federal.
-        const out = await getKingResultsByDate({
-          uf: sKey,
-          date: d,
-          closeHour: null,
-          closeHourBucket: null,
-          positions: [1, 2, 3, 4, 5, 6, 7],
-        });
-
-        const list = unwrapDraws(out);
-        const deduped = dedupeDraws(list, sKey, d);
-
-        if (!cancelled) setDraws(deduped);
-      } catch (e) {
-        if (!cancelled) {
-          setDraws([]);
-          setError(String(e?.message || e || "Falha ao carregar resultados."));
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    run();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [scopeKey, ymdClamped, reloadTick]);
 
   useEffect(() => {
     setShowAll(true);
@@ -911,6 +902,15 @@ export default function Results() {
     );
     setYmd(bounded);
     setCalendarOpen(false);
+  }
+
+  async function handleRefresh(e) {
+    stopEvt(e);
+    await Promise.allSettled([
+      boundsQuery.refetch(),
+      calendarMarksQuery.refetch(),
+      dayResultsQuery.refetch(),
+    ]);
   }
 
   const styles = useMemo(() => {
@@ -989,6 +989,10 @@ export default function Results() {
         box-sizing: border-box;
       }
       .pp_btn:hover{ background: rgba(255,255,255,0.08); }
+      .pp_btn:disabled{
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
 
       .pp_pills{
         display:flex;
@@ -1579,7 +1583,8 @@ export default function Results() {
                       const isMarked = calendarMarkedSet.has(cell.ymd);
                       const isSelected = cell.ymd === ymdClamped;
                       const isToday = cell.ymd === todayYMDLocal();
-                      const isLastDraw = isFederal && cell.ymd === bounds?.maxYmd;
+                      const isLastDraw =
+                        isFederal && cell.ymd === effectiveBounds?.maxYmd;
 
                       const cls = [
                         "pp_calDay",
@@ -1621,8 +1626,8 @@ export default function Results() {
                     <div className="pp_calMini">
                       {calendarLoading
                         ? "Lendo mês…"
-                        : isFederal && isYMD(bounds?.maxYmd)
-                        ? `Último: ${ymdToBR(bounds.maxYmd)}`
+                        : isFederal && isYMD(effectiveBounds?.maxYmd)
+                        ? `Último: ${ymdToBR(effectiveBounds.maxYmd)}`
                         : ""}
                     </div>
                   </div>
@@ -1632,14 +1637,20 @@ export default function Results() {
 
             <button
               className="pp_btn"
-              onClick={(e) => {
-                stopEvt(e);
-                setReloadTick((v) => v + 1);
-              }}
+              onClick={handleRefresh}
               type="button"
               title="Atualizar"
+              disabled={
+                boundsQuery.isFetching ||
+                calendarMarksQuery.isFetching ||
+                dayResultsQuery.isFetching
+              }
             >
-              Atualizar
+              {boundsQuery.isFetching ||
+              calendarMarksQuery.isFetching ||
+              dayResultsQuery.isFetching
+                ? "Atualizando..."
+                : "Atualizar"}
             </button>
           </div>
         </div>
@@ -1796,4 +1807,3 @@ export default function Results() {
     </div>
   );
 }
-
