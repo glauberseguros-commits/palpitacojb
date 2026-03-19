@@ -612,9 +612,13 @@ function buildFreqAndFirstMaps(nextDraw) {
   return { freq, firstMap };
 }
 
-function mergeMapsAdd(target, source) {
+function mergeMapsAdd(target, source, multiplier = 1) {
+  const mult = Number.isFinite(Number(multiplier)) ? Number(multiplier) : 1;
   for (const [k, v] of source.entries()) {
-    target.set(Number(k), Number(target.get(Number(k)) || 0) + Number(v || 0));
+    target.set(
+      Number(k),
+      Number(target.get(Number(k)) || 0) + (Number(v || 0) * mult)
+    );
   }
 }
 
@@ -820,6 +824,7 @@ function buildLayerConfigs({
         key: "FED_DOW_PREVG",
         label: "Federal: dia da semana + grupo anterior",
         minSamples: LAYER_MIN_SAMPLES.FED_DOW_PREVG,
+        specificity: 1.0,
         match: (ctx) =>
           ctx.targetDow === targetDow &&
           ctx.prevGrupo === prevGrupo,
@@ -828,18 +833,21 @@ function buildLayerConfigs({
         key: "FED_PREVG",
         label: "Federal: grupo anterior",
         minSamples: LAYER_MIN_SAMPLES.FED_PREVG,
+        specificity: 0.76,
         match: (ctx) => ctx.prevGrupo === prevGrupo,
       },
       {
         key: "FED_DOW_ONLY",
         label: "Federal: dia da semana",
         minSamples: LAYER_MIN_SAMPLES.FED_DOW_ONLY,
+        specificity: 0.48,
         match: (ctx) => ctx.targetDow === targetDow,
       },
       {
         key: "FED_ONLY",
         label: "Federal: histórico geral",
         minSamples: LAYER_MIN_SAMPLES.FED_ONLY,
+        specificity: 0.22,
         match: () => true,
       },
     ];
@@ -850,6 +858,7 @@ function buildLayerConfigs({
       key: "DOM_DOW_PREVH_PREVG_TO_TARGET",
       label: "dia do mês + dia da semana + hora anterior + grupo anterior -> alvo",
       minSamples: LAYER_MIN_SAMPLES.DOM_DOW_PREVH_PREVG_TO_TARGET,
+      specificity: 1.0,
       match: (ctx) =>
         ctx.targetDayOfMonth === targetDayOfMonth &&
         ctx.targetDow === targetDow &&
@@ -861,6 +870,7 @@ function buildLayerConfigs({
       key: "DOW_PREVH_PREVG_TO_TARGET",
       label: "dia da semana + hora anterior + grupo anterior -> alvo",
       minSamples: LAYER_MIN_SAMPLES.DOW_PREVH_PREVG_TO_TARGET,
+      specificity: 0.86,
       match: (ctx) =>
         ctx.targetDow === targetDow &&
         ctx.prevHour === prevHour &&
@@ -871,6 +881,7 @@ function buildLayerConfigs({
       key: "PREVH_PREVG_TO_TARGET",
       label: "hora anterior + grupo anterior -> alvo",
       minSamples: LAYER_MIN_SAMPLES.PREVH_PREVG_TO_TARGET,
+      specificity: 0.72,
       match: (ctx) =>
         ctx.prevHour === prevHour &&
         ctx.prevGrupo === prevGrupo &&
@@ -880,6 +891,7 @@ function buildLayerConfigs({
       key: "DOM_TARGET",
       label: "dia do mês + alvo",
       minSamples: LAYER_MIN_SAMPLES.DOM_TARGET,
+      specificity: 0.46,
       match: (ctx) =>
         ctx.targetDayOfMonth === targetDayOfMonth &&
         ctx.targetHour === targetHour,
@@ -888,6 +900,7 @@ function buildLayerConfigs({
       key: "DOW_TARGET",
       label: "dia da semana + alvo",
       minSamples: LAYER_MIN_SAMPLES.DOW_TARGET,
+      specificity: 0.34,
       match: (ctx) =>
         ctx.targetDow === targetDow &&
         ctx.targetHour === targetHour,
@@ -896,9 +909,19 @@ function buildLayerConfigs({
       key: "TARGET_ONLY",
       label: "alvo geral",
       minSamples: LAYER_MIN_SAMPLES.TARGET_ONLY,
+      specificity: 0.20,
       match: (ctx) => ctx.targetHour === targetHour,
     },
   ];
+}
+
+function sumMapValues(mapLike) {
+  if (!(mapLike instanceof Map)) return 0;
+  let total = 0;
+  for (const v of mapLike.values()) {
+    total += Number(v || 0);
+  }
+  return total;
 }
 
 function buildConditionalLayerDistribution({
@@ -929,9 +952,11 @@ function buildConditionalLayerDistribution({
     key: layer.key,
     label: layer.label,
     minSamples: layer.minSamples,
+    specificity: Number(layer.specificity || 0),
     samples: 0,
     freq: new Map(),
     firstFreq: new Map(),
+    firstHits: 0,
   }));
 
   for (const d of list) {
@@ -977,19 +1002,48 @@ function buildConditionalLayerDistribution({
     };
 
     const nextMaps = buildFreqAndFirstMaps(nextDraw);
+    const firstHitsThisSample = sumMapValues(nextMaps.firstMap);
 
     for (let i = 0; i < layers.length; i += 1) {
       const layer = layers[i];
       if (!layer.match(ctx)) continue;
 
       layerResults[i].samples += 1;
+      layerResults[i].firstHits += firstHitsThisSample;
       mergeMapsAdd(layerResults[i].freq, nextMaps.freq);
       mergeMapsAdd(layerResults[i].firstFreq, nextMaps.firstMap);
     }
   }
 
+  const layerCandidates = layerResults
+    .filter((x) => x.samples > 0 && x.firstHits > 0)
+    .map((x) => {
+      const sufficiency = Math.min(1, x.samples / Math.max(1, x.minSamples));
+      const firstHitRate = x.firstHits / Math.max(1, x.samples);
+      const choiceScore =
+        (x.specificity * 1000) +
+        (sufficiency * 220) +
+        (firstHitRate * 160) +
+        Math.min(40, x.samples);
+
+      return {
+        ...x,
+        sufficiency,
+        firstHitRate,
+        choiceScore,
+      };
+    })
+    .sort((a, b) => {
+      if (b.choiceScore !== a.choiceScore) return b.choiceScore - a.choiceScore;
+      if (b.specificity !== a.specificity) return b.specificity - a.specificity;
+      if (b.sufficiency !== a.sufficiency) return b.sufficiency - a.sufficiency;
+      if (b.firstHitRate !== a.firstHitRate) return b.firstHitRate - a.firstHitRate;
+      if (b.samples !== a.samples) return b.samples - a.samples;
+      return a.key.localeCompare(b.key);
+    });
+
   let chosen =
-    layerResults.find((x) => x.samples >= x.minSamples && x.freq.size > 0) ||
+    layerCandidates[0] ||
     layerResults.find((x) => x.samples > 0 && x.freq.size > 0) ||
     null;
 
@@ -998,15 +1052,49 @@ function buildConditionalLayerDistribution({
       key: "NONE",
       label: "sem amostra",
       minSamples: 0,
+      specificity: 0,
       samples: 0,
       freq: new Map(),
       firstFreq: new Map(),
+      firstHits: 0,
+      sufficiency: 0,
+      firstHitRate: 0,
+      choiceScore: 0,
     };
+  }
+
+  const blendedFirstFreq = new Map();
+  let blendedFirstDenom = 0;
+
+  for (const layer of layerCandidates) {
+    const sufficiency = Math.min(1, layer.samples / Math.max(1, layer.minSamples));
+    const firstHitRate = layer.firstHits / Math.max(1, layer.samples);
+
+    const weight =
+      layer.specificity *
+      (0.55 + (sufficiency * 0.45)) *
+      (0.55 + (firstHitRate * 0.45));
+
+    if (!(weight > 0)) continue;
+
+    mergeMapsAdd(blendedFirstFreq, layer.firstFreq, weight);
+    blendedFirstDenom += layer.firstHits * weight;
   }
 
   return {
     chosen,
-    layers: layerResults,
+    layers: layerResults.map((layer) => {
+      const sufficiency = Math.min(1, layer.samples / Math.max(1, layer.minSamples));
+      const firstHitRate = layer.firstHits / Math.max(1, layer.samples);
+
+      return {
+        ...layer,
+        sufficiency,
+        firstHitRate,
+      };
+    }),
+    blendedFirstFreq,
+    blendedFirstDenom,
   };
 }
 
@@ -1336,6 +1424,10 @@ export function computeConditionalNextTop3({
             label: layer.label,
             samples: layer.samples,
             minSamples: layer.minSamples,
+            specificity: Number(layer.specificity || 0),
+            firstHits: Number(layer.firstHits || 0),
+            firstHitRate: Number(layer.firstHitRate || 0),
+            sufficiency: Number(layer.sufficiency || 0),
           })),
         },
       },
@@ -1372,6 +1464,10 @@ export function computeConditionalNextTop3({
           label: layer.label,
           samples: layer.samples,
           minSamples: layer.minSamples,
+          specificity: Number(layer.specificity || 0),
+          firstHits: Number(layer.firstHits || 0),
+          firstHitRate: Number(layer.firstHitRate || 0),
+          sufficiency: Number(layer.sufficiency || 0),
         })),
       },
     },
@@ -1810,36 +1906,36 @@ function computeRecentBichoMetrics(draws, groupsK = TOP3_GROUPS_K) {
 function getBichoFocusedWeights(regime) {
   if (regime === "repeat") {
     return {
-      transitionFirst: 0.22,
-      structuralFirst: 0.18,
-      structuralTop5: 0.12,
-      memory: 0.12,
-      duplication: 0.18,
-      recent: 0.14,
-      late: 0.04,
+      transitionFirst: 0.38,
+      structuralFirst: 0.14,
+      structuralTop5: 0.08,
+      memory: 0.18,
+      duplication: 0.12,
+      recent: 0.08,
+      late: 0.02,
     };
   }
 
   if (regime === "spread") {
     return {
-      transitionFirst: 0.18,
-      structuralFirst: 0.24,
-      structuralTop5: 0.20,
-      memory: 0.14,
+      transitionFirst: 0.32,
+      structuralFirst: 0.20,
+      structuralTop5: 0.12,
+      memory: 0.16,
       duplication: 0.05,
-      recent: 0.15,
+      recent: 0.11,
       late: 0.04,
     };
   }
 
   return {
-    transitionFirst: 0.21,
-    structuralFirst: 0.21,
-    structuralTop5: 0.16,
-    memory: 0.14,
-    duplication: 0.10,
-    recent: 0.14,
-    late: 0.04,
+    transitionFirst: 0.36,
+    structuralFirst: 0.16,
+    structuralTop5: 0.10,
+    memory: 0.18,
+    duplication: 0.08,
+    recent: 0.10,
+    late: 0.02,
   };
 }
 
@@ -1951,14 +2047,27 @@ export function computeConditionalNextTop3V2({
   });
 
   const chosen = layerOut?.chosen || null;
-  const condSamples = Number(chosen?.samples || 0);
-  const condFirstFreq = chosen?.firstFreq || new Map();
+  const chosenFirstFreq = chosen?.firstFreq || new Map();
+  const chosenSamples = Number(chosen?.samples || 0);
+
+  const blendedFirstFreq =
+    layerOut?.blendedFirstFreq instanceof Map && layerOut.blendedFirstFreq.size
+      ? layerOut.blendedFirstFreq
+      : chosenFirstFreq;
+
+  const blendedFirstDenom =
+    Number(layerOut?.blendedFirstDenom || 0) > 0
+      ? Number(layerOut.blendedFirstDenom)
+      : Math.max(1, chosenSamples);
+
+  const condSamples = chosenSamples;
+  const condSamplesForTransition = Math.max(1, blendedFirstDenom);
 
   const pTransitionFirst = new Map();
   for (let g = 1; g <= safeInt(TOP3_GROUPS_K, 25); g += 1) {
     pTransitionFirst.set(
       g,
-      Number(condFirstFreq.get(g) || 0) / Math.max(1, condSamples)
+      Number(blendedFirstFreq.get(g) || 0) / condSamplesForTransition
     );
   }
 
@@ -2095,9 +2204,9 @@ export function computeConditionalNextTop3V2({
         (recentLast1Norm * 0.10);
 
       const dominanceScore =
-        (pT * 0.42) +
-        (pSF * 0.26) +
-        (pST * 0.18) +
+        (pT * 0.52) +
+        (pSF * 0.20) +
+        (pST * 0.14) +
         (pD * 0.14);
 
       const seenTs = Number(lateSeen.get(grupo));
@@ -2121,10 +2230,10 @@ export function computeConditionalNextTop3V2({
         (lateNorm * weights.late);
 
       const score =
-        (dominanceScore * 1000) +
-        (pM * 220) +
-        (recentComposite * 180) +
-        (lateNorm * 35);
+        (dominanceScore * 1120) +
+        (pM * 240) +
+        (recentComposite * 160) +
+        (lateNorm * 28);
 
       return {
         grupo,
@@ -2145,7 +2254,7 @@ export function computeConditionalNextTop3V2({
         recentLast3Top5: rm.recentLast3Top5,
         lateNorm,
         gapMs,
-        condFirstCount: Number(condFirstFreq.get(grupo) || 0),
+        condFirstCount: Number(blendedFirstFreq.get(grupo) || 0),
         structuralFirstCount: Number(structuralFirst?.firstFreq?.get(grupo) || 0),
         structuralTop5Count: Number(structuralTop5?.freq?.get(grupo) || 0),
         duplicationCount: Number(duplication?.freq?.get(grupo) || 0),
@@ -2157,6 +2266,7 @@ export function computeConditionalNextTop3V2({
       if (b.score !== a.score) return b.score - a.score;
       if (b.dominanceScore !== a.dominanceScore) return b.dominanceScore - a.dominanceScore;
       if (b.probTransition !== a.probTransition) return b.probTransition - a.probTransition;
+      if (b.probMemory !== a.probMemory) return b.probMemory - a.probMemory;
       if (b.probDuplication !== a.probDuplication) return b.probDuplication - a.probDuplication;
       if (b.probStructuralFirst !== a.probStructuralFirst) return b.probStructuralFirst - a.probStructuralFirst;
       if (b.probStructuralTop5 !== a.probStructuralTop5) return b.probStructuralTop5 - a.probStructuralTop5;
@@ -2171,7 +2281,8 @@ export function computeConditionalNextTop3V2({
     `Pesos: transição1º=${(weights.transitionFirst * 100).toFixed(0)}% | estrutural1º=${(weights.structuralFirst * 100).toFixed(0)}% | estruturalTOP5=${(weights.structuralTop5 * 100).toFixed(0)}% | memória=${(weights.memory * 100).toFixed(0)}% | duplicação=${(weights.duplication * 100).toFixed(0)}% | recência=${(weights.recent * 100).toFixed(0)}% | atraso=${(weights.late * 100).toFixed(0)}%`,
     `Estado atual: prev=${String(prevGrupo).padStart(2, "0")} @ ${lastH} → alvo ${targetH}`,
     `Estado curto comparável: [${currentState.map((g) => String(g).padStart(2, "0")).join(", ")}]`,
-    `Camada condicional: ${chosen?.label || "—"} | amostras=${condSamples}`,
+    `Camada escolhida: ${chosen?.label || "—"} | amostras=${condSamples}`,
+    `Blend condicional: denom=${condSamplesForTransition.toFixed(2)} | camadas úteis=${Array.isArray(layerOut?.layers) ? layerOut.layers.filter((x) => Number(x.firstHits || 0) > 0).length : 0}`,
     `Amostra estrutural 1º=${Number(structuralFirst?.totalSamples || 0)} | TOP5=${Number(structuralTop5?.totalSamples || 0)} | duplicação=${Number(duplication?.totalSamples || 0)}`,
     `Amostra memória: matches=${Number(memoryOut?.matchedSamples || 0)} | peso=${Number(memoryOut?.totalWeight || 0).toFixed(2)}`,
     `Data alvo: ${targetY} | DOW=${targetDow} | dia=${String(targetDayOfMonth).padStart(2, "0")}`,
@@ -2198,7 +2309,7 @@ export function computeConditionalNextTop3V2({
       freqBase: x.structuralFirstCount,
       freqZeroWhy:
         x.condFirstCount <= 0
-          ? `Sem 1º lugar nesta camada (${chosen?.label || "—"}).`
+          ? `Sem 1º lugar na transição condicional blendada (${chosen?.label || "—"}).`
           : "",
       reasons: [
         ...reasonsBase,
@@ -2209,7 +2320,7 @@ export function computeConditionalNextTop3V2({
         `Grupo G${g2}: memória curta=${(x.probMemory * 100).toFixed(2)}%`,
         `Grupo G${g2}: recência composta=${(x.recentComposite * 100).toFixed(2)}%`,
         `Grupo G${g2}: atraso normalizado=${(x.lateNorm * 100).toFixed(2)}%`,
-        `Grupo G${g2}: 1ºs na camada=${x.condFirstCount}`,
+        `Grupo G${g2}: força blend condicional=${Number(x.condFirstCount || 0).toFixed(2)}`,
         `Grupo G${g2}: 1ºs estruturais=${x.structuralFirstCount}`,
         `Grupo G${g2}: TOP5 estruturais=${x.structuralTop5Count}`,
         `Grupo G${g2}: draws com duplicação=${x.duplicationCount}`,
@@ -2237,6 +2348,7 @@ export function computeConditionalNextTop3V2({
           layerKey: chosen?.key || "NONE",
           layerLabel: chosen?.label || "—",
           layerSamples: condSamples,
+          blendedTransitionDenom: condSamplesForTransition,
           structuralFirstSamples: Number(structuralFirst?.totalSamples || 0),
           structuralTop5Samples: Number(structuralTop5?.totalSamples || 0),
           duplicationSamples: Number(duplication?.totalSamples || 0),
@@ -2257,6 +2369,10 @@ export function computeConditionalNextTop3V2({
             label: layer.label,
             samples: layer.samples,
             minSamples: layer.minSamples,
+            specificity: Number(layer.specificity || 0),
+            firstHits: Number(layer.firstHits || 0),
+            firstHitRate: Number(layer.firstHitRate || 0),
+            sufficiency: Number(layer.sufficiency || 0),
           })),
         },
       },
@@ -2286,6 +2402,7 @@ export function computeConditionalNextTop3V2({
         layerKey: chosen?.key || "NONE",
         layerLabel: chosen?.label || "—",
         layerSamples: condSamples,
+        blendedTransitionDenom: condSamplesForTransition,
         structuralFirstSamples: Number(structuralFirst?.totalSamples || 0),
         structuralTop5Samples: Number(structuralTop5?.totalSamples || 0),
         duplicationSamples: Number(duplication?.totalSamples || 0),
@@ -2301,6 +2418,10 @@ export function computeConditionalNextTop3V2({
           label: layer.label,
           samples: layer.samples,
           minSamples: layer.minSamples,
+          specificity: Number(layer.specificity || 0),
+          firstHits: Number(layer.firstHits || 0),
+          firstHitRate: Number(layer.firstHitRate || 0),
+          sufficiency: Number(layer.sufficiency || 0),
         })),
       },
     },

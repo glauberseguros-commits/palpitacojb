@@ -197,6 +197,8 @@ export function useTop3Controller() {
     source: "none",
   });
 
+  const [baseDrawState, setBaseDrawState] = useState(null);
+
   const lotteryKeySafe = useMemo(
     () => safeStr(lotteryKey).toUpperCase() || DEFAULT_LOTTERY,
     [lotteryKey]
@@ -273,6 +275,7 @@ export function useTop3Controller() {
     setLastHourBucket("");
     setTargetHourBucket("");
     setTargetYmd("");
+    setBaseDrawState(null);
 
     setLastInfo({
       lastYmd: "",
@@ -501,6 +504,7 @@ export function useTop3Controller() {
 
       if (requestIdRef.current !== currentRequestId) return;
 
+      setBaseDrawState(baseDraw || null);
       setLastHourBucket(baseH);
       setTargetYmd(resolvedTargetY || "");
       setTargetHourBucket(resolvedTargetH || "");
@@ -566,6 +570,7 @@ export function useTop3Controller() {
     } catch (e) {
       if (requestIdRef.current === currentRequestId) {
         setError(String(e?.message || e || "Falha ao carregar dados do TOP3."));
+        setBaseDrawState(null);
       }
     } finally {
       if (requestIdRef.current === currentRequestId) {
@@ -601,6 +606,9 @@ export function useTop3Controller() {
     const firstDraw = list[0];
     const lastDrawInRange = list[list.length - 1];
 
+    const baseDrawY = pickDrawYMD(baseDrawState) || "";
+    const baseDrawH = toHourBucket(pickDrawHour(baseDrawState)) || "";
+
     const cacheKey = [
       "V2",
       lotteryKeySafe,
@@ -615,22 +623,33 @@ export function useTop3Controller() {
       lastY,
       toHourBucket(lastH),
       Number(lastG),
+      baseDrawY,
+      baseDrawH,
     ].join("|");
 
     if (analyticsCacheRef.current.key === cacheKey) {
       return analyticsCacheRef.current.value;
     }
 
-    const drawLast = list.find((d) => {
-      const y = pickDrawYMD(d);
-      const h = toHourBucket(pickDrawHour(d));
-      return y === lastY && h === toHourBucket(lastH);
-    });
+    const drawLast = baseDrawState;
 
     if (!drawLast) {
       const empty = { top: [], meta: null };
       analyticsCacheRef.current = { key: cacheKey, value: empty };
       return empty;
+    }
+
+    const drawLastY = pickDrawYMD(drawLast) || "";
+    const drawLastH = toHourBucket(pickDrawHour(drawLast)) || "";
+
+    if (drawLastY !== lastY || drawLastH !== toHourBucket(lastH)) {
+      console.warn(
+        "[TOP3] Inconsistência entre baseDrawState e lastInfo. Usando baseDrawState como fonte de verdade.",
+        {
+          baseDrawState: { ymd: drawLastY, hour: drawLastH },
+          lastInfo: { ymd: lastY, hour: toHourBucket(lastH) },
+        }
+      );
     }
 
     const computed = computeConditionalNextTop3V2({
@@ -654,6 +673,7 @@ export function useTop3Controller() {
     lastInfo?.lastGrupo,
     lastInfo?.lastYmd,
     lastInfo?.lastHour,
+    baseDrawState,
   ]);
 
   const build20 = useCallback(
