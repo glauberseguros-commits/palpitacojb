@@ -464,11 +464,117 @@ function Top3Card({
   );
 }
 
+function TimelineSlot({
+  slot,
+  theme,
+  copiedAllKey,
+  copiedCellKey,
+  setCopiedAllKey,
+  setCopiedCellKey,
+  copyText,
+  build16,
+  buildMilhares,
+  build20,
+}) {
+  const t = theme;
+  const slotTop3 = Array.isArray(slot?.top3) ? slot.top3.slice(0, 3) : [];
+  const resultGrupo = Number(slot?.resultGrupo);
+  const hasResult = Number.isFinite(resultGrupo) && resultGrupo >= 1 && resultGrupo <= 25;
+  const resultAnimal = hasResult ? String(getAnimalLabel(resultGrupo) || "") : "";
+  const resultImg = hasResult ? getImgFromGrupo(resultGrupo, 64) : "";
+  const status =
+    slot?.status === "validated"
+      ? slot?.hit
+        ? "hit"
+        : "miss"
+      : "pending";
+
+  return (
+    <section className="top3-shell">
+      <div className="timeline-slot__header">
+        <div className="timeline-slot__title">
+          {formatYmdHour(slot?.targetYmd, slot?.targetHour)}
+        </div>
+
+        <div className={`timeline-slot__badge timeline-slot__badge--${status}`}>
+          {status === "hit" ? "✅ ACERTO" : status === "miss" ? "❌ ERRO" : "⏳ PENDENTE"}
+        </div>
+      </div>
+
+      <div className="timeline-slot__metaGrid">
+        <div className="top3-metaItem">
+          <div className="top3-metaItem__label">Base usada</div>
+          <div className="top3-metaItem__value">
+            {formatYmdHour(slot?.baseYmd, slot?.baseHour)}
+          </div>
+        </div>
+
+        <div className="top3-metaItem">
+          <div className="top3-metaItem__label">Resultado real</div>
+          <div className="top3-metaItem__value">
+            {hasResult ? `G${formatGrupo(resultGrupo)} • ${resultAnimal.toUpperCase()}` : "Pendente"}
+          </div>
+        </div>
+
+        <div className="top3-metaItem">
+          <div className="top3-metaItem__label">Status</div>
+          <div className="top3-metaItem__value">
+            {status === "hit" ? "Acerto" : status === "miss" ? "Erro" : "Aguardando resultado"}
+          </div>
+        </div>
+      </div>
+
+      {hasResult ? (
+        <div className="timeline-slot__resultBox">
+          <ImgWithFallback
+            srcs={[resultImg]}
+            alt={resultAnimal}
+            size={54}
+            style={{ borderRadius: 10 }}
+          />
+          <div className="timeline-slot__resultText">
+            <div className="timeline-slot__resultGroup">G{formatGrupo(resultGrupo)}</div>
+            <div className="timeline-slot__resultAnimal">
+              {String(resultAnimal || "").toUpperCase()}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {!slotTop3.length ? (
+        <div className="top3-empty">Sem Top3 calculado para este horário.</div>
+      ) : (
+        <>
+          <div className="timeline-slot__cards">
+            {slotTop3.map((item, i) => (
+              <Top3Card
+                key={`${slot?.targetYmd || "y"}_${slot?.targetHour || "h"}_${String(item?.grupo ?? i)}`}
+                item={item}
+                idx={i}
+                theme={t}
+                copiedAllKey={copiedAllKey}
+                copiedCellKey={copiedCellKey}
+                setCopiedAllKey={setCopiedAllKey}
+                setCopiedCellKey={setCopiedCellKey}
+                copyText={copyText}
+                build16={build16}
+                buildMilhares={buildMilhares}
+                build20={build20}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
 export default function Top3View(props) {
   const {
     loading,
     error,
     top3,
+    timelineTop3,
     layerMetaText,
     lastLabel,
     prevLabel,
@@ -485,6 +591,7 @@ export default function Top3View(props) {
   } = props || {};
 
   const list = Array.isArray(top3) ? top3.slice(0, 3) : [];
+  const timeline = Array.isArray(timelineTop3) ? timelineTop3 : [];
 
   const meta = useMemo(() => {
     const last = lastLabel || "—";
@@ -719,7 +826,8 @@ export default function Top3View(props) {
           color: rgba(255,255,255,0.94);
         }
 
-        .top3-metaGrid{
+        .top3-metaGrid,
+        .timeline-slot__metaGrid{
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
           gap: 10px;
@@ -771,6 +879,82 @@ export default function Top3View(props) {
           gap: 16px;
           align-items: start;
           justify-content: center;
+        }
+
+        .timeline-slot__cards{
+          width: 100%;
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 16px;
+          align-items: start;
+        }
+
+        .timeline-slot__header{
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:12px;
+          margin-bottom: 12px;
+        }
+
+        .timeline-slot__title{
+          font-weight: 950;
+          font-size: 18px;
+          letter-spacing: 0.2px;
+        }
+
+        .timeline-slot__badge{
+          border-radius: 999px;
+          padding: 8px 12px;
+          font-weight: 950;
+          font-size: 12px;
+          letter-spacing: 0.5px;
+          border: 1px solid rgba(255,255,255,0.12);
+          white-space: nowrap;
+        }
+
+        .timeline-slot__badge--hit{
+          background: rgba(38, 180, 90, 0.18);
+          color: #b8ffd0;
+          border-color: rgba(38, 180, 90, 0.35);
+        }
+
+        .timeline-slot__badge--miss{
+          background: rgba(220, 70, 70, 0.18);
+          color: #ffd0d0;
+          border-color: rgba(220, 70, 70, 0.35);
+        }
+
+        .timeline-slot__badge--pending{
+          background: rgba(201,168,62,0.16);
+          color: rgba(255,255,255,0.92);
+          border-color: rgba(201,168,62,0.35);
+        }
+
+        .timeline-slot__resultBox{
+          margin-top: 12px;
+          display:flex;
+          align-items:center;
+          gap:12px;
+          padding: 10px 12px;
+          border-radius: 14px;
+          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .timeline-slot__resultText{
+          display:grid;
+          gap:2px;
+        }
+
+        .timeline-slot__resultGroup{
+          font-weight: 950;
+        }
+
+        .timeline-slot__resultAnimal{
+          font-size: 12px;
+          color: var(--top3-muted);
+          text-transform: uppercase;
         }
 
         .top3-card{
@@ -1108,6 +1292,10 @@ export default function Top3View(props) {
           .top3-secondaryRow{
             max-width: 980px;
           }
+
+          .timeline-slot__cards{
+            grid-template-columns: 1fr;
+          }
         }
 
         @media (max-width: 980px){
@@ -1120,7 +1308,8 @@ export default function Top3View(props) {
             border-radius: 18px;
           }
 
-          .top3-metaGrid{
+          .top3-metaGrid,
+          .timeline-slot__metaGrid{
             grid-template-columns: 1fr 1fr;
           }
 
@@ -1169,6 +1358,11 @@ export default function Top3View(props) {
             grid-template-columns: 1fr;
             align-items:start;
           }
+
+          .timeline-slot__header{
+            flex-direction: column;
+            align-items: flex-start;
+          }
         }
 
         @media (max-width: 640px){
@@ -1181,7 +1375,8 @@ export default function Top3View(props) {
             border-radius: 16px;
           }
 
-          .top3-header__title{
+          .top3-header__title,
+          .timeline-slot__title{
             font-size: 17px;
           }
 
@@ -1235,7 +1430,8 @@ export default function Top3View(props) {
             padding: 3px 6px;
           }
 
-          .top3-metaGrid{
+          .top3-metaGrid,
+          .timeline-slot__metaGrid{
             grid-template-columns: 1fr;
           }
         }
@@ -1384,6 +1580,33 @@ export default function Top3View(props) {
             ) : null}
           </section>
         )}
+
+        {timeline.length > 0 ? (
+          <section className="top3-stage">
+            <section className="top3-shell">
+              <div className="top3-header__title">Leitura do dia — Timeline completa</div>
+              <div className="top3-helper">
+                Cada bloco abaixo mostra o Top3 calculado para o horário alvo, a base usada e o resultado real quando disponível.
+              </div>
+            </section>
+
+            {timeline.map((slot, idx) => (
+              <TimelineSlot
+                key={`${String(slot?.targetYmd || "y")}_${String(slot?.targetHour || "h")}_${idx}`}
+                slot={slot}
+                theme={t}
+                copiedAllKey={copiedAllKey}
+                copiedCellKey={copiedCellKey}
+                setCopiedAllKey={setCopiedAllKey}
+                setCopiedCellKey={setCopiedCellKey}
+                copyText={copyText}
+                build16={build16}
+                buildMilhares={buildMilhares}
+                build20={build20}
+              />
+            ))}
+          </section>
+        ) : null}
 
         <section className="top3-shell">
           <div className="top3-header__title">

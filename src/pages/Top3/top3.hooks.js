@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   safeStr,
@@ -32,13 +32,10 @@ import {
   buildMilharesForGrupo,
   getNextSlotForLottery,
   computeConditionalNextTop3V2,
+  buildTimelineTop3,
 } from "./top3.engine";
 
-import {
-  lotteryLabel,
-  makeImgVariantsFromGrupo,
-  normalizeImgSrc,
-} from "./top3.selectors";
+import { lotteryLabel } from "./top3.selectors";
 
 import {
   getKingResultsByDate,
@@ -47,6 +44,67 @@ import {
 } from "../../services/kingResultsService";
 
 import { getAnimalLabel, getImgFromGrupo } from "../../constants/bichoMap";
+
+function publicBase() {
+  const b = String(process.env.PUBLIC_URL || "").trim();
+  return b && b !== "/" ? b : "";
+}
+
+function normalizeImgSrc(src) {
+  const s = String(src || "").trim();
+  if (!s) return "";
+
+  if (/^https?:\/\//i.test(s)) return s;
+
+  const base = publicBase();
+
+  if (s.startsWith("/")) return `${base}${s}`;
+  if (s.startsWith("public/")) return `${base}/${s.slice("public/".length)}`;
+  if (s.startsWith("img/")) return `${base}/${s}`;
+
+  return `${base}/${s}`;
+}
+
+function buildResultStyleImgVariants(grupo, size = 96) {
+  const g = Number(grupo);
+  if (!Number.isFinite(g) || g <= 0) return [];
+
+  const seeds = [
+    getImgFromGrupo?.(g, size),
+    getImgFromGrupo?.(g),
+  ]
+    .map((x) => normalizeImgSrc(x))
+    .filter(Boolean);
+
+  const out = [];
+
+  for (const seed of seeds) {
+    const clean = String(seed).split("?")[0];
+    if (!clean) continue;
+
+    out.push(clean);
+
+    if (/\.png$/i.test(clean)) {
+      out.push(clean.replace(/\.png$/i, ".jpg"));
+      out.push(clean.replace(/\.png$/i, ".jpeg"));
+      out.push(clean.replace(/\.png$/i, ".webp"));
+    } else if (/\.jpg$/i.test(clean)) {
+      out.push(clean.replace(/\.jpg$/i, ".png"));
+      out.push(clean.replace(/\.jpg$/i, ".jpeg"));
+      out.push(clean.replace(/\.jpg$/i, ".webp"));
+    } else if (/\.jpeg$/i.test(clean)) {
+      out.push(clean.replace(/\.jpeg$/i, ".png"));
+      out.push(clean.replace(/\.jpeg$/i, ".jpg"));
+      out.push(clean.replace(/\.jpeg$/i, ".webp"));
+    } else if (/\.webp$/i.test(clean)) {
+      out.push(clean.replace(/\.webp$/i, ".png"));
+      out.push(clean.replace(/\.webp$/i, ".jpg"));
+      out.push(clean.replace(/\.webp$/i, ".jpeg"));
+    }
+  }
+
+  return Array.from(new Set(out.filter(Boolean)));
+}
 
 function normHour(h) {
   const m = String(h || "").match(/(\d{1,2})/);
@@ -1076,12 +1134,7 @@ export function useTop3Controller() {
         safeStr(getImgFromGrupo?.(g, 512) || getImgFromGrupo?.(g) || "")
       );
 
-      const iconVariants = makeImgVariantsFromGrupo({
-        grupo: g,
-        size: 96,
-        getImgFromGrupo,
-        getAnimalLabel,
-      });
+      const iconVariants = buildResultStyleImgVariants(g, 96);
 
       return {
         ...x,
@@ -1095,6 +1148,79 @@ export function useTop3Controller() {
       };
     });
   }, [analytics, build20]);
+
+  const timelineTop3 = useMemo(() => {
+    const day = Array.isArray(todayDraws) ? todayDraws : [];
+    const range = Array.isArray(rangeDraws) ? rangeDraws : [];
+
+    if (!isYMD(ymdSafe) || !range.length) return [];
+
+    const rawTimeline = buildTimelineTop3({
+      ymd: ymdSafe,
+      drawsToday: day,
+      drawsRange: range,
+      lotteryKey: lotteryKeySafe,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+    });
+
+    return (Array.isArray(rawTimeline) ? rawTimeline : []).map((slot) => {
+      const arr = Array.isArray(slot?.top3) ? slot.top3 : [];
+      const milharesCache = new Map();
+
+      const mappedTop3 = arr.map((x) => {
+        const g = Number(x?.grupo);
+        const animal = safeStr(getAnimalLabel(g) || "");
+
+        let out = milharesCache.get(g);
+        if (!out) {
+          out = buildMilharesForGrupo({
+            rangeDraws,
+            analysisHourBucket: slot?.targetHour,
+            schedule: getScheduleForLottery({
+              lotteryKey: lotteryKeySafe,
+              ymd: slot?.targetYmd,
+              PT_RIO_SCHEDULE_NORMAL,
+              PT_RIO_SCHEDULE_WED_SAT,
+              FEDERAL_SCHEDULE,
+            }),
+            grupo2: g,
+            count: 20,
+          });
+          milharesCache.set(g, out);
+        }
+
+        const milharesCols = build4ColsFromEngineOut(out, 4, 5);
+        const milhares20 = milharesCols.flatMap((c) => c.items).slice(0, 20);
+
+        const prob = Number(x?.prob || 0);
+        const probPct = prob * 100;
+
+        const bgPrimary = normalizeImgSrc(
+          safeStr(getImgFromGrupo?.(g, 512) || getImgFromGrupo?.(g) || "")
+        );
+
+        const iconVariants = buildResultStyleImgVariants(g, 96);
+
+        return {
+          ...x,
+          animal,
+          imgBg: [bgPrimary],
+          imgIcon: iconVariants,
+          prob,
+          probPct,
+          milharesCols,
+          milhares20,
+        };
+      });
+
+      return {
+        ...slot,
+        top3: mappedTop3,
+      };
+    });
+  }, [todayDraws, rangeDraws, lotteryKeySafe, ymdSafe]);
 
   useEffect(() => {
     if (!analysisYmd || !analysisHourBucket) return;
@@ -1145,6 +1271,7 @@ export function useTop3Controller() {
     prevLabel,
     lastLabel,
     top3,
+    timelineTop3,
 
     setLotteryKey,
     setYmd,
@@ -1166,4 +1293,5 @@ export function useTop3Controller() {
     normalizeImgSrc,
   };
 }
+
 
