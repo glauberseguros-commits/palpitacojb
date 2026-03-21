@@ -53,6 +53,16 @@ function formatYmdHour(ymd, hour) {
   return "—";
 }
 
+function hourBucketToSortValue(hour) {
+  const s = String(hour || "").trim().toLowerCase();
+  const m = s.match(/^(\d{1,2})(?::(\d{2}))?h?$/);
+  if (!m) return -1;
+  const hh = Number(m[1]);
+  const mm = Number(m[2] || 0);
+  if (!Number.isFinite(hh) || !Number.isFinite(mm)) return -1;
+  return hh * 60 + mm;
+}
+
 function wrapToDezena2(n) {
   const x = Number(n);
   if (!Number.isFinite(x)) return "";
@@ -518,14 +528,6 @@ export default function Top3View(props) {
     }
   }, []);
 
-  const stats = useMemo(() => {
-    const valid = log.filter((l) => l?.result != null);
-    const total = valid.length;
-    const hits = valid.filter((l) => l?.hit === true).length;
-    const rate = total ? (hits / total) * 100 : 0;
-    return { total, hits, rate };
-  }, [log]);
-
   useEffect(() => {
     if (!copiedAllKey) return;
     const id = setTimeout(() => setCopiedAllKey(""), 900);
@@ -600,16 +602,26 @@ export default function Top3View(props) {
   const heroItem = list[0] || null;
   const secondaryItems = list.slice(1, 3);
 
+  const historyAnchorYmd = useMemo(() => {
+    const y = String(analysisYmd || "").trim();
+    if (isYMD(y)) return y;
+
+    const last = log[log.length - 1];
+    const fallback = String(last?.target?.ymd || "").trim();
+    return isYMD(fallback) ? fallback : "";
+  }, [analysisYmd, log]);
+
   const historyRows = useMemo(() => {
+    if (!log.length || !historyAnchorYmd) return [];
+
     return [...log]
-      .filter((item) => item?.target?.ymd && item?.target?.hour)
+      .filter((item) => String(item?.target?.ymd || "").trim() === historyAnchorYmd)
       .sort((a, b) => {
-        const aKey = `${String(a?.target?.ymd || "")}_${String(a?.target?.hour || "")}`;
-        const bKey = `${String(b?.target?.ymd || "")}_${String(b?.target?.hour || "")}`;
-        return aKey < bKey ? 1 : -1;
-      })
-      .slice(0, 10);
-  }, [log]);
+        const ah = hourBucketToSortValue(a?.target?.hour);
+        const bh = hourBucketToSortValue(b?.target?.hour);
+        return bh - ah;
+      });
+  }, [log, historyAnchorYmd]);
 
   return (
     <div
@@ -709,7 +721,7 @@ export default function Top3View(props) {
 
         .top3-metaGrid{
           display: grid;
-          grid-template-columns: repeat(4, minmax(0, 1fr));
+          grid-template-columns: repeat(3, minmax(0, 1fr));
           gap: 10px;
         }
 
@@ -1320,13 +1332,6 @@ export default function Top3View(props) {
                 <div className="top3-metaItem__label">Condição</div>
                 <div className="top3-metaItem__value">{meta.layer}</div>
               </div>
-
-              <div className="top3-metaItem">
-                <div className="top3-metaItem__label">Assertividade</div>
-                <div className="top3-metaItem__value">
-                  {stats.rate.toFixed(1)}% ({stats.hits}/{stats.total})
-                </div>
-              </div>
             </div>
           </div>
         </section>
@@ -1381,82 +1386,92 @@ export default function Top3View(props) {
         )}
 
         <section className="top3-shell">
-          <div className="top3-header__title">Histórico recente</div>
+          <div className="top3-header__title">
+            Histórico recente {historyAnchorYmd ? `— ${ymdToBR(historyAnchorYmd)}` : ""}
+          </div>
 
           <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
-            {historyRows.map((item) => {
-              const y = String(item?.target?.ymd || "");
-              const h = String(item?.target?.hour || "");
+            {!historyRows.length ? (
+              <div className="top3-empty">Sem histórico para a data analisada.</div>
+            ) : (
+              historyRows.map((item) => {
+                const y = String(item?.target?.ymd || "");
+                const h = String(item?.target?.hour || "");
 
-              const picks = Array.isArray(item?.picks)
-                ? item.picks.map((g) => formatGrupo(g)).join(" - ")
-                : "--- - --- - ---";
+                const picks = Array.isArray(item?.picks)
+                  ? item.picks.map((g) => formatGrupo(g)).join(" - ")
+                  : "--- - --- - ---";
 
-              const resultGrupo = Number(item?.result ?? item?.grupo ?? item?.prizes?.[0]?.grupo);
-              const hasResult = Number.isFinite(resultGrupo);
+                const resultGrupo = Number(
+                  item?.result ?? item?.grupo ?? item?.prizes?.[0]?.grupo
+                );
+                const hasResult = Number.isFinite(resultGrupo);
 
-              const resultAnimal = hasResult ? (item?.animal || getAnimalLabel(resultGrupo)) : "";
-              const resultImg = hasResult
-                ? getImgFromGrupo(resultGrupo, 64)
-                : "";
+                const resultAnimal = hasResult
+                  ? (item?.animal || getAnimalLabel(resultGrupo))
+                  : "";
+                const resultImg = hasResult
+                  ? getImgFromGrupo(resultGrupo, 64)
+                  : "";
 
-              return (
-                <div
-                  key={String(item?.targetKey || `${y}_${h}`)}
-                  className="top3-historyRow"
-                >
-                  <div style={{ fontWeight: 800 }}>
-                    {ymdToBR(y)} {h}
-                  </div>
+                return (
+                  <div
+                    key={String(item?.targetKey || `${y}_${h}`)}
+                    className="top3-historyRow"
+                  >
+                    <div style={{ fontWeight: 800 }}>
+                      {ymdToBR(y)} {h}
+                    </div>
 
-                  <div style={{ letterSpacing: 1 }}>
-                    {picks}
-                  </div>
+                    <div style={{ letterSpacing: 1 }}>
+                      {picks}
+                    </div>
 
-                  <div className="top3-historyResult">
-                    {hasResult ? (
-                      <>
-                        <ImgWithFallback
-                          srcs={[resultImg]}
-                          alt={resultAnimal}
-                          size={36}
-                          style={{ borderRadius: 8 }}
-                        />
-                        <div className="top3-historyResultText">
-                          <div className="top3-historyResultGroup">
-                            G{formatGrupo(resultGrupo)}
+                    <div className="top3-historyResult">
+                      {hasResult ? (
+                        <>
+                          <ImgWithFallback
+                            srcs={[resultImg]}
+                            alt={resultAnimal}
+                            size={36}
+                            style={{ borderRadius: 8 }}
+                          />
+                          <div className="top3-historyResultText">
+                            <div className="top3-historyResultGroup">
+                              G{formatGrupo(resultGrupo)}
+                            </div>
+                            <div className="top3-historyResultAnimal">
+                              {String(resultAnimal || "").toUpperCase()}
+                            </div>
                           </div>
-                          <div className="top3-historyResultAnimal">
-                            {String(resultAnimal || "").toUpperCase()}
+                        </>
+                      ) : (
+                        <>
+                          <ImgWithFallback
+                            srcs={[]}
+                            alt="pendente"
+                            size={36}
+                            style={{ borderRadius: 8 }}
+                          />
+                          <div className="top3-historyResultText">
+                            <div className="top3-historyResultGroup">G—</div>
+                            <div className="top3-historyResultAnimal">PENDENTE</div>
                           </div>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <ImgWithFallback
-                          srcs={[]}
-                          alt="pendente"
-                          size={36}
-                          style={{ borderRadius: 8 }}
-                        />
-                        <div className="top3-historyResultText">
-                          <div className="top3-historyResultGroup">G—</div>
-                          <div className="top3-historyResultAnimal">PENDENTE</div>
-                        </div>
-                      </>
-                    )}
-                  </div>
+                        </>
+                      )}
+                    </div>
 
-                  <div style={{ textAlign: "center", fontSize: 16 }}>
-                    {item?.hit === true
-                      ? "✅"
-                      : item?.hit === false
-                        ? "❌"
-                        : "⏳"}
+                    <div style={{ textAlign: "center", fontSize: 16 }}>
+                      {item?.hit === true
+                        ? "✅"
+                        : item?.hit === false
+                          ? "❌"
+                          : "⏳"}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </section>
       </div>

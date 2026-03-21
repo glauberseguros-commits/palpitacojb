@@ -1837,39 +1837,68 @@ function computeRecentBichoMetrics(draws, groupsK = TOP3_GROUPS_K) {
   return out;
 }
 
-function getBichoFocusedWeights(regime) {
-  if (regime === "repeat") {
+function getDayDrivenWeights(mode) {
+  if (mode === "REPEAT") {
     return {
-      transitionFirst: 0.38,
-      structuralFirst: 0.14,
-      structuralTop5: 0.08,
-      memory: 0.18,
-      duplication: 0.12,
-      recent: 0.08,
-      late: 0.02,
+      transition: 0.25,
+      pair: 0.25,
+      memory: 0.20,
+      recent: 0.15,
+      structural: 0.10,
+      late: 0.05,
     };
   }
 
-  if (regime === "spread") {
+  if (mode === "SPREAD") {
     return {
-      transitionFirst: 0.32,
-      structuralFirst: 0.20,
-      structuralTop5: 0.12,
-      memory: 0.16,
-      duplication: 0.05,
-      recent: 0.11,
-      late: 0.04,
+      transition: 0.20,
+      pair: 0.10,
+      memory: 0.10,
+      recent: 0.20,
+      structural: 0.30,
+      late: 0.10,
     };
   }
 
   return {
-    transitionFirst: 0.36,
-    structuralFirst: 0.16,
-    structuralTop5: 0.10,
-    memory: 0.18,
-    duplication: 0.08,
-    recent: 0.10,
-    late: 0.02,
+    transition: 0.30,
+    pair: 0.15,
+    memory: 0.15,
+    recent: 0.15,
+    structural: 0.20,
+    late: 0.05,
+  };
+}
+
+function normalizeWeights(weights) {
+  const safe = {
+    transition: Number(weights?.transition || 0),
+    pair: Number(weights?.pair || 0),
+    memory: Number(weights?.memory || 0),
+    recent: Number(weights?.recent || 0),
+    structural: Number(weights?.structural || 0),
+    late: Number(weights?.late || 0),
+  };
+
+  const total = Object.values(safe).reduce((acc, n) => acc + n, 0);
+  if (!Number.isFinite(total) || total <= 0) {
+    return {
+      transition: 0.30,
+      pair: 0.15,
+      memory: 0.15,
+      recent: 0.15,
+      structural: 0.20,
+      late: 0.05,
+    };
+  }
+
+  return {
+    transition: safe.transition / total,
+    pair: safe.pair / total,
+    memory: safe.memory / total,
+    recent: safe.recent / total,
+    structural: safe.structural / total,
+    late: safe.late / total,
   };
 }
 
@@ -2310,7 +2339,15 @@ export function computeConditionalNextTop3V2({
   );
 
   const regime = safeStr(regimeInfo?.regime || "neutral");
-  const weights = getBichoFocusedWeights(regime);
+
+  const mode =
+    dayContext.repeatNow || Number(dayContext?.diversidade || 0) < 0.5
+      ? "REPEAT"
+      : Number(dayContext?.diversidade || 0) > 0.75
+        ? "SPREAD"
+        : "NEUTRAL";
+
+  const weights = getDayDrivenWeights(mode);
 
   const recentContextDraws = getComparableContextDrawsBeforeTs(
     list,
@@ -2353,6 +2390,16 @@ export function computeConditionalNextTop3V2({
       : 1;
 
   const dayFlowConfidence = confidenceFromSamples(dayContext?.total || 0, 4);
+  const pairStrong = Number(pairOut?.samples || 0) >= 4;
+
+  const adjustedWeights = normalizeWeights({
+    transition: pairStrong ? weights.transition * 0.7 : weights.transition,
+    pair: pairStrong ? weights.pair * 1.4 : weights.pair,
+    memory: weights.memory,
+    recent: weights.recent,
+    structural: weights.structural,
+    late: weights.late,
+  });
 
   const ranked = Array.from(
     { length: safeInt(TOP3_GROUPS_K, 25) },
@@ -2407,18 +2454,6 @@ export function computeConditionalNextTop3V2({
         Math.min(1, gapMs / Math.max(1, maxGapMsBase))
       );
 
-      const prob =
-        (pT * (weights.transitionFirst * 0.72)) +
-        (pPair * (0.10 * pairConfidence)) +
-        (pSeq * 0.10) +
-        (pSF * weights.structuralFirst) +
-        (pST * weights.structuralTop5) +
-        (pM * weights.memory) +
-        (pD * weights.duplication) +
-        (recentComposite * weights.recent) +
-        (repeatBoost * 0.03) +
-        (lateNorm * weights.late);
-
       const dayFreq = Number(dayContext?.freq?.get?.(grupo) || 0);
       const dayFirstFreq = Number(dayContext?.firstFreq?.get?.(grupo) || 0);
       const isDominantToday =
@@ -2450,14 +2485,34 @@ export function computeConditionalNextTop3V2({
           ? ((pPair * 260) + Math.min(70, Number(pairOut.samples || 0) * 8)) * pairConfidence
           : 0;
 
+      const structuralBlend =
+        (pSF * 0.45) +
+        (pST * 0.35) +
+        (pD * 0.20);
+
+      const memoryBlend =
+        (pM * 0.75) +
+        (pSeq * 0.25);
+
+      const recentBlend =
+        (recentComposite * 0.85) +
+        (repeatBoost * 0.15);
+
+      const prob =
+        (pT * adjustedWeights.transition) +
+        (pPair * adjustedWeights.pair * pairConfidence) +
+        (memoryBlend * adjustedWeights.memory) +
+        (recentBlend * adjustedWeights.recent) +
+        (structuralBlend * adjustedWeights.structural) +
+        (lateNorm * adjustedWeights.late);
+
       const score =
-        (dominanceScore * 1000) +
-        (pSeq * 220) +
-        (pPair * 180 * pairConfidence) +
-        (repeatBoost * 120) +
-        (pM * 210) +
-        (recentComposite * 170) +
-        (lateNorm * 35) +
+        (pT * adjustedWeights.transition * 1000) +
+        (pPair * adjustedWeights.pair * 1000 * pairConfidence) +
+        (memoryBlend * adjustedWeights.memory * 1000) +
+        (recentBlend * adjustedWeights.recent * 1000) +
+        (structuralBlend * adjustedWeights.structural * 1000) +
+        (lateNorm * adjustedWeights.late * 100) +
         dayFlowScore +
         pairSequenceScore;
 
@@ -2520,7 +2575,7 @@ export function computeConditionalNextTop3V2({
     `Motor: V2_BICHO`,
     `Regime detectado: ${regime}`,
     `RepeatRate=${Number(regimeInfo?.repeatRate || 0).toFixed(2)} | UniqueRate=${Number(regimeInfo?.uniqueRate || 0).toFixed(2)}`,
-    `Pesos: transição1º=${(weights.transitionFirst * 100).toFixed(0)}% | estrutural1º=${(weights.structuralFirst * 100).toFixed(0)}% | estruturalTOP5=${(weights.structuralTop5 * 100).toFixed(0)}% | memória=${(weights.memory * 100).toFixed(0)}% | duplicação=${(weights.duplication * 100).toFixed(0)}% | recência=${(weights.recent * 100).toFixed(0)}% | atraso=${(weights.late * 100).toFixed(0)}%`,
+    `Pesos: mode=${mode} | transição=${(adjustedWeights.transition * 100).toFixed(0)}% | par=${(adjustedWeights.pair * 100).toFixed(0)}% | memória=${(adjustedWeights.memory * 100).toFixed(0)}% | recência=${(adjustedWeights.recent * 100).toFixed(0)}% | estrutural=${(adjustedWeights.structural * 100).toFixed(0)}% | atraso=${(adjustedWeights.late * 100).toFixed(0)}%`,
     `Estado atual: prev=${String(prevGrupo).padStart(2, "0")} @ ${lastH} → alvo ${targetH}`,
     `Estado curto comparável: [${currentState.map((g) => String(g).padStart(2, "0")).join(", ")}]`,
     `Camada condicional: ${chosen?.label || "—"} | amostras=${condSamples}`,
@@ -2592,10 +2647,11 @@ export function computeConditionalNextTop3V2({
         scenario: `V2_BICHO_${safeStr(regime).toUpperCase()}`,
         explain: {
           engine: "V2_BICHO",
+          mode,
           regime,
           repeatRate: Number(regimeInfo?.repeatRate || 0),
           uniqueRate: Number(regimeInfo?.uniqueRate || 0),
-          weights,
+          weights: adjustedWeights,
           layerKey: chosen?.key || "NONE",
           layerLabel: chosen?.label || "—",
           layerSamples: condSamples,
@@ -2652,10 +2708,11 @@ export function computeConditionalNextTop3V2({
       scenario: `V2_BICHO_${safeStr(regime).toUpperCase()}`,
       explain: {
         engine: "V2_BICHO",
+        mode,
         regime,
         repeatRate: Number(regimeInfo?.repeatRate || 0),
         uniqueRate: Number(regimeInfo?.uniqueRate || 0),
-        weights,
+        weights: adjustedWeights,
         layerKey: chosen?.key || "NONE",
         layerLabel: chosen?.label || "—",
         layerSamples: condSamples,
