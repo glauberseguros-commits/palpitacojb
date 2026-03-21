@@ -454,7 +454,18 @@ export function findNextExistingDrawFromSlot({
   let daysWalked = 0;
 
   while (steps < maxSteps && daysWalked <= maxDays) {
-    const d = drawsIndex.get(`${curY}|${toHourBucket(curH)}`) || null;
+    const drawKey = `${curY}|${toHourBucket(curH)}`;
+    let d = drawsIndex.get(drawKey) || null;
+
+    if (!d) {
+      for (const [k, v] of drawsIndex.entries()) {
+        if (k.startsWith(`${curY}|`)) {
+          d = v;
+          break;
+        }
+      }
+    }
+
     if (d) return { slot: { ymd: curY, hour: toHourBucket(curH) }, draw: d };
 
     const sch = getScheduleForLottery({
@@ -504,19 +515,21 @@ export function indexDrawsByYmdHour(draws) {
 
   for (const d of list) {
     const y = pickDrawYMD(d);
-    const h = toHourBucket(pickDrawHour(d));
+    const rawH = pickDrawHour(d);
+    const h = toHourBucket(rawH);
+
     if (!isYMD(y) || !h) continue;
 
-    const key = `${y}|${h}`;
-    const prev = map.get(key);
+    const drawKey = `${y}|${h}`;
+    const prev = map.get(drawKey);
 
     if (!prev) {
-      map.set(key, d);
+      map.set(drawKey, d);
       continue;
     }
 
-    if (drawQualityScore(d) > drawQualityScore(prev)) {
-      map.set(key, d);
+    if (drawQualityScore(d) >= drawQualityScore(prev)) {
+      map.set(drawKey, d);
     }
   }
 
@@ -784,6 +797,23 @@ function normalizeMetric(value, maxValue) {
   const m = Number(maxValue || 0);
   if (!Number.isFinite(v) || !Number.isFinite(m) || m <= 0) return 0;
   return Math.max(0, Math.min(1, v / m));
+}
+
+function clamp01(v) {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(1, n));
+}
+
+function buildZeroProbMap(groupsK = TOP3_GROUPS_K) {
+  const k = safeInt(groupsK, 25);
+  return new Map(Array.from({ length: k }, (_, i) => [i + 1, 0]));
+}
+
+function confidenceFromSamples(samples, fullConfidenceAt = 8) {
+  const n = Number(samples || 0);
+  const lim = Math.max(1, Number(fullConfidenceAt || 8));
+  return clamp01(n / lim);
 }
 
 /* =========================
@@ -1884,6 +1914,228 @@ function computeComparableLastSeenByGrupo(
   return last;
 }
 
+function buildDayContext(drawsToday = []) {
+  const list = sortDrawsAsc(Array.isArray(drawsToday) ? drawsToday : []);
+  const freq = new Map();
+  const firstFreq = new Map();
+  const seq = [];
+
+  for (const d of list) {
+    const g = getFirstGrupoFromDraw(d);
+    if (!Number.isFinite(Number(g)) || Number(g) < 1 || Number(g) > 25) continue;
+
+    const gg = Number(g);
+    seq.push(gg);
+    freq.set(gg, Number(freq.get(gg) || 0) + 1);
+
+    const items = getAllTop5Groups(d);
+    if (items.some((it) => Number(it.grupo) === gg && Number(it.pos) === 1)) {
+      firstFreq.set(gg, Number(firstFreq.get(gg) || 0) + 1);
+    }
+  }
+
+  const total = seq.length;
+  const unique = new Set(seq).size;
+  const diversidade = total > 0 ? unique / total : 0;
+
+  let dominante = null;
+  let dominanteCount = -1;
+  for (const [g, n] of freq.entries()) {
+    if (Number(n) > dominanteCount) {
+      dominante = Number(g);
+      dominanteCount = Number(n);
+    }
+  }
+
+  const last1 = total >= 1 ? seq[total - 1] : null;
+  const last2 = total >= 2 ? seq[total - 2] : null;
+  const repeatNow =
+    Number.isFinite(Number(last1)) &&
+    Number.isFinite(Number(last2)) &&
+    Number(last1) === Number(last2);
+
+  return {
+    total,
+    unique,
+    diversidade,
+    dominante,
+    dominanteCount: Math.max(0, dominanteCount),
+    repeatNow,
+    freq,
+    firstFreq,
+    seq,
+  };
+}
+
+function buildPairSequenceDistribution({
+  drawsRange,
+  lotteryKey,
+  targetHour,
+  targetDow,
+  targetDayOfMonth,
+  prevPair,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+  groupsK = TOP3_GROUPS_K,
+}) {
+  const seq = buildComparableFirstSequence(
+    Array.isArray(drawsRange) ? drawsRange : [],
+    lotteryKey,
+    targetHour,
+    targetDow
+  );
+
+  const k = safeInt(groupsK, 25);
+  const outFreq = new Map();
+
+  for (let g = 1; g <= k; g += 1) outFreq.set(g, 0);
+
+  const pair = Array.isArray(prevPair) ? prevPair : [];
+  if (pair.length < 2) {
+    return {
+      prob: buildZeroProbMap(k),
+      samples: 0,
+      weightedSamples: 0,
+      exactDomSamples: 0,
+      freq: outFreq,
+    };
+  }
+
+  const pA = Number(pair[0]);
+  const pB = Number(pair[1]);
+  const key = safeStr(lotteryKey).toUpperCase();
+
+  let matchedSamples = 0;
+  let weightedSamples = 0;
+  let exactDomSamples = 0;
+
+  for (let i = 2; i < seq.length; i += 1) {
+    const a = Number(seq[i - 2]?.grupo);
+    const b = Number(seq[i - 1]?.grupo);
+    const g = Number(seq[i]?.grupo);
+    const y = safeStr(seq[i]?.ymd);
+
+    if (!Number.isFinite(a) || !Number.isFinite(b) || !Number.isFinite(g)) continue;
+    if (a !== pA || b !== pB) continue;
+    if (!isYMD(y)) continue;
+
+    matchedSamples += 1;
+
+    let weight = 1;
+
+    if (key !== "FEDERAL") {
+      const dom = Number(getDayOfMonth(y));
+      if (Number.isFinite(dom) && Number(dom) === Number(targetDayOfMonth)) {
+        weight = 1.35;
+        exactDomSamples += 1;
+      }
+    }
+
+    weightedSamples += weight;
+    outFreq.set(g, Number(outFreq.get(g) || 0) + weight);
+  }
+
+  const prob = new Map();
+  const denom = Math.max(1, weightedSamples);
+
+  for (let g = 1; g <= k; g += 1) {
+    prob.set(g, Number(outFreq.get(g) || 0) / denom);
+  }
+
+  return {
+    prob,
+    samples: matchedSamples,
+    weightedSamples,
+    exactDomSamples,
+    freq: outFreq,
+  };
+}
+
+function buildSeq2FirstDistribution(
+  comparableSeq,
+  currentState,
+  groupsK = TOP3_GROUPS_K
+) {
+  const seq = Array.isArray(comparableSeq) ? comparableSeq : [];
+  const state = Array.isArray(currentState) ? currentState : [];
+  const k = safeInt(groupsK, 25);
+
+  const freq = new Map();
+  for (let g = 1; g <= k; g += 1) freq.set(g, 0);
+
+  if (state.length < 2) {
+    const prob = new Map();
+    for (let g = 1; g <= k; g += 1) prob.set(g, 0);
+    return { prob, freq, samples: 0, prev2: null, prev1: null };
+  }
+
+  const prev1 = Number(state[0]);
+  const prev2 = Number(state[1]);
+
+  let samples = 0;
+
+  for (let i = 2; i < seq.length; i += 1) {
+    const gA = Number(seq[i - 2]?.grupo);
+    const gB = Number(seq[i - 1]?.grupo);
+    const gN = Number(seq[i]?.grupo);
+
+    if (!Number.isFinite(gA) || !Number.isFinite(gB) || !Number.isFinite(gN)) continue;
+    if (gA !== prev2 || gB !== prev1) continue;
+    if (gN < 1 || gN > k) continue;
+
+    samples += 1;
+    freq.set(gN, Number(freq.get(gN) || 0) + 1);
+  }
+
+  const prob = new Map();
+  const denom = Math.max(1, samples);
+
+  for (let g = 1; g <= k; g += 1) {
+    prob.set(g, Number(freq.get(g) || 0) / denom);
+  }
+
+  return { prob, freq, samples, prev2, prev1 };
+}
+
+function buildRecentRepeatBoostMap(
+  comparableSeq,
+  targetTs,
+  windowSize = 4,
+  groupsK = TOP3_GROUPS_K
+) {
+  const seq = getComparableRecentDrawsBeforeTs(
+    Array.isArray(comparableSeq) ? comparableSeq : [],
+    targetTs,
+    windowSize
+  );
+
+  const k = safeInt(groupsK, 25);
+  const counts = new Map();
+  for (let g = 1; g <= k; g += 1) counts.set(g, 0);
+
+  for (const item of seq) {
+    const g = Number(item?.grupo);
+    if (!Number.isFinite(g) || g < 1 || g > k) continue;
+    counts.set(g, Number(counts.get(g) || 0) + 1);
+  }
+
+  const boost = new Map();
+  const maxCount = Math.max(1, ...Array.from(counts.values()).map((n) => Number(n || 0)));
+
+  for (let g = 1; g <= k; g += 1) {
+    const c = Number(counts.get(g) || 0);
+    boost.set(g, c >= 2 ? c / maxCount : 0);
+  }
+
+  return {
+    boost,
+    counts,
+    windowSize,
+    considered: Array.isArray(seq) ? seq.length : 0,
+  };
+}
+
 /* =========================
    Motor principal V2 (FOCO = BICHO)
 ========================= */
@@ -1892,6 +2144,7 @@ export function computeConditionalNextTop3V2({
   lotteryKey,
   drawsRange,
   drawLast,
+  drawsToday,
   PT_RIO_SCHEDULE_NORMAL,
   PT_RIO_SCHEDULE_WED_SAT,
   FEDERAL_SCHEDULE,
@@ -1936,6 +2189,30 @@ export function computeConditionalNextTop3V2({
   }
 
   const targetTs = ymdHourToTs(targetY, targetH);
+
+  const dayContext = buildDayContext(drawsToday);
+  const prevPair =
+    Array.isArray(dayContext?.seq) && dayContext.seq.length >= 2
+      ? dayContext.seq.slice(-2)
+      : [];
+
+  const pairOut = buildPairSequenceDistribution({
+    drawsRange: list,
+    lotteryKey: key,
+    targetHour: targetH,
+    targetDow,
+    targetDayOfMonth,
+    prevPair,
+    PT_RIO_SCHEDULE_NORMAL,
+    PT_RIO_SCHEDULE_WED_SAT,
+    FEDERAL_SCHEDULE,
+    groupsK: TOP3_GROUPS_K,
+  });
+
+  const pairConfidence = clamp01(
+    (confidenceFromSamples(pairOut?.samples || 0, 6) * 0.7) +
+    (confidenceFromSamples(pairOut?.exactDomSamples || 0, 3) * 0.3)
+  );
 
   const layerOut = buildConditionalLayerDistribution({
     lotteryKey,
@@ -2013,6 +2290,21 @@ export function computeConditionalNextTop3V2({
 
   const pMemory = memoryOut?.prob || new Map();
 
+  const seq2Out = buildSeq2FirstDistribution(
+    comparableSeq,
+    currentState,
+    TOP3_GROUPS_K
+  );
+  const pSeq2 = seq2Out?.prob || new Map();
+
+  const repeatBoostOut = buildRecentRepeatBoostMap(
+    comparableSeq,
+    targetTs,
+    4,
+    TOP3_GROUPS_K
+  );
+  const repeatBoostMap = repeatBoostOut?.boost || new Map();
+
   const regimeInfo = detectRegimeFromComparableSequence(
     getComparableRecentDrawsBeforeTs(comparableSeq, targetTs, 6)
   );
@@ -2060,6 +2352,8 @@ export function computeConditionalNextTop3V2({
       ? Math.max(1, targetTs - minSeenTs)
       : 1;
 
+  const dayFlowConfidence = confidenceFromSamples(dayContext?.total || 0, 4);
+
   const ranked = Array.from(
     { length: safeInt(TOP3_GROUPS_K, 25) },
     (_, idx) => {
@@ -2070,6 +2364,9 @@ export function computeConditionalNextTop3V2({
       const pST = Number(pStructuralTop5.get(grupo) || 0);
       const pM = Number(pMemory.get(grupo) || 0);
       const pD = Number(pDuplication.get(grupo) || 0);
+      const pSeq = Number(pSeq2.get(grupo) || 0);
+      const repeatBoost = Number(repeatBoostMap.get(grupo) || 0);
+      const pPair = Number(pairOut?.prob?.get?.(grupo) || 0);
 
       const rm = recentMetrics.get(grupo) || {
         recentTop5: 0,
@@ -2085,7 +2382,6 @@ export function computeConditionalNextTop3V2({
       const recentDupNorm = normalizeMetric(rm.recentDupDraws, recentMaxDup);
       const recentLast1Norm = normalizeMetric(rm.recentLast1Top5, 1);
       const recentLast2Norm = normalizeMetric(rm.recentLast2Top5, 2);
-      const recentLast3Norm = normalizeMetric(rm.recentLast3Top5, 3);
 
       const recentComposite =
         (recentFirstNorm * 0.34) +
@@ -2112,19 +2408,58 @@ export function computeConditionalNextTop3V2({
       );
 
       const prob =
-        (pT * weights.transitionFirst) +
+        (pT * (weights.transitionFirst * 0.72)) +
+        (pPair * (0.10 * pairConfidence)) +
+        (pSeq * 0.10) +
         (pSF * weights.structuralFirst) +
         (pST * weights.structuralTop5) +
         (pM * weights.memory) +
         (pD * weights.duplication) +
         (recentComposite * weights.recent) +
+        (repeatBoost * 0.03) +
         (lateNorm * weights.late);
+
+      const dayFreq = Number(dayContext?.freq?.get?.(grupo) || 0);
+      const dayFirstFreq = Number(dayContext?.firstFreq?.get?.(grupo) || 0);
+      const isDominantToday =
+        Number.isFinite(Number(dayContext?.dominante)) &&
+        Number(dayContext.dominante) === Number(grupo);
+
+      let dayFlowRaw = 0;
+
+      if (dayFreq >= 2) dayFlowRaw += 32;
+      if (dayFreq >= 3) dayFlowRaw += 18;
+      if (dayFirstFreq >= 1) dayFlowRaw += 20;
+      if (dayFirstFreq >= 2) dayFlowRaw += 14;
+      if (isDominantToday) dayFlowRaw += 24;
+
+      if (Number(dayContext?.diversidade || 0) < 0.5) {
+        dayFlowRaw += dayFreq > 0 ? 12 : -8;
+      } else if (Number(dayContext?.diversidade || 0) > 0.75) {
+        dayFlowRaw += dayFreq === 0 ? 10 : 0;
+      }
+
+      if (dayContext?.repeatNow && dayFreq > 0) {
+        dayFlowRaw += 10;
+      }
+
+      const dayFlowScore = dayFlowRaw * dayFlowConfidence;
+
+      const pairSequenceScore =
+        Number(pairOut?.samples || 0) > 0
+          ? ((pPair * 260) + Math.min(70, Number(pairOut.samples || 0) * 8)) * pairConfidence
+          : 0;
 
       const score =
         (dominanceScore * 1000) +
-        (pM * 220) +
-        (recentComposite * 180) +
-        (lateNorm * 35);
+        (pSeq * 220) +
+        (pPair * 180 * pairConfidence) +
+        (repeatBoost * 120) +
+        (pM * 210) +
+        (recentComposite * 170) +
+        (lateNorm * 35) +
+        dayFlowScore +
+        pairSequenceScore;
 
       return {
         grupo,
@@ -2135,6 +2470,10 @@ export function computeConditionalNextTop3V2({
         probStructuralTop5: pST,
         probMemory: pM,
         probDuplication: pD,
+        probSeq2: pSeq,
+        probPair: pPair,
+        pairConfidence,
+        repeatBoost,
         dominanceScore,
         recentComposite,
         recentTop5: rm.recentTop5,
@@ -2150,13 +2489,26 @@ export function computeConditionalNextTop3V2({
         structuralTop5Count: Number(structuralTop5?.freq?.get(grupo) || 0),
         duplicationCount: Number(duplication?.freq?.get(grupo) || 0),
         memoryWeight: Number(memoryOut?.freq?.get(grupo) || 0),
+        dayFreq,
+        dayFirstFreq,
+        isDominantToday,
+        dayFlowConfidence,
+        dayFlowScore,
+        pairProb: pPair,
+        pairSamples: Number(pairOut?.samples || 0),
+        pairWeightedSamples: Number(pairOut?.weightedSamples || 0),
+        pairExactDomSamples: Number(pairOut?.exactDomSamples || 0),
+        pairCount: Number(pairOut?.freq?.get?.(grupo) || 0),
+        pairSequenceScore,
       };
     }
   )
     .sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score;
+      if (b.prob !== a.prob) return b.prob - a.prob;
       if (b.dominanceScore !== a.dominanceScore) return b.dominanceScore - a.dominanceScore;
       if (b.probTransition !== a.probTransition) return b.probTransition - a.probTransition;
+      if (b.probPair !== a.probPair) return b.probPair - a.probPair;
       if (b.probDuplication !== a.probDuplication) return b.probDuplication - a.probDuplication;
       if (b.probStructuralFirst !== a.probStructuralFirst) return b.probStructuralFirst - a.probStructuralFirst;
       if (b.probStructuralTop5 !== a.probStructuralTop5) return b.probStructuralTop5 - a.probStructuralTop5;
@@ -2174,6 +2526,8 @@ export function computeConditionalNextTop3V2({
     `Camada condicional: ${chosen?.label || "—"} | amostras=${condSamples}`,
     `Amostra estrutural 1º=${Number(structuralFirst?.totalSamples || 0)} | TOP5=${Number(structuralTop5?.totalSamples || 0)} | duplicação=${Number(duplication?.totalSamples || 0)}`,
     `Amostra memória: matches=${Number(memoryOut?.matchedSamples || 0)} | peso=${Number(memoryOut?.totalWeight || 0).toFixed(2)}`,
+    `Par do dia: ${Array.isArray(prevPair) && prevPair.length === 2 ? prevPair.map((n) => String(n).padStart(2, "0")).join("→") : "--"} | matches=${Number(pairOut?.samples || 0)} | matches DOM=${Number(pairOut?.exactDomSamples || 0)} | confiança=${(pairConfidence * 100).toFixed(0)}%`,
+    `Fluxo do dia: draws=${Number(dayContext?.total || 0)} | confiança=${(dayFlowConfidence * 100).toFixed(0)}%`,
     `Data alvo: ${targetY} | DOW=${targetDow} | dia=${String(targetDayOfMonth).padStart(2, "0")}`,
   ];
 
@@ -2206,6 +2560,9 @@ export function computeConditionalNextTop3V2({
         `Grupo G${g2}: estrutural de 1º=${(x.probStructuralFirst * 100).toFixed(2)}%`,
         `Grupo G${g2}: estrutural de TOP5=${(x.probStructuralTop5 * 100).toFixed(2)}%`,
         `Grupo G${g2}: duplicação histórica=${(x.probDuplication * 100).toFixed(2)}%`,
+        `Grupo G${g2}: sequência ordem 2=${(x.probSeq2 * 100).toFixed(2)}%`,
+        `Grupo G${g2}: par do dia=${(x.probPair * 100).toFixed(2)}% | confiança=${(x.pairConfidence * 100).toFixed(2)}%`,
+        `Grupo G${g2}: boost de repetição=${(x.repeatBoost * 100).toFixed(2)}%`,
         `Grupo G${g2}: memória curta=${(x.probMemory * 100).toFixed(2)}%`,
         `Grupo G${g2}: recência composta=${(x.recentComposite * 100).toFixed(2)}%`,
         `Grupo G${g2}: atraso normalizado=${(x.lateNorm * 100).toFixed(2)}%`,
@@ -2214,6 +2571,11 @@ export function computeConditionalNextTop3V2({
         `Grupo G${g2}: TOP5 estruturais=${x.structuralTop5Count}`,
         `Grupo G${g2}: draws com duplicação=${x.duplicationCount}`,
         `Grupo G${g2}: peso de memória=${Number(x.memoryWeight || 0).toFixed(2)}`,
+        `Grupo G${g2}: frequência no dia=${x.dayFreq}`,
+        `Grupo G${g2}: 1ºs no dia=${x.dayFirstFreq}`,
+        `Grupo G${g2}: dominante no dia=${x.isDominantToday ? "sim" : "não"}`,
+        `Grupo G${g2}: score do fluxo do dia=${Number(x.dayFlowScore || 0).toFixed(2)} | confiança=${(Number(x.dayFlowConfidence || 0) * 100).toFixed(0)}%`,
+        `Grupo G${g2}: sequência ${Array.isArray(prevPair) && prevPair.length === 2 ? prevPair.map((n) => String(n).padStart(2, "0")).join("→") : "--"} | amostras=${x.pairSamples} | amostras ponderadas=${Number(x.pairWeightedSamples || 0).toFixed(2)} | DOM exato=${x.pairExactDomSamples} | ocorrências=${Number(x.pairCount || 0).toFixed(2)} | prob=${(Number(x.pairProb || 0) * 100).toFixed(2)}% | score=${Number(x.pairSequenceScore || 0).toFixed(2)}`,
         `Probabilidade final BICHO=${(x.prob * 100).toFixed(2)}%`,
       ],
       meta: {
@@ -2242,11 +2604,22 @@ export function computeConditionalNextTop3V2({
           duplicationSamples: Number(duplication?.totalSamples || 0),
           memoryMatchedSamples: Number(memoryOut?.matchedSamples || 0),
           memoryTotalWeight: Number(memoryOut?.totalWeight || 0),
+          seq2Samples: Number(seq2Out?.samples || 0),
+          seq2Prev2: Number(seq2Out?.prev2 || 0),
+          seq2Prev1: Number(seq2Out?.prev1 || 0),
+          pairSamples: Number(pairOut?.samples || 0),
+          pairWeightedSamples: Number(pairOut?.weightedSamples || 0),
+          pairExactDomSamples: Number(pairOut?.exactDomSamples || 0),
+          pairConfidence,
+          repeatWindowSize: Number(repeatBoostOut?.windowSize || 0),
+          repeatWindowConsidered: Number(repeatBoostOut?.considered || 0),
           currentState,
           targetDow,
           targetDayOfMonth,
           prevHour: lastH,
           prevGrupo: Number(prevGrupo),
+          dayContextTotal: Number(dayContext?.total || 0),
+          dayFlowConfidence,
           dominanceScore: x.dominanceScore,
           recentComposite: x.recentComposite,
           recentTop5: x.recentTop5,
@@ -2291,11 +2664,17 @@ export function computeConditionalNextTop3V2({
         duplicationSamples: Number(duplication?.totalSamples || 0),
         memoryMatchedSamples: Number(memoryOut?.matchedSamples || 0),
         memoryTotalWeight: Number(memoryOut?.totalWeight || 0),
+        pairSamples: Number(pairOut?.samples || 0),
+        pairWeightedSamples: Number(pairOut?.weightedSamples || 0),
+        pairExactDomSamples: Number(pairOut?.exactDomSamples || 0),
+        pairConfidence,
         currentState,
         targetDow,
         targetDayOfMonth,
         prevHour: lastH,
         prevGrupo: Number(prevGrupo),
+        dayContextTotal: Number(dayContext?.total || 0),
+        dayFlowConfidence,
         allLayers: (layerOut?.layers || []).map((layer) => ({
           key: layer.key,
           label: layer.label,

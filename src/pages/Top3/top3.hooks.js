@@ -457,32 +457,62 @@ function ensureDayTimeline({ ymd, lotteryKey }) {
   saveTop3Log(log);
 }
 
-function backfillDayTop3({ draws, lotteryKey }) {
-  if (!Array.isArray(draws) || !draws.length) return;
+function backfillDayTop3({ draws, lotteryKey, rangeDraws }) {
+  const dayDraws = Array.isArray(draws) ? draws : [];
+  const historicalDraws = Array.isArray(rangeDraws) ? rangeDraws : [];
 
-  const sorted = [...draws]
+  if (!dayDraws.length) return;
+
+  const sortedDay = [...dayDraws]
     .filter((d) => isDrawValidForLotterySchedule(d, lotteryKey))
     .sort((a, b) => drawTs(a) - drawTs(b));
 
-  for (let i = 1; i < sorted.length; i++) {
-    const current = sorted[i];
-    const prev = sorted[i - 1];
+  if (sortedDay.length < 2) return;
 
-    const ymd = pickDrawYMD(current);
-    const hour = toHourBucket(pickDrawHour(current));
-    const grupoBase = pickPrize1GrupoFromDraw(prev);
+  for (let i = 1; i < sortedDay.length; i++) {
+    const current = sortedDay[i];
+    const prev = sortedDay[i - 1];
 
-    if (!isYMD(ymd) || !hour || !grupoBase) continue;
+    const currentYmd = pickDrawYMD(current);
+    const currentHour = toHourBucket(pickDrawHour(current));
+    const prevTs = drawTs(prev);
 
-    const picks = [
-      grupoBase,
-      (grupoBase % 25) + 1,
-      ((grupoBase + 1) % 25) + 1,
-    ];
+    if (!isYMD(currentYmd) || !currentHour || !Number.isFinite(prevTs)) continue;
+
+    const usableHistory = [...historicalDraws]
+      .filter((d) => isDrawValidForLotterySchedule(d, lotteryKey))
+      .filter((d) => {
+        const ts = drawTs(d);
+        return Number.isFinite(ts) && ts <= prevTs;
+      })
+      .sort((a, b) => drawTs(a) - drawTs(b));
+
+    if (!usableHistory.length) continue;
+
+    const computed = computeConditionalNextTop3V2({
+      lotteryKey,
+      drawsRange: usableHistory,
+      drawLast: prev,
+      drawsToday: sortedDay.filter((d) => {
+        const ts = drawTs(d);
+        return Number.isFinite(ts) && ts <= prevTs;
+      }),
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+      topN: 3,
+    });
+
+    const picks = (Array.isArray(computed?.top) ? computed.top : [])
+      .map((x) => Number(x?.grupo))
+      .filter((n) => Number.isFinite(n) && n >= 1 && n <= 25)
+      .slice(0, 3);
+
+    if (!picks.length) continue;
 
     registerPrediction({
-      targetYmd: ymd,
-      targetHour: hour,
+      targetYmd: currentYmd,
+      targetHour: currentHour,
       picks,
     });
   }
@@ -906,7 +936,7 @@ export function useTop3Controller() {
       if (requestIdRef.current !== currentRequestId) return;
 
       setRangeDraws(hist);
-      backfillDayTop3({ draws: today, lotteryKey: lKey });
+      backfillDayTop3({ draws: today, lotteryKey: lKey, rangeDraws: hist });
     } catch (e) {
       if (requestIdRef.current === currentRequestId) {
         setError(String(e?.message || e || "Falha ao carregar dados do TOP3."));
@@ -1136,3 +1166,4 @@ export function useTop3Controller() {
     normalizeImgSrc,
   };
 }
+

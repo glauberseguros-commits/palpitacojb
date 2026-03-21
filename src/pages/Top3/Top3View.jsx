@@ -1,5 +1,6 @@
 // src/pages/Top3/Top3View.jsx
 import React, { useMemo, useState, useCallback, useEffect } from "react";
+import { getAnimalLabel, getImgFromGrupo } from "../../constants/bichoMap";
 
 function toPercent(score) {
   const n = Number(score);
@@ -52,10 +53,6 @@ function formatYmdHour(ymd, hour) {
   return "—";
 }
 
-/**
- * Wrap cíclico apenas para montar as 4 dezenas fixas do grupo.
- * NÃO é regra geral de transformação de centena em dezena.
- */
 function wrapToDezena2(n) {
   const x = Number(n);
   if (!Number.isFinite(x)) return "";
@@ -101,13 +98,6 @@ function clampColsFromItemMilharesCols(milharesCols, expectedCols = 4, perCol = 
   return out.slice(0, expectedCols);
 }
 
-/**
- * MONTA 20 MILHARES EM 4 COLUNAS (5 POR DEZENA FIXA)
- * - NÃO INVENTA NÚMEROS
- * - se faltar, completa com "" (vazio)
- * - respeita dezenas fixas do grupo
- * - mantém "sem repetir centena" GLOBAL
- */
 function build20ByDezena({ grupo, baseMilhares, perCol = 5 }) {
   const g = Number(grupo);
   const dezenas = getDezenasFixasFromGrupo(g);
@@ -211,7 +201,8 @@ function ImgWithFallback({ srcs, alt, size = 84, style }) {
         height: size,
         borderRadius: 16,
         border: "1px solid rgba(201,168,62,0.36)",
-        background: "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(0,0,0,0.28))",
+        background:
+          "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(0,0,0,0.28))",
         display: "grid",
         placeItems: "center",
         overflow: "hidden",
@@ -286,8 +277,8 @@ function Top3Card({
     Array.isArray(item?.imgIcon) && item.imgIcon.length
       ? item.imgIcon
       : Array.isArray(item?.imgBg)
-      ? item.imgBg
-      : [];
+        ? item.imgBg
+        : [];
 
   const hasCols =
     Array.isArray(item?.milharesCols) &&
@@ -472,15 +463,12 @@ export default function Top3View(props) {
     lastLabel,
     prevLabel,
     theme,
-
     LOTTERY_OPTIONS,
     lotteryKeySafe,
     setLotteryKey,
-
     build16,
     buildMilhares,
     build20,
-
     analysisYmd,
     analysisHourBucket,
     lastHourBucket,
@@ -519,6 +507,24 @@ export default function Top3View(props) {
 
   const [copiedAllKey, setCopiedAllKey] = useState("");
   const [copiedCellKey, setCopiedCellKey] = useState("");
+  const [log, setLog] = useState([]);
+
+  useEffect(() => {
+    try {
+      const data = JSON.parse(localStorage.getItem("top3_log") || "[]");
+      setLog(Array.isArray(data) ? data : []);
+    } catch {
+      setLog([]);
+    }
+  }, []);
+
+  const stats = useMemo(() => {
+    const valid = log.filter((l) => l?.result != null);
+    const total = valid.length;
+    const hits = valid.filter((l) => l?.hit === true).length;
+    const rate = total ? (hits / total) * 100 : 0;
+    return { total, hits, rate };
+  }, [log]);
 
   useEffect(() => {
     if (!copiedAllKey) return;
@@ -593,6 +599,17 @@ export default function Top3View(props) {
   const curLot = String(lotteryKeySafe || "PT_RIO").toUpperCase();
   const heroItem = list[0] || null;
   const secondaryItems = list.slice(1, 3);
+
+  const historyRows = useMemo(() => {
+    return [...log]
+      .filter((item) => item?.target?.ymd && item?.target?.hour)
+      .sort((a, b) => {
+        const aKey = `${String(a?.target?.ymd || "")}_${String(a?.target?.hour || "")}`;
+        const bKey = `${String(b?.target?.ymd || "")}_${String(b?.target?.hour || "")}`;
+        return aKey < bKey ? 1 : -1;
+      })
+      .slice(0, 10);
+  }, [log]);
 
   return (
     <div
@@ -692,7 +709,7 @@ export default function Top3View(props) {
 
         .top3-metaGrid{
           display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
+          grid-template-columns: repeat(4, minmax(0, 1fr));
           gap: 10px;
         }
 
@@ -1037,6 +1054,44 @@ export default function Top3View(props) {
           padding: 6px 0;
         }
 
+        .top3-historyRow{
+          display:grid;
+          grid-template-columns: 170px 1fr 250px 60px;
+          align-items:center;
+          gap: 12px;
+          padding: 10px 12px;
+          border-radius: 12px;
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.08);
+          font-size: 13px;
+        }
+
+        .top3-historyResult{
+          display:flex;
+          align-items:center;
+          gap:10px;
+          min-width:0;
+        }
+
+        .top3-historyResultText{
+          display:grid;
+          gap:2px;
+          min-width:0;
+        }
+
+        .top3-historyResultGroup{
+          font-weight:900;
+        }
+
+        .top3-historyResultAnimal{
+          font-size:11px;
+          color: var(--top3-muted);
+          text-transform: uppercase;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
         @media (max-width: 1180px){
           .top3-secondaryRow{
             max-width: 980px;
@@ -1054,7 +1109,7 @@ export default function Top3View(props) {
           }
 
           .top3-metaGrid{
-            grid-template-columns: 1fr;
+            grid-template-columns: 1fr 1fr;
           }
 
           .top3-heroWrap,
@@ -1096,6 +1151,11 @@ export default function Top3View(props) {
 
           .pp-btn{
             width: 100%;
+          }
+
+          .top3-historyRow{
+            grid-template-columns: 1fr;
+            align-items:start;
           }
         }
 
@@ -1161,6 +1221,10 @@ export default function Top3View(props) {
             top: 6px;
             font-size: 9px;
             padding: 3px 6px;
+          }
+
+          .top3-metaGrid{
+            grid-template-columns: 1fr;
           }
         }
 
@@ -1256,6 +1320,13 @@ export default function Top3View(props) {
                 <div className="top3-metaItem__label">Condição</div>
                 <div className="top3-metaItem__value">{meta.layer}</div>
               </div>
+
+              <div className="top3-metaItem">
+                <div className="top3-metaItem__label">Assertividade</div>
+                <div className="top3-metaItem__value">
+                  {stats.rate.toFixed(1)}% ({stats.hits}/{stats.total})
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -1308,6 +1379,86 @@ export default function Top3View(props) {
             ) : null}
           </section>
         )}
+
+        <section className="top3-shell">
+          <div className="top3-header__title">Histórico recente</div>
+
+          <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
+            {historyRows.map((item) => {
+              const y = String(item?.target?.ymd || "");
+              const h = String(item?.target?.hour || "");
+
+              const picks = Array.isArray(item?.picks)
+                ? item.picks.map((g) => formatGrupo(g)).join(" - ")
+                : "--- - --- - ---";
+
+              const resultGrupo = Number(item?.result ?? item?.grupo ?? item?.prizes?.[0]?.grupo);
+              const hasResult = Number.isFinite(resultGrupo);
+
+              const resultAnimal = hasResult ? (item?.animal || getAnimalLabel(resultGrupo)) : "";
+              const resultImg = hasResult
+                ? getImgFromGrupo(resultGrupo, 64)
+                : "";
+
+              return (
+                <div
+                  key={String(item?.targetKey || `${y}_${h}`)}
+                  className="top3-historyRow"
+                >
+                  <div style={{ fontWeight: 800 }}>
+                    {ymdToBR(y)} {h}
+                  </div>
+
+                  <div style={{ letterSpacing: 1 }}>
+                    {picks}
+                  </div>
+
+                  <div className="top3-historyResult">
+                    {hasResult ? (
+                      <>
+                        <ImgWithFallback
+                          srcs={[resultImg]}
+                          alt={resultAnimal}
+                          size={36}
+                          style={{ borderRadius: 8 }}
+                        />
+                        <div className="top3-historyResultText">
+                          <div className="top3-historyResultGroup">
+                            G{formatGrupo(resultGrupo)}
+                          </div>
+                          <div className="top3-historyResultAnimal">
+                            {String(resultAnimal || "").toUpperCase()}
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <ImgWithFallback
+                          srcs={[]}
+                          alt="pendente"
+                          size={36}
+                          style={{ borderRadius: 8 }}
+                        />
+                        <div className="top3-historyResultText">
+                          <div className="top3-historyResultGroup">G—</div>
+                          <div className="top3-historyResultAnimal">PENDENTE</div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  <div style={{ textAlign: "center", fontSize: 16 }}>
+                    {item?.hit === true
+                      ? "✅"
+                      : item?.hit === false
+                        ? "❌"
+                        : "⏳"}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
       </div>
     </div>
   );
