@@ -48,6 +48,232 @@ import {
 
 import { getAnimalLabel, getImgFromGrupo } from "../../constants/bichoMap";
 
+function normHour(h) {
+  const m = String(h || "").match(/(\d{1,2})/);
+  const hh = m ? String(m[1]).padStart(2, "0") : "";
+  return hh ? `${hh}h` : "";
+}
+
+function makeKey(ymd, hour) {
+  const y = String(ymd || "").trim();
+  const h = normHour(hour);
+  return y && h ? `${y}_${h}` : "";
+}
+
+function normalizeLogEntry(entry) {
+  if (!entry || typeof entry !== "object") return null;
+
+  const ymd = safeStr(entry?.target?.ymd || "");
+  const hour = normHour(entry?.target?.hour || "");
+  const targetKey = makeKey(ymd, hour);
+
+  if (!isYMD(ymd) || !hour || !targetKey) return null;
+
+  const picks = Array.isArray(entry?.picks)
+    ? entry.picks
+        .map(Number)
+        .filter((n) => Number.isFinite(n) && n >= 1 && n <= 25)
+    : [];
+
+  const resultNum = Number(entry?.result);
+  const result =
+    entry?.result != null &&
+    Number.isFinite(resultNum) &&
+    resultNum >= 1 &&
+    resultNum <= 25
+      ? resultNum
+      : null;
+
+  return {
+    ...entry,
+    targetKey,
+    target: { ymd, hour },
+    picks,
+    result,
+    hit:
+      typeof entry?.hit === "boolean"
+        ? entry.hit
+        : result != null && picks.length
+          ? picks.includes(result)
+          : null,
+    createdAt: Number(entry?.createdAt) || Date.now(),
+    validatedAt: Number(entry?.validatedAt) || undefined,
+    status: safeStr(entry?.status || "") || undefined,
+  };
+}
+
+function scoreLogEntry(entry) {
+  if (!entry) return -1;
+  let score = 0;
+  if (Array.isArray(entry?.picks) && entry.picks.length) score += 20;
+  if (entry?.result != null) score += 10;
+  if (typeof entry?.hit === "boolean") score += 5;
+  if (entry?.validatedAt) score += 2;
+  if (entry?.createdAt) score += 1;
+  return score;
+}
+
+function normalizeAndDedupeLog(log) {
+  const list = Array.isArray(log) ? log : [];
+  const byKey = new Map();
+
+  for (const raw of list) {
+    const entry = normalizeLogEntry(raw);
+    if (!entry) continue;
+
+    const key = entry.targetKey;
+    const prev = byKey.get(key);
+
+    if (!prev) {
+      byKey.set(key, entry);
+      continue;
+    }
+
+    byKey.set(key, scoreLogEntry(entry) >= scoreLogEntry(prev) ? entry : prev);
+  }
+
+  return [...byKey.values()].sort((a, b) => {
+    const aKey = `${a?.target?.ymd || ""}_${a?.target?.hour || ""}`;
+    const bKey = `${b?.target?.ymd || ""}_${b?.target?.hour || ""}`;
+    return aKey < bKey ? -1 : aKey > bKey ? 1 : 0;
+  });
+}
+
+// ===============================
+// TOP3 LOG SYSTEM (VALIDAÇÃO REAL)
+// ===============================
+function getTop3Log() {
+  try {
+    const raw = JSON.parse(localStorage.getItem("top3_log") || "[]");
+    return normalizeAndDedupeLog(raw);
+  } catch {
+    return [];
+  }
+}
+
+function saveTop3Log(log) {
+  try {
+    const normalized = normalizeAndDedupeLog(log).slice(-200);
+    localStorage.setItem("top3_log", JSON.stringify(normalized));
+  } catch {}
+}
+
+function registerPrediction({ targetKey, targetYmd, targetHour, picks }) {
+  const normalizedHour = normHour(targetHour);
+  const normalizedKey = makeKey(targetYmd, normalizedHour);
+  if (!normalizedKey || !Array.isArray(picks) || !picks.length) return;
+
+  const log = getTop3Log();
+  const normalizedPicks = picks
+    .map(Number)
+    .filter((n) => Number.isFinite(n) && n >= 1 && n <= 25);
+
+  const idx = log.findIndex(
+    (l) => String(l?.targetKey || "") === String(normalizedKey)
+  );
+
+  if (idx >= 0) {
+    const prev = log[idx] || {};
+    log[idx] = {
+      ...prev,
+      targetKey: normalizedKey,
+      target: { ymd: targetYmd || "", hour: normalizedHour || "" },
+      picks: normalizedPicks,
+      createdAt: prev.createdAt || Date.now(),
+      result: prev.result ?? null,
+      hit:
+        prev.result != null
+          ? normalizedPicks.includes(Number(prev.result))
+          : prev.hit ?? null,
+      status: normalizedPicks.length ? "predicted" : prev.status || "empty",
+    };
+  } else {
+    log.push({
+      targetKey: normalizedKey,
+      target: { ymd: targetYmd || "", hour: normalizedHour || "" },
+      picks: normalizedPicks,
+      result: null,
+      hit: null,
+      createdAt: Date.now(),
+      status: "predicted",
+    });
+  }
+
+  saveTop3Log(log);
+}
+
+function registerResult({ targetKey, resultGrupo }) {
+  const log = getTop3Log();
+  const normalizedTargetKey = String(targetKey || "").trim();
+  if (!normalizedTargetKey || !Number.isFinite(Number(resultGrupo))) return;
+
+  const idx = log.findIndex(
+    (l) => String(l?.targetKey || "") === String(normalizedTargetKey)
+  );
+  if (idx === -1) return;
+
+  const picks = Array.isArray(log[idx]?.picks)
+    ? log[idx].picks.map(Number)
+    : [];
+
+  log[idx] = {
+    ...log[idx],
+    result: Number(resultGrupo),
+    hit: picks.includes(Number(resultGrupo)),
+    validatedAt: Date.now(),
+    status: "validated",
+  };
+
+  saveTop3Log(log);
+}
+
+function findRealDrawByTarget({ targetYmd, targetHour, todayDraws, rangeDraws }) {
+  const normalizedHour = normHour(targetHour);
+
+  const sameTarget = (d) =>
+    pickDrawYMD(d) === targetYmd &&
+    normHour(toHourBucket(pickDrawHour(d))) === normalizedHour;
+
+  const realToday =
+    (Array.isArray(todayDraws) ? todayDraws : []).find(sameTarget) || null;
+
+  const realRange =
+    (Array.isArray(rangeDraws) ? rangeDraws : []).find(sameTarget) || null;
+
+  return realToday || realRange || null;
+}
+
+function reconcilePendingTop3Log({ todayDraws, rangeDraws }) {
+  const log = getTop3Log();
+  if (!Array.isArray(log) || !log.length) return;
+
+  for (const entry of log) {
+    if (!entry || entry.result != null) continue;
+
+    const targetYmd = safeStr(entry?.target?.ymd || "");
+    const targetHour = normHour(entry?.target?.hour || "");
+
+    if (!isYMD(targetYmd) || !targetHour) continue;
+
+    const real = findRealDrawByTarget({
+      targetYmd,
+      targetHour,
+      todayDraws,
+      rangeDraws,
+    });
+
+    if (!real) continue;
+
+    const resultGrupo = pickPrize1GrupoFromDraw(real);
+    if (!Number.isFinite(Number(resultGrupo))) continue;
+
+    registerResult({
+      targetKey: entry.targetKey,
+      resultGrupo: Number(resultGrupo),
+    });
+  }
+}
+
 function normalizeMilhar4(v) {
   const s = String(v || "").trim();
   if (!s) return "";
@@ -160,6 +386,108 @@ function findLatestHistoricalBaseDraw({
   };
 }
 
+function sanitizeHistoricalDraws({ draws, lotteryKey, baseDraw }) {
+  const list = Array.isArray(draws) ? draws : [];
+  if (!baseDraw) return [];
+
+  const baseTs = drawTs(baseDraw);
+  if (!Number.isFinite(baseTs)) return [];
+
+  return list
+    .filter((d) => isDrawValidForLotterySchedule(d, lotteryKey))
+    .filter((d) => {
+      const ts = drawTs(d);
+      return Number.isFinite(ts) && ts <= baseTs;
+    })
+    .sort((a, b) => drawTs(a) - drawTs(b));
+}
+
+function ensureDayTimeline({ ymd, lotteryKey }) {
+  if (!isYMD(ymd)) return;
+
+  const schedule = getScheduleForLottery({
+    lotteryKey,
+    ymd,
+    PT_RIO_SCHEDULE_NORMAL,
+    PT_RIO_SCHEDULE_WED_SAT,
+    FEDERAL_SCHEDULE,
+  });
+
+  if (!Array.isArray(schedule) || !schedule.length) return;
+
+  const log = getTop3Log();
+
+  for (const h of schedule) {
+    const hour = normHour(toHourBucket(h));
+    const targetKey = makeKey(ymd, hour);
+    if (!targetKey) continue;
+
+    const idx = log.findIndex(
+      (l) => String(l?.targetKey || "") === String(targetKey)
+    );
+
+    if (idx >= 0) {
+      const prev = log[idx] || {};
+      log[idx] = {
+        ...prev,
+        targetKey,
+        target: { ymd, hour },
+        picks: Array.isArray(prev?.picks) ? prev.picks : [],
+        result: prev?.result ?? null,
+        hit: prev?.hit ?? null,
+        createdAt: prev?.createdAt || Date.now(),
+        status:
+          Array.isArray(prev?.picks) && prev.picks.length
+            ? prev.status || "predicted"
+            : prev.status || "empty",
+      };
+    } else {
+      log.push({
+        targetKey,
+        target: { ymd, hour },
+        picks: [],
+        result: null,
+        hit: null,
+        createdAt: Date.now(),
+        status: "empty",
+      });
+    }
+  }
+
+  saveTop3Log(log);
+}
+
+function backfillDayTop3({ draws, lotteryKey }) {
+  if (!Array.isArray(draws) || !draws.length) return;
+
+  const sorted = [...draws]
+    .filter((d) => isDrawValidForLotterySchedule(d, lotteryKey))
+    .sort((a, b) => drawTs(a) - drawTs(b));
+
+  for (let i = 1; i < sorted.length; i++) {
+    const current = sorted[i];
+    const prev = sorted[i - 1];
+
+    const ymd = pickDrawYMD(current);
+    const hour = toHourBucket(pickDrawHour(current));
+    const grupoBase = pickPrize1GrupoFromDraw(prev);
+
+    if (!isYMD(ymd) || !hour || !grupoBase) continue;
+
+    const picks = [
+      grupoBase,
+      (grupoBase % 25) + 1,
+      ((grupoBase + 1) % 25) + 1,
+    ];
+
+    registerPrediction({
+      targetYmd: ymd,
+      targetHour: hour,
+      picks,
+    });
+  }
+}
+
 export function useTop3Controller() {
   const DEFAULT_LOTTERY = "PT_RIO";
 
@@ -172,10 +500,14 @@ export function useTop3Controller() {
   const [lookback, setLookback] = useState(LOOKBACK_ALL);
 
   const [loading, setLoading] = useState(false);
-  const [loadingStage, setLoadingStage] = useState({ today: false, range: false });
+  const [loadingStage, setLoadingStage] = useState({
+    today: false,
+    range: false,
+  });
   const [error, setError] = useState("");
 
   const [rangeDraws, setRangeDraws] = useState([]);
+  const [todayDraws, setTodayDraws] = useState([]);
   const [rangeInfo, setRangeInfo] = useState({ from: "", to: "" });
 
   const [lastHourBucket, setLastHourBucket] = useState("");
@@ -254,7 +586,9 @@ export function useTop3Controller() {
         ? `${ymdToBR(prevInfo.prevYmd)} ${prevInfo.prevHour}`
         : "";
 
-    return `G${String(g).padStart(2, "0")}${animal ? " • " + animal.toUpperCase() : ""}${when ? " • " + when : ""}`;
+    return `G${String(g).padStart(2, "0")}${
+      animal ? " • " + animal.toUpperCase() : ""
+    }${when ? " • " + when : ""}`;
   }, [prevInfo]);
 
   const lastLabel = useMemo(() => {
@@ -268,7 +602,9 @@ export function useTop3Controller() {
         ? `${ymdToBR(lastInfo.lastYmd)} ${lastInfo.lastHour}`
         : "";
 
-    return `G${String(g).padStart(2, "0")}${animal ? " • " + animal.toUpperCase() : ""}${when ? " • " + when : ""}`;
+    return `G${String(g).padStart(2, "0")}${
+      animal ? " • " + animal.toUpperCase() : ""
+    }${when ? " • " + when : ""}`;
   }, [lastInfo]);
 
   const resetStateForNoData = useCallback(() => {
@@ -294,6 +630,7 @@ export function useTop3Controller() {
 
     setRangeInfo({ from: "", to: "" });
     setRangeDraws([]);
+    setTodayDraws([]);
   }, []);
 
   const load = useCallback(async () => {
@@ -351,6 +688,7 @@ export function useTop3Controller() {
       });
 
       const todayLast = findLastDrawInList(today, todaySchedule);
+      setTodayDraws(today);
 
       let baseDraw = null;
       let baseY = "";
@@ -371,9 +709,11 @@ export function useTop3Controller() {
       const fallbackBaseSearch = async (targetY, targetH) => {
         const searchFrom =
           minDate ||
-          (lKey === "FEDERAL" ? addDaysYMD(targetY, -180) : addDaysYMD(targetY, -60));
+          (lKey === "FEDERAL"
+            ? addDaysYMD(targetY, -180)
+            : addDaysYMD(targetY, -60));
 
-        const histBase =
+        const hist =
           (await getKingResultsByRange({
             uf: ufResolved,
             dateFrom: searchFrom,
@@ -383,7 +723,7 @@ export function useTop3Controller() {
           })) || [];
 
         return findLatestHistoricalBaseDraw({
-          draws: histBase,
+          draws: hist,
           lotteryKey: lKey,
           targetYmd: targetY,
           targetHourBucket: targetH,
@@ -431,7 +771,9 @@ export function useTop3Controller() {
 
         if (!firstHourToday) {
           resetStateForNoData();
-          setError("Não foi possível determinar o primeiro horário válido para esta loteria.");
+          setError(
+            "Não foi possível determinar o primeiro horário válido para esta loteria."
+          );
           return;
         }
 
@@ -456,7 +798,9 @@ export function useTop3Controller() {
 
         if (!previousResolved?.draw) {
           resetStateForNoData();
-          setError("Não foi possível localizar a base anterior ao primeiro sorteio do dia.");
+          setError(
+            "Não foi possível localizar a base anterior ao primeiro sorteio do dia."
+          );
           return;
         }
 
@@ -536,13 +880,7 @@ export function useTop3Controller() {
         });
       }
 
-      let rangeTo = ymdSafe;
-
-      if (resolvedTargetY && resolvedTargetY > rangeTo) {
-        rangeTo = resolvedTargetY;
-      }
-
-      let rangeFrom;
+      let rangeFrom = "";
 
       if (lookback === LOOKBACK_ALL) {
         rangeFrom = minDate || addDaysYMD(ymdSafe, -180);
@@ -551,8 +889,9 @@ export function useTop3Controller() {
         rangeFrom = addDaysYMD(ymdSafe, -(days - 1));
       }
 
-      setRangeInfo({ from: rangeFrom, to: rangeTo });
+      const rangeTo = isYMD(baseY) ? baseY : ymdSafe;
 
+      setRangeInfo({ from: rangeFrom, to: rangeTo });
       setLoadingStage({ today: false, range: true });
 
       const hist =
@@ -567,6 +906,7 @@ export function useTop3Controller() {
       if (requestIdRef.current !== currentRequestId) return;
 
       setRangeDraws(hist);
+      backfillDayTop3({ draws: today, lotteryKey: lKey });
     } catch (e) {
       if (requestIdRef.current === currentRequestId) {
         setError(String(e?.message || e || "Falha ao carregar dados do TOP3."));
@@ -578,84 +918,78 @@ export function useTop3Controller() {
         setLoading(false);
       }
     }
-  }, [
-    lotteryKeySafe,
-    ymdSafe,
-    lookback,
-    dateBR,
-    resetStateForNoData,
-  ]);
+  }, [lotteryKeySafe, ymdSafe, lookback, dateBR, resetStateForNoData]);
 
   useEffect(() => {
+    ensureDayTimeline({
+      ymd: ymdSafe,
+      lotteryKey: lotteryKeySafe,
+    });
+
     load();
-  }, [load]);
+  }, [load, ymdSafe, lotteryKeySafe]);
 
   const analytics = useMemo(() => {
-    const list = Array.isArray(rangeDraws) ? rangeDraws : [];
+    const rawList = Array.isArray(rangeDraws) ? rangeDraws : [];
+    const drawLast = baseDrawState;
 
-    const lastG = lastInfo?.lastGrupo;
-    const lastY = safeStr(lastInfo?.lastYmd);
-    const lastH = safeStr(lastInfo?.lastHour);
-
-    if (!list.length || !lastG || !isYMD(lastY) || !safeStr(lastH)) {
+    if (!rawList.length || !drawLast) {
       const empty = { top: [], meta: null };
       analyticsCacheRef.current = { key: "", value: empty };
       return empty;
     }
 
-    const firstDraw = list[0];
-    const lastDrawInRange = list[list.length - 1];
+    const lastG = Number(pickPrize1GrupoFromDraw(drawLast));
+    const lastY = pickDrawYMD(drawLast) || "";
+    const lastH = toHourBucket(pickDrawHour(drawLast)) || "";
 
-    const baseDrawY = pickDrawYMD(baseDrawState) || "";
-    const baseDrawH = toHourBucket(pickDrawHour(baseDrawState)) || "";
+    if (!Number.isFinite(lastG) || !isYMD(lastY) || !lastH) {
+      const empty = { top: [], meta: null };
+      analyticsCacheRef.current = { key: "", value: empty };
+      return empty;
+    }
+
+    const historicalList = sanitizeHistoricalDraws({
+      draws: rawList,
+      lotteryKey: lotteryKeySafe,
+      baseDraw: drawLast,
+    });
+
+    if (!historicalList.length) {
+      const empty = { top: [], meta: null };
+      analyticsCacheRef.current = { key: "", value: empty };
+      return empty;
+    }
+
+    const firstDraw = historicalList[0];
+    const lastDrawInRange = historicalList[historicalList.length - 1];
 
     const cacheKey = [
-      "V2",
+      "V3",
       lotteryKeySafe,
       lookback,
       rangeInfo?.from || "",
       rangeInfo?.to || "",
-      list.length,
+      historicalList.length,
+      Array.isArray(todayDraws) ? todayDraws.length : 0,
       pickDrawYMD(firstDraw) || "",
       toHourBucket(pickDrawHour(firstDraw)) || "",
       pickDrawYMD(lastDrawInRange) || "",
       toHourBucket(pickDrawHour(lastDrawInRange)) || "",
       lastY,
-      toHourBucket(lastH),
-      Number(lastG),
-      baseDrawY,
-      baseDrawH,
+      lastH,
+      lastG,
     ].join("|");
 
     if (analyticsCacheRef.current.key === cacheKey) {
       return analyticsCacheRef.current.value;
     }
 
-    const drawLast = baseDrawState;
-
-    if (!drawLast) {
-      const empty = { top: [], meta: null };
-      analyticsCacheRef.current = { key: cacheKey, value: empty };
-      return empty;
-    }
-
-    const drawLastY = pickDrawYMD(drawLast) || "";
-    const drawLastH = toHourBucket(pickDrawHour(drawLast)) || "";
-
-    if (drawLastY !== lastY || drawLastH !== toHourBucket(lastH)) {
-      console.warn(
-        "[TOP3] Inconsistência entre baseDrawState e lastInfo. Usando baseDrawState como fonte de verdade.",
-        {
-          baseDrawState: { ymd: drawLastY, hour: drawLastH },
-          lastInfo: { ymd: lastY, hour: toHourBucket(lastH) },
-        }
-      );
-    }
-
     const computed = computeConditionalNextTop3V2({
       lotteryKey: lotteryKeySafe,
-      drawsRange: list,
+      drawsRange: historicalList,
       drawLast,
+      drawsToday: Array.isArray(todayDraws) ? todayDraws : [],
       PT_RIO_SCHEDULE_NORMAL,
       PT_RIO_SCHEDULE_WED_SAT,
       FEDERAL_SCHEDULE,
@@ -670,10 +1004,8 @@ export function useTop3Controller() {
     rangeInfo?.to,
     lotteryKeySafe,
     lookback,
-    lastInfo?.lastGrupo,
-    lastInfo?.lastYmd,
-    lastInfo?.lastHour,
     baseDrawState,
+    todayDraws,
   ]);
 
   const build20 = useCallback(
@@ -691,7 +1023,6 @@ export function useTop3Controller() {
 
   const top3 = useMemo(() => {
     const arr = Array.isArray(analytics?.top) ? analytics.top : [];
-
     const milharesCache = new Map();
 
     return arr.map((x) => {
@@ -734,6 +1065,32 @@ export function useTop3Controller() {
       };
     });
   }, [analytics, build20]);
+
+  useEffect(() => {
+    if (!analysisYmd || !analysisHourBucket) return;
+    if (!Array.isArray(top3) || !top3.length) return;
+
+    const targetKey = makeKey(analysisYmd, analysisHourBucket);
+    const picks = top3
+      .map((x) => Number(x?.grupo))
+      .filter((n) => Number.isFinite(n));
+
+    if (!targetKey || !picks.length) return;
+
+    registerPrediction({
+      targetKey,
+      targetYmd: analysisYmd,
+      targetHour: analysisHourBucket,
+      picks,
+    });
+  }, [analysisYmd, analysisHourBucket, top3]);
+
+  useEffect(() => {
+    reconcilePendingTop3Log({
+      todayDraws: Array.isArray(todayDraws) ? todayDraws : [],
+      rangeDraws: Array.isArray(rangeDraws) ? rangeDraws : [],
+    });
+  }, [todayDraws, rangeDraws]);
 
   return {
     LOOKBACK_ALL,
