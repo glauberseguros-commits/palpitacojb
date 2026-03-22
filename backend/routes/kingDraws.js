@@ -1,54 +1,75 @@
 "use strict";
 
-// 🔒 Normalização única de lottery_key
+const express = require("express");
+const { getDb } = require("../service/firebaseAdmin");
+
+const router = express.Router();
+
+console.log("[KING] routes loaded from:", __filename);
+
+/* =========================
+   NORMALIZAÇÃO
+========================= */
 function normalizeLotteryKey(v) {
   const s = String(v ?? "").trim().toUpperCase();
 
-  // RJ
   if (s === "RJ" || s === "RIO" || s === "PT-RIO" || s === "PT_RIO") return "PT_RIO";
-
-  // FEDERAL
   if (s === "FED" || s === "FEDERAL" || s === "BR") return "FEDERAL";
 
-  // sem fallback: inválido => força 400
   return "";
 }
 
-function getExpectedHours(lottery, date) {
+/* =========================
+   REGRAS DE HORÁRIOS
+========================= */
+function getExpectedHours(lottery, date, hasFederal) {
   if (lottery !== "PT_RIO") return [];
 
   const dt = new Date(`${date}T12:00:00`);
-  const dow = dt.getDay(); // 0=domingo, 6=sábado
+  const dow = dt.getDay(); // 0 = domingo
 
+  // Domingo: só 09, 11, 14, 16
   if (dow === 0) {
     return ["09:00", "11:00", "14:00", "16:00"];
   }
 
-  return ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
-}
+  // Base fixa todos os outros dias
+  const expected = ["09:00", "11:00", "14:00", "16:00"];
 
-function checkDrawIntegrity(draws, lottery, date) {
-  const expectedHours = getExpectedHours(lottery, date);
+  // 21h existe fora domingo
+  expected.push("21:00");
 
-  if (!expectedHours.length) {
-    return { ok: true, missing: [], extra: [] };
+  // 18h só se NÃO tiver Federal no dia
+  if (!hasFederal) {
+    expected.push("18:00");
   }
 
-  const gotHours = draws
-    .map((d) => String(d.close_hour || "").trim())
+  return expected.sort();
+}
+
+function checkDrawIntegrity(draws, lottery, date, hasFederal) {
+  const expectedHours = getExpectedHours(lottery, date, hasFederal);
+
+  if (!expectedHours.length) {
+    return {
+      ok: true,
+      missing: [],
+      extra: [],
+      expectedHours: [],
+      hasFederal: Boolean(hasFederal),
+    };
+  }
+
+  const gotHours = (Array.isArray(draws) ? draws : [])
+    .map((d) => String(d?.close_hour || "").trim())
     .filter(Boolean);
 
-  const missing = expectedHours.filter(
-    (h) => !gotHours.includes(h)
-  );
-
-  const extra = gotHours.filter(
-    (h) => !expectedHours.includes(h)
-  );
+  const missing = expectedHours.filter((h) => !gotHours.includes(h));
+  const extra = gotHours.filter((h) => !expectedHours.includes(h));
 
   if (missing.length || extra.length) {
     console.warn(
-      `[DRAW ALERT] ${lottery} ${date} missing=${missing.join(", ")} extra=${extra.join(", ")}`
+      `[DRAW ALERT] ${lottery} ${date} missing=${missing.join(", ")} extra=${extra.join(", ")} hasFederal=${hasFederal ? "1" : "0"}`
     );
   }
 
@@ -56,20 +77,14 @@ function checkDrawIntegrity(draws, lottery, date) {
     ok: missing.length === 0 && extra.length === 0,
     missing,
     extra,
+    expectedHours,
+    hasFederal: Boolean(hasFederal),
   };
 }
 
-const express = require("express");
-const { getDb } = require("../service/firebaseAdmin");
-
-const router = express.Router();
-
-// ✅ prova definitiva do arquivo carregado
-console.log("[KING] routes loaded from:", __filename);
-
-/**
- * Helpers
- */
+/* =========================
+   HELPERS
+========================= */
 function isISODate(s) {
   const str = String(s || "").trim();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) return false;
@@ -106,104 +121,14 @@ function normalizeHHMM(value) {
     const hh = Number(m1[1]);
     if (hh >= 0 && hh <= 23) return `${String(hh).padStart(2, "0")}:00`;
     return "";
-}
-
-function getExpectedHours(lottery, date) {
-  if (lottery !== "PT_RIO") return [];
-
-  const dt = new Date(`${date}T12:00:00`);
-  const dow = dt.getDay(); // 0=domingo, 6=sábado
-
-  if (dow === 0) {
-    return ["09:00", "11:00", "14:00", "16:00"];
   }
-
-  return ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
-}
-
-function checkDrawIntegrity(draws, lottery, date) {
-  const expectedHours = getExpectedHours(lottery, date);
-
-  if (!expectedHours.length) {
-    return { ok: true, missing: [], extra: [] };
-  }
-
-  const gotHours = draws
-    .map((d) => String(d.close_hour || "").trim())
-    .filter(Boolean);
-
-  const missing = expectedHours.filter(
-    (h) => !gotHours.includes(h)
-  );
-
-  const extra = gotHours.filter(
-    (h) => !expectedHours.includes(h)
-  );
-
-  if (missing.length || extra.length) {
-    console.warn(
-      `[DRAW ALERT] ${lottery} ${date} missing=${missing.join(", ")} extra=${extra.join(", ")}`
-    );
-  }
-
-  return {
-    ok: missing.length === 0 && extra.length === 0,
-    missing,
-    extra,
-  };
-}
 
   const m2 = s.match(/^(\d{1,2})$/);
   if (m2) {
     const hh = Number(m2[1]);
     if (hh >= 0 && hh <= 23) return `${String(hh).padStart(2, "0")}:00`;
     return "";
-}
-
-function getExpectedHours(lottery, date) {
-  if (lottery !== "PT_RIO") return [];
-
-  const dt = new Date(`${date}T12:00:00`);
-  const dow = dt.getDay(); // 0=domingo, 6=sábado
-
-  if (dow === 0) {
-    return ["09:00", "11:00", "14:00", "16:00"];
   }
-
-  return ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
-}
-
-function checkDrawIntegrity(draws, lottery, date) {
-  const expectedHours = getExpectedHours(lottery, date);
-
-  if (!expectedHours.length) {
-    return { ok: true, missing: [], extra: [] };
-  }
-
-  const gotHours = draws
-    .map((d) => String(d.close_hour || "").trim())
-    .filter(Boolean);
-
-  const missing = expectedHours.filter(
-    (h) => !gotHours.includes(h)
-  );
-
-  const extra = gotHours.filter(
-    (h) => !expectedHours.includes(h)
-  );
-
-  if (missing.length || extra.length) {
-    console.warn(
-      `[DRAW ALERT] ${lottery} ${date} missing=${missing.join(", ")} extra=${extra.join(", ")}`
-    );
-  }
-
-  return {
-    ok: missing.length === 0 && extra.length === 0,
-    missing,
-    extra,
-  };
-}
 
   const m3 = s.match(/^(\d{1,2}):(\d{1,2})$/);
   if (m3) {
@@ -213,99 +138,9 @@ function checkDrawIntegrity(draws, lottery, date) {
       return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
     }
     return "";
-}
-
-function getExpectedHours(lottery, date) {
-  if (lottery !== "PT_RIO") return [];
-
-  const dt = new Date(`${date}T12:00:00`);
-  const dow = dt.getDay(); // 0=domingo, 6=sábado
-
-  if (dow === 0) {
-    return ["09:00", "11:00", "14:00", "16:00"];
   }
-
-  return ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
-}
-
-function checkDrawIntegrity(draws, lottery, date) {
-  const expectedHours = getExpectedHours(lottery, date);
-
-  if (!expectedHours.length) {
-    return { ok: true, missing: [], extra: [] };
-  }
-
-  const gotHours = draws
-    .map((d) => String(d.close_hour || "").trim())
-    .filter(Boolean);
-
-  const missing = expectedHours.filter(
-    (h) => !gotHours.includes(h)
-  );
-
-  const extra = gotHours.filter(
-    (h) => !expectedHours.includes(h)
-  );
-
-  if (missing.length || extra.length) {
-    console.warn(
-      `[DRAW ALERT] ${lottery} ${date} missing=${missing.join(", ")} extra=${extra.join(", ")}`
-    );
-  }
-
-  return {
-    ok: missing.length === 0 && extra.length === 0,
-    missing,
-    extra,
-  };
-}
 
   return "";
-}
-
-function getExpectedHours(lottery, date) {
-  if (lottery !== "PT_RIO") return [];
-
-  const dt = new Date(`${date}T12:00:00`);
-  const dow = dt.getDay(); // 0=domingo, 6=sábado
-
-  if (dow === 0) {
-    return ["09:00", "11:00", "14:00", "16:00"];
-  }
-
-  return ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
-}
-
-function checkDrawIntegrity(draws, lottery, date) {
-  const expectedHours = getExpectedHours(lottery, date);
-
-  if (!expectedHours.length) {
-    return { ok: true, missing: [], extra: [] };
-  }
-
-  const gotHours = draws
-    .map((d) => String(d.close_hour || "").trim())
-    .filter(Boolean);
-
-  const missing = expectedHours.filter(
-    (h) => !gotHours.includes(h)
-  );
-
-  const extra = gotHours.filter(
-    (h) => !expectedHours.includes(h)
-  );
-
-  if (missing.length || extra.length) {
-    console.warn(
-      `[DRAW ALERT] ${lottery} ${date} missing=${missing.join(", ")} extra=${extra.join(", ")}`
-    );
-  }
-
-  return {
-    ok: missing.length === 0 && extra.length === 0,
-    missing,
-    extra,
-  };
 }
 
 function cmpHHMM(a, b) {
@@ -324,12 +159,61 @@ function upTrim(v) {
   return String(v ?? "").trim().toUpperCase();
 }
 
-/**
- * ✅ Harden: fetch do DIA robusto
- * - mescla ymd e date
- * - dedup por doc.id
- * - evita perder draw legado quando uma parte está em ymd e outra em date
- */
+function parseIncludePrizes(v, defBool) {
+  const raw = String(v ?? (defBool ? "1" : "0")).trim().toLowerCase();
+  return raw === "1" || raw === "true" || raw === "yes";
+}
+
+function getLotteryFromQuery(req) {
+  return normalizeLotteryKey(req.query.lotteryKey ?? req.query.lottery ?? req.query.uf);
+}
+
+function getWindowFromQuery(req) {
+  const fromRaw = req.query.from != null ? String(req.query.from).trim() : "";
+  const toRaw = req.query.to != null ? String(req.query.to).trim() : "";
+
+  const from = fromRaw ? normalizeHHMM(fromRaw) : "";
+  const to = toRaw ? normalizeHHMM(toRaw) : "";
+
+  if (fromRaw && !from) {
+    return { error: "Parâmetro inválido: from (use HH:MM, 10h ou 10)" };
+  }
+  if (toRaw && !to) {
+    return { error: "Parâmetro inválido: to (use HH:MM, 10h ou 10)" };
+  }
+
+  return { from, to };
+}
+
+function parsePositionsParam(v) {
+  const raw = String(v ?? "").trim().toLowerCase();
+  if (!raw) return { positions: null, maxPos: null };
+
+  const m = raw.match(/^(\d+)\s*(?:\-|\.\.)\s*(\d+)$/);
+  if (m) {
+    const a = Math.max(1, Number(m[1]));
+    const b = Math.max(1, Number(m[2]));
+    const lo = Math.min(a, b);
+    const hi = Math.max(a, b);
+    const positions = [];
+    for (let i = lo; i <= hi; i += 1) positions.push(i);
+    return { positions, maxPos: hi };
+  }
+
+  const parts = raw
+    .split(",")
+    .map((s) => Number(String(s).trim()))
+    .filter((n) => Number.isFinite(n) && n >= 1);
+
+  if (!parts.length) return { positions: null, maxPos: null };
+
+  const uniq = Array.from(new Set(parts)).sort((a, b) => a - b);
+  return { positions: uniq, maxPos: uniq[uniq.length - 1] };
+}
+
+/* =========================
+   FIRESTORE
+========================= */
 async function fetchDayDraws(db, ymd) {
   const [s1, s2] = await Promise.all([
     db.collection("draws").where("ymd", "==", ymd).get(),
@@ -344,9 +228,6 @@ async function fetchDayDraws(db, ymd) {
   return Array.from(map.values());
 }
 
-/**
- * Concorrência limitada
- */
 async function mapWithConcurrency(items, limitN, mapper) {
   const arr = Array.isArray(items) ? items : [];
   const concurrency = Math.max(1, Number(limitN) || 6);
@@ -369,59 +250,6 @@ async function mapWithConcurrency(items, limitN, mapper) {
   return results;
 }
 
-/**
- * Helpers (aliases)
- */
-function parseIncludePrizes(v, defBool) {
-  const raw = String(v ?? (defBool ? "1" : "0")).trim().toLowerCase();
-  return raw === "1" || raw === "true" || raw === "yes";
-}
-
-function getLotteryFromQuery(req) {
-  // compat: uf=RJ, lottery=PT_RIO etc.
-  return normalizeLotteryKey(req.query.lotteryKey ?? req.query.lottery ?? req.query.uf);
-}
-
-function getWindowFromQuery(req) {
-  const fromRaw = req.query.from != null ? String(req.query.from).trim() : "";
-  const toRaw = req.query.to != null ? String(req.query.to).trim() : "";
-
-  const from = fromRaw ? normalizeHHMM(fromRaw) : "";
-  const to = toRaw ? normalizeHHMM(toRaw) : "";
-
-  if (fromRaw && !from) return { error: "Parâmetro inválido: from (use HH:MM, 10h ou 10)" };
-  if (toRaw && !to) return { error: "Parâmetro inválido: to (use HH:MM, 10h ou 10)" };
-
-  return { from, to };
-}
-
-function parsePositionsParam(v) {
-  const raw = String(v ?? "").trim().toLowerCase();
-  if (!raw) return { positions: null, maxPos: null };
-
-  const m = raw.match(/^(\d+)\s*(?:\-|\.\.)\s*(\d+)$/);
-  if (m) {
-    const a = Math.max(1, Number(m[1]));
-    const b = Math.max(1, Number(m[2]));
-    const lo = Math.min(a, b);
-    const hi = Math.max(a, b);
-    const positions = [];
-    for (let i = lo; i <= hi; i++) positions.push(i);
-    return { positions, maxPos: hi };
-  }
-
-  const parts = raw
-    .split(",")
-    .map((s) => Number(String(s).trim()))
-    .filter((n) => Number.isFinite(n) && n >= 1);
-
-  if (!parts.length) return { positions: null, maxPos: null };
-
-  const uniq = Array.from(new Set(parts)).sort((a, b) => a - b);
-  const maxPos = uniq[uniq.length - 1];
-  return { positions: uniq, maxPos };
-}
-
 async function loadPrizesForDraws(db, drawsWindow, includePrizes, positionsInfo) {
   if (!includePrizes) return drawsWindow;
 
@@ -430,10 +258,17 @@ async function loadPrizesForDraws(db, drawsWindow, includePrizes, positionsInfo)
       ? positionsInfo.positions
       : null;
 
-  const posSet = posArr && posArr.length ? new Set(posArr.map((n) => Number(n))) : null;
+  const posSet =
+    posArr && posArr.length
+      ? new Set(posArr.map((n) => Number(n)))
+      : null;
 
   const draws = await mapWithConcurrency(drawsWindow, 6, async (d) => {
-    let q = db.collection("draws").doc(d.id).collection("prizes").orderBy("position", "asc");
+    let q = db
+      .collection("draws")
+      .doc(d.id)
+      .collection("prizes")
+      .orderBy("position", "asc");
 
     if (positionsInfo && positionsInfo.maxPos && posArr) {
       const maxPos = Number(positionsInfo.maxPos) || null;
@@ -448,7 +283,9 @@ async function loadPrizesForDraws(db, drawsWindow, includePrizes, positionsInfo)
 
     const prizesSnap = await q.get();
     const rows = prizesSnap.docs.map((p) => p.data());
-    const prizes = posSet ? rows.filter((r) => posSet.has(Number(r.position))) : rows;
+    const prizes = posSet
+      ? rows.filter((r) => posSet.has(Number(r.position)))
+      : rows;
 
     return { ...d, prizes };
   });
@@ -456,10 +293,51 @@ async function loadPrizesForDraws(db, drawsWindow, includePrizes, positionsInfo)
   return draws;
 }
 
-/**
- * ✅ Redirect 308 preservando querystring
- * - req.baseUrl aqui é "/api/king"
- */
+/* =========================
+   NORMALIZAÇÃO DE DRAW
+========================= */
+function normalizeDrawDoc(doc) {
+  const data = doc.data() || {};
+  return {
+    id: doc.id,
+    ...data,
+    close_hour: normalizeHHMM(data.close_hour ?? data.close ?? data.hour),
+  };
+}
+
+function sortDrawsByHourOnly(a, b) {
+  return cmpHHMM(a.close_hour, b.close_hour);
+}
+
+function sortDrawsByDateThenHour(a, b) {
+  const da = String(a.ymd || a.date || "");
+  const db = String(b.ymd || b.date || "");
+  if (da !== db) return da.localeCompare(db);
+  return cmpHHMM(a.close_hour, b.close_hour);
+}
+
+function applyLotteryFilter(draws, lottery) {
+  return (Array.isArray(draws) ? draws : []).filter(
+    (d) => upTrim(d.lottery_key) === lottery
+  );
+}
+
+function applyHourWindow(draws, from, to) {
+  return (Array.isArray(draws) ? draws : []).filter((d) => {
+    if (!from && !to) return true;
+    return inRangeHHMM(d.close_hour, from || "", to || "");
+  });
+}
+
+function hasFederalInDraws(draws) {
+  return (Array.isArray(draws) ? draws : []).some(
+    (d) => upTrim(d.lottery_key) === "FEDERAL"
+  );
+}
+
+/* =========================
+   REDIRECT / VALIDATION
+========================= */
 function redirect308(destPath) {
   return (req, res) => {
     const q = req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : "";
@@ -467,9 +345,6 @@ function redirect308(destPath) {
   };
 }
 
-/**
- * ✅ validação comum de lottery
- */
 function requireLotteryOr400(lottery, res) {
   if (!lottery) {
     res.status(400).json({
@@ -481,40 +356,9 @@ function requireLotteryOr400(lottery, res) {
   return true;
 }
 
-function normalizeDrawDoc(doc) {
-  const data = doc.data() || {};
-  return {
-    id: doc.id,
-    ...data,
-    close_hour: normalizeHHMM(data.close_hour),
-  };
-}
-
-function sortDrawsByHourOnly(a, b) {
-  return cmpHHMM(a.close_hour, b.close_hour);
-}
-
-function sortDrawsByDateThenHour(a, b) {
-  const da = String(a.ymd || a.date || "");
-  const dbb = String(b.ymd || b.date || "");
-  if (da !== dbb) return da.localeCompare(dbb);
-  return cmpHHMM(a.close_hour, b.close_hour);
-}
-
-function applyLotteryFilter(draws, lottery) {
-  return (Array.isArray(draws) ? draws : []).filter((d) => upTrim(d.lottery_key) === lottery);
-}
-
-function applyHourWindow(draws, from, to) {
-  return (Array.isArray(draws) ? draws : []).filter((d) => {
-    if (!from && !to) return true;
-    return inRangeHHMM(d.close_hour, from || "", to || "");
-  });
-}
-
-/**
- * KING DRAWS (endpoint técnico legado)
- */
+/* =========================
+   ENDPOINT LEGADO
+========================= */
 router.get("/draws", async (req, res) => {
   try {
     const db = getDb();
@@ -555,15 +399,18 @@ router.get("/draws", async (req, res) => {
     }
 
     const docs = await fetchDayDraws(db, date);
-
     const rawDraws = docs.map(normalizeDrawDoc);
+    const hasFederal = hasFederalInDraws(rawDraws);
+
     const byLottery = applyLotteryFilter(rawDraws, lottery).sort(sortDrawsByHourOnly);
     const drawsWindow = applyHourWindow(byLottery, from || "", to || "");
     const draws = await loadPrizesForDraws(db, drawsWindow, includePrizes, positionsInfo);
 
-const integrity = checkDrawIntegrity(draws, lottery, date);
+    const integrity = checkDrawIntegrity(draws, lottery, date, hasFederal);
 
-    return res.json({ ok: true, integrity,
+    return res.json({
+      ok: true,
+      integrity,
       date,
       lottery,
       from: from || null,
@@ -577,9 +424,9 @@ const integrity = checkDrawIntegrity(draws, lottery, date);
   }
 });
 
-/* =========================================================
-   ✅ Rotas CANÔNICAS + COMPAT
-========================================================= */
+/* =========================
+   ROTAS CANÔNICAS
+========================= */
 router.get("/results/day", redirect308("/draws/day"));
 router.get("/results/range", redirect308("/draws/range"));
 
@@ -606,16 +453,19 @@ async function handleDay(req, res) {
     const positionsInfo = parsePositionsParam(req.query.positions);
 
     const docs = await fetchDayDraws(db, date);
-
     const rawDraws = docs.map(normalizeDrawDoc);
+    const hasFederal = hasFederalInDraws(rawDraws);
+
     const byLottery = applyLotteryFilter(rawDraws, lottery).sort(sortDrawsByHourOnly);
     const drawsWindow = applyHourWindow(byLottery, win.from || "", win.to || "");
     const draws = await loadPrizesForDraws(db, drawsWindow, includePrizes, positionsInfo);
 
-const integrity = checkDrawIntegrity(draws, lottery, date);
+    const integrity = checkDrawIntegrity(draws, lottery, date, hasFederal);
 
-    return res.json({ ok: true, integrity,
+    return res.json({
+      ok: true,
       mode: "day",
+      integrity,
       date,
       lottery,
       from: win.from || null,
@@ -671,10 +521,43 @@ async function handleRange(req, res) {
     const drawsWindow = applyHourWindow(byLottery, win.from || "", win.to || "");
     const draws = await loadPrizesForDraws(db, drawsWindow, includePrizes, positionsInfo);
 
-const integrity = checkDrawIntegrity(draws, lottery, date);
+    const groupedIntegrity = {};
+    if (lottery === "PT_RIO") {
+      const rawByDay = rawDraws.reduce((acc, d) => {
+        const ymd = String(d.ymd || d.date || "").trim();
+        if (!ymd) return acc;
+        if (!acc[ymd]) acc[ymd] = [];
+        acc[ymd].push(d);
+        return acc;
+      }, {});
 
-    return res.json({ ok: true, integrity,
+      const filteredByDay = draws.reduce((acc, d) => {
+        const ymd = String(d.ymd || d.date || "").trim();
+        if (!ymd) return acc;
+        if (!acc[ymd]) acc[ymd] = [];
+        acc[ymd].push(d);
+        return acc;
+      }, {});
+
+      const allDays = Array.from(
+        new Set([
+          ...Object.keys(rawByDay),
+          ...Object.keys(filteredByDay),
+        ])
+      ).sort();
+
+      for (const ymd of allDays) {
+        const dayRaw = rawByDay[ymd] || [];
+        const dayFiltered = filteredByDay[ymd] || [];
+        const hasFederal = hasFederalInDraws(dayRaw);
+        groupedIntegrity[ymd] = checkDrawIntegrity(dayFiltered, lottery, ymd, hasFederal);
+      }
+    }
+
+    return res.json({
+      ok: true,
       mode: "range",
+      integrityByDay: groupedIntegrity,
       dateFrom,
       dateTo,
       lottery,
@@ -693,6 +576,3 @@ router.get("/draws/day", handleDay);
 router.get("/draws/range", handleRange);
 
 module.exports = router;
-
-
-

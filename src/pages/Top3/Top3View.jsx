@@ -185,6 +185,31 @@ function cleanLayerText(s) {
   return noSamples || "—";
 }
 
+function analyzeTop3Hit(top3, resultGrupo) {
+  if (!Array.isArray(top3) || !top3.length) {
+    return { type: "none", score: 0, position: -1 };
+  }
+
+  const grupoNum = Number(resultGrupo);
+  if (!Number.isFinite(grupoNum) || grupoNum < 1 || grupoNum > 25) {
+    return { type: "none", score: 0, position: -1 };
+  }
+
+  const idx = top3.findIndex(
+    (item) => Number(item?.grupo) === grupoNum
+  );
+
+  if (idx === -1) {
+    return { type: "miss", score: 0, position: -1 };
+  }
+
+  if (idx === 0) return { type: "hit_exact", score: 100, position: 1 };
+  if (idx === 1) return { type: "hit_top3", score: 75, position: 2 };
+  if (idx === 2) return { type: "hit_top3", score: 60, position: 3 };
+
+  return { type: "hit_partial", score: 50, position: idx + 1 };
+}
+
 function ImgWithFallback({ srcs, alt, size = 84, style }) {
   const list = useMemo(
     () => (Array.isArray(srcs) ? srcs.filter(Boolean) : []),
@@ -464,6 +489,76 @@ function Top3Card({
   );
 }
 
+function CompactTop3Result({ slot, status, statusLabel, statusDetail }) {
+  const slotTop3 = Array.isArray(slot?.top3) ? slot.top3.slice(0, 3) : [];
+  const resultGrupo = Number(slot?.resultGrupo);
+  const hasResult = Number.isFinite(resultGrupo) && resultGrupo >= 1 && resultGrupo <= 25;
+  const resultAnimal = hasResult ? String(getAnimalLabel(resultGrupo) || "") : "";
+  const resultImg = hasResult ? getImgFromGrupo(resultGrupo, 64) : "";
+
+  return (
+    <div className="timeline-compact">
+      <div className="timeline-compact__grid">
+        <div className="timeline-compact__predictions">
+          {slotTop3.map((item, idx) => {
+            const grupo = Number(item?.grupo);
+            const animal = String(item?.animal || getAnimalLabel(grupo) || "").trim();
+            const img = Number.isFinite(grupo) ? getImgFromGrupo(grupo, 64) : "";
+
+            return (
+              <div key={`${String(slot?.targetYmd || "y")}_${String(slot?.targetHour || "h")}_${idx}_${grupo}`} className="timeline-compact__pick">
+                <div className="timeline-compact__pickRank">{idx + 1}</div>
+                <ImgWithFallback
+                  srcs={img ? [img] : []}
+                  alt={animal || `G${formatGrupo(grupo)}`}
+                  size={44}
+                  style={{ borderRadius: 10 }}
+                />
+                <div className="timeline-compact__pickText">
+                  <div className="timeline-compact__pickGroup">G{formatGrupo(grupo)}</div>
+                  <div className="timeline-compact__pickAnimal">
+                    {animal ? animal.toUpperCase() : "—"}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="timeline-compact__result">
+          <div className="timeline-compact__resultLabel">Resultado</div>
+
+          {hasResult ? (
+            <div className="timeline-compact__resultBox">
+              <ImgWithFallback
+                srcs={resultImg ? [resultImg] : []}
+                alt={resultAnimal}
+                size={48}
+                style={{ borderRadius: 10 }}
+              />
+              <div className="timeline-compact__resultText">
+                <div className="timeline-compact__resultGroup">G{formatGrupo(resultGrupo)}</div>
+                <div className="timeline-compact__resultAnimal">
+                  {String(resultAnimal || "").toUpperCase()}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="timeline-compact__resultPending">PENDENTE</div>
+          )}
+        </div>
+
+        <div className="timeline-compact__performance">
+          <div className={`timeline-compact__performanceBadge timeline-compact__performanceBadge--${status}`}>
+            {statusLabel}
+          </div>
+          <div className="timeline-compact__performanceText">{statusDetail}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function TimelineSlot({
   slot,
   theme,
@@ -482,12 +577,35 @@ function TimelineSlot({
   const hasResult = Number.isFinite(resultGrupo) && resultGrupo >= 1 && resultGrupo <= 25;
   const resultAnimal = hasResult ? String(getAnimalLabel(resultGrupo) || "") : "";
   const resultImg = hasResult ? getImgFromGrupo(resultGrupo, 64) : "";
+  const analysis = analyzeTop3Hit(slotTop3, resultGrupo);
   const status =
-    slot?.status === "validated"
-      ? slot?.hit
+    analysis.type === "none"
+      ? "pending"
+      : analysis.type === "hit_exact" || analysis.type === "hit_top3" || analysis.type === "hit_partial"
         ? "hit"
-        : "miss"
-      : "pending";
+        : "miss";
+
+  const statusLabel =
+    analysis.type === "hit_exact"
+      ? `🎯 ACERTO TOTAL (${analysis.score}%)`
+      : analysis.type === "hit_top3"
+        ? `🔥 TOP 3 (${analysis.score}%)`
+        : analysis.type === "hit_partial"
+          ? `🟡 PARCIAL (${analysis.score}%)`
+          : analysis.type === "miss"
+            ? "❌ ERRO (0%)"
+            : "⏳ PENDENTE";
+
+  const statusDetail =
+    analysis.type === "hit_exact"
+      ? "Acertou o palpite principal do Top3."
+      : analysis.type === "hit_top3"
+        ? `Acertou dentro do Top3 na posição ${analysis.position}.`
+        : analysis.type === "hit_partial"
+          ? `Acerto parcial na posição ${analysis.position}.`
+          : analysis.type === "miss"
+            ? "Nenhum dos 3 palpites foi sorteado."
+            : "Aguardando resultado oficial.";
 
   return (
     <section className="top3-shell">
@@ -497,7 +615,7 @@ function TimelineSlot({
         </div>
 
         <div className={`timeline-slot__badge timeline-slot__badge--${status}`}>
-          {status === "hit" ? "✅ ACERTO" : status === "miss" ? "❌ ERRO" : "⏳ PENDENTE"}
+          {statusLabel}
         </div>
       </div>
 
@@ -518,52 +636,62 @@ function TimelineSlot({
 
         <div className="top3-metaItem">
           <div className="top3-metaItem__label">Status</div>
-          <div className="top3-metaItem__value">
-            {status === "hit" ? "Acerto" : status === "miss" ? "Erro" : "Aguardando resultado"}
-          </div>
+          <div className="top3-metaItem__value">{statusDetail}</div>
         </div>
       </div>
 
       {hasResult ? (
-        <div className="timeline-slot__resultBox">
-          <ImgWithFallback
-            srcs={[resultImg]}
-            alt={resultAnimal}
-            size={54}
-            style={{ borderRadius: 10 }}
-          />
-          <div className="timeline-slot__resultText">
-            <div className="timeline-slot__resultGroup">G{formatGrupo(resultGrupo)}</div>
-            <div className="timeline-slot__resultAnimal">
-              {String(resultAnimal || "").toUpperCase()}
+        <>
+          <div className="timeline-slot__resultBox">
+            <ImgWithFallback
+              srcs={[resultImg]}
+              alt={resultAnimal}
+              size={54}
+              style={{ borderRadius: 10 }}
+            />
+            <div className="timeline-slot__resultText">
+              <div className="timeline-slot__resultGroup">G{formatGrupo(resultGrupo)}</div>
+              <div className="timeline-slot__resultAnimal">
+                {String(resultAnimal || "").toUpperCase()}
+              </div>
             </div>
           </div>
-        </div>
+
+          <div className="timeline-slot__insightBox">
+            <div className="timeline-slot__insightTitle">Leitura de performance</div>
+            <div className="timeline-slot__insightText">{statusDetail}</div>
+          </div>
+        </>
       ) : null}
 
       {!slotTop3.length ? (
         <div className="top3-empty">Sem Top3 calculado para este horário.</div>
+      ) : status === "pending" ? (
+        <div className="timeline-slot__cards">
+          {slotTop3.map((item, i) => (
+            <Top3Card
+              key={`${slot?.targetYmd || "y"}_${slot?.targetHour || "h"}_${String(item?.grupo ?? i)}`}
+              item={item}
+              idx={i}
+              theme={t}
+              copiedAllKey={copiedAllKey}
+              copiedCellKey={copiedCellKey}
+              setCopiedAllKey={setCopiedAllKey}
+              setCopiedCellKey={setCopiedCellKey}
+              copyText={copyText}
+              build16={build16}
+              buildMilhares={buildMilhares}
+              build20={build20}
+            />
+          ))}
+        </div>
       ) : (
-        <>
-          <div className="timeline-slot__cards">
-            {slotTop3.map((item, i) => (
-              <Top3Card
-                key={`${slot?.targetYmd || "y"}_${slot?.targetHour || "h"}_${String(item?.grupo ?? i)}`}
-                item={item}
-                idx={i}
-                theme={t}
-                copiedAllKey={copiedAllKey}
-                copiedCellKey={copiedCellKey}
-                setCopiedAllKey={setCopiedAllKey}
-                setCopiedCellKey={setCopiedCellKey}
-                copyText={copyText}
-                build16={build16}
-                buildMilhares={buildMilhares}
-                build20={build20}
-              />
-            ))}
-          </div>
-        </>
+        <CompactTop3Result
+          slot={slot}
+          status={status}
+          statusLabel={statusLabel}
+          statusDetail={statusDetail}
+        />
       )}
     </section>
   );
@@ -885,32 +1013,216 @@ export default function Top3View(props) {
           width: 100%;
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 16px;
+          gap: 14px;
           align-items: start;
+        }
+
+        .timeline-compact{
+          margin-top: 2px;
+        }
+
+        .timeline-compact__grid{
+          display: grid;
+          grid-template-columns: minmax(0, 1.7fr) minmax(220px, 0.8fr) minmax(240px, 1fr);
+          gap: 12px;
+          align-items: stretch;
+        }
+
+        .timeline-compact__predictions,
+        .timeline-compact__result,
+        .timeline-compact__performance{
+          border: 1px solid rgba(255,255,255,0.10);
+          background: rgba(255,255,255,0.025);
+          border-radius: 16px;
+          padding: 12px;
+          min-width: 0;
+          transition: all 0.2s ease;
+        }
+
+        .timeline-compact__performanceBadge--miss ~ *{
+          opacity: 0.92;
+        }
+
+        .timeline-compact__predictions{
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 10px;
+        }
+
+        .timeline-compact__pick{
+          display: grid;
+          grid-template-columns: 28px 44px minmax(0, 1fr);
+          gap: 10px;
+          align-items: center;
+          min-width: 0;
+          padding: 8px;
+          border-radius: 14px;
+          background:
+            linear-gradient(180deg, rgba(201,168,62,0.08), rgba(255,255,255,0.02)),
+            rgba(255,255,255,0.02);
+          border: 1px solid rgba(201,168,62,0.14);
+        }
+
+        .timeline-compact__pickRank{
+          width: 28px;
+          height: 28px;
+          display: grid;
+          place-items: center;
+          border-radius: 9px;
+          background: rgba(201,168,62,0.16);
+          border: 1px solid rgba(201,168,62,0.30);
+          color: var(--top3-accent);
+          font-size: 12px;
+          font-weight: 1000;
+        }
+
+        .timeline-compact__pickText{
+          display: grid;
+          gap: 2px;
+          min-width: 0;
+        }
+
+        .timeline-compact__pickGroup{
+          font-size: 11px;
+          font-weight: 900;
+          color: var(--top3-muted);
+          letter-spacing: 0.6px;
+        }
+
+        .timeline-compact__pickAnimal{
+          font-size: 15px;
+          font-weight: 1000;
+          color: var(--top3-text);
+          text-transform: uppercase;
+          line-height: 1.05;
+          word-break: break-word;
+        }
+
+        .timeline-compact__result{
+          display: grid;
+          gap: 10px;
+          align-content: start;
+        }
+
+        .timeline-compact__resultLabel{
+          font-size: 11px;
+          font-weight: 1000;
+          letter-spacing: 0.9px;
+          text-transform: uppercase;
+          color: var(--top3-muted);
+        }
+
+        .timeline-compact__resultBox{
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          min-width: 0;
+          padding: 10px 12px;
+          border-radius: 14px;
+          background:
+            linear-gradient(180deg, rgba(201,168,62,0.10), rgba(255,255,255,0.02)),
+            rgba(255,255,255,0.04);
+          border: 1px solid rgba(201,168,62,0.18);
+          box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+        }
+
+        .timeline-compact__resultText{
+          display: grid;
+          gap: 2px;
+          min-width: 0;
+        }
+
+        .timeline-compact__resultGroup{
+          font-size: 20px;
+          font-weight: 1000;
+          line-height: 1;
+          color: var(--top3-accent);
+          text-shadow: 0 0 8px rgba(201,168,62,0.35);
+        }
+
+        .timeline-compact__resultAnimal{
+          font-size: 12px;
+          color: var(--top3-muted);
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .timeline-compact__resultPending{
+          font-size: 14px;
+          font-weight: 1000;
+          color: var(--top3-muted);
+        }
+
+        .timeline-compact__performance{
+          display: grid;
+          gap: 10px;
+          align-content: start;
+        }
+
+        .timeline-compact__performanceBadge{
+          width: fit-content;
+          max-width: 100%;
+          border-radius: 999px;
+          padding: 10px 14px;
+          font-size: 12px;
+          font-weight: 1000;
+          letter-spacing: 0.6px;
+          border: 1px solid rgba(255,255,255,0.16);
+          box-shadow: 0 12px 28px rgba(0,0,0,0.35);
+          white-space: nowrap;
+        }
+
+        .timeline-compact__performanceBadge--hit{
+          background: linear-gradient(180deg, rgba(201,168,62,0.28), rgba(201,168,62,0.12));
+          color: #fff4c4;
+          border-color: rgba(201,168,62,0.5);
+          box-shadow: 0 0 16px rgba(201,168,62,0.35);
+        }
+
+        .timeline-compact__performanceBadge--miss{
+          background: linear-gradient(180deg, rgba(220,70,70,0.28), rgba(120,20,20,0.18));
+          color: #ffe0e0;
+          border-color: rgba(220, 70, 70, 0.6);
+          box-shadow: 0 0 18px rgba(220,70,70,0.35);
+        }
+
+        .timeline-compact__performanceBadge--pending{
+          background: rgba(201,168,62,0.16);
+          color: rgba(255,255,255,0.92);
+          border-color: rgba(201,168,62,0.35);
+        }
+
+        .timeline-compact__performanceText{
+          font-size: 14px;
+          font-weight: 900;
+          line-height: 1.4;
+          color: var(--top3-text);
         }
 
         .timeline-slot__header{
           display:flex;
-          align-items:center;
+          align-items:flex-start;
           justify-content:space-between;
-          gap:12px;
-          margin-bottom: 12px;
+          gap:14px;
+          margin-bottom: 14px;
         }
 
         .timeline-slot__title{
-          font-weight: 950;
-          font-size: 18px;
+          font-weight: 1000;
+          font-size: 22px;
           letter-spacing: 0.2px;
+          line-height: 1;
         }
 
         .timeline-slot__badge{
           border-radius: 999px;
-          padding: 8px 12px;
-          font-weight: 950;
+          padding: 10px 14px;
+          font-weight: 1000;
           font-size: 12px;
-          letter-spacing: 0.5px;
-          border: 1px solid rgba(255,255,255,0.12);
+          letter-spacing: 0.55px;
+          border: 1px solid rgba(255,255,255,0.14);
           white-space: nowrap;
+          box-shadow: 0 10px 24px rgba(0,0,0,0.28);
         }
 
         .timeline-slot__badge--hit{
@@ -935,11 +1247,14 @@ export default function Top3View(props) {
           margin-top: 12px;
           display:flex;
           align-items:center;
-          gap:12px;
-          padding: 10px 12px;
-          border-radius: 14px;
-          background: rgba(255,255,255,0.03);
-          border: 1px solid rgba(255,255,255,0.08);
+          gap:14px;
+          padding: 12px 14px;
+          border-radius: 16px;
+          background:
+            linear-gradient(180deg, rgba(201,168,62,0.08), rgba(255,255,255,0.02)),
+            rgba(255,255,255,0.03);
+          border: 1px solid rgba(255,255,255,0.09);
+          box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
         }
 
         .timeline-slot__resultText{
@@ -948,13 +1263,43 @@ export default function Top3View(props) {
         }
 
         .timeline-slot__resultGroup{
-          font-weight: 950;
+          font-weight: 1000;
+          font-size: 18px;
+          line-height: 1;
         }
 
         .timeline-slot__resultAnimal{
           font-size: 12px;
           color: var(--top3-muted);
           text-transform: uppercase;
+          letter-spacing: 0.6px;
+        }
+
+        .timeline-slot__insightBox{
+          margin-top: 12px;
+          padding: 14px 16px;
+          border-radius: 16px;
+          background:
+            linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015)),
+            rgba(255,255,255,0.025);
+          border: 1px solid rgba(255,255,255,0.08);
+          display: grid;
+          gap: 6px;
+        }
+
+        .timeline-slot__insightTitle{
+          font-size: 11px;
+          font-weight: 1000;
+          letter-spacing: 1px;
+          text-transform: uppercase;
+          color: var(--top3-accent);
+        }
+
+        .timeline-slot__insightText{
+          font-size: 14px;
+          font-weight: 900;
+          line-height: 1.4;
+          color: var(--top3-text);
         }
 
         .top3-card{
@@ -1252,14 +1597,14 @@ export default function Top3View(props) {
 
         .top3-historyRow{
           display:grid;
-          grid-template-columns: 170px 1fr 250px 60px;
+          grid-template-columns: 160px 1fr 220px 56px;
           align-items:center;
-          gap: 12px;
-          padding: 10px 12px;
+          gap: 10px;
+          padding: 8px 10px;
           border-radius: 12px;
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.08);
-          font-size: 13px;
+          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(255,255,255,0.06);
+          font-size: 12px;
         }
 
         .top3-historyResult{
@@ -1280,12 +1625,13 @@ export default function Top3View(props) {
         }
 
         .top3-historyResultAnimal{
-          font-size:11px;
+          font-size:10px;
           color: var(--top3-muted);
           text-transform: uppercase;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+          letter-spacing: 0.5px;
         }
 
         @media (max-width: 1180px){
@@ -1294,6 +1640,14 @@ export default function Top3View(props) {
           }
 
           .timeline-slot__cards{
+            grid-template-columns: 1fr;
+          }
+
+          .timeline-compact__grid{
+            grid-template-columns: 1fr;
+          }
+
+          .timeline-compact__predictions{
             grid-template-columns: 1fr;
           }
         }
@@ -1366,6 +1720,30 @@ export default function Top3View(props) {
         }
 
         @media (max-width: 640px){
+          .timeline-compact__pick{
+            grid-template-columns: 26px 40px minmax(0, 1fr);
+            gap: 8px;
+            padding: 8px;
+          }
+
+          .timeline-compact__pickRank{
+            width: 26px;
+            height: 26px;
+            border-radius: 8px;
+          }
+
+          .timeline-compact__pickAnimal{
+            font-size: 14px;
+          }
+
+          .timeline-compact__resultGroup{
+            font-size: 16px;
+          }
+
+          .timeline-compact__performanceText{
+            font-size: 13px;
+          }
+
           .top3-page{
             gap: 12px;
           }
@@ -1701,3 +2079,4 @@ export default function Top3View(props) {
     </div>
   );
 }
+
