@@ -14,6 +14,51 @@ function normalizeLotteryKey(v) {
   return "";
 }
 
+function getExpectedHours(lottery, date) {
+  if (lottery !== "PT_RIO") return [];
+
+  const dt = new Date(`${date}T12:00:00`);
+  const dow = dt.getDay(); // 0=domingo, 6=sábado
+
+  if (dow === 0) {
+    return ["09:00", "11:00", "14:00", "16:00"];
+  }
+
+  return ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
+}
+
+function checkDrawIntegrity(draws, lottery, date) {
+  const expectedHours = getExpectedHours(lottery, date);
+
+  if (!expectedHours.length) {
+    return { ok: true, missing: [], extra: [] };
+  }
+
+  const gotHours = draws
+    .map((d) => String(d.close_hour || "").trim())
+    .filter(Boolean);
+
+  const missing = expectedHours.filter(
+    (h) => !gotHours.includes(h)
+  );
+
+  const extra = gotHours.filter(
+    (h) => !expectedHours.includes(h)
+  );
+
+  if (missing.length || extra.length) {
+    console.warn(
+      `[DRAW ALERT] ${lottery} ${date} missing=${missing.join(", ")} extra=${extra.join(", ")}`
+    );
+  }
+
+  return {
+    ok: missing.length === 0 && extra.length === 0,
+    missing,
+    extra,
+  };
+}
+
 const express = require("express");
 const { getDb } = require("../service/firebaseAdmin");
 
@@ -61,14 +106,104 @@ function normalizeHHMM(value) {
     const hh = Number(m1[1]);
     if (hh >= 0 && hh <= 23) return `${String(hh).padStart(2, "0")}:00`;
     return "";
+}
+
+function getExpectedHours(lottery, date) {
+  if (lottery !== "PT_RIO") return [];
+
+  const dt = new Date(`${date}T12:00:00`);
+  const dow = dt.getDay(); // 0=domingo, 6=sábado
+
+  if (dow === 0) {
+    return ["09:00", "11:00", "14:00", "16:00"];
   }
+
+  return ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
+}
+
+function checkDrawIntegrity(draws, lottery, date) {
+  const expectedHours = getExpectedHours(lottery, date);
+
+  if (!expectedHours.length) {
+    return { ok: true, missing: [], extra: [] };
+  }
+
+  const gotHours = draws
+    .map((d) => String(d.close_hour || "").trim())
+    .filter(Boolean);
+
+  const missing = expectedHours.filter(
+    (h) => !gotHours.includes(h)
+  );
+
+  const extra = gotHours.filter(
+    (h) => !expectedHours.includes(h)
+  );
+
+  if (missing.length || extra.length) {
+    console.warn(
+      `[DRAW ALERT] ${lottery} ${date} missing=${missing.join(", ")} extra=${extra.join(", ")}`
+    );
+  }
+
+  return {
+    ok: missing.length === 0 && extra.length === 0,
+    missing,
+    extra,
+  };
+}
 
   const m2 = s.match(/^(\d{1,2})$/);
   if (m2) {
     const hh = Number(m2[1]);
     if (hh >= 0 && hh <= 23) return `${String(hh).padStart(2, "0")}:00`;
     return "";
+}
+
+function getExpectedHours(lottery, date) {
+  if (lottery !== "PT_RIO") return [];
+
+  const dt = new Date(`${date}T12:00:00`);
+  const dow = dt.getDay(); // 0=domingo, 6=sábado
+
+  if (dow === 0) {
+    return ["09:00", "11:00", "14:00", "16:00"];
   }
+
+  return ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
+}
+
+function checkDrawIntegrity(draws, lottery, date) {
+  const expectedHours = getExpectedHours(lottery, date);
+
+  if (!expectedHours.length) {
+    return { ok: true, missing: [], extra: [] };
+  }
+
+  const gotHours = draws
+    .map((d) => String(d.close_hour || "").trim())
+    .filter(Boolean);
+
+  const missing = expectedHours.filter(
+    (h) => !gotHours.includes(h)
+  );
+
+  const extra = gotHours.filter(
+    (h) => !expectedHours.includes(h)
+  );
+
+  if (missing.length || extra.length) {
+    console.warn(
+      `[DRAW ALERT] ${lottery} ${date} missing=${missing.join(", ")} extra=${extra.join(", ")}`
+    );
+  }
+
+  return {
+    ok: missing.length === 0 && extra.length === 0,
+    missing,
+    extra,
+  };
+}
 
   const m3 = s.match(/^(\d{1,2}):(\d{1,2})$/);
   if (m3) {
@@ -78,9 +213,99 @@ function normalizeHHMM(value) {
       return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
     }
     return "";
+}
+
+function getExpectedHours(lottery, date) {
+  if (lottery !== "PT_RIO") return [];
+
+  const dt = new Date(`${date}T12:00:00`);
+  const dow = dt.getDay(); // 0=domingo, 6=sábado
+
+  if (dow === 0) {
+    return ["09:00", "11:00", "14:00", "16:00"];
   }
 
+  return ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
+}
+
+function checkDrawIntegrity(draws, lottery, date) {
+  const expectedHours = getExpectedHours(lottery, date);
+
+  if (!expectedHours.length) {
+    return { ok: true, missing: [], extra: [] };
+  }
+
+  const gotHours = draws
+    .map((d) => String(d.close_hour || "").trim())
+    .filter(Boolean);
+
+  const missing = expectedHours.filter(
+    (h) => !gotHours.includes(h)
+  );
+
+  const extra = gotHours.filter(
+    (h) => !expectedHours.includes(h)
+  );
+
+  if (missing.length || extra.length) {
+    console.warn(
+      `[DRAW ALERT] ${lottery} ${date} missing=${missing.join(", ")} extra=${extra.join(", ")}`
+    );
+  }
+
+  return {
+    ok: missing.length === 0 && extra.length === 0,
+    missing,
+    extra,
+  };
+}
+
   return "";
+}
+
+function getExpectedHours(lottery, date) {
+  if (lottery !== "PT_RIO") return [];
+
+  const dt = new Date(`${date}T12:00:00`);
+  const dow = dt.getDay(); // 0=domingo, 6=sábado
+
+  if (dow === 0) {
+    return ["09:00", "11:00", "14:00", "16:00"];
+  }
+
+  return ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
+}
+
+function checkDrawIntegrity(draws, lottery, date) {
+  const expectedHours = getExpectedHours(lottery, date);
+
+  if (!expectedHours.length) {
+    return { ok: true, missing: [], extra: [] };
+  }
+
+  const gotHours = draws
+    .map((d) => String(d.close_hour || "").trim())
+    .filter(Boolean);
+
+  const missing = expectedHours.filter(
+    (h) => !gotHours.includes(h)
+  );
+
+  const extra = gotHours.filter(
+    (h) => !expectedHours.includes(h)
+  );
+
+  if (missing.length || extra.length) {
+    console.warn(
+      `[DRAW ALERT] ${lottery} ${date} missing=${missing.join(", ")} extra=${extra.join(", ")}`
+    );
+  }
+
+  return {
+    ok: missing.length === 0 && extra.length === 0,
+    missing,
+    extra,
+  };
 }
 
 function cmpHHMM(a, b) {
@@ -336,8 +561,9 @@ router.get("/draws", async (req, res) => {
     const drawsWindow = applyHourWindow(byLottery, from || "", to || "");
     const draws = await loadPrizesForDraws(db, drawsWindow, includePrizes, positionsInfo);
 
-    return res.json({
-      ok: true,
+const integrity = checkDrawIntegrity(draws, lottery, date);
+
+    return res.json({ ok: true, integrity,
       date,
       lottery,
       from: from || null,
@@ -386,8 +612,9 @@ async function handleDay(req, res) {
     const drawsWindow = applyHourWindow(byLottery, win.from || "", win.to || "");
     const draws = await loadPrizesForDraws(db, drawsWindow, includePrizes, positionsInfo);
 
-    return res.json({
-      ok: true,
+const integrity = checkDrawIntegrity(draws, lottery, date);
+
+    return res.json({ ok: true, integrity,
       mode: "day",
       date,
       lottery,
@@ -444,8 +671,9 @@ async function handleRange(req, res) {
     const drawsWindow = applyHourWindow(byLottery, win.from || "", win.to || "");
     const draws = await loadPrizesForDraws(db, drawsWindow, includePrizes, positionsInfo);
 
-    return res.json({
-      ok: true,
+const integrity = checkDrawIntegrity(draws, lottery, date);
+
+    return res.json({ ok: true, integrity,
       mode: "range",
       dateFrom,
       dateTo,
@@ -465,3 +693,6 @@ router.get("/draws/day", handleDay);
 router.get("/draws/range", handleRange);
 
 module.exports = router;
+
+
+

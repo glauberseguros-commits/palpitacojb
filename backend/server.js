@@ -1,3 +1,4 @@
+const { validateEnv } = require("./utils/validateEnv.js");
 "use strict";
 
 /* =========================
@@ -42,35 +43,33 @@ function parseEnvValue(val) {
 }
 
 (function loadEnvLocal() {
-  try {
-    const envPath = path.join(__dirname, ".env.local");
-    if (!fs.existsSync(envPath)) return;
+  const envPath = path.join(__dirname, ".env.local");
+  if (!fs.existsSync(envPath)) return;
 
-    let raw = fs.readFileSync(envPath, "utf8");
-    raw = raw.replace(/^\uFEFF/, "");
+  let raw = fs.readFileSync(envPath, "utf8");
+  raw = raw.replace(/^\uFEFF/, "");
 
-    raw.split(/\r?\n/).forEach((line) => {
-      let s = String(line || "").trim();
-      if (!s || s.startsWith("#")) return;
+  raw.split(/\r?\n/).forEach((line) => {
+    let s = String(line || "").trim();
+    if (!s || s.startsWith("#")) return;
 
-      if (/^export\s+/i.test(s)) {
-        s = s.replace(/^export\s+/i, "").trim();
-      }
+    if (/^export\s+/i.test(s)) {
+      s = s.replace(/^export\s+/i, "").trim();
+    }
 
-      const i = s.indexOf("=");
-      if (i <= 0) return;
+    const i = s.indexOf("=");
+    if (i <= 0) return;
 
-      const key = s.slice(0, i).trim();
-      const val = parseEnvValue(s.slice(i + 1));
+    const key = s.slice(0, i).trim();
+    const val = parseEnvValue(s.slice(i + 1));
 
-      if (!process.env[key]) process.env[key] = val;
-    });
+    if (!process.env[key]) process.env[key] = val;
+  });
 
-    console.log("[ENV] .env.local carregado");
-  } catch (e) {
-    console.warn("[ENV] Falha ao carregar .env.local:", e?.message || e);
-  }
+  console.log("[ENV] .env.local carregado");
 })();
+
+validateEnv();
 
 /* =========================
    APP
@@ -849,6 +848,11 @@ process.on("beforeExit", (code) => {
 process.on("exit", (code) => {
   console.warn("[WARN] exit code=", code);
 });
+
+
+
+
+
 
 
 
