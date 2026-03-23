@@ -522,10 +522,18 @@ function stopOnly(e) {
 }
 
 function getExpectedRjHoursDesc(ymd) {
-  const out = [...RJ_EXPECTED_HOURS_BASE_DESC];
+  const d = ymdToDateLocal(ymd);
+  const dow = d instanceof Date && !Number.isNaN(d.getTime()) ? d.getDay() : -1;
+
+  const out =
+    dow === 0
+      ? ["16:00", "14:00", "11:00"]
+      : [...RJ_EXPECTED_HOURS_BASE_DESC];
+
   if (isYMD(ymd) && ymd >= RJ_09H_START_YMD) {
     out.push("09:00");
   }
+
   return out;
 }
 

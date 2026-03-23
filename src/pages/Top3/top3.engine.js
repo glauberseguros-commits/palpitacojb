@@ -18,7 +18,36 @@ import {
   TOP3_NEXTDRAW_SCAN_MAX_STEPS,
   TOP3_NEXTDRAW_SCAN_MAX_DAYS,
   TOP3_GROUPS_K,
+  PT_RIO_SCHEDULE_SUNDAY,
 } from "./top3.constants";
+
+function findPreviousValidDraw(draws, currentYmd, currentHour) {
+  const MAX_BACK = 7;
+
+  let date = new Date(currentYmd + "T00:00:00");
+
+  for (let d = 0; d < MAX_BACK; d++) {
+    const ymd = date.toISOString().slice(0, 10);
+
+    const dayDraws = draws
+      .filter(d => d.ymd === ymd)
+      .sort((a, b) => b.hour.localeCompare(a.hour));
+
+    for (const draw of dayDraws) {
+      if (ymd === currentYmd && draw.hour >= currentHour) continue;
+
+      if (draw?.prizes?.length > 0) {
+        return draw;
+      }
+    }
+
+    date.setDate(date.getDate() - 1);
+  }
+
+  return null;
+}
+
+
 
 /* =========================
    Draw helpers (robustos)
@@ -190,6 +219,7 @@ export function getPtRioScheduleForYmd(
   PT_RIO_SCHEDULE_WED_SAT
 ) {
   const dow = getDowKey(ymd);
+  if (dow === 0) return PT_RIO_SCHEDULE_SUNDAY;
   if (dow === 3 || dow === 6) return PT_RIO_SCHEDULE_WED_SAT;
   return PT_RIO_SCHEDULE_NORMAL;
 }
@@ -302,7 +332,7 @@ export async function getPreviousDrawRobust({
       safeStr(lotteryKey).toUpperCase() === "FEDERAL" &&
       !daySchedule.length
     ) {
-      continue;
+
     }
 
     const out = await getKingResultsByDate({
@@ -525,7 +555,7 @@ export function indexDrawsByYmdHour(draws) {
 
     if (!prev) {
       map.set(drawKey, d);
-      continue;
+
     }
 
     if (drawQualityScore(d) >= drawQualityScore(prev)) {
@@ -551,7 +581,7 @@ export function computeLastSeenByGrupo(draws) {
     for (const p of ps) {
       const pos = guessPrizePos(p);
       if (!Number.isFinite(Number(pos)) || Number(pos) < 1 || Number(pos) > 5) {
-        continue;
+
       }
 
       const g = guessPrizeGrupo(p);
@@ -575,7 +605,7 @@ export function countAparicoesByGrupoInDraw(draw) {
   for (const p of ps) {
     const pos = guessPrizePos(p);
     if (!Number.isFinite(Number(pos)) || Number(pos) < 1 || Number(pos) > 5) {
-      continue;
+
     }
     const g = guessPrizeGrupo(p);
     if (!Number.isFinite(Number(g)) || Number(g) <= 0) continue;
@@ -601,7 +631,7 @@ function getAllTop5Groups(draw) {
   for (const p of ps) {
     const pos = guessPrizePos(p);
     if (!Number.isFinite(Number(pos)) || Number(pos) < 1 || Number(pos) > 5) {
-      continue;
+
     }
     const g = guessPrizeGrupo(p);
     if (!Number.isFinite(Number(g)) || Number(g) <= 0) continue;
@@ -2815,7 +2845,7 @@ export function buildMilharesForGrupo({
       for (const p of ps) {
         const pos = guessPrizePos(p);
         if (!Number.isFinite(Number(pos)) || Number(pos) < 1 || Number(pos) > 5) {
-          continue;
+
         }
 
         const g = guessPrizeGrupo(p);
@@ -2951,8 +2981,22 @@ export function buildTimelineTop3({
 
     let baseDraw = null;
 
-    if (currentDraw) {
-      const currentTs = ymdHourToTs(targetYmd, slotHour);
+    const prevSameDay = daySorted
+      .filter((d) => {
+        const y = pickDrawYMD(d);
+        const h = toHourBucket(pickDrawHour(d));
+        return y === targetYmd && h && hourToInt(h) < hourToInt(slotHour);
+      })
+      .sort((a, b) => {
+        const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+        const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+        return tb - ta;
+      })[0] || null;
+
+    if (prevSameDay) {
+      baseDraw = prevSameDay;
+    } else {
+      const slotTs = ymdHourToTs(targetYmd, slotHour);
 
       for (let i = rangeSorted.length - 1; i >= 0; i -= 1) {
         const d = rangeSorted[i];
@@ -2960,40 +3004,14 @@ export function buildTimelineTop3({
         const h = toHourBucket(pickDrawHour(d));
         const ts = ymdHourToTs(y, h);
 
-        if (!Number.isFinite(ts) || ts >= currentTs) continue;
+        if (!Number.isFinite(ts) || ts >= slotTs) continue;
 
         baseDraw = d;
         break;
       }
-    } else {
-      const prevSameDay = daySorted
-        .filter((d) => {
-          const y = pickDrawYMD(d);
-          const h = toHourBucket(pickDrawHour(d));
-          return y === targetYmd && h && hourToInt(h) < hourToInt(slotHour);
-        })
-        .sort((a, b) => {
-          const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
-          const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
-          return tb - ta;
-        })[0] || null;
 
-      if (prevSameDay) {
-        baseDraw = prevSameDay;
-      } else {
-        const slotTs = ymdHourToTs(targetYmd, slotHour);
-
-        for (let i = rangeSorted.length - 1; i >= 0; i -= 1) {
-          const d = rangeSorted[i];
-          const y = pickDrawYMD(d);
-          const h = toHourBucket(pickDrawHour(d));
-          const ts = ymdHourToTs(y, h);
-
-          if (!Number.isFinite(ts) || ts >= slotTs) continue;
-
-          baseDraw = d;
-          break;
-        }
+      if (!baseDraw) {
+        baseDraw = findPreviousValidDraw(rangeSorted, targetYmd, slotHour);
       }
     }
 
@@ -3045,6 +3063,7 @@ export function buildTimelineTop3({
 
     const top3 = Array.isArray(computed?.top) ? computed.top.slice(0, 3) : [];
     const resultGrupo = currentDraw ? pickPrize1GrupoFromDraw(currentDraw) : null;
+
     const hit =
       Number.isFinite(Number(resultGrupo)) && top3.length
         ? top3.some((t) => Number(t?.grupo) === Number(resultGrupo))
@@ -3064,5 +3083,4 @@ export function buildTimelineTop3({
 
   return timeline;
 }
-
 

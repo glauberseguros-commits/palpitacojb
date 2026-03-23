@@ -36,6 +36,13 @@ export const PT_RIO_SCHEDULE_NORMAL = [
   "21:00",
 ];
 
+export const PT_RIO_SCHEDULE_SUNDAY = [
+  "09:00",
+  "11:00",
+  "14:00",
+  "16:00",
+];
+
 /**
  * PT_RIO em QUA/SÁB (RJ)
  * ATENÇÃO:

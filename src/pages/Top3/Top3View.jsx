@@ -2,6 +2,23 @@
 import React, { useMemo, useState, useCallback, useEffect } from "react";
 import { getAnimalLabel, getImgFromGrupo } from "../../constants/bichoMap";
 
+function extractResultMilhar(slot) {
+  if (!slot || !Array.isArray(slot.prizes)) return "";
+
+  const p1 = slot.prizes.find((p) => Number(p.position) === 1);
+  if (!p1) return "";
+
+  const num = String(
+    p1.numero ||
+      p1.milhar ||
+      p1.number ||
+      p1.valor ||
+      ""
+  ).replace(/\D/g, "");
+
+  return num.padStart(4, "0");
+}
+
 function toPercent(score) {
   const n = Number(score);
   if (!Number.isFinite(n)) return 0;
@@ -185,29 +202,52 @@ function cleanLayerText(s) {
   return noSamples || "—";
 }
 
-function analyzeTop3Hit(top3, resultGrupo) {
+function analyzeTop3Hit(top3, resultGrupo, resultMilhar) {
   if (!Array.isArray(top3) || !top3.length) {
     return { type: "none", score: 0, position: -1 };
   }
 
   const grupoNum = Number(resultGrupo);
-  if (!Number.isFinite(grupoNum) || grupoNum < 1 || grupoNum > 25) {
-    return { type: "none", score: 0, position: -1 };
-  }
+  const milhar = normalizeMilharStr(resultMilhar);
+  const centena = milhar ? milhar.slice(-3) : "";
 
-  const idx = top3.findIndex(
-    (item) => Number(item?.grupo) === grupoNum
-  );
+  let best = { type: "miss", score: 0, position: -1 };
 
-  if (idx === -1) {
-    return { type: "miss", score: 0, position: -1 };
-  }
+  top3.forEach((item, idx) => {
+    const g = Number(item?.grupo);
 
-  if (idx === 0) return { type: "hit_exact", score: 100, position: 1 };
-  if (idx === 1) return { type: "hit_top3", score: 75, position: 2 };
-  if (idx === 2) return { type: "hit_top3", score: 60, position: 3 };
+    const milhares = Array.isArray(item?.milhares20)
+      ? item.milhares20
+      : Array.isArray(item?.milhares)
+        ? item.milhares
+        : [];
 
-  return { type: "hit_partial", score: 50, position: idx + 1 };
+    const centenas = milhares.map((m) => centenaFromMilhar(m));
+
+    let score = 0;
+    let type = "miss";
+
+    if (milhar && milhares.includes(milhar)) {
+      score = 100;
+      type = "hit_exact";
+    } else if (centena && centenas.includes(centena)) {
+      score = 66;
+      type = "hit_centena";
+    } else if (g === grupoNum) {
+      score = 33;
+      type = "hit_grupo";
+    }
+
+    if (score > best.score) {
+      best = {
+        type,
+        score,
+        position: idx + 1,
+      };
+    }
+  });
+
+  return best;
 }
 
 function ImgWithFallback({ srcs, alt, size = 84, style }) {
@@ -437,7 +477,7 @@ function Top3Card({
 
       <div className="top3-card__body">
         <div className="top3-card__actions">
-          <div className="top3-card__sectionTitle">Combinações principais</div>
+          <div className="top3-card__sectionTitle"></div>
 
           <button
             type="button"
@@ -445,7 +485,7 @@ function Top3Card({
             className="pp-btn"
             title="Copiar as 20 milhares"
           >
-            {copiedAllKey === key ? "✅ Copiado" : "Copiar 20"}
+            {copiedAllKey === key ? "✅ Copiado" : "Apostar"}
           </button>
         </div>
 
@@ -506,7 +546,10 @@ function CompactTop3Result({ slot, status, statusLabel, statusDetail }) {
             const img = Number.isFinite(grupo) ? getImgFromGrupo(grupo, 64) : "";
 
             return (
-              <div key={`${String(slot?.targetYmd || "y")}_${String(slot?.targetHour || "h")}_${idx}_${grupo}`} className="timeline-compact__pick">
+              <div
+                key={`${String(slot?.targetYmd || "y")}_${String(slot?.targetHour || "h")}_${idx}_${grupo}`}
+                className="timeline-compact__pick"
+              >
                 <div className="timeline-compact__pickRank">{idx + 1}</div>
                 <ImgWithFallback
                   srcs={img ? [img] : []}
@@ -549,7 +592,9 @@ function CompactTop3Result({ slot, status, statusLabel, statusDetail }) {
         </div>
 
         <div className="timeline-compact__performance">
-          <div className={`timeline-compact__performanceBadge timeline-compact__performanceBadge--${status}`}>
+          <div
+            className={`timeline-compact__performanceBadge timeline-compact__performanceBadge--${status}`}
+          >
             {statusLabel}
           </div>
           <div className="timeline-compact__performanceText">{statusDetail}</div>
@@ -573,36 +618,42 @@ function TimelineSlot({
 }) {
   const t = theme;
   const slotTop3 = Array.isArray(slot?.top3) ? slot.top3.slice(0, 3) : [];
+
   const resultGrupo = Number(slot?.resultGrupo);
   const hasResult = Number.isFinite(resultGrupo) && resultGrupo >= 1 && resultGrupo <= 25;
   const resultAnimal = hasResult ? String(getAnimalLabel(resultGrupo) || "") : "";
-  const resultImg = hasResult ? getImgFromGrupo(resultGrupo, 64) : "";
-  const analysis = analyzeTop3Hit(slotTop3, resultGrupo);
+
+  const analysis = analyzeTop3Hit(
+    slotTop3,
+    resultGrupo,
+    extractResultMilhar(slot)
+  );
+
   const status =
     analysis.type === "none"
       ? "pending"
-      : analysis.type === "hit_exact" || analysis.type === "hit_top3" || analysis.type === "hit_partial"
-        ? "hit"
-        : "miss";
+      : analysis.type === "miss"
+        ? "miss"
+        : "hit";
 
   const statusLabel =
     analysis.type === "hit_exact"
       ? `🎯 ACERTO TOTAL (${analysis.score}%)`
-      : analysis.type === "hit_top3"
-        ? `🔥 TOP 3 (${analysis.score}%)`
-        : analysis.type === "hit_partial"
-          ? `🟡 PARCIAL (${analysis.score}%)`
+      : analysis.type === "hit_centena"
+        ? `🟡 CENTENA (${analysis.score}%)`
+        : analysis.type === "hit_grupo"
+          ? `✅ GRUPO (${analysis.score}%)`
           : analysis.type === "miss"
             ? "❌ ERRO (0%)"
             : "⏳ PENDENTE";
 
   const statusDetail =
     analysis.type === "hit_exact"
-      ? "Acertou o palpite principal do Top3."
-      : analysis.type === "hit_top3"
-        ? `Acertou dentro do Top3 na posição ${analysis.position}.`
-        : analysis.type === "hit_partial"
-          ? `Acerto parcial na posição ${analysis.position}.`
+      ? `Milhar exata acertada no palpite #${analysis.position}.`
+      : analysis.type === "hit_centena"
+        ? `Centena acertada no palpite #${analysis.position}.`
+        : analysis.type === "hit_grupo"
+          ? `Grupo acertado no palpite #${analysis.position}.`
           : analysis.type === "miss"
             ? "Nenhum dos 3 palpites foi sorteado."
             : "Aguardando resultado oficial.";
@@ -630,7 +681,9 @@ function TimelineSlot({
         <div className="top3-metaItem">
           <div className="top3-metaItem__label">Resultado real</div>
           <div className="top3-metaItem__value">
-            {hasResult ? `G${formatGrupo(resultGrupo)} • ${resultAnimal.toUpperCase()}` : "Pendente"}
+            {hasResult
+              ? `G${formatGrupo(resultGrupo)} • ${resultAnimal.toUpperCase()}`
+              : "Pendente"}
           </div>
         </div>
 
@@ -639,30 +692,6 @@ function TimelineSlot({
           <div className="top3-metaItem__value">{statusDetail}</div>
         </div>
       </div>
-
-      {hasResult ? (
-        <>
-          <div className="timeline-slot__resultBox">
-            <ImgWithFallback
-              srcs={[resultImg]}
-              alt={resultAnimal}
-              size={54}
-              style={{ borderRadius: 10 }}
-            />
-            <div className="timeline-slot__resultText">
-              <div className="timeline-slot__resultGroup">G{formatGrupo(resultGrupo)}</div>
-              <div className="timeline-slot__resultAnimal">
-                {String(resultAnimal || "").toUpperCase()}
-              </div>
-            </div>
-          </div>
-
-          <div className="timeline-slot__insightBox">
-            <div className="timeline-slot__insightTitle">Leitura de performance</div>
-            <div className="timeline-slot__insightText">{statusDetail}</div>
-          </div>
-        </>
-      ) : null}
 
       {!slotTop3.length ? (
         <div className="top3-empty">Sem Top3 calculado para este horário.</div>
@@ -854,7 +883,7 @@ export default function Top3View(props) {
       .sort((a, b) => {
         const ah = hourBucketToSortValue(a?.target?.hour);
         const bh = hourBucketToSortValue(b?.target?.hour);
-        return bh - ah;
+        return ah - bh;
       });
   }, [log, historyAnchorYmd]);
 
@@ -2079,4 +2108,3 @@ export default function Top3View(props) {
     </div>
   );
 }
-

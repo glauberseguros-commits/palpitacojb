@@ -216,7 +216,7 @@ function saveTop3Log(log) {
   } catch {}
 }
 
-function registerPrediction({ targetKey, targetYmd, targetHour, picks }) {
+function registerPrediction({ targetKey, targetYmd, targetHour, picks, ranking = [] }) {
   const normalizedHour = normHour(targetHour);
   const normalizedKey = makeKey(targetYmd, normalizedHour);
   if (!normalizedKey || !Array.isArray(picks) || !picks.length) return;
@@ -237,6 +237,7 @@ function registerPrediction({ targetKey, targetYmd, targetHour, picks }) {
       targetKey: normalizedKey,
       target: { ymd: targetYmd || "", hour: normalizedHour || "" },
       picks: normalizedPicks,
+      ranking: Array.isArray(ranking) ? ranking : [],
       createdAt: prev.createdAt || Date.now(),
       result: prev.result ?? null,
       hit:
@@ -250,6 +251,7 @@ function registerPrediction({ targetKey, targetYmd, targetHour, picks }) {
       targetKey: normalizedKey,
       target: { ymd: targetYmd || "", hour: normalizedHour || "" },
       picks: normalizedPicks,
+      ranking: Array.isArray(ranking) ? ranking : [],
       result: null,
       hit: null,
       createdAt: Date.now(),
@@ -263,7 +265,9 @@ function registerPrediction({ targetKey, targetYmd, targetHour, picks }) {
 function registerResult({ targetKey, resultGrupo }) {
   const log = getTop3Log();
   const normalizedTargetKey = String(targetKey || "").trim();
-  if (!normalizedTargetKey || !Number.isFinite(Number(resultGrupo))) return;
+  const resultNum = Number(resultGrupo);
+
+  if (!normalizedTargetKey || !Number.isFinite(resultNum)) return;
 
   const idx = log.findIndex(
     (l) => String(l?.targetKey || "") === String(normalizedTargetKey)
@@ -274,10 +278,26 @@ function registerResult({ targetKey, resultGrupo }) {
     ? log[idx].picks.map(Number)
     : [];
 
+  const ranking = Array.isArray(log[idx]?.ranking)
+    ? log[idx].ranking
+    : [];
+
+  const position =
+    ranking.findIndex((x) => Number(x?.grupo) === resultNum) + 1;
+
+  const score =
+    position === 1 ? 100 :
+    position === 2 ? 80 :
+    position === 3 ? 60 :
+    position > 0 && position <= 5 ? 40 :
+    position > 0 && position <= 10 ? 20 : 0;
+
   log[idx] = {
     ...log[idx],
-    result: Number(resultGrupo),
-    hit: picks.includes(Number(resultGrupo)),
+    result: resultNum,
+    hit: picks.includes(resultNum),
+    position: position > 0 ? position : null,
+    score,
     validatedAt: Date.now(),
     status: "validated",
   };
@@ -572,6 +592,7 @@ function backfillDayTop3({ draws, lotteryKey, rangeDraws }) {
       targetYmd: currentYmd,
       targetHour: currentHour,
       picks,
+      ranking: (Array.isArray(computed?.top) ? computed.top : []),
     });
   }
 }
@@ -731,12 +752,6 @@ export function useTop3Controller() {
 
     const currentRequestId = ++requestIdRef.current;
 
-    if (lKey === "FEDERAL" && !isFederalDrawDay(ymdSafe)) {
-      setError(
-        `Federal sem concurso hoje (${dateBR}). Exibindo previsão para o próximo sorteio com base no último resultado disponível.`
-      );
-    }
-
     try {
       const ufResolved = lKey;
 
@@ -760,16 +775,21 @@ export function useTop3Controller() {
         boundsCacheRef.current.set(ufResolved, { minDate, maxDate });
       }
 
+      const effectiveYmd =
+        lKey === "FEDERAL" && isYMD(maxDate) && !isFederalDrawDay(ymdSafe)
+          ? maxDate
+          : ymdSafe;
+
       const today =
         (await getKingResultsByDate({
           uf: ufResolved,
-          date: ymdSafe,
+          date: effectiveYmd,
           readPolicy: "server",
         })) || [];
 
       const todaySchedule = getScheduleForLottery({
         lotteryKey: lKey,
-        ymd: ymdSafe,
+        ymd: effectiveYmd,
         PT_RIO_SCHEDULE_NORMAL,
         PT_RIO_SCHEDULE_WED_SAT,
         FEDERAL_SCHEDULE,
@@ -820,22 +840,31 @@ export function useTop3Controller() {
 
       if (todayLast) {
         baseDraw = todayLast;
-        baseY = pickDrawYMD(todayLast) || ymdSafe;
+        baseY = pickDrawYMD(todayLast) || effectiveYmd;
         baseH = toHourBucket(pickDrawHour(todayLast));
         baseGrupo = pickPrize1GrupoFromDraw(todayLast);
         baseAnimal = baseGrupo ? safeStr(getAnimalLabel(baseGrupo)) : "";
 
-        const nextSlot = getNextSlotForLottery({
-          lotteryKey: lKey,
-          ymd: baseY,
-          hourBucket: baseH,
-          PT_RIO_SCHEDULE_NORMAL,
-          PT_RIO_SCHEDULE_WED_SAT,
-          FEDERAL_SCHEDULE,
-        });
+        const isFederalFallbackDay =
+          lKey === "FEDERAL" &&
+          effectiveYmd !== ymdSafe;
 
-        resolvedTargetY = safeStr(nextSlot?.ymd);
-        resolvedTargetH = toHourBucket(nextSlot?.hour);
+        if (isFederalFallbackDay) {
+          resolvedTargetY = baseY;
+          resolvedTargetH = baseH;
+        } else {
+          const nextSlot = getNextSlotForLottery({
+            lotteryKey: lKey,
+            ymd: baseY,
+            hourBucket: baseH,
+            PT_RIO_SCHEDULE_NORMAL,
+            PT_RIO_SCHEDULE_WED_SAT,
+            FEDERAL_SCHEDULE,
+          });
+
+          resolvedTargetY = safeStr(nextSlot?.ymd);
+          resolvedTargetH = toHourBucket(nextSlot?.hour);
+        }
 
         if (isYMD(baseY) && baseH) {
           resolvedPrev = await getPreviousDrawRobust({
@@ -865,13 +894,13 @@ export function useTop3Controller() {
           return;
         }
 
-        resolvedTargetY = ymdSafe;
+        resolvedTargetY = effectiveYmd;
         resolvedTargetH = firstHourToday;
 
         const previousForFirstSlot = await getPreviousDrawRobust({
           getKingResultsByDate,
           lotteryKey: lKey,
-          ymdTarget: ymdSafe,
+          ymdTarget: effectiveYmd,
           targetHourBucket: firstHourToday,
           todayDraws: today,
           schedule: todaySchedule,
@@ -882,7 +911,7 @@ export function useTop3Controller() {
 
         const previousResolved = previousForFirstSlot?.draw
           ? previousForFirstSlot
-          : await fallbackBaseSearch(ymdSafe, firstHourToday);
+          : await fallbackBaseSearch(effectiveYmd, firstHourToday);
 
         if (!previousResolved?.draw) {
           resetStateForNoData();
@@ -899,7 +928,7 @@ export function useTop3Controller() {
         baseAnimal = baseGrupo ? safeStr(getAnimalLabel(baseGrupo)) : "";
 
         const baseDayDraws =
-          baseY === ymdSafe
+          baseY === effectiveYmd
             ? today
             : (await getKingResultsByDate({
                 uf: ufResolved,
@@ -1006,16 +1035,23 @@ export function useTop3Controller() {
         setLoading(false);
       }
     }
-  }, [lotteryKeySafe, ymdSafe, lookback, dateBR, resetStateForNoData]);
+  }, [lotteryKeySafe, ymdSafe, lookback, resetStateForNoData]);
 
   useEffect(() => {
-    ensureDayTimeline({
-      ymd: ymdSafe,
-      lotteryKey: lotteryKeySafe,
-    });
+    const timelineYmd =
+  lotteryKeySafe === "FEDERAL" &&
+  isFederalNonDrawDay &&
+  isYMD(lastInfo?.lastYmd)
+    ? lastInfo.lastYmd
+    : ymdSafe;
+
+ensureDayTimeline({
+  ymd: timelineYmd,
+  lotteryKey: lotteryKeySafe,
+});
 
     load();
-  }, [load, ymdSafe, lotteryKeySafe]);
+  }, [load, ymdSafe, lotteryKeySafe, isFederalNonDrawDay, lastInfo?.lastYmd]);
 
   const analytics = useMemo(() => {
     const rawList = Array.isArray(rangeDraws) ? rangeDraws : [];
@@ -1126,6 +1162,9 @@ export function useTop3Controller() {
 
       const milharesCols = build4ColsFromEngineOut(out, 4, 5);
       const milhares20 = milharesCols.flatMap((c) => c.items).slice(0, 20);
+const centenas = milhares20
+  .map((m) => getCentena3(m))
+  .filter((c) => c && /^\d{3}$/.test(c));
 
       const prob = Number(x.prob || 0);
       const probPct = prob * 100;
@@ -1145,6 +1184,7 @@ export function useTop3Controller() {
         probPct,
         milharesCols,
         milhares20,
+centenas,
       };
     });
   }, [analytics, build20]);
@@ -1155,8 +1195,15 @@ export function useTop3Controller() {
 
     if (!isYMD(ymdSafe) || !range.length) return [];
 
-    const rawTimeline = buildTimelineTop3({
-      ymd: ymdSafe,
+    const timelineYmd =
+  lotteryKeySafe === "FEDERAL" &&
+  isFederalNonDrawDay &&
+  isYMD(lastInfo?.lastYmd)
+    ? lastInfo.lastYmd
+    : ymdSafe;
+
+const rawTimeline = buildTimelineTop3({
+  ymd: timelineYmd,
       drawsToday: day,
       drawsRange: range,
       lotteryKey: lotteryKeySafe,
@@ -1193,6 +1240,9 @@ export function useTop3Controller() {
 
         const milharesCols = build4ColsFromEngineOut(out, 4, 5);
         const milhares20 = milharesCols.flatMap((c) => c.items).slice(0, 20);
+const centenas = milhares20
+  .map((m) => getCentena3(m))
+  .filter((c) => c && /^\d{3}$/.test(c));
 
         const prob = Number(x?.prob || 0);
         const probPct = prob * 100;
@@ -1212,6 +1262,7 @@ export function useTop3Controller() {
           probPct,
           milharesCols,
           milhares20,
+centenas,
         };
       });
 
@@ -1220,7 +1271,7 @@ export function useTop3Controller() {
         top3: mappedTop3,
       };
     });
-  }, [todayDraws, rangeDraws, lotteryKeySafe, ymdSafe]);
+  }, [todayDraws, rangeDraws, lotteryKeySafe, ymdSafe, isFederalNonDrawDay, lastInfo?.lastYmd]);
 
   useEffect(() => {
     if (!analysisYmd || !analysisHourBucket) return;
@@ -1293,5 +1344,18 @@ export function useTop3Controller() {
     normalizeImgSrc,
   };
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
