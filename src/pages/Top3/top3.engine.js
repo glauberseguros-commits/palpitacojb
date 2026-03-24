@@ -332,7 +332,7 @@ export async function getPreviousDrawRobust({
       safeStr(lotteryKey).toUpperCase() === "FEDERAL" &&
       !daySchedule.length
     ) {
-
+      continue;
     }
 
     const out = await getKingResultsByDate({
@@ -555,7 +555,7 @@ export function indexDrawsByYmdHour(draws) {
 
     if (!prev) {
       map.set(drawKey, d);
-
+      continue;
     }
 
     if (drawQualityScore(d) >= drawQualityScore(prev)) {
@@ -581,7 +581,7 @@ export function computeLastSeenByGrupo(draws) {
     for (const p of ps) {
       const pos = guessPrizePos(p);
       if (!Number.isFinite(Number(pos)) || Number(pos) < 1 || Number(pos) > 5) {
-
+        continue;
       }
 
       const g = guessPrizeGrupo(p);
@@ -605,7 +605,7 @@ export function countAparicoesByGrupoInDraw(draw) {
   for (const p of ps) {
     const pos = guessPrizePos(p);
     if (!Number.isFinite(Number(pos)) || Number(pos) < 1 || Number(pos) > 5) {
-
+      continue;
     }
     const g = guessPrizeGrupo(p);
     if (!Number.isFinite(Number(g)) || Number(g) <= 0) continue;
@@ -631,7 +631,7 @@ function getAllTop5Groups(draw) {
   for (const p of ps) {
     const pos = guessPrizePos(p);
     if (!Number.isFinite(Number(pos)) || Number(pos) < 1 || Number(pos) > 5) {
-
+      continue;
     }
     const g = guessPrizeGrupo(p);
     if (!Number.isFinite(Number(g)) || Number(g) <= 0) continue;
@@ -2845,7 +2845,7 @@ export function buildMilharesForGrupo({
       for (const p of ps) {
         const pos = guessPrizePos(p);
         if (!Number.isFinite(Number(pos)) || Number(pos) < 1 || Number(pos) > 5) {
-
+          continue;
         }
 
         const g = guessPrizeGrupo(p);
@@ -2916,7 +2916,7 @@ export function build20MilharesForGrupo(args) {
   return buildMilharesForGrupo({ ...(args || {}), count: 20 });
 }
 /* =========================
-   TIMELINE DO DIA (NOVO)
+   TIMELINE DO DIA (CADEIA PREDITIVA)
 ========================= */
 
 export function buildTimelineTop3({
@@ -2974,18 +2974,49 @@ export function buildTimelineTop3({
     realizedTodayMap.set(`${y}|${h}`, d);
   }
 
+  function makeSyntheticDrawFromTop1(targetHour, top1Grupo) {
+    const grupo = Number(top1Grupo);
+    if (!Number.isFinite(grupo) || grupo < 1 || grupo > 25) return null;
+
+    return {
+      ymd: targetYmd,
+      hour: targetHour,
+      close_hour: targetHour,
+      date: targetYmd,
+      source: "simulated_timeline",
+      simulated: true,
+      prizes: [
+        {
+          prizeId: "p01",
+          position: 1,
+          grupo2: grupo,
+          grupo,
+          group2: grupo,
+          group: grupo,
+          animal_grupo: grupo,
+          raw: "",
+          milhar: "",
+          numero: "",
+        },
+      ],
+    };
+  }
+
+  const chainContextDraws = [];
   const timeline = [];
 
   for (const slotHour of normalizedSchedule) {
     const currentDraw = realizedTodayMap.get(`${targetYmd}|${slotHour}`) || null;
+    const slotTs = ymdHourToTs(targetYmd, slotHour);
 
     let baseDraw = null;
 
-    const prevSameDay = daySorted
+    const priorChainDraw = [...chainContextDraws]
       .filter((d) => {
         const y = pickDrawYMD(d);
         const h = toHourBucket(pickDrawHour(d));
-        return y === targetYmd && h && hourToInt(h) < hourToInt(slotHour);
+        const ts = ymdHourToTs(y, h);
+        return isYMD(y) && h && Number.isFinite(ts) && ts < slotTs;
       })
       .sort((a, b) => {
         const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
@@ -2993,11 +3024,30 @@ export function buildTimelineTop3({
         return tb - ta;
       })[0] || null;
 
-    if (prevSameDay) {
-      baseDraw = prevSameDay;
-    } else {
-      const slotTs = ymdHourToTs(targetYmd, slotHour);
+    if (priorChainDraw) {
+      baseDraw = priorChainDraw;
+    }
 
+    if (!baseDraw) {
+      const prevSameDay = daySorted
+        .filter((d) => {
+          const y = pickDrawYMD(d);
+          const h = toHourBucket(pickDrawHour(d));
+          const ts = ymdHourToTs(y, h);
+          return y === targetYmd && h && Number.isFinite(ts) && ts < slotTs;
+        })
+        .sort((a, b) => {
+          const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+          const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+          return tb - ta;
+        })[0] || null;
+
+      if (prevSameDay) {
+        baseDraw = prevSameDay;
+      }
+    }
+
+    if (!baseDraw) {
       for (let i = rangeSorted.length - 1; i >= 0; i -= 1) {
         const d = rangeSorted[i];
         const y = pickDrawYMD(d);
@@ -3009,10 +3059,10 @@ export function buildTimelineTop3({
         baseDraw = d;
         break;
       }
+    }
 
-      if (!baseDraw) {
-        baseDraw = findPreviousValidDraw(rangeSorted, targetYmd, slotHour);
-      }
+    if (!baseDraw) {
+      baseDraw = findPreviousValidDraw(rangeSorted, targetYmd, slotHour);
     }
 
     if (!baseDraw) {
@@ -3022,9 +3072,9 @@ export function buildTimelineTop3({
         baseYmd: "",
         baseHour: "",
         top3: [],
-        resultGrupo: currentDraw ? pickPrize1GrupoFromDraw(currentDraw) : null,
+        resultGrupo: null,
         hit: null,
-        status: currentDraw ? "validated" : "pending",
+        status: "pending",
       });
       continue;
     }
@@ -3042,17 +3092,23 @@ export function buildTimelineTop3({
       return Number.isFinite(ts) && ts <= baseTs;
     });
 
-    const usableTodayContext = daySorted.filter((d) => {
-      const ts = ymdHourToTs(
-        pickDrawYMD(d),
-        toHourBucket(pickDrawHour(d))
-      );
-      return Number.isFinite(ts) && ts <= baseTs;
-    });
+    const usableTodayContext = [...chainContextDraws]
+      .filter((d) => {
+        const ts = ymdHourToTs(
+          pickDrawYMD(d),
+          toHourBucket(pickDrawHour(d))
+        );
+        return Number.isFinite(ts) && ts <= baseTs;
+      })
+      .sort((a, b) => {
+        const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+        const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+        return ta - tb;
+      });
 
     const computed = computeConditionalNextTop3V2({
       lotteryKey,
-      drawsRange: usableHistory,
+      drawsRange: [...usableHistory, ...usableTodayContext],
       drawLast: baseDraw,
       drawsToday: usableTodayContext,
       PT_RIO_SCHEDULE_NORMAL,
@@ -3079,8 +3135,16 @@ export function buildTimelineTop3({
       hit,
       status: Number.isFinite(Number(resultGrupo)) ? "validated" : "pending",
     });
+
+    if (currentDraw) {
+      chainContextDraws.push(currentDraw);
+    } else if (top3.length && Number.isFinite(Number(top3[0]?.grupo))) {
+      const synthetic = makeSyntheticDrawFromTop1(slotHour, top3[0].grupo);
+      if (synthetic) {
+        chainContextDraws.push(synthetic);
+      }
+    }
   }
 
   return timeline;
 }
-
