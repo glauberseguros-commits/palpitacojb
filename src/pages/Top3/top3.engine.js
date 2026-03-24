@@ -23,22 +23,18 @@ import {
 
 function findPreviousValidDraw(draws, currentYmd, currentHour) {
   const MAX_BACK = 7;
+  let date = new Date(`${currentYmd}T00:00:00`);
 
-  let date = new Date(currentYmd + "T00:00:00");
-
-  for (let d = 0; d < MAX_BACK; d++) {
+  for (let d = 0; d < MAX_BACK; d += 1) {
     const ymd = date.toISOString().slice(0, 10);
 
     const dayDraws = draws
-      .filter(d => d.ymd === ymd)
+      .filter((item) => item.ymd === ymd)
       .sort((a, b) => b.hour.localeCompare(a.hour));
 
     for (const draw of dayDraws) {
       if (ymd === currentYmd && draw.hour >= currentHour) continue;
-
-      if (draw?.prizes?.length > 0) {
-        return draw;
-      }
+      if (draw?.prizes?.length > 0) return draw;
     }
 
     date.setDate(date.getDate() - 1);
@@ -46,8 +42,6 @@ function findPreviousValidDraw(draws, currentYmd, currentHour) {
 
   return null;
 }
-
-
 
 /* =========================
    Draw helpers (robustos)
@@ -479,7 +473,6 @@ export function findNextExistingDrawFromSlot({
 
   let curY = y0;
   let curH = h0;
-
   let steps = 0;
   let daysWalked = 0;
 
@@ -721,7 +714,7 @@ function computeStructuralBaseDistribution(
     out.set(g, n / denom);
   }
 
-  return { prob: out, totalSamples };
+  return { scoreProb: out, totalSamples };
 }
 
 /* =========================
@@ -786,12 +779,8 @@ function computeRecentPressureMetrics(recentDraws, groupsK = TOP3_GROUPS_K) {
       const row = out.get(g);
       row.recentTop5 += 1;
 
-      if (pos >= 2 && pos <= 4) {
-        row.recentIndirect += 1;
-      }
-      if (pos === 1) {
-        row.recentFirst += 1;
-      }
+      if (pos >= 2 && pos <= 4) row.recentIndirect += 1;
+      if (pos === 1) row.recentFirst += 1;
     }
   }
 
@@ -1152,14 +1141,14 @@ export function computeConditionalNextTop3({
     targetDow,
     TOP3_GROUPS_K
   );
-  const probBase = structural?.prob || new Map();
+  const probBase = structural?.scoreProb || new Map();
 
   const condWeight =
     key === "FEDERAL"
       ? samples >= 8
         ? 0.55
         : samples >= 4
-          ? 0.40
+          ? 0.4
           : 0.25
       : samples >= 12
         ? 0.65
@@ -1197,118 +1186,106 @@ export function computeConditionalNextTop3({
     ...Array.from(recentMetrics.values()).map((x) => Number(x.recentFirst || 0))
   );
 
-  const ranked = Array.from(
-    { length: safeInt(TOP3_GROUPS_K, 25) },
-    (_, idx) => {
-      const grupo = idx + 1;
-      const aparicoes = Number(freq.get(grupo) || 0);
-      const primeiros = Number(firstFreq.get(grupo) || 0);
-      const pCond = Number(probCond.get(grupo) || 0);
-      const pBase = Number(probBase.get(grupo) || 0);
-      const pFinal = (pCond * condWeight) + (pBase * baseWeight);
+  const ranked = Array.from({ length: safeInt(TOP3_GROUPS_K, 25) }, (_, idx) => {
+    const grupo = idx + 1;
+    const aparicoes = Number(freq.get(grupo) || 0);
+    const primeiros = Number(firstFreq.get(grupo) || 0);
+    const pCond = Number(probCond.get(grupo) || 0);
+    const pBase = Number(probBase.get(grupo) || 0);
+    const pFinal = (pCond * condWeight) + (pBase * baseWeight);
 
-      const ls = lastSeen.get(grupo);
-      const lastSeenTs = Number.isFinite(ls) ? ls : Number.POSITIVE_INFINITY;
+    const ls = lastSeen.get(grupo);
+    const lastSeenTs = Number.isFinite(ls) ? ls : Number.POSITIVE_INFINITY;
 
-      const gapMs =
-        Number.isFinite(nowTs) &&
-        Number.isFinite(lastSeenTs) &&
-        lastSeenTs !== Number.POSITIVE_INFINITY
-          ? Math.max(0, nowTs - lastSeenTs)
-          : maxGapMsBase;
+    const gapMs =
+      Number.isFinite(nowTs) &&
+      Number.isFinite(lastSeenTs) &&
+      lastSeenTs !== Number.POSITIVE_INFINITY
+        ? Math.max(0, nowTs - lastSeenTs)
+        : maxGapMsBase;
 
-      const taxaPrimeiro = samples > 0 ? primeiros / samples : 0;
-      const lateBonusRaw = Math.max(0, gapMs) / Math.max(1, maxGapMsBase);
-      const lateBonus = Math.max(0, Math.min(1, lateBonusRaw));
+    const taxaPrimeiro = samples > 0 ? primeiros / samples : 0;
+    const lateBonusRaw = Math.max(0, gapMs) / Math.max(1, maxGapMsBase);
+    const lateBonus = Math.max(0, Math.min(1, lateBonusRaw));
 
-      const rm = recentMetrics.get(grupo) || {
-        recentTop5: 0,
-        recentIndirect: 0,
-        recentFirst: 0,
-        recentLast1First: 0,
-        recentLast2Top5: 0,
-      };
+    const rm = recentMetrics.get(grupo) || {
+      recentTop5: 0,
+      recentIndirect: 0,
+      recentFirst: 0,
+      recentLast1First: 0,
+      recentLast2Top5: 0,
+    };
 
-      const recentTop5Norm = normalizeMetric(rm.recentTop5, recentMaxTop5);
-      const recentIndirectNorm = normalizeMetric(rm.recentIndirect, recentMaxIndirect);
-      const recentFirstNorm = normalizeMetric(rm.recentFirst, recentMaxFirst);
+    const recentTop5Norm = normalizeMetric(rm.recentTop5, recentMaxTop5);
+    const recentIndirectNorm = normalizeMetric(rm.recentIndirect, recentMaxIndirect);
+    const recentFirstNorm = normalizeMetric(rm.recentFirst, recentMaxFirst);
+    const recentLast1FirstNorm = normalizeMetric(rm.recentLast1First, 1);
+    const recentLast2Top5Norm = normalizeMetric(rm.recentLast2Top5, 2);
 
-      const persistenceShort =
-        (recentTop5Norm * 0.65) + (normalizeMetric(rm.recentLast2Top5, 2) * 0.35);
+    const recencyCoolingFactor =
+      rm.recentLast1First > 0
+        ? 0.72
+        : rm.recentFirst >= 2
+          ? 0.84
+          : 1.0;
 
-      const indirectPressure =
-        (recentIndirectNorm * 0.75) + (recentTop5Norm * 0.25);
+    const smartLateBoost =
+      lateBonus *
+      (0.45 + (recentIndirectNorm * 0.35) + (recentLast2Top5Norm * 0.2)) *
+      recencyCoolingFactor;
 
-      const explosionPenalty =
-        rm.recentLast1First > 0
-          ? 0.72
-          : rm.recentFirst >= 2
-            ? 0.84
-            : 1.0;
+    const recentComposite =
+      (recentTop5Norm * 0.45) +
+      (recentIndirectNorm * 0.35) +
+      (recentFirstNorm * 0.2);
 
-      const smartLateBoost =
-        lateBonus * (0.45 + (indirectPressure * 0.35) + (persistenceShort * 0.20));
+    const baseScore =
+      key === "FEDERAL"
+        ? (pFinal * 145) +
+          (pBase * 85) +
+          (primeiros * 42) +
+          (aparicoes * 18) +
+          (recentComposite * 26) +
+          (smartLateBoost * 10)
+        : useFirstFocusedRanking
+          ? (pFinal * 125) +
+            (aparicoes * 155) +
+            (primeiros * 70) +
+            (taxaPrimeiro * 34) +
+            (recentComposite * 18) +
+            (recentLast1FirstNorm * 10) +
+            (smartLateBoost * 16)
+          : (pFinal * 125) +
+            (aparicoes * 135) +
+            (primeiros * 62) +
+            (recentComposite * 24) +
+            (recentLast1FirstNorm * 8) +
+            (smartLateBoost * 18);
 
-      const recentComposite =
-        (indirectPressure * 0.45) +
-        (persistenceShort * 0.35) +
-        (recentFirstNorm * 0.20);
-
-      const baseScore =
-        key === "FEDERAL"
-          ? (pFinal * 145) +
-            (pBase * 85) +
-            (primeiros * 42) +
-            (aparicoes * 18) +
-            (recentComposite * 26) +
-            (smartLateBoost * 10)
-          : useFirstFocusedRanking
-            ? (pFinal * 125) +
-              (aparicoes * 155) +
-              (primeiros * 70) +
-              (taxaPrimeiro * 34) +
-              (indirectPressure * 55) +
-              (persistenceShort * 45) +
-              (smartLateBoost * 16)
-            : (pFinal * 125) +
-              (aparicoes * 135) +
-              (primeiros * 62) +
-              (indirectPressure * 60) +
-              (persistenceShort * 48) +
-              (smartLateBoost * 18);
-
-      const score = baseScore * explosionPenalty;
-
-      return {
-        grupo,
-        aparicoes,
-        primeiros,
-        taxaPrimeiro,
-        prob: pFinal,
-        probCond: pCond,
-        probBase: pBase,
-        score,
-        lateBonus,
-        smartLateBoost,
-        recentTop5: rm.recentTop5,
-        recentIndirect: rm.recentIndirect,
-        recentFirst: rm.recentFirst,
-        recentLast1First: rm.recentLast1First,
-        recentLast2Top5: rm.recentLast2Top5,
-        indirectPressure,
-        persistenceShort,
-        explosionPenalty,
-        recentComposite,
-        lastSeenTs,
-        gapMs,
-      };
-    }
-  )
+    return {
+      grupo,
+      aparicoes,
+      primeiros,
+      taxaPrimeiro,
+      scoreProb: pFinal,
+      probCond: pCond,
+      probBase: pBase,
+      score: baseScore,
+      lateBonus,
+      smartLateBoost,
+      recentTop5: rm.recentTop5,
+      recentIndirect: rm.recentIndirect,
+      recentFirst: rm.recentFirst,
+      recentLast1First: rm.recentLast1First,
+      recentLast2Top5: rm.recentLast2Top5,
+      recentComposite,
+      lastSeenTs,
+      gapMs,
+    };
+  })
     .sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score;
-      if (b.indirectPressure !== a.indirectPressure) return b.indirectPressure - a.indirectPressure;
-      if (b.persistenceShort !== a.persistenceShort) return b.persistenceShort - a.persistenceShort;
-      if (b.prob !== a.prob) return b.prob - a.prob;
+      if (b.scoreProb !== a.scoreProb) return b.scoreProb - a.scoreProb;
       if (b.primeiros !== a.primeiros) return b.primeiros - a.primeiros;
       if (b.aparicoes !== a.aparicoes) return b.aparicoes - a.aparicoes;
       return a.grupo - b.grupo;
@@ -1326,7 +1303,7 @@ export function computeConditionalNextTop3({
 
   const top = ranked.map((x, idx) => {
     const g2 = String(x.grupo).padStart(2, "0");
-    const pct = (x.prob * 100).toFixed(2);
+    const pct = (x.scoreProb * 100).toFixed(2);
     const pctCond = (x.probCond * 100).toFixed(2);
     const pctBase = (x.probBase * 100).toFixed(2);
 
@@ -1339,9 +1316,9 @@ export function computeConditionalNextTop3({
             ? "2º mais provável"
             : "3º mais provável",
       grupo: x.grupo,
-      prob: x.prob,
-      probCond: x.probCond,
-      probBase: x.probBase,
+      scoreProb: Number(x.scoreProb || 0),
+      probCond: Number(x.probCond || 0),
+      probBase: Number(x.probBase || 0),
       lateBonus: Number(x.lateBonus || 0),
       freq: x.aparicoes,
       freqCond: x.aparicoes,
@@ -1358,7 +1335,6 @@ export function computeConditionalNextTop3({
         `Composição da probabilidade: condicional=${pctCond}% | estrutural=${pctBase}%`,
         `Presença indireta recente (2º-4º): ${x.recentIndirect}`,
         `Persistência curta recente: ${x.recentTop5}`,
-        `Penalidade de explosão recente: ${x.explosionPenalty.toFixed(2)}`,
         `Bônus de atraso ajustado: ${(Number(x.smartLateBoost || 0) * 100).toFixed(2)}%`,
       ],
       meta: {
@@ -1388,9 +1364,7 @@ export function computeConditionalNextTop3({
           recentIndirect: x.recentIndirect,
           recentFirst: x.recentFirst,
           recentLast1First: x.recentLast1First,
-          persistenceShort: x.persistenceShort,
-          indirectPressure: x.indirectPressure,
-          explosionPenalty: x.explosionPenalty,
+          recentLast2Top5: x.recentLast2Top5,
           allLayers: (layerOut?.layers || []).map((layer) => ({
             key: layer.key,
             label: layer.label,
@@ -1666,7 +1640,7 @@ function detectRegimeFromComparableSequence(seqRecent) {
 
   let regime = "neutral";
 
-  if (repeatRate >= 0.34 || uniqueRate <= 0.50) {
+  if (repeatRate >= 0.34 || uniqueRate <= 0.5) {
     regime = "repeat";
   } else if (repeatRate === 0 && uniqueRate >= 0.84) {
     regime = "spread";
@@ -1872,30 +1846,30 @@ function getDayDrivenWeights(mode) {
     return {
       transition: 0.25,
       pair: 0.25,
-      memory: 0.20,
+      memory: 0.2,
       recent: 0.15,
-      structural: 0.10,
+      structural: 0.1,
       late: 0.05,
     };
   }
 
   if (mode === "SPREAD") {
     return {
-      transition: 0.20,
-      pair: 0.10,
-      memory: 0.10,
-      recent: 0.20,
-      structural: 0.30,
-      late: 0.10,
+      transition: 0.2,
+      pair: 0.1,
+      memory: 0.1,
+      recent: 0.2,
+      structural: 0.3,
+      late: 0.1,
     };
   }
 
   return {
-    transition: 0.30,
+    transition: 0.3,
     pair: 0.15,
     memory: 0.15,
     recent: 0.15,
-    structural: 0.20,
+    structural: 0.2,
     late: 0.05,
   };
 }
@@ -1913,11 +1887,11 @@ function normalizeWeights(weights) {
   const total = Object.values(safe).reduce((acc, n) => acc + n, 0);
   if (!Number.isFinite(total) || total <= 0) {
     return {
-      transition: 0.30,
+      transition: 0.3,
       pair: 0.15,
       memory: 0.15,
       recent: 0.15,
-      structural: 0.20,
+      structural: 0.2,
       late: 0.05,
     };
   }
@@ -2422,6 +2396,11 @@ export function computeConditionalNextTop3V2({
   const dayFlowConfidence = confidenceFromSamples(dayContext?.total || 0, 4);
   const pairStrong = Number(pairOut?.samples || 0) >= 4;
 
+  const confidence =
+    (pairConfidence * 0.3) +
+    (confidenceFromSamples(condSamples, 20) * 0.4) +
+    (confidenceFromSamples(memoryOut?.matchedSamples || 0, 15) * 0.3);
+
   const adjustedWeights = normalizeWeights({
     transition: pairStrong ? weights.transition * 0.7 : weights.transition,
     pair: pairStrong ? weights.pair * 1.4 : weights.pair,
@@ -2431,166 +2410,161 @@ export function computeConditionalNextTop3V2({
     late: weights.late,
   });
 
-  const ranked = Array.from(
-    { length: safeInt(TOP3_GROUPS_K, 25) },
-    (_, idx) => {
-      const grupo = idx + 1;
+  const ranked = Array.from({ length: safeInt(TOP3_GROUPS_K, 25) }, (_, idx) => {
+    const grupo = idx + 1;
 
-      const pT = Number(pTransitionFirst.get(grupo) || 0);
-      const pSF = Number(pStructuralFirst.get(grupo) || 0);
-      const pST = Number(pStructuralTop5.get(grupo) || 0);
-      const pM = Number(pMemory.get(grupo) || 0);
-      const pD = Number(pDuplication.get(grupo) || 0);
-      const pSeq = Number(pSeq2.get(grupo) || 0);
-      const repeatBoost = Number(repeatBoostMap.get(grupo) || 0);
-      const pPair = Number(pairOut?.prob?.get?.(grupo) || 0);
+    const pT = Number(pTransitionFirst.get(grupo) || 0);
+    const pSF = Number(pStructuralFirst.get(grupo) || 0);
+    const pST = Number(pStructuralTop5.get(grupo) || 0);
+    const pM = Number(pMemory.get(grupo) || 0);
+    const pD = Number(pDuplication.get(grupo) || 0);
+    const pSeq = Number(pSeq2.get(grupo) || 0);
+    const repeatBoost = Number(repeatBoostMap.get(grupo) || 0);
+    const pPair = Number(pairOut?.prob?.get?.(grupo) || 0);
 
-      const rm = recentMetrics.get(grupo) || {
-        recentTop5: 0,
-        recentFirst: 0,
-        recentDupDraws: 0,
-        recentLast1Top5: 0,
-        recentLast2Top5: 0,
-        recentLast3Top5: 0,
-      };
+    const rm = recentMetrics.get(grupo) || {
+      recentTop5: 0,
+      recentFirst: 0,
+      recentDupDraws: 0,
+      recentLast1Top5: 0,
+      recentLast2Top5: 0,
+      recentLast3Top5: 0,
+    };
 
-      const recentTop5Norm = normalizeMetric(rm.recentTop5, recentMaxTop5);
-      const recentFirstNorm = normalizeMetric(rm.recentFirst, recentMaxFirst);
-      const recentDupNorm = normalizeMetric(rm.recentDupDraws, recentMaxDup);
-      const recentLast1Norm = normalizeMetric(rm.recentLast1Top5, 1);
-      const recentLast2Norm = normalizeMetric(rm.recentLast2Top5, 2);
+    const recentTop5Norm = normalizeMetric(rm.recentTop5, recentMaxTop5);
+    const recentFirstNorm = normalizeMetric(rm.recentFirst, recentMaxFirst);
+    const recentDupNorm = normalizeMetric(rm.recentDupDraws, recentMaxDup);
+    const recentLast1Norm = normalizeMetric(rm.recentLast1Top5, 1);
+    const recentLast2Norm = normalizeMetric(rm.recentLast2Top5, 2);
 
-      const recentComposite =
-        (recentFirstNorm * 0.34) +
-        (recentTop5Norm * 0.24) +
-        (recentDupNorm * 0.18) +
-        (recentLast2Norm * 0.14) +
-        (recentLast1Norm * 0.10);
+    const recentComposite =
+      (recentFirstNorm * 0.34) +
+      (recentTop5Norm * 0.24) +
+      (recentDupNorm * 0.18) +
+      (recentLast2Norm * 0.14) +
+      (recentLast1Norm * 0.1);
 
-      const dominanceScore =
-        (pT * 0.42) +
-        (pSF * 0.26) +
-        (pST * 0.18) +
-        (pD * 0.14);
+    const dominanceScore =
+      (pT * 0.42) +
+      (pSF * 0.26) +
+      (pST * 0.18) +
+      (pD * 0.14);
 
-      const seenTs = Number(lateSeen.get(grupo));
-      const gapMs =
-        Number.isFinite(targetTs) && Number.isFinite(seenTs)
-          ? Math.max(0, targetTs - seenTs)
-          : maxGapMsBase;
+    const seenTs = Number(lateSeen.get(grupo));
+    const gapMs =
+      Number.isFinite(targetTs) && Number.isFinite(seenTs)
+        ? Math.max(0, targetTs - seenTs)
+        : maxGapMsBase;
 
-      const lateNorm = Math.max(
-        0,
-        Math.min(1, gapMs / Math.max(1, maxGapMsBase))
-      );
+    const lateNorm = Math.max(
+      0,
+      Math.min(1, gapMs / Math.max(1, maxGapMsBase))
+    );
 
-      const dayFreq = Number(dayContext?.freq?.get?.(grupo) || 0);
-      const dayFirstFreq = Number(dayContext?.firstFreq?.get?.(grupo) || 0);
-      const isDominantToday =
-        Number.isFinite(Number(dayContext?.dominante)) &&
-        Number(dayContext.dominante) === Number(grupo);
+    const dayFreq = Number(dayContext?.freq?.get?.(grupo) || 0);
+    const dayFirstFreq = Number(dayContext?.firstFreq?.get?.(grupo) || 0);
+    const isDominantToday =
+      Number.isFinite(Number(dayContext?.dominante)) &&
+      Number(dayContext.dominante) === Number(grupo);
 
-      let dayFlowRaw = 0;
+    let dayFlowRaw = 0;
 
-      if (dayFreq >= 2) dayFlowRaw += 32;
-      if (dayFreq >= 3) dayFlowRaw += 18;
-      if (dayFirstFreq >= 1) dayFlowRaw += 20;
-      if (dayFirstFreq >= 2) dayFlowRaw += 14;
-      if (isDominantToday) dayFlowRaw += 24;
+    if (dayFreq >= 2) dayFlowRaw += 32;
+    if (dayFreq >= 3) dayFlowRaw += 18;
+    if (dayFirstFreq >= 1) dayFlowRaw += 20;
+    if (dayFirstFreq >= 2) dayFlowRaw += 14;
+    if (isDominantToday) dayFlowRaw += 24;
 
-      if (Number(dayContext?.diversidade || 0) < 0.5) {
-        dayFlowRaw += dayFreq > 0 ? 12 : -8;
-      } else if (Number(dayContext?.diversidade || 0) > 0.75) {
-        dayFlowRaw += dayFreq === 0 ? 10 : 0;
-      }
-
-      if (dayContext?.repeatNow && dayFreq > 0) {
-        dayFlowRaw += 10;
-      }
-
-      const dayFlowScore = dayFlowRaw * dayFlowConfidence;
-
-      const pairSequenceScore =
-        Number(pairOut?.samples || 0) > 0
-          ? ((pPair * 260) + Math.min(70, Number(pairOut.samples || 0) * 8)) * pairConfidence
-          : 0;
-
-      const structuralBlend =
-        (pSF * 0.45) +
-        (pST * 0.35) +
-        (pD * 0.20);
-
-      const memoryBlend =
-        (pM * 0.75) +
-        (pSeq * 0.25);
-
-      const recentBlend =
-        (recentComposite * 0.85) +
-        (repeatBoost * 0.15);
-
-      const prob =
-        (pT * adjustedWeights.transition) +
-        (pPair * adjustedWeights.pair * pairConfidence) +
-        (memoryBlend * adjustedWeights.memory) +
-        (recentBlend * adjustedWeights.recent) +
-        (structuralBlend * adjustedWeights.structural) +
-        (lateNorm * adjustedWeights.late);
-
-      const score =
-        (pT * adjustedWeights.transition * 1000) +
-        (pPair * adjustedWeights.pair * 1000 * pairConfidence) +
-        (memoryBlend * adjustedWeights.memory * 1000) +
-        (recentBlend * adjustedWeights.recent * 1000) +
-        (structuralBlend * adjustedWeights.structural * 1000) +
-        (lateNorm * adjustedWeights.late * 100) +
-        dayFlowScore +
-        pairSequenceScore;
-
-      return {
-        grupo,
-        prob,
-        score,
-        probTransition: pT,
-        probStructuralFirst: pSF,
-        probStructuralTop5: pST,
-        probMemory: pM,
-        probDuplication: pD,
-        probSeq2: pSeq,
-        probPair: pPair,
-        pairConfidence,
-        repeatBoost,
-        dominanceScore,
-        recentComposite,
-        recentTop5: rm.recentTop5,
-        recentFirst: rm.recentFirst,
-        recentDupDraws: rm.recentDupDraws,
-        recentLast1Top5: rm.recentLast1Top5,
-        recentLast2Top5: rm.recentLast2Top5,
-        recentLast3Top5: rm.recentLast3Top5,
-        lateNorm,
-        gapMs,
-        condFirstCount: Number(condFirstFreq.get(grupo) || 0),
-        structuralFirstCount: Number(structuralFirst?.firstFreq?.get(grupo) || 0),
-        structuralTop5Count: Number(structuralTop5?.freq?.get(grupo) || 0),
-        duplicationCount: Number(duplication?.freq?.get(grupo) || 0),
-        memoryWeight: Number(memoryOut?.freq?.get(grupo) || 0),
-        dayFreq,
-        dayFirstFreq,
-        isDominantToday,
-        dayFlowConfidence,
-        dayFlowScore,
-        pairProb: pPair,
-        pairSamples: Number(pairOut?.samples || 0),
-        pairWeightedSamples: Number(pairOut?.weightedSamples || 0),
-        pairExactDomSamples: Number(pairOut?.exactDomSamples || 0),
-        pairCount: Number(pairOut?.freq?.get?.(grupo) || 0),
-        pairSequenceScore,
-      };
+    if (Number(dayContext?.diversidade || 0) < 0.5) {
+      dayFlowRaw += dayFreq > 0 ? 12 : -8;
+    } else if (Number(dayContext?.diversidade || 0) > 0.75) {
+      dayFlowRaw += dayFreq === 0 ? 10 : 0;
     }
-  )
+
+    if (dayContext?.repeatNow && dayFreq > 0) {
+      dayFlowRaw += 10;
+    }
+
+    const dayFlowScore = dayFlowRaw * dayFlowConfidence;
+
+    const pairSequenceScore =
+      Number(pairOut?.samples || 0) > 0
+        ? ((pPair * 260) + Math.min(70, Number(pairOut.samples || 0) * 8)) * pairConfidence
+        : 0;
+
+    const structuralBlend =
+      (pSF * 0.45) +
+      (pST * 0.35) +
+      (pD * 0.2);
+
+    const memoryBlend =
+      (pM * 0.75) +
+      (pSeq * 0.25);
+
+    const recentBlend =
+      (recentComposite * 0.85) +
+      (repeatBoost * 0.15);
+
+    const prob =
+      (pT * adjustedWeights.transition) +
+      (pPair * adjustedWeights.pair * pairConfidence) +
+      (memoryBlend * adjustedWeights.memory) +
+      (recentBlend * adjustedWeights.recent) +
+      (structuralBlend * adjustedWeights.structural) +
+      (lateNorm * adjustedWeights.late);
+
+    const score =
+      (prob * 1000) +
+      (dominanceScore * 180) +
+      (pairSequenceScore * 0.6) +
+      (dayFlowScore * 0.8) +
+      (confidence * 50);
+
+    return {
+      grupo,
+      prob,
+      scoreProb: prob,
+      score,
+      probTransition: pT,
+      probStructuralFirst: pSF,
+      probStructuralTop5: pST,
+      probMemory: pM,
+      probDuplication: pD,
+      probSeq2: pSeq,
+      probPair: pPair,
+      pairProb: pPair,
+      pairConfidence,
+      repeatBoost,
+      dominanceScore,
+      recentComposite,
+      recentTop5: rm.recentTop5,
+      recentFirst: rm.recentFirst,
+      recentDupDraws: rm.recentDupDraws,
+      recentLast1Top5: rm.recentLast1Top5,
+      recentLast2Top5: rm.recentLast2Top5,
+      recentLast3Top5: rm.recentLast3Top5,
+      lateNorm,
+      gapMs,
+      condFirstCount: Number(condFirstFreq.get(grupo) || 0),
+      structuralFirstCount: Number(structuralFirst?.firstFreq?.get(grupo) || 0),
+      structuralTop5Count: Number(structuralTop5?.freq?.get(grupo) || 0),
+      duplicationCount: Number(duplication?.freq?.get(grupo) || 0),
+      memoryWeight: Number(memoryOut?.freq?.get(grupo) || 0),
+      dayFreq,
+      dayFirstFreq,
+      isDominantToday,
+      dayFlowConfidence,
+      dayFlowScore,
+      pairSamples: Number(pairOut?.samples || 0),
+      pairWeightedSamples: Number(pairOut?.weightedSamples || 0),
+      pairExactDomSamples: Number(pairOut?.exactDomSamples || 0),
+      pairCount: Number(pairOut?.freq?.get?.(grupo) || 0),
+      pairSequenceScore,
+    };
+  })
     .sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score;
-      if (b.prob !== a.prob) return b.prob - a.prob;
+      if (b.scoreProb !== a.scoreProb) return b.scoreProb - a.scoreProb;
       if (b.dominanceScore !== a.dominanceScore) return b.dominanceScore - a.dominanceScore;
       if (b.probTransition !== a.probTransition) return b.probTransition - a.probTransition;
       if (b.probPair !== a.probPair) return b.probPair - a.probPair;
@@ -2628,10 +2602,10 @@ export function computeConditionalNextTop3V2({
             ? "2º mais provável"
             : "3º mais provável",
       grupo: x.grupo,
-      prob: x.prob,
-      probCond: x.probTransition,
-      probBase: x.probStructuralFirst,
-      lateBonus: x.lateNorm,
+      scoreProb: Number(x.scoreProb || 0),
+      probCond: Number(x.probTransition || 0),
+      probBase: Number(x.probStructuralFirst || 0),
+      lateBonus: Number(x.lateNorm || 0),
       freq: x.condFirstCount,
       freqCond: x.condFirstCount,
       freqBase: x.structuralFirstCount,
@@ -2661,7 +2635,7 @@ export function computeConditionalNextTop3V2({
         `Grupo G${g2}: dominante no dia=${x.isDominantToday ? "sim" : "não"}`,
         `Grupo G${g2}: score do fluxo do dia=${Number(x.dayFlowScore || 0).toFixed(2)} | confiança=${(Number(x.dayFlowConfidence || 0) * 100).toFixed(0)}%`,
         `Grupo G${g2}: sequência ${Array.isArray(prevPair) && prevPair.length === 2 ? prevPair.map((n) => String(n).padStart(2, "0")).join("→") : "--"} | amostras=${x.pairSamples} | amostras ponderadas=${Number(x.pairWeightedSamples || 0).toFixed(2)} | DOM exato=${x.pairExactDomSamples} | ocorrências=${Number(x.pairCount || 0).toFixed(2)} | prob=${(Number(x.pairProb || 0) * 100).toFixed(2)}% | score=${Number(x.pairSequenceScore || 0).toFixed(2)}`,
-        `Probabilidade final BICHO=${(x.prob * 100).toFixed(2)}%`,
+        `Probabilidade final BICHO=${(x.scoreProb * 100).toFixed(2)}%`,
       ],
       meta: {
         trigger: {
@@ -2915,6 +2889,7 @@ export function build16MilharesForGrupo(args) {
 export function build20MilharesForGrupo(args) {
   return buildMilharesForGrupo({ ...(args || {}), count: 20 });
 }
+
 /* =========================
    TIMELINE DO DIA (CADEIA PREDITIVA)
 ========================= */
@@ -3024,9 +2999,7 @@ export function buildTimelineTop3({
         return tb - ta;
       })[0] || null;
 
-    if (priorChainDraw) {
-      baseDraw = priorChainDraw;
-    }
+    if (priorChainDraw) baseDraw = priorChainDraw;
 
     if (!baseDraw) {
       const prevSameDay = daySorted
@@ -3042,9 +3015,7 @@ export function buildTimelineTop3({
           return tb - ta;
         })[0] || null;
 
-      if (prevSameDay) {
-        baseDraw = prevSameDay;
-      }
+      if (prevSameDay) baseDraw = prevSameDay;
     }
 
     if (!baseDraw) {
