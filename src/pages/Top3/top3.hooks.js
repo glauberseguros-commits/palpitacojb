@@ -69,10 +69,7 @@ function buildResultStyleImgVariants(grupo, size = 96) {
   const g = Number(grupo);
   if (!Number.isFinite(g) || g <= 0) return [];
 
-  const seeds = [
-    getImgFromGrupo?.(g, size),
-    getImgFromGrupo?.(g),
-  ]
+  const seeds = [getImgFromGrupo?.(g, size), getImgFromGrupo?.(g)]
     .map((x) => normalizeImgSrc(x))
     .filter(Boolean);
 
@@ -216,7 +213,7 @@ function saveTop3Log(log) {
   } catch {}
 }
 
-function registerPrediction({ targetKey, targetYmd, targetHour, picks, ranking = [] }) {
+function registerPrediction({ targetKey, targetYmd, targetHour, picks }) {
   const normalizedHour = normHour(targetHour);
   const normalizedKey = makeKey(targetYmd, normalizedHour);
   if (!normalizedKey || !Array.isArray(picks) || !picks.length) return;
@@ -237,7 +234,6 @@ function registerPrediction({ targetKey, targetYmd, targetHour, picks, ranking =
       targetKey: normalizedKey,
       target: { ymd: targetYmd || "", hour: normalizedHour || "" },
       picks: normalizedPicks,
-      ranking: Array.isArray(ranking) ? ranking : [],
       createdAt: prev.createdAt || Date.now(),
       result: prev.result ?? null,
       hit:
@@ -251,7 +247,6 @@ function registerPrediction({ targetKey, targetYmd, targetHour, picks, ranking =
       targetKey: normalizedKey,
       target: { ymd: targetYmd || "", hour: normalizedHour || "" },
       picks: normalizedPicks,
-      ranking: Array.isArray(ranking) ? ranking : [],
       result: null,
       hit: null,
       createdAt: Date.now(),
@@ -265,9 +260,7 @@ function registerPrediction({ targetKey, targetYmd, targetHour, picks, ranking =
 function registerResult({ targetKey, resultGrupo }) {
   const log = getTop3Log();
   const normalizedTargetKey = String(targetKey || "").trim();
-  const resultNum = Number(resultGrupo);
-
-  if (!normalizedTargetKey || !Number.isFinite(resultNum)) return;
+  if (!normalizedTargetKey || !Number.isFinite(Number(resultGrupo))) return;
 
   const idx = log.findIndex(
     (l) => String(l?.targetKey || "") === String(normalizedTargetKey)
@@ -278,26 +271,10 @@ function registerResult({ targetKey, resultGrupo }) {
     ? log[idx].picks.map(Number)
     : [];
 
-  const ranking = Array.isArray(log[idx]?.ranking)
-    ? log[idx].ranking
-    : [];
-
-  const position =
-    ranking.findIndex((x) => Number(x?.grupo) === resultNum) + 1;
-
-  const score =
-    position === 1 ? 100 :
-    position === 2 ? 80 :
-    position === 3 ? 60 :
-    position > 0 && position <= 5 ? 40 :
-    position > 0 && position <= 10 ? 20 : 0;
-
   log[idx] = {
     ...log[idx],
-    result: resultNum,
-    hit: picks.includes(resultNum),
-    position: position > 0 ? position : null,
-    score,
+    result: Number(resultGrupo),
+    hit: picks.includes(Number(resultGrupo)),
     validatedAt: Date.now(),
     status: "validated",
   };
@@ -592,9 +569,36 @@ function backfillDayTop3({ draws, lotteryKey, rangeDraws }) {
       targetYmd: currentYmd,
       targetHour: currentHour,
       picks,
-      ranking: (Array.isArray(computed?.top) ? computed.top : []),
     });
   }
+}
+
+function resolveProbValue(x) {
+  const n = Number(
+    x?.scoreProb ??
+      x?.prob ??
+      x?.probCond ??
+      x?.score ??
+      0
+  );
+
+  return Number.isFinite(n) ? n : 0;
+}
+
+function resolveLayerMetaText(analytics) {
+  const meta = analytics?.meta || null;
+  const explain = meta?.explain || null;
+
+  const candidates = [
+    meta?.label,
+    explain?.layerLabel,
+    explain?.layerKey,
+    meta?.scenario,
+  ]
+    .map((v) => safeStr(v))
+    .filter(Boolean);
+
+  return candidates[0] || "";
 }
 
 export function useTop3Controller() {
@@ -846,8 +850,7 @@ export function useTop3Controller() {
         baseAnimal = baseGrupo ? safeStr(getAnimalLabel(baseGrupo)) : "";
 
         const isFederalFallbackDay =
-          lKey === "FEDERAL" &&
-          effectiveYmd !== ymdSafe;
+          lKey === "FEDERAL" && effectiveYmd !== ymdSafe;
 
         if (isFederalFallbackDay) {
           resolvedTargetY = baseY;
@@ -1039,16 +1042,16 @@ export function useTop3Controller() {
 
   useEffect(() => {
     const timelineYmd =
-  lotteryKeySafe === "FEDERAL" &&
-  isFederalNonDrawDay &&
-  isYMD(lastInfo?.lastYmd)
-    ? lastInfo.lastYmd
-    : ymdSafe;
+      lotteryKeySafe === "FEDERAL" &&
+      isFederalNonDrawDay &&
+      isYMD(lastInfo?.lastYmd)
+        ? lastInfo.lastYmd
+        : ymdSafe;
 
-ensureDayTimeline({
-  ymd: timelineYmd,
-  lotteryKey: lotteryKeySafe,
-});
+    ensureDayTimeline({
+      ymd: timelineYmd,
+      lotteryKey: lotteryKeySafe,
+    });
 
     load();
   }, [load, ymdSafe, lotteryKeySafe, isFederalNonDrawDay, lastInfo?.lastYmd]);
@@ -1073,16 +1076,26 @@ ensureDayTimeline({
       return empty;
     }
 
-    const historicalList = sanitizeHistoricalDraws({
+    let historicalList = sanitizeHistoricalDraws({
       draws: rawList,
       lotteryKey: lotteryKeySafe,
       baseDraw: drawLast,
     });
 
     if (!historicalList.length) {
-      const empty = { top: [], meta: null };
-      analyticsCacheRef.current = { key: "", value: empty };
-      return empty;
+      const fallback = computeConditionalNextTop3V2({
+        lotteryKey: lotteryKeySafe,
+        drawsRange: rawList,
+        drawLast,
+        drawsToday: Array.isArray(todayDraws) ? todayDraws : [],
+        PT_RIO_SCHEDULE_NORMAL,
+        PT_RIO_SCHEDULE_WED_SAT,
+        FEDERAL_SCHEDULE,
+        topN: 3,
+      }) || { top: [], meta: null };
+
+      analyticsCacheRef.current = { key: "fallback", value: fallback };
+      return fallback;
     }
 
     const firstDraw = historicalList[0];
@@ -1145,6 +1158,10 @@ ensureDayTimeline({
     [rangeDraws, analysisHourBucket, schedule]
   );
 
+  const layerMetaText = useMemo(() => {
+    return resolveLayerMetaText(analytics);
+  }, [analytics]);
+
   const top3 = useMemo(() => {
     const arr = Array.isArray(analytics?.top) ? analytics.top : [];
     const milharesCache = new Map();
@@ -1162,11 +1179,8 @@ ensureDayTimeline({
 
       const milharesCols = build4ColsFromEngineOut(out, 4, 5);
       const milhares20 = milharesCols.flatMap((c) => c.items).slice(0, 20);
-const centenas = milhares20
-  .map((m) => getCentena3(m))
-  .filter((c) => c && /^\d{3}$/.test(c));
 
-      const prob = Number(x.prob || 0);
+      const prob = resolveProbValue(x);
       const probPct = prob * 100;
 
       const bgPrimary = normalizeImgSrc(
@@ -1182,9 +1196,9 @@ const centenas = milhares20
         imgIcon: iconVariants,
         prob,
         probPct,
+        meta: x?.meta || null,
         milharesCols,
         milhares20,
-centenas,
       };
     });
   }, [analytics, build20]);
@@ -1196,14 +1210,14 @@ centenas,
     if (!isYMD(ymdSafe) || !range.length) return [];
 
     const timelineYmd =
-  lotteryKeySafe === "FEDERAL" &&
-  isFederalNonDrawDay &&
-  isYMD(lastInfo?.lastYmd)
-    ? lastInfo.lastYmd
-    : ymdSafe;
+      lotteryKeySafe === "FEDERAL" &&
+      isFederalNonDrawDay &&
+      isYMD(lastInfo?.lastYmd)
+        ? lastInfo.lastYmd
+        : ymdSafe;
 
-const rawTimeline = buildTimelineTop3({
-  ymd: timelineYmd,
+    const rawTimeline = buildTimelineTop3({
+      ymd: timelineYmd,
       drawsToday: day,
       drawsRange: range,
       lotteryKey: lotteryKeySafe,
@@ -1240,11 +1254,8 @@ const rawTimeline = buildTimelineTop3({
 
         const milharesCols = build4ColsFromEngineOut(out, 4, 5);
         const milhares20 = milharesCols.flatMap((c) => c.items).slice(0, 20);
-const centenas = milhares20
-  .map((m) => getCentena3(m))
-  .filter((c) => c && /^\d{3}$/.test(c));
 
-        const prob = Number(x?.prob || 0);
+        const prob = resolveProbValue(x);
         const probPct = prob * 100;
 
         const bgPrimary = normalizeImgSrc(
@@ -1260,9 +1271,9 @@ const centenas = milhares20
           imgIcon: iconVariants,
           prob,
           probPct,
+          meta: x?.meta || null,
           milharesCols,
           milhares20,
-centenas,
         };
       });
 
@@ -1271,7 +1282,14 @@ centenas,
         top3: mappedTop3,
       };
     });
-  }, [todayDraws, rangeDraws, lotteryKeySafe, ymdSafe, isFederalNonDrawDay, lastInfo?.lastYmd]);
+  }, [
+    todayDraws,
+    rangeDraws,
+    lotteryKeySafe,
+    ymdSafe,
+    isFederalNonDrawDay,
+    lastInfo?.lastYmd,
+  ]);
 
   useEffect(() => {
     if (!analysisYmd || !analysisHourBucket) return;
@@ -1321,6 +1339,7 @@ centenas,
     analysisYmd,
     prevLabel,
     lastLabel,
+    layerMetaText,
     top3,
     timelineTop3,
 
@@ -1344,19 +1363,3 @@ centenas,
     normalizeImgSrc,
   };
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

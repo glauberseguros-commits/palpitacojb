@@ -202,6 +202,43 @@ function cleanLayerText(s) {
   return noSamples || "—";
 }
 
+function getSlotResultGrupo(slot) {
+  const direct = Number(
+    slot?.resultGrupo ??
+      slot?.grupo ??
+      slot?.result?.grupo ??
+      slot?.resultado?.grupo
+  );
+
+  if (Number.isFinite(direct) && direct >= 1 && direct <= 25) {
+    return direct;
+  }
+
+  if (Array.isArray(slot?.prizes)) {
+    const p1 = slot.prizes.find((p) => Number(p?.position) === 1) || slot.prizes[0];
+    const fromPrize = Number(
+      p1?.grupo ??
+        p1?.group ??
+        p1?.animal_grupo ??
+        p1?.grupo2
+    );
+
+    if (Number.isFinite(fromPrize) && fromPrize >= 1 && fromPrize <= 25) {
+      return fromPrize;
+    }
+  }
+
+  return NaN;
+}
+
+function hasOfficialResult(slot) {
+  const grupo = getSlotResultGrupo(slot);
+  if (Number.isFinite(grupo) && grupo >= 1 && grupo <= 25) return true;
+
+  const milhar = extractResultMilhar(slot);
+  return /^\d{4}$/.test(milhar);
+}
+
 function analyzeTop3Hit(top3, resultGrupo, resultMilhar) {
   if (!Array.isArray(top3) || !top3.length) {
     return { type: "none", score: 0, position: -1 };
@@ -210,6 +247,13 @@ function analyzeTop3Hit(top3, resultGrupo, resultMilhar) {
   const grupoNum = Number(resultGrupo);
   const milhar = normalizeMilharStr(resultMilhar);
   const centena = milhar ? milhar.slice(-3) : "";
+
+  const hasGrupo = Number.isFinite(grupoNum) && grupoNum >= 1 && grupoNum <= 25;
+  const hasMilhar = /^\d{4}$/.test(milhar);
+
+  if (!hasGrupo && !hasMilhar) {
+    return { type: "none", score: 0, position: -1 };
+  }
 
   let best = { type: "miss", score: 0, position: -1 };
 
@@ -227,13 +271,13 @@ function analyzeTop3Hit(top3, resultGrupo, resultMilhar) {
     let score = 0;
     let type = "miss";
 
-    if (milhar && milhares.includes(milhar)) {
+    if (hasMilhar && milhares.includes(milhar)) {
       score = 100;
       type = "hit_exact";
     } else if (centena && centenas.includes(centena)) {
       score = 66;
       type = "hit_centena";
-    } else if (g === grupoNum) {
+    } else if (hasGrupo && g === grupoNum) {
       score = 33;
       type = "hit_grupo";
     }
@@ -531,7 +575,7 @@ function Top3Card({
 
 function CompactTop3Result({ slot, status, statusLabel, statusDetail }) {
   const slotTop3 = Array.isArray(slot?.top3) ? slot.top3.slice(0, 3) : [];
-  const resultGrupo = Number(slot?.resultGrupo);
+  const resultGrupo = getSlotResultGrupo(slot);
   const hasResult = Number.isFinite(resultGrupo) && resultGrupo >= 1 && resultGrupo <= 25;
   const resultAnimal = hasResult ? String(getAnimalLabel(resultGrupo) || "") : "";
   const resultImg = hasResult ? getImgFromGrupo(resultGrupo, 64) : "";
@@ -619,9 +663,12 @@ function TimelineSlot({
   const t = theme;
   const slotTop3 = Array.isArray(slot?.top3) ? slot.top3.slice(0, 3) : [];
 
-  const resultGrupo = Number(slot?.resultGrupo);
-  const hasResult = Number.isFinite(resultGrupo) && resultGrupo >= 1 && resultGrupo <= 25;
-  const resultAnimal = hasResult ? String(getAnimalLabel(resultGrupo) || "") : "";
+  const resultGrupo = getSlotResultGrupo(slot);
+  const hasResult = hasOfficialResult(slot);
+  const resultAnimal =
+    hasResult && Number.isFinite(resultGrupo)
+      ? String(getAnimalLabel(resultGrupo) || "")
+      : "";
 
   const analysis = analyzeTop3Hit(
     slotTop3,
@@ -630,33 +677,33 @@ function TimelineSlot({
   );
 
   const status =
-    analysis.type === "none"
+    !hasResult
       ? "pending"
       : analysis.type === "miss"
         ? "miss"
         : "hit";
 
   const statusLabel =
-    analysis.type === "hit_exact"
-      ? `🎯 ACERTO TOTAL (${analysis.score}%)`
-      : analysis.type === "hit_centena"
-        ? `🟡 CENTENA (${analysis.score}%)`
-        : analysis.type === "hit_grupo"
-          ? `✅ GRUPO (${analysis.score}%)`
-          : analysis.type === "miss"
-            ? "❌ ERRO (0%)"
-            : "⏳ PENDENTE";
+    !hasResult
+      ? "⏳ PENDENTE"
+      : analysis.type === "hit_exact"
+        ? `🎯 ACERTO TOTAL (${analysis.score}%)`
+        : analysis.type === "hit_centena"
+          ? `🟡 CENTENA (${analysis.score}%)`
+          : analysis.type === "hit_grupo"
+            ? `✅ GRUPO (${analysis.score}%)`
+            : "❌ ERRO (0%)";
 
   const statusDetail =
-    analysis.type === "hit_exact"
-      ? `Milhar exata acertada no palpite #${analysis.position}.`
-      : analysis.type === "hit_centena"
-        ? `Centena acertada no palpite #${analysis.position}.`
-        : analysis.type === "hit_grupo"
-          ? `Grupo acertado no palpite #${analysis.position}.`
-          : analysis.type === "miss"
-            ? "Nenhum dos 3 palpites foi sorteado."
-            : "Aguardando resultado oficial.";
+    !hasResult
+      ? "Aguardando resultado oficial."
+      : analysis.type === "hit_exact"
+        ? `Milhar exata acertada no palpite #${analysis.position}.`
+        : analysis.type === "hit_centena"
+          ? `Centena acertada no palpite #${analysis.position}.`
+          : analysis.type === "hit_grupo"
+            ? `Grupo acertado no palpite #${analysis.position}.`
+            : "Nenhum dos 3 palpites foi sorteado.";
 
   return (
     <section className="top3-shell">
@@ -2035,7 +2082,8 @@ export default function Top3View(props) {
                 const resultGrupo = Number(
                   item?.result ?? item?.grupo ?? item?.prizes?.[0]?.grupo
                 );
-                const hasResult = Number.isFinite(resultGrupo);
+                const hasResult =
+                  Number.isFinite(resultGrupo) && resultGrupo >= 1 && resultGrupo <= 25;
 
                 const resultAnimal = hasResult
                   ? (item?.animal || getAnimalLabel(resultGrupo))
@@ -2043,6 +2091,12 @@ export default function Top3View(props) {
                 const resultImg = hasResult
                   ? getImgFromGrupo(resultGrupo, 64)
                   : "";
+
+                const hitMark = !hasResult
+                  ? "⏳"
+                  : item?.hit === true
+                    ? "✅"
+                    : "❌";
 
                 return (
                   <div
@@ -2092,11 +2146,7 @@ export default function Top3View(props) {
                     </div>
 
                     <div style={{ textAlign: "center", fontSize: 16 }}>
-                      {item?.hit === true
-                        ? "✅"
-                        : item?.hit === false
-                          ? "❌"
-                          : "⏳"}
+                      {hitMark}
                     </div>
                   </div>
                 );
