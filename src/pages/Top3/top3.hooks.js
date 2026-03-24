@@ -115,6 +115,33 @@ function makeKey(ymd, hour) {
   return y && h ? `${y}_${h}` : "";
 }
 
+function parseTargetDate(ymd, hour) {
+  if (!isYMD(ymd)) return null;
+
+  const hourBucket = toHourBucket(hour);
+  const m = String(hourBucket || "").match(/^(\d{2}):(\d{2})$/);
+  if (!m) return null;
+
+  const [Y, M, D] = String(ymd).split("-").map(Number);
+  const hh = Number(m[1]);
+  const mm = Number(m[2]);
+
+  const dt = new Date(Y, M - 1, D, hh, mm, 0, 0);
+  return Number.isNaN(dt.getTime()) ? null : dt;
+}
+
+function isFutureTarget(ymd, hour) {
+  const target = parseTargetDate(ymd, hour);
+  if (!target) return false;
+  return target.getTime() > Date.now();
+}
+
+function resolvePendingStatus(ymd, hour, picks) {
+  const hasPicks = Array.isArray(picks) && picks.length > 0;
+  if (!hasPicks) return "empty";
+  return isFutureTarget(ymd, hour) ? "future" : "pending_result";
+}
+
 function normalizeLogEntry(entry) {
   if (!entry || typeof entry !== "object") return null;
 
@@ -139,6 +166,11 @@ function normalizeLogEntry(entry) {
       ? resultNum
       : null;
 
+  const normalizedStatus =
+    result != null
+      ? "validated"
+      : resolvePendingStatus(ymd, hour, picks);
+
   return {
     ...entry,
     targetKey,
@@ -153,7 +185,7 @@ function normalizeLogEntry(entry) {
           : null,
     createdAt: Number(entry?.createdAt) || Date.now(),
     validatedAt: Number(entry?.validatedAt) || undefined,
-    status: safeStr(entry?.status || "") || undefined,
+    status: safeStr(entry?.status || "") || normalizedStatus,
   };
 }
 
@@ -227,8 +259,15 @@ function registerPrediction({ targetKey, targetYmd, targetHour, picks }) {
     (l) => String(l?.targetKey || "") === String(normalizedKey)
   );
 
+  const status = resolvePendingStatus(targetYmd, normalizedHour, normalizedPicks);
+
   if (idx >= 0) {
     const prev = log[idx] || {};
+
+    if (prev.result != null || prev.status === "validated") {
+      return;
+    }
+
     log[idx] = {
       ...prev,
       targetKey: normalizedKey,
@@ -239,8 +278,8 @@ function registerPrediction({ targetKey, targetYmd, targetHour, picks }) {
       hit:
         prev.result != null
           ? normalizedPicks.includes(Number(prev.result))
-          : prev.hit ?? null,
-      status: normalizedPicks.length ? "predicted" : prev.status || "empty",
+          : null,
+      status,
     };
   } else {
     log.push({
@@ -250,7 +289,7 @@ function registerPrediction({ targetKey, targetYmd, targetHour, picks }) {
       result: null,
       hit: null,
       createdAt: Date.now(),
-      status: "predicted",
+      status,
     });
   }
 
@@ -309,6 +348,7 @@ function reconcilePendingTop3Log({ todayDraws, rangeDraws }) {
     const targetHour = normHour(entry?.target?.hour || "");
 
     if (!isYMD(targetYmd) || !targetHour) continue;
+    if (isFutureTarget(targetYmd, targetHour)) continue;
 
     const real = findRealDrawByTarget({
       targetYmd,
@@ -483,18 +523,21 @@ function ensureDayTimeline({ ymd, lotteryKey }) {
 
     if (idx >= 0) {
       const prev = log[idx] || {};
+      const picks = Array.isArray(prev?.picks) ? prev.picks : [];
+      const status =
+        prev?.result != null
+          ? "validated"
+          : resolvePendingStatus(ymd, hour, picks);
+
       log[idx] = {
         ...prev,
         targetKey,
         target: { ymd, hour },
-        picks: Array.isArray(prev?.picks) ? prev.picks : [],
+        picks,
         result: prev?.result ?? null,
         hit: prev?.hit ?? null,
         createdAt: prev?.createdAt || Date.now(),
-        status:
-          Array.isArray(prev?.picks) && prev.picks.length
-            ? prev.status || "predicted"
-            : prev.status || "empty",
+        status,
       };
     } else {
       log.push({
@@ -1076,7 +1119,7 @@ export function useTop3Controller() {
       return empty;
     }
 
-    let historicalList = sanitizeHistoricalDraws({
+    const historicalList = sanitizeHistoricalDraws({
       draws: rawList,
       lotteryKey: lotteryKeySafe,
       baseDraw: drawLast,
@@ -1295,6 +1338,8 @@ export function useTop3Controller() {
     if (!analysisYmd || !analysisHourBucket) return;
     if (!Array.isArray(top3) || !top3.length) return;
 
+    if (!isFutureTarget(analysisYmd, analysisHourBucket)) return;
+
     const targetKey = makeKey(analysisYmd, analysisHourBucket);
     const picks = top3
       .map((x) => Number(x?.grupo))
@@ -1311,6 +1356,9 @@ export function useTop3Controller() {
   }, [analysisYmd, analysisHourBucket, top3]);
 
   useEffect(() => {
+    if (!Array.isArray(todayDraws) && !Array.isArray(rangeDraws)) return;
+    if (!(todayDraws?.length || rangeDraws?.length)) return;
+
     reconcilePendingTop3Log({
       todayDraws: Array.isArray(todayDraws) ? todayDraws : [],
       rangeDraws: Array.isArray(rangeDraws) ? rangeDraws : [],
