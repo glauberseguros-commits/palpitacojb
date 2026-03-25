@@ -795,7 +795,13 @@ export default function Top3View(props) {
   } = props || {};
 
   const list = Array.isArray(top3) ? top3.slice(0, 3) : [];
-  const timeline = Array.isArray(timelineTop3) ? timelineTop3 : [];
+  const timeline = (Array.isArray(timelineTop3) ? timelineTop3 : [])
+  .slice()
+  .sort((a, b) => {
+    const ta = `${a?.targetYmd || ""} ${a?.targetHour || ""}`;
+    const tb = `${b?.targetYmd || ""} ${b?.targetHour || ""}`;
+    return ta.localeCompare(tb);
+  });
 
   const meta = useMemo(() => {
     const last = lastLabel || "—";
