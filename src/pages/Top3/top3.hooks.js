@@ -745,7 +745,7 @@ export function useTop3Controller() {
         dateFrom: rangeFrom,
         dateTo: rangeTo,
       });
-      perfLog("loadHistoryRange:aggregated", perfRange);
+      perfLog("loadHistoryRange:detailed", perfRange);
 
       if (requestIdRef.current !== currentRequestId) return;
 
