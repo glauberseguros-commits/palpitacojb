@@ -20,8 +20,8 @@ export async function fallbackBaseSearch({
       uf,
       dateFrom: searchFrom,
       dateTo: targetYmd,
-      mode: "detailed",
-      readPolicy: "server",
+      mode: "aggregated",
+      readPolicy: "cache",
     })) || [];
 
   return findLatestHistoricalBaseDraw({
@@ -42,8 +42,8 @@ export async function loadHistoryRange({
       uf,
       dateFrom,
       dateTo,
-      mode: "detailed",
-      readPolicy: "server",
+      mode: "aggregated",
+      readPolicy: "cache",
     })) || []
   );
 }
