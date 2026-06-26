@@ -1630,7 +1630,7 @@ const ui = {
 
   apName: {
     fontWeight: 700,
-    fontSize: 20,
+    fontSize: 16,
     letterSpacing: 0.12,
     color: PP.text,
     opacity: 0.95,
@@ -1668,7 +1668,7 @@ const ui = {
   apVal: {
     textAlign: "right",
     fontWeight: 950,
-    fontSize: 20,
+    fontSize: 16,
     letterSpacing: 0.1,
     color: PP.text,
     opacity: 0.95,
@@ -1703,7 +1703,7 @@ const ui = {
 
   posHdrText: {
     fontWeight: 950,
-    fontSize: 20,
+    fontSize: 16,
     letterSpacing: 0.18,
     color: PP.text,
     opacity: 0.94,
@@ -1761,7 +1761,7 @@ const ui = {
 
   posLeft: {
     fontWeight: 950,
-    fontSize: 20,
+    fontSize: 16,
     letterSpacing: 0.2,
     color: PP.text2,
     opacity: 0.95,
@@ -1771,7 +1771,7 @@ const ui = {
 
   posAnimal: {
     fontWeight: 700,
-    fontSize: 20,
+    fontSize: 16,
     letterSpacing: 0.16,
     color: PP.text,
     opacity: 0.95,
@@ -1808,7 +1808,7 @@ const ui = {
   posRight: {
     textAlign: "right",
     fontWeight: 950,
-    fontSize: 20,
+    fontSize: 16,
     letterSpacing: 0.12,
     color: PP.text,
     opacity: 0.95,

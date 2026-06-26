@@ -1337,6 +1337,7 @@ function drawsCacheKeyDay({ scopeKey, ymd, positionsArr, hourFilter }) {
   return `day::${scopeKey}::${ymd}::pos=${p}::h=${h}`;
 }
 
+
 export async function getKingResultsByDate({
   uf,
   date,
@@ -1434,21 +1435,25 @@ export async function getKingResultsByDate({
 
   let dayAll = dedupeDrawsLocal(hydratedAll);
 
-  if (scopeKey === FEDERAL_SCOPE_CODE) {
-    dayAll = collapseFederalDailyCloneDraws(dayAll);
-  }
+if (scopeKey === FEDERAL_SCOPE_CODE) {
+  dayAll = collapseFederalDailyCloneDraws(dayAll);
+}
 
   const base = hourFilter?.kind
     ? dayAll.filter((d) => drawPassesHourFilter(d, hourFilter))
     : dayAll;
 
-  const out = dedupeDrawsLocal(sortDrawsLocal(base));
+  let out = dedupeDrawsLocal(sortDrawsLocal(base));
+
+if (scopeKey === FEDERAL_SCOPE_CODE) {
+  out = collapseFederalDailyCloneDraws(out);
+}
 
   if (allowMemoryCache) {
     cacheSet(DRAWS_CACHE, dayKey, out);
   }
 
-  console.log("DEBUG getKingResultsByDate OUT:", JSON.stringify(out, null, 2)); return out;
+  return out;
 }
 
 /* =========================
@@ -1633,9 +1638,10 @@ export async function getKingResultsByRange({
             ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
             : baseAll;
 
-          const out = dedupeDrawsLocal(sortDrawsLocal(base));
+          let out = dedupeDrawsLocal(sortDrawsLocal(base));
+
           cacheSet(DRAWS_CACHE, rangeKey, out);
-          console.log("DEBUG getKingResultsByDate OUT:", JSON.stringify(out, null, 2)); return out;
+          return out;
         }
 
         const all = [];
@@ -1656,9 +1662,10 @@ export async function getKingResultsByRange({
           ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
           : baseAll;
 
-        const out = dedupeDrawsLocal(sortDrawsLocal(base));
+        let out = dedupeDrawsLocal(sortDrawsLocal(base));
+
         cacheSet(DRAWS_CACHE, rangeKey, out);
-        console.log("DEBUG getKingResultsByDate OUT:", JSON.stringify(out, null, 2)); return out;
+        return out;
       }
 
       const rawCode = String(error?.code || "");
@@ -1697,9 +1704,10 @@ export async function getKingResultsByRange({
           ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
           : baseAll;
 
-        const out = dedupeDrawsLocal(sortDrawsLocal(base));
+        let out = dedupeDrawsLocal(sortDrawsLocal(base));
+
         cacheSet(DRAWS_CACHE, rangeKey, out);
-        console.log("DEBUG getKingResultsByDate OUT:", JSON.stringify(out, null, 2)); return out;
+        return out;
       }
 
       const all = [];
@@ -1731,7 +1739,7 @@ export async function getKingResultsByRange({
 
       const out = dedupeDrawsLocal(results);
       cacheSet(DRAWS_CACHE, rangeKey, out);
-      console.log("DEBUG getKingResultsByDate OUT:", JSON.stringify(out, null, 2)); return out;
+      return out;
     }
 
     return [];
@@ -1759,7 +1767,7 @@ export async function getKingResultsByRange({
       })
     );
     cacheSet(DRAWS_CACHE, rangeKey, out);
-    console.log("DEBUG getKingResultsByDate OUT:", JSON.stringify(out, null, 2)); return out;
+    return out;
   }
 
   const conc = chooseRangeConcurrency(ordered.length);
@@ -1772,7 +1780,7 @@ export async function getKingResultsByRange({
 
   const out = dedupeDrawsLocal(results);
   cacheSet(DRAWS_CACHE, rangeKey, out);
-  console.log("DEBUG getKingResultsByDate OUT:", JSON.stringify(out, null, 2)); return out;
+  return out;
 }
 
 /* =========================
@@ -1995,13 +2003,5 @@ export async function getKingLateByRange({
   const out = sorted.map((r, idx) => ({ ...r, pos: idx + 1 }));
 
   cacheSet(LATE_CACHE, cacheKey, out);
-  console.log("DEBUG getKingResultsByDate OUT:", JSON.stringify(out, null, 2)); return out;
+  return out;
 }
-
-
-
-
-
-
-
-

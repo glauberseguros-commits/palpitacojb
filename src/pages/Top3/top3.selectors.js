@@ -98,19 +98,23 @@ export function makeImgVariantsFromGrupo({
   const bySlugPng = slug ? joinPublic(base, `img/${slug}_${s}.png`) : "";
   const bySlugJpg = slug ? joinPublic(base, `img/${slug}_${s}.jpg`) : "";
   const bySlugJpeg = slug ? joinPublic(base, `img/${slug}_${s}.jpeg`) : "";
+  const bySlugWebp = slug ? joinPublic(base, `img/${slug}_${s}.webp`) : "";
 
   const byGroupPng = joinPublic(base, `img/g${g2}_${s}.png`);
   const byGroupJpg = joinPublic(base, `img/g${g2}_${s}.jpg`);
   const byGroupJpeg = joinPublic(base, `img/g${g2}_${s}.jpeg`);
+  const byGroupWebp = joinPublic(base, `img/g${g2}_${s}.webp`);
 
   const seeds = [
     primary,
     bySlugPng,
     bySlugJpg,
     bySlugJpeg,
+    bySlugWebp,
     byGroupPng,
     byGroupJpg,
     byGroupJpeg,
+    byGroupWebp,
   ].filter(Boolean);
 
   const out = [];
@@ -136,10 +140,10 @@ export function makeImgVariantsFromGrupo({
     if (clean.endsWith(".png")) push(clean.slice(0, -4) + ".PNG");
     if (clean.endsWith(".PNG")) push(clean.slice(0, -4) + ".png");
 
-    if (/\.(png|PNG|jpg|jpeg)$/i.test(clean)) {
+    if (/\.(png|PNG|jpg|jpeg|webp)$/i.test(clean)) {
 
       push(clean.replace(/\.(png|PNG)$/i, ".jpg"));
-      push(clean.replace(/\.(png|PNG|jpg|jpeg)$/i, ".jpeg"));
+      push(clean.replace(/\.(png|PNG|jpg|jpeg|webp)$/i, ".jpeg"));
     }
 
     push(addCacheBust(clean, "v=1"));

@@ -777,7 +777,6 @@ export default function Top3View(props) {
   const {
     loading,
     error,
-    top3,
     timelineTop3,
     layerMetaText,
     lastLabel,
@@ -794,7 +793,18 @@ export default function Top3View(props) {
     lastHourBucket,
   } = props || {};
 
-  const list = Array.isArray(top3) ? top3.slice(0, 3) : [];
+  const forecastSlot = useMemo(() => {
+  if (!Array.isArray(timelineTop3) || !timelineTop3.length) return null;
+
+  return timelineTop3.find((slot) =>
+    String(slot?.targetYmd || "").trim() === String(analysisYmd || "").trim() &&
+    String(slot?.targetHour || "").trim() === String(analysisHourBucket || "").trim()
+  ) || null;
+}, [timelineTop3, analysisYmd, analysisHourBucket]);
+
+const list = Array.isArray(forecastSlot?.top3)
+  ? forecastSlot.top3.slice(0, 3)
+  : [];
   const timeline = (Array.isArray(timelineTop3) ? timelineTop3 : [])
   .slice()
   .sort((a, b) => {
@@ -802,6 +812,8 @@ export default function Top3View(props) {
     const tb = `${b?.targetYmd || ""} ${b?.targetHour || ""}`;
     return ta.localeCompare(tb);
   });
+
+  const showDetailedTimeline = false;
 
   const meta = useMemo(() => {
     const last = lastLabel || "—";
@@ -920,25 +932,54 @@ export default function Top3View(props) {
   const secondaryItems = list.slice(1, 3);
 
   const historyAnchorYmd = useMemo(() => {
-    const y = String(analysisYmd || "").trim();
-    if (isYMD(y)) return y;
+  const y = String(analysisYmd || "").trim();
+  if (isYMD(y)) return y;
 
-    const last = log[log.length - 1];
-    const fallback = String(last?.target?.ymd || "").trim();
-    return isYMD(fallback) ? fallback : "";
-  }, [analysisYmd, log]);
+  const lastTimeline = Array.isArray(timeline) && timeline.length
+    ? timeline[timeline.length - 1]
+    : null;
+
+  const fallback = String(lastTimeline?.targetYmd || "").trim();
+  return isYMD(fallback) ? fallback : "";
+}, [analysisYmd, timeline]);
 
   const historyRows = useMemo(() => {
-    if (!log.length || !historyAnchorYmd) return [];
+  if (!Array.isArray(timeline) || !timeline.length || !historyAnchorYmd) return [];
 
-    return [...log]
-      .filter((item) => String(item?.target?.ymd || "").trim() === historyAnchorYmd)
-      .sort((a, b) => {
-        const ah = hourBucketToSortValue(a?.target?.hour);
-        const bh = hourBucketToSortValue(b?.target?.hour);
-        return ah - bh;
-      });
-  }, [log, historyAnchorYmd]);
+  return timeline
+    .filter((slot) => String(slot?.targetYmd || "").trim() === historyAnchorYmd)
+    .sort((a, b) => {
+      const ah = hourBucketToSortValue(a?.targetHour);
+      const bh = hourBucketToSortValue(b?.targetHour);
+      return ah - bh;
+    })
+    .map((slot) => {
+      const slotTop3 = Array.isArray(slot?.top3) ? slot.top3.slice(0, 3) : [];
+      const resultGrupo = getSlotResultGrupo(slot);
+      const hasResult =
+        Number.isFinite(resultGrupo) && resultGrupo >= 1 && resultGrupo <= 25;
+
+      const analysis = analyzeTop3Hit(
+        slotTop3,
+        resultGrupo,
+        extractResultMilhar(slot)
+      );
+
+      return {
+        targetKey: `${String(slot?.targetYmd || "")}__${String(slot?.targetHour || "")}`,
+        target: {
+          ymd: String(slot?.targetYmd || ""),
+          hour: String(slot?.targetHour || ""),
+        },
+        picks: slotTop3.map((t) => Number(t?.grupo)).filter((g) => Number.isFinite(g)),
+        top3: slotTop3,
+        result: hasResult ? Number(resultGrupo) : null,
+        grupo: hasResult ? Number(resultGrupo) : null,
+        animal: hasResult ? getAnimalLabel(resultGrupo) : "",
+        hit: analysis.type !== "miss" && analysis.type !== "none",
+      };
+    });
+}, [timeline, historyAnchorYmd]);
 
   return (
     <div
@@ -2041,7 +2082,7 @@ export default function Top3View(props) {
           </section>
         )}
 
-        {timeline.length > 0 ? (
+        {showDetailedTimeline && timeline.length > 0 ? (
           <section className="top3-stage">
             <section className="top3-shell">
               <div className="top3-header__title">Leitura do dia — Timeline completa</div>
@@ -2081,9 +2122,11 @@ export default function Top3View(props) {
                 const y = String(item?.target?.ymd || "");
                 const h = String(item?.target?.hour || "");
 
-                const picks = Array.isArray(item?.picks)
-                  ? item.picks.map((g) => formatGrupo(g)).join(" - ")
-                  : "--- - --- - ---";
+                const picks = Array.isArray(item?.picks) && item.picks.length
+  ? item.picks.map((g) => formatGrupo(g)).join(" - ")
+  : Array.isArray(item?.top3)
+    ? item.top3.map((t) => formatGrupo(t?.grupo)).join(" - ")
+    : "--- - --- - ---";
 
                 const resultGrupo = Number(
                   item?.result ?? item?.grupo ?? item?.prizes?.[0]?.grupo
@@ -2164,3 +2207,4 @@ export default function Top3View(props) {
     </div>
   );
 }
+

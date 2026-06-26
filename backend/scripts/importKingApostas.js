@@ -1,4 +1,4 @@
-"use strict";
+﻿"use strict";
 
 /**
  * importKingApostas.js
@@ -763,37 +763,6 @@ function summarizeCloseHours(draws, lotteryKey) {
   return Array.from(set).sort();
 }
 
-function pickFallbackDrawForMissingSlot(draws, lotteryKey, normalizedClose) {
-  const lk = String(lotteryKey || "").trim().toUpperCase();
-  const target = String(normalizedClose || "").trim();
-
-  if (lk !== "PT_RIO" || target !== "21:00") return null;
-
-  const ordered = (Array.isArray(draws) ? draws : [])
-    .map((d) => {
-      const raw = normalizeHHMM(d?.close_hour ?? d?.closeHour ?? d?.horario ?? d?.close ?? "");
-      const prizes = extractPrizes(d);
-      return { draw: d, raw, prizesCount: prizes.length };
-    })
-    .filter((x) => x.raw && x.prizesCount > 0)
-    .sort((a, b) => a.raw.localeCompare(b.raw));
-
-  if (!ordered.length) return null;
-
-  const last = ordered[ordered.length - 1];
-  if (!last || !last.raw) return null;
-
-  // Só aceita fallback se já existe draw de fim de dia suficiente.
-  // Evita transformar 16:00 em 21:00.
-  if (last.raw < "18:00") return null;
-
-  return {
-    ...last.draw,
-    close_hour: "21:00",
-    __fallback_from_close_hour: last.raw,
-  };
-}
-
 /**
  * ✅ Fetch robusto:
  * - Por default faz 1 request por lotteryId e mescla (evita “cap”/consolidação do endpoint)
@@ -1494,7 +1463,7 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
   // ✅ Fetch API (JSON)
   let payload = await fetchKingResults({ date, lotteryKey: lk });
 
-  // ✅ Se pediram closeHour e ele NÃO existe no dia, tenta fallback seguro antes de bloquear
+  // ✅ Se pediram closeHour e ele NÃO existe no dia (close_hours do FETCH), retorna blocked/api_missing_slot
   if (normalizedClose) {
     const closes = summarizeCloseHours(
       Array.isArray(payload?.data) ? payload.data : [],
@@ -1503,104 +1472,91 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
     const hasTarget = closes.includes(normalizedClose);
 
     if (!hasTarget) {
-      const fallbackDraw = pickFallbackDrawForMissingSlot(
-        Array.isArray(payload?.data) ? payload.data : [],
-        lk,
-        normalizedClose
-      );
-
-      if (fallbackDraw) {
-        console.warn(
-          `[SAFE-FALLBACK] lk=${lk} date=${date} slot=${normalizedClose} usando draw de ${fallbackDraw.__fallback_from_close_hour}`
-        );
-        payload.data.push(fallbackDraw);
-      } else {
-        // diagnóstico: tenta fallback HTML apenas para logar
-        try {
-          const fb = await tryHtmlDetailsFallback({
-            date,
-            lotteryKey: lk,
-            closeHour: normalizedClose,
-          });
-
-          if (fb.ok) {
-            console.warn(
-              "[FALLBACK:DETAILS] lk=" +
-                lk +
-                " date=" +
-                date +
-                " slot=" +
-                fb.slot +
-                " kind=" +
-                fb.kind +
-                " hasSlot=" +
-                fb.hasSlot +
-                " hasAnyPrize=" +
-                fb.hasAnyPrize +
-                " url=" +
-                fb.url
-            );
-          }
-        } catch (e) {
-          console.warn("[FALLBACK:DETAILS] erro: " + String(e?.message || e || "unknown"));
-        }
-
-        const ms0 = Date.now() - startedAt;
-
-        return {
-          ok: true,
-          lotteryKey: lk,
+      // diagnóstico: tenta fallback HTML apenas para logar
+      try {
+        const fb = await tryHtmlDetailsFallback({
           date,
+          lotteryKey: lk,
           closeHour: normalizedClose,
-          requestedCloseHour: norm.requested || null,
+        });
 
-          blocked: true,
-          blockedReason: "api_missing_slot",
-          todayBR,
+        if (fb.ok) {
+          console.warn(
+            "[FALLBACK:DETAILS] lk=" +
+              lk +
+              " date=" +
+              date +
+              " slot=" +
+              fb.slot +
+              " kind=" +
+              fb.kind +
+              " hasSlot=" +
+              fb.hasSlot +
+              " hasAnyPrize=" +
+              fb.hasAnyPrize +
+              " url=" +
+              fb.url
+          );
+        }
+      } catch (e) {
+        console.warn("[FALLBACK:DETAILS] erro: " + String(e?.message || e || "unknown"));
+      }
 
-          captured: false,
+      const ms0 = Date.now() - startedAt;
+
+      return {
+        ok: true,
+        lotteryKey: lk,
+        date,
+        closeHour: normalizedClose,
+        requestedCloseHour: norm.requested || null,
+
+        blocked: true,
+        blockedReason: "api_missing_slot",
+        todayBR,
+
+        captured: false,
+        apiHasPrizes: false,
+        alreadyCompleteAny: false,
+        alreadyCompleteAll: false,
+
+        expectedTargets: 0,
+        alreadyCompleteCount: 0,
+        slotDocsFound: 0,
+        apiReturnedTargetDraws: 0,
+
+        savedCount: 0,
+        writeCount: 0,
+        targetDrawIds: [],
+
+        tookMs: ms0,
+
+        totalDrawsFromApi: Array.isArray(payload?.data) ? payload.data.length : 0,
+        totalDrawsMatchedClose: 0,
+        totalDrawsValid: 0,
+        totalDrawsSaved: 0,
+        totalDrawsUpserted: 0,
+        totalPrizesSaved: 0,
+        totalPrizesUpserted: 0,
+        skippedEmpty: 0,
+        skippedInvalid: 0,
+        skippedCloseHour: 0,
+        skippedAlreadyComplete: 0,
+        proof: {
+          filterClose: normalizedClose,
           apiHasPrizes: false,
+          apiReturnedTargetDraws: 0,
+          targetDrawIds: [],
+          inferredDate: null,
+          expectedTargets: 0,
+          slotDocsFound: 0,
+          alreadyCompleteCount: 0,
           alreadyCompleteAny: false,
           alreadyCompleteAll: false,
-
-          expectedTargets: 0,
-          alreadyCompleteCount: 0,
-          slotDocsFound: 0,
-          apiReturnedTargetDraws: 0,
-
-          savedCount: 0,
-          writeCount: 0,
-          targetDrawIds: [],
-
-          tookMs: ms0,
-
-          totalDrawsFromApi: Array.isArray(payload?.data) ? payload.data.length : 0,
-          totalDrawsMatchedClose: 0,
-          totalDrawsValid: 0,
-          totalDrawsSaved: 0,
-          totalDrawsUpserted: 0,
-          totalPrizesSaved: 0,
-          totalPrizesUpserted: 0,
-          skippedEmpty: 0,
-          skippedInvalid: 0,
-          skippedCloseHour: 0,
-          skippedAlreadyComplete: 0,
-          proof: {
-            filterClose: normalizedClose,
-            apiHasPrizes: false,
-            apiReturnedTargetDraws: 0,
-            targetDrawIds: [],
-            inferredDate: null,
-            expectedTargets: 0,
-            slotDocsFound: 0,
-            alreadyCompleteCount: 0,
-            alreadyCompleteAny: false,
-            alreadyCompleteAll: false,
-            targetWriteCount: 0,
-            targetSavedCount: 0,
-          },
-        };
-      }
+          targetWriteCount: 0,
+          targetSavedCount: 0,
+        },
+      };
     }
   }
 
@@ -1720,7 +1676,7 @@ async function main() {
 
   let payload = await fetchKingResults({ date, lotteryKey: lk });
 
-  // ✅ CLI: tenta fallback seguro antes de desistir
+  // ✅ NOVO (CLI também): se pediram closeHour e ele não existe no dia, avisa e sai 0
   if (normalizedClose) {
     const closes = summarizeCloseHours(
       Array.isArray(payload?.data) ? payload.data : [],
@@ -1729,37 +1685,25 @@ async function main() {
     const hasTarget = closes.includes(normalizedClose);
 
     if (!hasTarget) {
-      const fallbackDraw = pickFallbackDrawForMissingSlot(
-        Array.isArray(payload?.data) ? payload.data : [],
-        lk,
-        normalizedClose
+      console.warn(
+        `[NO_DRAW_FOR_SLOT] ${lk} ${date} slot=${normalizedClose} close_hours=[${closes.join(", ")}]`
       );
 
-      if (fallbackDraw) {
-        console.warn(
-          `[SAFE-FALLBACK:CLI] lk=${lk} date=${date} slot=${normalizedClose} usando draw de ${fallbackDraw.__fallback_from_close_hour}`
-        );
-        payload.data.push(fallbackDraw);
-      } else {
-        console.warn(
-          `[NO_DRAW_FOR_SLOT] ${lk} ${date} slot=${normalizedClose} close_hours=[${closes.join(", ")}]`
-        );
+      // tenta fallback apenas pra logar
+      try {
+        const fb = await tryHtmlDetailsFallback({
+          date,
+          lotteryKey: lk,
+          closeHour: normalizedClose,
+        });
+        if (fb.ok) {
+          console.warn(
+            `[FALLBACK:DETAILS] lk=${lk} date=${date} slot=${fb.slot} kind=${fb.kind} hasSlot=${fb.hasSlot} hasAnyPrize=${fb.hasAnyPrize} url=${fb.url}`
+          );
+        }
+      } catch {}
 
-        try {
-          const fb = await tryHtmlDetailsFallback({
-            date,
-            lotteryKey: lk,
-            closeHour: normalizedClose,
-          });
-          if (fb.ok) {
-            console.warn(
-              `[FALLBACK:DETAILS] lk=${lk} date=${date} slot=${fb.slot} kind=${fb.kind} hasSlot=${fb.hasSlot} hasAnyPrize=${fb.hasAnyPrize} url=${fb.url}`
-            );
-          }
-        } catch {}
-
-        process.exit(0);
-      }
+      process.exit(0);
     }
   }
 

@@ -12,6 +12,7 @@ import {
   getDezena2,
   getCentena3,
   milharCompareAsc,
+  wrapToDezena2,
 } from "./top3.formatters";
 
 import {
@@ -22,25 +23,23 @@ import {
 } from "./top3.constants";
 
 function findPreviousValidDraw(draws, currentYmd, currentHour) {
-  const MAX_BACK = 7;
-  let date = new Date(`${currentYmd}T00:00:00`);
+  const list = Array.isArray(draws) ? draws : [];
+  const targetY = safeStr(currentYmd);
+  const targetH = toHourBucket(currentHour);
 
-  for (let d = 0; d < MAX_BACK; d += 1) {
-    const ymd = date.toISOString().slice(0, 10);
+  if (!isYMD(targetY) || !targetH) return null;
 
-    const dayDraws = draws
-      .filter((item) => item.ymd === ymd)
-      .sort((a, b) => b.hour.localeCompare(a.hour));
+  const targetTs = ymdHourToTs(targetY, targetH);
 
-    for (const draw of dayDraws) {
-      if (ymd === currentYmd && draw.hour >= currentHour) continue;
-      if (draw?.prizes?.length > 0) return draw;
-    }
-
-    date.setDate(date.getDate() - 1);
-  }
-
-  return null;
+  return list
+    .filter((draw) => Array.isArray(draw?.prizes) && draw.prizes.length > 0)
+    .map((draw) => {
+      const y = pickDrawYMD(draw);
+      const h = toHourBucket(pickDrawHour(draw));
+      return { draw, ts: ymdHourToTs(y, h) };
+    })
+    .filter((x) => Number.isFinite(x.ts) && x.ts < targetTs)
+    .sort((a, b) => b.ts - a.ts)[0]?.draw || null;
 }
 
 /* =========================
@@ -57,13 +56,6 @@ function grupoFromDezena2(dezena2) {
 
   const g = Math.ceil(n / 4);
   return g >= 1 && g <= 25 ? g : null;
-}
-
-function wrapToDezena2(n) {
-  const x = Number(n);
-  if (!Number.isFinite(x)) return null;
-  const d = ((x % 100) + 100) % 100;
-  return String(d).padStart(2, "0");
 }
 
 function drawQualityScore(draw) {
@@ -97,27 +89,26 @@ export function guessPrizePos(p) {
 }
 
 export function guessPrizeGrupo(p) {
-  const g = Number.isFinite(Number(p?.grupo2))
-    ? Number(p.grupo2)
-    : Number.isFinite(Number(p?.group2))
-      ? Number(p.group2)
-      : Number.isFinite(Number(p?.grupo))
-        ? Number(p.grupo)
-        : Number.isFinite(Number(p?.group))
-          ? Number(p.group)
-          : Number.isFinite(Number(p?.animal_grupo))
-            ? Number(p.animal_grupo)
-            : null;
-
-  if (Number.isFinite(Number(g)) && Number(g) >= 1 && Number(g) <= 25) {
-    return Number(g);
+  // PRIORIDADE ABSOLUTA: grupo2
+  if (Number.isFinite(Number(p?.grupo2))) {
+    const g = Number(p.grupo2);
+    if (g >= 1 && g <= 25) return g;
   }
 
+  // SEGUNDA OPÇÃO: group2 (caso backend use inglês)
+  if (Number.isFinite(Number(p?.group2))) {
+    const g = Number(p.group2);
+    if (g >= 1 && g <= 25) return g;
+  }
+
+  // fallback SOMENTE via milhar
   const milhar4 = pickPrizeMilhar4(p);
+
   if (milhar4) {
     const dezena2 = getDezena2(milhar4);
     const derived = grupoFromDezena2(dezena2);
-    if (Number.isFinite(Number(derived))) return Number(derived);
+
+    if (Number.isFinite(derived)) return derived;
   }
 
   return null;
@@ -481,12 +472,16 @@ export function findNextExistingDrawFromSlot({
     let d = drawsIndex.get(drawKey) || null;
 
     if (!d) {
-      for (const [k, v] of drawsIndex.entries()) {
-        if (k.startsWith(`${curY}|`)) {
-          d = v;
-          break;
-        }
-      }
+      const curTs = ymdHourToTs(curY, curH);
+      const curYLocked = curY;
+      d = Array.from(drawsIndex.entries())
+        .map(([k, v]) => {
+          const [ky, kh] = String(k).split("|");
+          return { ymd: ky, hour: kh, draw: v, ts: ymdHourToTs(ky, kh) };
+        })
+        .filter((x) => x.ymd === curYLocked)
+        .filter((x) => Number.isFinite(x.ts) && x.ts >= curTs)
+        .sort((a, b) => a.ts - b.ts)[0]?.draw || null;
     }
 
     if (d) return { slot: { ymd: curY, hour: toHourBucket(curH) }, draw: d };
