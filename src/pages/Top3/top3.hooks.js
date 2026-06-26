@@ -432,6 +432,16 @@ export function useTop3Controller() {
 
     const currentRequestId = ++requestIdRef.current;
 
+    const perfNow = () =>
+      typeof performance !== "undefined" ? performance.now() : Date.now();
+
+    const perfLog = (label, start) => {
+      const ms = Math.round((perfNow() - start) * 100) / 100;
+      console.info(`[TOP3 PERF] ${label}: ${ms} ms`);
+    };
+
+    const perfTotal = perfNow();
+
     try {
       const ufResolved = lKey;
 
@@ -444,7 +454,9 @@ export function useTop3Controller() {
         minDate = cached.minDate;
         maxDate = cached.maxDate;
       } else {
+        const perfBounds = perfNow();
         const b = await getKingBoundsByUf({ uf: ufResolved });
+        perfLog("getKingBoundsByUf", perfBounds);
 
         const bMin = safeStr(b?.minYmd || b?.minDate || "");
         const bMax = safeStr(b?.maxYmd || b?.maxDate || "");
@@ -460,12 +472,14 @@ export function useTop3Controller() {
           ? maxDate
           : ymdSafe;
 
+      const perfToday = perfNow();
       const today =
         (await getKingResultsByDate({
           uf: ufResolved,
           date: effectiveYmd,
           readPolicy: "server",
         })) || [];
+      perfLog("getKingResultsByDate:today", perfToday);
 
       const todaySchedule = getScheduleForLottery({
         lotteryKey: lKey,
@@ -693,6 +707,7 @@ export function useTop3Controller() {
       // Libera a renderização principal antes do carregamento pesado do histórico.
       setLoading(false);
 
+      const perfRange = perfNow();
       const hist =
         (await getKingResultsByRange({
           uf: ufResolved,
@@ -701,6 +716,7 @@ export function useTop3Controller() {
           mode: "detailed",
           readPolicy: "server",
         })) || [];
+      perfLog("getKingResultsByRange:history", perfRange);
 
       if (requestIdRef.current !== currentRequestId) return;
 
@@ -712,6 +728,8 @@ export function useTop3Controller() {
         setBaseDrawState(null);
       }
     } finally {
+      perfLog("load:total", perfTotal);
+
       if (requestIdRef.current === currentRequestId) {
         setLoadingStage({ today: false, range: false });
         setLoading(false);
