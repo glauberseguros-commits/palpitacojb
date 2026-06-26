@@ -777,6 +777,32 @@ function mapDrawDoc(doc) {
   };
 }
 
+
+function normalizeEmbeddedPrizesForAggregated(embeddedPrizes) {
+  const arr = Array.isArray(embeddedPrizes) ? embeddedPrizes : [];
+  if (!arr.length) return [];
+
+  const normalized = arr.map((p, idx) =>
+    normalizePrize(p, p?.prizeId ?? `emb_${idx}`)
+  );
+
+  return sortPrizesByPosition(
+    normalized.filter(
+      (x) =>
+        isValidPosition(x?.position) &&
+        (
+          isValidGrupo(x?.grupo) ||
+          x?.numero ||
+          x?.milhar ||
+          x?.milhar4 ||
+          x?.dezena2 ||
+          x?.centena3
+        )
+    )
+  );
+}
+
+
 /* =========================
    Compat: uf OU lottery_key
 ========================= */
@@ -1486,11 +1512,11 @@ async function fetchDrawsDayNoPrizes({ uf, dayYmd }) {
   const ordered = sortDrawsLocal(baseAll);
 
   return ordered.map((d) => {
-    const embedded = Array.isArray(d?.prizes) ? d.prizes : [];
+    const embedded = normalizeEmbeddedPrizesForAggregated(d?.prizes);
     return {
       ...d,
-      prizes: [],
-      prizesCount: embedded.length || 0,
+      prizes: embedded,
+      prizesCount: embedded.length || Number(d?.prizesCount || 0),
       __mode: "aggregated",
     };
   });
@@ -1682,10 +1708,10 @@ export async function getKingResultsByRange({
   if (effectiveMode === "aggregated") {
     const out = dedupeDrawsLocal(
       ordered.map((d) => {
-        const embedded = Array.isArray(d?.prizes) ? d.prizes : [];
+        const embedded = normalizeEmbeddedPrizesForAggregated(d?.prizes);
         return {
           ...d,
-          prizes: Array.isArray(d?.prizes) ? d.prizes : [],
+          prizes: embedded,
           prizesCount: Number.isFinite(Number(d?.prizesCount))
             ? Number(d.prizesCount)
             : embedded.length || 0,

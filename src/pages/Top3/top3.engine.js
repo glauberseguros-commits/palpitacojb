@@ -89,19 +89,24 @@ export function guessPrizePos(p) {
 }
 
 export function guessPrizeGrupo(p) {
-  // PRIORIDADE ABSOLUTA: grupo2
-  if (Number.isFinite(Number(p?.grupo2))) {
-    const g = Number(p.grupo2);
-    if (g >= 1 && g <= 25) return g;
+  const directCandidates = [
+    p?.grupo2,
+    p?.group2,
+    p?.grupo,
+    p?.group,
+    p?.animal_grupo,
+    p?.grupo_animal,
+    p?.grupoAnimal,
+    p?.g,
+  ];
+
+  for (const v of directCandidates) {
+    const g = Number(v);
+    if (Number.isFinite(g) && g >= 1 && g <= 25) {
+      return g;
+    }
   }
 
-  // SEGUNDA OPÇÃO: group2 (caso backend use inglês)
-  if (Number.isFinite(Number(p?.group2))) {
-    const g = Number(p.group2);
-    if (g >= 1 && g <= 25) return g;
-  }
-
-  // fallback SOMENTE via milhar
   const milhar4 = pickPrizeMilhar4(p);
 
   if (milhar4) {
