@@ -15,7 +15,16 @@ import { db } from "./firebase";
 
 import { cacheGet, cacheSet } from "./king/king.cache";
 
-import { normalizePositions, isValidGrupo, isValidPosition, extractIntInRange, normalizeDigitsOnly, prizeWidthByPosition, toPrizeDigitsByPosition, digitsToDezena2, digitsToCentena3, normalizePrize, sortPrizesByPosition, filterPrizesByPositions, normalizeEmbeddedPrizesForAggregated } from "./king/king.normalize";
+import {
+  normalizePositions,
+  isValidGrupo,
+  isValidPosition,
+  toPrizeDigitsByPosition,
+  normalizePrize,
+  sortPrizesByPosition,
+  filterPrizesByPositions,
+  normalizeEmbeddedPrizesForAggregated,
+} from "./king/king.normalize";
 
 import {
   pad2,
