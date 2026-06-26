@@ -39,7 +39,10 @@ import { lotteryLabel } from "./top3.selectors";
 
 import { useTop3State } from "./modules/top3.state";
 
-import { fallbackBaseSearch } from "./modules/top3.loader";
+import {
+  fallbackBaseSearch,
+  loadHistoryRange,
+} from "./modules/top3.loader";
 
 import {
   registerPrediction,
@@ -732,15 +735,13 @@ export function useTop3Controller() {
       setLoading(false);
 
       const perfRange = perfNow();
-      const hist =
-        (await getKingResultsByRange({
-          uf: ufResolved,
-          dateFrom: rangeFrom,
-          dateTo: rangeTo,
-          mode: "detailed",
-          readPolicy: "server",
-        })) || [];
-      perfLog("getKingResultsByRange:history", perfRange);
+      const hist = await loadHistoryRange({
+        getKingResultsByRange,
+        uf: ufResolved,
+        dateFrom: rangeFrom,
+        dateTo: rangeTo,
+      });
+      perfLog("loadHistoryRange:aggregated", perfRange);
 
       if (requestIdRef.current !== currentRequestId) return;
 

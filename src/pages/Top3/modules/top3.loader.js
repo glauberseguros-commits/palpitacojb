@@ -31,3 +31,19 @@ export async function fallbackBaseSearch({
     targetHourBucket,
   });
 }
+export async function loadHistoryRange({
+  getKingResultsByRange,
+  uf,
+  dateFrom,
+  dateTo,
+}) {
+  return (
+    (await getKingResultsByRange({
+      uf,
+      dateFrom,
+      dateTo,
+      mode: "aggregated",
+      readPolicy: "server",
+    })) || []
+  );
+}
