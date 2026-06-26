@@ -29,6 +29,19 @@ export function computeTop3Analytics({
   const rawList = Array.isArray(rangeDraws) ? rangeDraws : [];
   const drawLast = baseDrawState;
 
+  console.info("[TOP3 ANALYTICS DEBUG]", {
+    rawListLength: rawList.length,
+    hasBaseDraw: !!drawLast,
+    baseYmd: pickDrawYMD(drawLast) || "",
+    baseHour: toHourBucket(pickDrawHour(drawLast)) || "",
+    baseGrupo: pickPrize1GrupoFromDraw(drawLast),
+    lotteryKeySafe,
+    lookback,
+    rangeFrom: rangeInfo?.from || "",
+    rangeTo: rangeInfo?.to || "",
+    todayDrawsLength: Array.isArray(todayDraws) ? todayDraws.length : 0,
+  });
+
   if (!rawList.length || !drawLast) {
     const empty = { top: [], meta: null };
     analyticsCacheRef.current = { key: "", value: empty };
@@ -49,6 +62,14 @@ export function computeTop3Analytics({
     draws: rawList,
     lotteryKey: lotteryKeySafe,
     baseDraw: drawLast,
+  });
+
+  console.info("[TOP3 ANALYTICS DEBUG] historicalList", {
+    historicalListLength: historicalList.length,
+    firstYmd: pickDrawYMD(historicalList[0]) || "",
+    firstHour: toHourBucket(pickDrawHour(historicalList[0])) || "",
+    lastYmd: pickDrawYMD(historicalList[historicalList.length - 1]) || "",
+    lastHour: toHourBucket(pickDrawHour(historicalList[historicalList.length - 1])) || "",
   });
 
   if (!historicalList.length) {
@@ -100,6 +121,11 @@ export function computeTop3Analytics({
     PT_RIO_SCHEDULE_WED_SAT,
     FEDERAL_SCHEDULE,
     topN: 3,
+  });
+
+  console.info("[TOP3 ANALYTICS DEBUG] computed", {
+    topLength: Array.isArray(computed?.top) ? computed.top.length : 0,
+    meta: computed?.meta || null,
   });
 
   analyticsCacheRef.current = { key: cacheKey, value: computed };
