@@ -39,6 +39,8 @@ import { lotteryLabel } from "./top3.selectors";
 
 import { useTop3State } from "./modules/top3.state";
 
+import { fallbackBaseSearch } from "./modules/top3.loader";
+
 import {
   registerPrediction,
   reconcilePendingTop3Log,
@@ -526,29 +528,6 @@ export function useTop3Controller() {
         source: "none",
       };
 
-      const fallbackBaseSearch = async (targetY, targetH) => {
-        const searchFrom =
-          minDate ||
-          (lKey === "FEDERAL"
-            ? addDaysYMD(targetY, -180)
-            : addDaysYMD(targetY, -60));
-
-        const hist =
-          (await getKingResultsByRange({
-            uf: ufResolved,
-            dateFrom: searchFrom,
-            dateTo: targetY,
-            mode: "detailed",
-            readPolicy: "server",
-          })) || [];
-
-        return findLatestHistoricalBaseDraw({
-          draws: hist,
-          lotteryKey: lKey,
-          targetYmd: targetY,
-          targetHourBucket: targetH,
-        });
-      };
 
       if (todayLast) {
         baseDraw = todayLast;
@@ -591,7 +570,16 @@ export function useTop3Controller() {
           });
 
           if (!resolvedPrev?.draw) {
-            resolvedPrev = await fallbackBaseSearch(baseY, baseH);
+            resolvedPrev = await fallbackBaseSearch({
+              getKingResultsByRange,
+              findLatestHistoricalBaseDraw,
+              addDaysYMD,
+              minDate,
+              lotteryKey: lKey,
+              targetYmd: baseY,
+              targetHourBucket: baseH,
+              uf: ufResolved,
+            });
           }
         }
       } else {
@@ -622,7 +610,16 @@ export function useTop3Controller() {
 
         const previousResolved = previousForFirstSlot?.draw
           ? previousForFirstSlot
-          : await fallbackBaseSearch(effectiveYmd, firstHourToday);
+          : await fallbackBaseSearch({
+              getKingResultsByRange,
+              findLatestHistoricalBaseDraw,
+              addDaysYMD,
+              minDate,
+              lotteryKey: lKey,
+              targetYmd: effectiveYmd,
+              targetHourBucket: firstHourToday,
+              uf: ufResolved,
+            });
 
         if (!previousResolved?.draw) {
           resetStateForNoData();
@@ -669,7 +666,16 @@ export function useTop3Controller() {
           });
 
           if (!resolvedPrev?.draw) {
-            resolvedPrev = await fallbackBaseSearch(baseY, baseH);
+            resolvedPrev = await fallbackBaseSearch({
+              getKingResultsByRange,
+              findLatestHistoricalBaseDraw,
+              addDaysYMD,
+              minDate,
+              lotteryKey: lKey,
+              targetYmd: baseY,
+              targetHourBucket: baseH,
+              uf: ufResolved,
+            });
           }
         }
       }
