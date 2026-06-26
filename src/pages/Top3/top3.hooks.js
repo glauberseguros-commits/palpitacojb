@@ -51,65 +51,14 @@ import {
   getKingBoundsByUf,
 } from "../../services/kingResultsService";
 
-import { getAnimalLabel, getImgFromGrupo } from "../../constants/bichoMap";
+import { getAnimalLabel } from "../../constants/bichoMap";
 
-function publicBase() {
-  const b = String(process.env.PUBLIC_URL || "").trim();
-  return b && b !== "/" ? b : "";
-}
+import {
+  normalizeImgSrc,
+  getGrupoImgSrc,
+  buildResultStyleImgVariants,
+} from "./top3.images";
 
-function normalizeImgSrc(src) {
-  const s = String(src || "").trim();
-  if (!s) return "";
-
-  if (/^https?:\/\//i.test(s)) return s;
-
-  const base = publicBase();
-
-  if (s.startsWith("/")) return `${base}${s}`;
-  if (s.startsWith("public/")) return `${base}/${s.slice("public/".length)}`;
-  if (s.startsWith("img/")) return `${base}/${s}`;
-
-  return `${base}/${s}`;
-}
-
-function buildResultStyleImgVariants(grupo, size = 96) {
-  const g = Number(grupo);
-  if (!Number.isFinite(g) || g <= 0) return [];
-
-  const seeds = [getImgFromGrupo?.(g, size), getImgFromGrupo?.(g)]
-    .map((x) => normalizeImgSrc(x))
-    .filter(Boolean);
-
-  const out = [];
-
-  for (const seed of seeds) {
-    const clean = String(seed).split("?")[0];
-    if (!clean) continue;
-
-    out.push(clean);
-
-    if (/\.png$/i.test(clean)) {
-      out.push(clean.replace(/\.png$/i, ".jpg"));
-      out.push(clean.replace(/\.png$/i, ".jpeg"));
-      out.push(clean.replace(/\.png$/i, ".webp"));
-    } else if (/\.jpg$/i.test(clean)) {
-      out.push(clean.replace(/\.jpg$/i, ".png"));
-      out.push(clean.replace(/\.jpg$/i, ".jpeg"));
-      out.push(clean.replace(/\.jpg$/i, ".webp"));
-    } else if (/\.jpeg$/i.test(clean)) {
-      out.push(clean.replace(/\.jpeg$/i, ".png"));
-      out.push(clean.replace(/\.jpeg$/i, ".jpg"));
-      out.push(clean.replace(/\.jpeg$/i, ".webp"));
-    } else if (/\.webp$/i.test(clean)) {
-      out.push(clean.replace(/\.webp$/i, ".png"));
-      out.push(clean.replace(/\.webp$/i, ".jpg"));
-      out.push(clean.replace(/\.webp$/i, ".jpeg"));
-    }
-  }
-
-  return Array.from(new Set(out.filter(Boolean)));
-}
 
 function normalizeMilhar4(v) {
   const s = String(v || "").trim();
@@ -903,9 +852,7 @@ export function useTop3Controller() {
       const prob = resolveProbValue(x);
       const probPct = prob * 100;
 
-      const bgPrimary = normalizeImgSrc(
-        safeStr(getImgFromGrupo?.(g, 512) || getImgFromGrupo?.(g) || "")
-      );
+      const bgPrimary = getGrupoImgSrc(g, 512);
 
       const iconVariants = buildResultStyleImgVariants(g, 96);
 
@@ -978,9 +925,7 @@ export function useTop3Controller() {
         const prob = resolveProbValue(x);
         const probPct = prob * 100;
 
-        const bgPrimary = normalizeImgSrc(
-          safeStr(getImgFromGrupo?.(g, 512) || getImgFromGrupo?.(g) || "")
-        );
+        const bgPrimary = getGrupoImgSrc(g, 512);
 
         const iconVariants = buildResultStyleImgVariants(g, 96);
 
