@@ -42,7 +42,7 @@ export async function loadHistoryRange({
       uf,
       dateFrom,
       dateTo,
-      mode: "aggregated",
+      mode: "detailed",
       readPolicy: "server",
     })) || []
   );
