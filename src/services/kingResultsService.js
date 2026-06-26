@@ -735,13 +735,13 @@ async function fetchPrizesForDraw(drawId, positionsArr, embeddedPrizes) {
 
   const allRaw = snap.docs.map((d) => normalizePrize(d.data(), d.id));
 
-  console.log("DEBUG allRaw:", allRaw);
+  // console.log("DEBUG allRaw:", allRaw);
 
 const all = allRaw.filter(
   (x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position)
 );
 
-console.log("DEBUG allFiltered:", all);
+// console.log("DEBUG allFiltered:", all);
 
   const allSorted = sortPrizesByPosition(all);
   cacheSet(PRIZES_CACHE, allKey, allSorted);
