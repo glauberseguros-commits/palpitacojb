@@ -768,20 +768,13 @@ export function useTop3Controller() {
   }, [lotteryKeySafe, ymdSafe, lookback, resetStateForNoData]);
 
   useEffect(() => {
-    const timelineYmd =
-      lotteryKeySafe === "FEDERAL" &&
-      isFederalNonDrawDay &&
-      isYMD(lastInfo?.lastYmd)
-        ? lastInfo.lastYmd
-        : ymdSafe;
-
     ensureDayTimeline({
-      ymd: timelineYmd,
+      ymd: ymdSafe,
       lotteryKey: lotteryKeySafe,
     });
 
     load();
-  }, [load, ymdSafe, lotteryKeySafe, isFederalNonDrawDay, lastInfo?.lastYmd]);
+  }, [load, ymdSafe, lotteryKeySafe]);
 
   const analytics = useMemo(() => {
     const rawList = Array.isArray(rangeDraws) ? rangeDraws : [];
