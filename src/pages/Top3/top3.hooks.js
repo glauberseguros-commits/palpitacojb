@@ -468,6 +468,14 @@ export function useTop3Controller() {
     };
 
     const perfTotal = perfNow();
+    let __top3TodayCount = 0;
+    let __top3HistCount = 0;
+
+    console.info("[TOP3 FLOW] inicio", {
+      lotteryKey: lotteryKeySafe,
+      ymd: ymdSafe,
+      lookback,
+    });
 
     try {
       const ufResolved = lKey;
@@ -507,6 +515,10 @@ export function useTop3Controller() {
           readPolicy: "server",
         })) || [];
       perfLog("getKingResultsByDate:today", perfToday);
+      __top3TodayCount = Array.isArray(today) ? today.length : 0;
+      console.info("[TOP3 FLOW] today carregado", {
+        totalToday: __top3TodayCount,
+      });
 
       const todaySchedule = getScheduleForLottery({
         lotteryKey: lKey,
@@ -746,6 +758,12 @@ export function useTop3Controller() {
         dateTo: rangeTo,
       });
       perfLog("loadHistoryRange:detailed", perfRange);
+      __top3HistCount = Array.isArray(hist) ? hist.length : 0;
+      console.info("[TOP3 FLOW] historico carregado", {
+        totalHistorico: __top3HistCount,
+        rangeFrom,
+        rangeTo,
+      });
 
       if (requestIdRef.current !== currentRequestId) return;
 
@@ -758,6 +776,10 @@ export function useTop3Controller() {
       }
     } finally {
       perfLog("load:total", perfTotal);
+      console.info("[TOP3 FLOW] fim", {
+        totalToday: __top3TodayCount,
+        totalHistorico: __top3HistCount,
+      });
 
       if (requestIdRef.current === currentRequestId) {
         setLoadingStage({ today: false, range: false });
