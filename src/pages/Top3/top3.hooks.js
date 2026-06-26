@@ -690,6 +690,9 @@ export function useTop3Controller() {
       setRangeInfo({ from: rangeFrom, to: rangeTo });
       setLoadingStage({ today: false, range: true });
 
+      // Libera a renderização principal antes do carregamento pesado do histórico.
+      setLoading(false);
+
       const hist =
         (await getKingResultsByRange({
           uf: ufResolved,
