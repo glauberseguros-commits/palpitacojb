@@ -15,11 +15,12 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 
+import { cacheGet, cacheSet } from "./king/king.cache";
+
 /* =========================
    PERF: caches (memória)
 ========================= */
 
-const CACHE_TTL_MS = 10 * 60 * 1000; // 10 min
 const PRIZES_CACHE = new Map(); // key -> { ts, data: prizesAllSorted }
 const DRAWS_CACHE = new Map(); // key -> { ts, data: mappedDrawDocs[] }
 
@@ -63,22 +64,6 @@ function pad2(n) {
   return String(n).padStart(2, "0");
 }
 
-function cacheGet(map, key) {
-  const entry = map.get(key);
-  if (!entry) return null;
-
-  const ts = Number(entry?.ts || 0);
-  if (!Number.isFinite(ts) || Date.now() - ts > CACHE_TTL_MS) {
-    map.delete(key);
-    return null;
-  }
-
-  return entry.data ?? null;
-}
-
-function cacheSet(map, key, data) {
-  map.set(key, { ts: Date.now(), data });
-}
 
 function applyBoundsFloor(_scopeKey, { minYmd, maxYmd }) {
   return { minYmd: minYmd || null, maxYmd: maxYmd || null };
