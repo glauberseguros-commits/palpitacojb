@@ -1,7 +1,5 @@
 import { apiUrl } from "../config/apiBase";
 // src/services/kingResultsService.js
-import { normalizeToYMD_SP } from "../utils/ymd";
-
 import {
   collection,
   query,
@@ -16,6 +14,19 @@ import {
 import { db } from "./firebase";
 
 import { cacheGet, cacheSet } from "./king/king.cache";
+
+import {
+  pad2,
+  isYMD,
+  ymdToBR,
+  normalizeToYMD,
+  utcTodayYmd,
+  addDaysUTC,
+  addDaysUTCLocal,
+  daysBetweenInclusiveUTC,
+  daysDiffUTC,
+  shouldForceFreshServerRead,
+} from "./king/king.date";
 
 /* =========================
    PERF: caches (memória)
@@ -60,9 +71,6 @@ const FEDERAL_INPUT_ALIASES = new Set([
 
 export const FEDERAL_DRAW_DOW = ["WEDNESDAY", "SATURDAY"]; // referência (UI)
 
-function pad2(n) {
-  return String(n).padStart(2, "0");
-}
 
 
 function applyBoundsFloor(_scopeKey, { minYmd, maxYmd }) {
@@ -177,17 +185,7 @@ function normalizeValueForField(fieldName, valueInput) {
    Utils
 ========================= */
 
-function isYMD(s) {
-  return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
-}
 
-function ymdToBR(ymd) {
-  const m = String(ymd || "")
-    .trim()
-    .match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!m) return null;
-  return `${m[3]}/${m[2]}/${m[1]}`;
-}
 
 /**
  * ✅ Normaliza "horário" para HH:MM
@@ -288,9 +286,6 @@ function drawPassesHourFilter(draw, hourFilter) {
    Date utils
 ========================= */
 
-function normalizeToYMD(input) {
-  return normalizeToYMD_SP(input);
-}
 
 function normalizePositions(positions) {
   const arr =
@@ -919,28 +914,8 @@ function pickMinMaxFromMapped(mapped) {
   return { minYmd, maxYmd };
 }
 
-function utcTodayYmd() {
-  const d = new Date();
-  const y = d.getUTCFullYear();
-  const m = pad2(d.getUTCMonth() + 1);
-  const dd = pad2(d.getUTCDate());
-  return `${y}-${m}-${dd}`;
-}
 
-function ymdToUTCDateLocal(ymd) {
-  const m = String(ymd || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!m) return null;
-  return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
-}
 
-function addDaysUTCLocal(ymd, days) {
-  const dt = ymdToUTCDateLocal(ymd);
-  if (!dt) return ymd;
-  dt.setUTCDate(dt.getUTCDate() + Number(days || 0));
-  return `${dt.getUTCFullYear()}-${pad2(dt.getUTCMonth() + 1)}-${pad2(
-    dt.getUTCDate()
-  )}`;
-}
 
 /**
  * ✅ “Prova de vida” do maxYmd sem depender de índice composto nem de docId:
@@ -1445,43 +1420,10 @@ if (scopeKey === FEDERAL_SCOPE_CODE) {
    API: Range
 ========================= */
 
-function ymdToUTCDate(ymd) {
-  const m = String(ymd || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!m) return null;
-  return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
-}
 
-function addDaysUTC(ymd, days) {
-  const dt = ymdToUTCDate(ymd);
-  if (!dt) return ymd;
-  dt.setUTCDate(dt.getUTCDate() + Number(days || 0));
-  const y = dt.getUTCFullYear();
-  const m = pad2(dt.getUTCMonth() + 1);
-  const d = pad2(dt.getUTCDate());
-  return `${y}-${m}-${d}`;
-}
 
-function daysBetweenInclusiveUTC(a, b) {
-  const da = ymdToUTCDate(a);
-  const db = ymdToUTCDate(b);
-  if (!da || !db) return NaN;
-  const ms = db.getTime() - da.getTime();
-  return Math.floor(ms / 86400000) + 1;
-}
 
-function daysDiffUTC(fromYmd, toYmd) {
-  const da = ymdToUTCDate(fromYmd);
-  const db = ymdToUTCDate(toYmd);
-  if (!da || !db) return NaN;
-  const ms = db.getTime() - da.getTime();
-  return Math.floor(ms / 86400000);
-}
 
-function shouldForceFreshServerRead(ymd) {
-  const today = utcTodayYmd();
-  const diffToToday = daysDiffUTC(ymd, today);
-  return Number.isFinite(diffToToday) && diffToToday <= 1;
-}
 
 function drawsCacheKeyRange({
   scopeKey,
