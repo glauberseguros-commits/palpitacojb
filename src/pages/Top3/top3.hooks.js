@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 
 import {
   safeStr,
@@ -36,6 +36,8 @@ import {
 } from "./top3.engine";
 
 import { lotteryLabel } from "./top3.selectors";
+
+import { useTop3State } from "./modules/top3.state";
 
 import {
   registerPrediction,
@@ -280,45 +282,51 @@ function resolveLayerMetaText(analytics) {
 export function useTop3Controller() {
   const DEFAULT_LOTTERY = "PT_RIO";
 
-  const requestIdRef = useRef(0);
-  const boundsCacheRef = useRef(new Map());
-  const analyticsCacheRef = useRef({ key: "", value: { top: [], meta: null } });
+  const {
+    requestIdRef,
+    boundsCacheRef,
+    analyticsCacheRef,
 
-  const [lotteryKey, setLotteryKey] = useState(DEFAULT_LOTTERY);
-  const [ymd, setYmd] = useState(() => todayYMDLocal());
-  const [lookback, setLookback] = useState(LOOKBACK_ALL);
+    lotteryKey,
+    setLotteryKey,
+    ymd,
+    setYmd,
+    lookback,
+    setLookback,
 
-  const [loading, setLoading] = useState(false);
-  const [loadingStage, setLoadingStage] = useState({
-    today: false,
-    range: false,
+    loading,
+    setLoading,
+    loadingStage,
+    setLoadingStage,
+    error,
+    setError,
+
+    rangeDraws,
+    setRangeDraws,
+    todayDraws,
+    setTodayDraws,
+    rangeInfo,
+    setRangeInfo,
+
+    lastHourBucket,
+    setLastHourBucket,
+    targetHourBucket,
+    setTargetHourBucket,
+    targetYmd,
+    setTargetYmd,
+
+    lastInfo,
+    setLastInfo,
+    prevInfo,
+    setPrevInfo,
+
+    baseDrawState,
+    setBaseDrawState,
+  } = useTop3State({
+    defaultLottery: DEFAULT_LOTTERY,
+    defaultYmd: todayYMDLocal(),
+    defaultLookback: LOOKBACK_ALL,
   });
-  const [error, setError] = useState("");
-
-  const [rangeDraws, setRangeDraws] = useState([]);
-  const [todayDraws, setTodayDraws] = useState([]);
-  const [rangeInfo, setRangeInfo] = useState({ from: "", to: "" });
-
-  const [lastHourBucket, setLastHourBucket] = useState("");
-  const [targetHourBucket, setTargetHourBucket] = useState("");
-  const [targetYmd, setTargetYmd] = useState("");
-
-  const [lastInfo, setLastInfo] = useState({
-    lastYmd: "",
-    lastHour: "",
-    lastGrupo: null,
-    lastAnimal: "",
-  });
-
-  const [prevInfo, setPrevInfo] = useState({
-    prevYmd: "",
-    prevHour: "",
-    prevGrupo: null,
-    prevAnimal: "",
-    source: "none",
-  });
-
-  const [baseDrawState, setBaseDrawState] = useState(null);
 
   const lotteryKeySafe = useMemo(
     () => safeStr(lotteryKey).toUpperCase() || DEFAULT_LOTTERY,
@@ -420,7 +428,17 @@ export function useTop3Controller() {
     setRangeInfo({ from: "", to: "" });
     setRangeDraws([]);
     setTodayDraws([]);
-  }, []);
+  }, [
+    setBaseDrawState,
+    setLastHourBucket,
+    setLastInfo,
+    setPrevInfo,
+    setRangeDraws,
+    setRangeInfo,
+    setTargetHourBucket,
+    setTargetYmd,
+    setTodayDraws,
+  ]);
 
   const load = useCallback(async () => {
     const lKey = safeStr(lotteryKeySafe);
@@ -735,7 +753,26 @@ export function useTop3Controller() {
         setLoading(false);
       }
     }
-  }, [lotteryKeySafe, ymdSafe, lookback, resetStateForNoData]);
+  }, [
+    lotteryKeySafe,
+    ymdSafe,
+    lookback,
+    resetStateForNoData,
+    boundsCacheRef,
+    requestIdRef,
+    setBaseDrawState,
+    setError,
+    setLastHourBucket,
+    setLastInfo,
+    setLoading,
+    setLoadingStage,
+    setPrevInfo,
+    setRangeDraws,
+    setRangeInfo,
+    setTargetHourBucket,
+    setTargetYmd,
+    setTodayDraws,
+  ]);
 
   useEffect(() => {
     ensureDayTimeline({
@@ -833,6 +870,7 @@ export function useTop3Controller() {
     lookback,
     baseDrawState,
     todayDraws,
+    analyticsCacheRef,
   ]);
 
   const build20 = useCallback(
