@@ -137,8 +137,7 @@ function getSessionPlan(sess) {
 /* =========================
    Banner
 ========================= */
-const DEFAULT_BANNER_SRC =
-  "https://images.unsplash.com/photo-1546182990-dffeafbe841d?auto=format&fit=crop&w=1400&q=80";
+const DEFAULT_BANNER_SRC = "/logo/palpitaco-jb.png";
 
 function safeReadJSON(key) {
   try {
@@ -1881,6 +1880,7 @@ export default function Dashboard(props) {
     </div>
   );
 }
+
 
 
 
