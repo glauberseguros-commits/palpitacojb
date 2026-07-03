@@ -1762,7 +1762,7 @@ export default function Dashboard(props) {
 
       <main className="dashMain">
         <section className="dashTop" style={{ position: "relative", zIndex: 1 }}>
-          <div className="dashBanner" style={{ position: "relative", zIndex: 1, pointerEvents: "none" }}>
+          <div className={`dashBanner ${bannerSrc === DEFAULT_BANNER_SRC ? "dashBanner--brand" : ""}`} style={{ position: "relative", zIndex: 1, pointerEvents: "none" }}>
             <img
               src={bannerSrc}
               alt="Banner"
@@ -1880,6 +1880,7 @@ export default function Dashboard(props) {
     </div>
   );
 }
+
 
 
 

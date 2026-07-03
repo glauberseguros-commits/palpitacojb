@@ -646,3 +646,12 @@
   min-height: 0;
   min-width: 0;
 }
+/* Banner institucional Palpitaco JB */
+.dashBanner--brand img{
+  object-fit: contain !important;
+  padding: 18px 28px;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(202,166,75,0.18), transparent 34%),
+    radial-gradient(circle at 80% 40%, rgba(202,166,75,0.10), transparent 38%),
+    linear-gradient(135deg, #050505 0%, #111 52%, #050505 100%);
+}
