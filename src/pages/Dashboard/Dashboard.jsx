@@ -27,6 +27,7 @@ import {
 
 import { buildPalpiteV2 } from "../../utils/buildPalpites";
 import { getKingBoundsByUf } from "../../services/kingResultsService";
+import { loadDashboardStatistics } from "./dashboard.snapshot.loader";
 import { buildRanking } from "../../utils/buildRanking";
 import { applyScoreEngine } from "../../utils/scoreEngine";
 import { normalizeToYMD_SP } from "../../utils/ymd";
