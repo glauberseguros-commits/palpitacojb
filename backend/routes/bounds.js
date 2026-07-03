@@ -314,3 +314,5 @@ router.get("/bounds", async (req, res) => {
 });
 
 module.exports = router;
+module.exports.computeBounds = computeBounds;
+module.exports.normalizeLotteryKey = normalizeLotteryKey;
