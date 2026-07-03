@@ -926,7 +926,7 @@ export default function Downloads() {
         .pp-exportBar{
           display: grid;
           grid-template-columns:
-            minmax(84px, 0.70fr)
+            minmax(132px, 0.95fr)
             minmax(122px, 1.05fr)
             minmax(122px, 1.05fr)
             minmax(98px, 0.85fr)
@@ -1122,7 +1122,7 @@ export default function Downloads() {
               <div className="pp-fieldLabel">UF</div>
               <select className="pp-select" value={ufUi} onChange={(e) => setUfUi(e.target.value)}>
                 <option value="PT_RIO">RJ</option>
-                <option value="FEDERAL">FEDERAL</option>
+                <option value="FEDERAL">Federal</option>
               </select>
             </div>
 
