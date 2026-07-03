@@ -1,13 +1,9 @@
-const admin = require("firebase-admin");
+"use strict";
+
+const { admin, getDb } = require("../service/firebaseAdmin");
 
 function getAdminDb() {
-  if (!admin.apps.length) {
-    admin.initializeApp({
-      credential: admin.credential.applicationDefault(),
-    });
-  }
-
-  return admin.firestore();
+  return getDb();
 }
 
 function safeArray(v) {

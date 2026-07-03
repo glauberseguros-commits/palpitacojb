@@ -32,30 +32,83 @@ async function fetchPrizesForDrawRef(drawRef) {
     .filter((p) => p.grupo && p.position);
 }
 
-async function fetchAllDrawsWithPrizes({ lottery = "PT_RIO", limit = 10000 } = {}) {
+async function mapWithConcurrency(items, concurrency, mapper) {
+  const arr = Array.isArray(items) ? items : [];
+  const out = new Array(arr.length);
+  let index = 0;
+
+  async function worker() {
+    while (index < arr.length) {
+      const i = index++;
+      out[i] = await mapper(arr[i], i);
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, arr.length) }, worker)
+  );
+
+  return out;
+}
+
+async function fetchAllDrawsWithPrizes({
+  lottery = "PT_RIO",
+  pageSize = 250,
+  prizeConcurrency = 12,
+} = {}) {
   const db = getAdminDb();
   const lk = normalizeLottery(lottery);
 
-  const snap = await db
-    .collection("draws")
-    .where("lottery_key", "==", lk)
-    .orderBy("ymd", "asc")
-    .orderBy("__name__", "asc")
-    .limit(limit)
-    .get();
+  const admin = require("firebase-admin");
+  const DOC_ID = admin.firestore.FieldPath.documentId();
 
   const draws = [];
+  let lastDoc = null;
+  let page = 0;
 
-  for (const doc of snap.docs) {
-    const data = doc.data() || {};
-    const prizes = await fetchPrizesForDrawRef(doc.ref);
+  while (true) {
+    page++;
 
-    draws.push({
-      id: doc.id,
-      drawId: doc.id,
-      ...data,
-      prizes,
-    });
+    let q = db
+      .collection("draws")
+      .where("lottery_key", "==", lk)
+      .orderBy("ymd", "asc")
+      .orderBy(DOC_ID, "asc")
+      .limit(pageSize);
+
+    if (lastDoc) q = q.startAfter(lastDoc);
+
+    console.log(`[BOOTSTRAP] Buscando página ${page}...`);
+
+    const snap = await q.get();
+
+    if (snap.empty) break;
+
+    const pageDraws = await mapWithConcurrency(
+      snap.docs,
+      prizeConcurrency,
+      async (doc) => {
+        const data = doc.data() || {};
+        const prizes = await fetchPrizesForDrawRef(doc.ref);
+
+        return {
+          id: doc.id,
+          drawId: doc.id,
+          ...data,
+          prizes,
+        };
+      }
+    );
+
+    draws.push(...pageDraws);
+
+    console.log(
+      `[BOOTSTRAP] Página ${page}: ${snap.docs.length} draws | total=${draws.length}`
+    );
+
+    lastDoc = snap.docs[snap.docs.length - 1];
+
+    if (snap.docs.length < pageSize) break;
   }
 
   return draws;
