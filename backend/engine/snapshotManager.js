@@ -10,6 +10,35 @@ const {
   writeSnapshotMetadata,
 } = require("./snapshotMetadata");
 
+
+async function fetchNewDrawsAfter(db, lottery, lastProcessedDrawId, limit = 25) {
+  if (!lastProcessedDrawId) {
+    return {
+      requiresBootstrap: true,
+      draws: [],
+    };
+  }
+
+  const admin = require("firebase-admin");
+  const DOC_ID = admin.firestore.FieldPath.documentId();
+
+  const snap = await db
+    .collection("draws")
+    .where("lottery_key", "==", String(lottery).toUpperCase())
+    .orderBy(DOC_ID, "asc")
+    .startAfter(String(lastProcessedDrawId))
+    .limit(limit)
+    .get();
+
+  return {
+    requiresBootstrap: false,
+    draws: snap.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    })),
+  };
+}
+
 async function updateSnapshot({
   lottery = "PT_RIO",
   force = false,
@@ -50,23 +79,41 @@ async function updateSnapshot({
     };
   }
 
+  const pending = await fetchNewDrawsAfter(
+    db,
+    lottery,
+    lastProcessedDrawId,
+    25
+  );
+
   await writeSnapshotMetadata(lottery, {
     lastKnownMinYmd: bounds?.minYmd || null,
     lastKnownMaxYmd: bounds?.maxYmd || null,
     latestDrawId,
     lastCheckAt: new Date().toISOString(),
     pendingIncrementalEngine: true,
+    pendingNewDrawsCount: pending.draws.length,
+    requiresBootstrap: pending.requiresBootstrap,
   });
 
   return {
     ok: true,
     lottery,
-    mode: force ? "force_pending" : "incremental_pending",
+    mode: pending.requiresBootstrap
+      ? "bootstrap_required"
+      : force
+      ? "force_pending"
+      : "incremental_pending",
     bounds,
     snapshot: current.data || null,
     metadata,
+    pendingNewDraws: pending.draws,
+    pendingNewDrawsCount: pending.draws.length,
+    requiresBootstrap: pending.requiresBootstrap,
     processed: 0,
-    nextStep: "IMPLEMENT_FETCH_NEW_DRAWS",
+    nextStep: pending.requiresBootstrap
+      ? "IMPLEMENT_BOOTSTRAP_SNAPSHOT"
+      : "IMPLEMENT_APPLY_NEW_DRAWS",
   };
 }
 
