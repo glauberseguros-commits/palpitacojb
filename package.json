@@ -20,6 +20,7 @@
   },
   "scripts": {
     "backend:server": "node backend/server.js",
+    "stats:update": "node backend/workers/updateStatistics.js",
     "dev": "react-scripts start",
     "auto:pt_rio": "node backend/scripts/autoImportToday.js",
     "build": "react-scripts build",
@@ -54,5 +55,6 @@
   }
   
 }
+
 
 
