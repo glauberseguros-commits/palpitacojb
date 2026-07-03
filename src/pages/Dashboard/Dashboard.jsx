@@ -1166,9 +1166,7 @@ export default function Dashboard(props) {
     return String(fsRankingMeta?.serviceMode || "detailed");
   }, [fsRankingMeta]);
 
-  const isAggregatedOnly = useMemo(() => {
-    return DATA_MODE === "firestore" && serviceModeEffective === "aggregated";
-  }, [serviceModeEffective]);
+  const isAggregatedOnly = false;
 
   const rankingLoading = DATA_MODE === "json" ? jsonState.loading : fsLoading;
   const rankingError = DATA_MODE === "json" ? jsonState.error : fsError;
