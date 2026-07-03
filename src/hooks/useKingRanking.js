@@ -3,7 +3,6 @@ import {
   getKingResultsByDate,
   getKingResultsByRange,
   getKingBoundsByUf,
-  AGGREGATED_AUTO_DAYS,
 } from "../services/kingResultsService";
 import { buildRanking } from "../utils/buildRanking";
 import { buildPalpite } from "../utils/buildPalpites";
@@ -240,14 +239,6 @@ function normalizeBucketInput(bucket) {
   return s;
 }
 
-function decideRangeServiceMode(rangeDays) {
-  const THRESHOLD = Number.isFinite(Number(AGGREGATED_AUTO_DAYS))
-    ? Number(AGGREGATED_AUTO_DAYS)
-    : 60;
-
-  if (!Number.isFinite(rangeDays) || rangeDays <= 0) return "detailed";
-  return rangeDays >= THRESHOLD ? "aggregated" : "detailed";
-}
 
 const BOUNDS_TTL_MS = 10 * 60 * 1000;
 
@@ -574,8 +565,7 @@ export function useKingRanking({
         let serviceMode = "detailed";
 
         if (mode === "range") {
-          serviceMode = decideRangeServiceMode(rangeDays);
-          if (needsPrizes) serviceMode = "detailed";
+          serviceMode = "detailed";
 
           draws = await getKingResultsByRange({
             uf,

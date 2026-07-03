@@ -50,7 +50,7 @@ const DRAWS_CACHE = new Map(); // key -> { ts, data: mappedDrawDocs[] }
 const LATE_CACHE = new Map(); // key -> { ts, data: lateRows[] }
 
 // ✅ corte seguro (modo auto) — acima disso, tende a ser "agregado" (sem prizes)
-export const AGGREGATED_AUTO_DAYS = 60;
+export const AGGREGATED_AUTO_DAYS = Number.POSITIVE_INFINITY;
 
 /* =========================
    Constantes / helpers base
@@ -1263,7 +1263,7 @@ export function decideKingRangeMode({ dateFrom, dateTo, mode = "detailed" }) {
 
   const days = daysBetweenInclusiveUTC(ymdFrom, ymdTo);
   if (!Number.isFinite(days) || days <= 0) return "detailed";
-  return days >= AGGREGATED_AUTO_DAYS ? "aggregated" : "detailed";
+  return "detailed";
 }
 
 /**

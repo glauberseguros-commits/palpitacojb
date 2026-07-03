@@ -28,6 +28,7 @@ import {
 import { buildPalpiteV2 } from "../../utils/buildPalpites";
 import { getKingBoundsByUf } from "../../services/kingResultsService";
 import { buildRanking } from "../../utils/buildRanking";
+import { applyScoreEngine } from "../../utils/scoreEngine";
 import { normalizeToYMD_SP } from "../../utils/ymd";
 
 /* =========================
@@ -1387,32 +1388,7 @@ export default function Dashboard(props) {
       return rankingRowsFromMeta;
     }
   }, [drawsForUi, rankingRowsFromMeta, isAggregatedOnly]);
-
-  const rankingDataForLeftTable = useMemo(() => {
-    if (isAggregatedOnly) return [];
-    if (!Array.isArray(drawsForView) || !drawsForView.length) return rankingRowsFromMeta;
-
-    try {
-      const built = buildRanking(drawsForView);
-      const arr = Array.isArray(built?.byGrupo)
-        ? built.byGrupo
-        : Array.isArray(built?.ranking)
-        ? built.ranking
-        : [];
-
-      const rows = arr.map((r) => ({
-        grupo: String(r?.grupo ?? r?.group ?? "").replace(/^0/, ""),
-        animal: r?.animal ?? r?.label ?? "",
-        total: Number(r?.apar ?? r?.total ?? r?.count ?? 0),
-      }));
-
-      return rows.length ? rows : rankingRowsFromMeta;
-    } catch {
-      return rankingRowsFromMeta;
-    }
-  }, [drawsForView, rankingRowsFromMeta, isAggregatedOnly]);
-
-  const rankingDataForCharts = useMemo(() => {
+const rankingDataForCharts = useMemo(() => {
     if (isAggregatedOnly) return [];
 
     try {
@@ -1428,6 +1404,15 @@ export default function Dashboard(props) {
       total: r.total,
     }));
   }, [drawsForView, rankingRowsFromMeta, isAggregatedOnly]);
+
+
+  const rankingFinal = useMemo(() => {
+    const base = Array.isArray(rankingDataForCharts)
+      ? rankingDataForCharts
+      : [];
+
+    return applyScoreEngine(base);
+  }, [rankingDataForCharts]);
 
   const palpitesByGrupo = useMemo(() => {
     if (isAggregatedOnly) return {};
@@ -1753,7 +1738,7 @@ export default function Dashboard(props) {
           locationLabel={locationLabel}
           loading={loadingEffective && !rankingRowsFromMeta.length && !drawsForUi.length}
           error={rankingError}
-          data={!dataReady ? rankingRowsFromMeta : rankingDataForLeftTable}
+          data={!dataReady ? rankingRowsFromMeta : rankingFinal}
           selectedGrupo={selectedGrupo}
           onSelectGrupo={onSelectGrupo}
           palpitesByGrupo={dataReady ? palpitesByGrupo : {}}
@@ -1866,7 +1851,7 @@ export default function Dashboard(props) {
             <ChartsGrid
               drawsRaw={drawsForView}
               drawsRawGlobal={drawsForUi}
-              rankingData={rankingDataForCharts}
+              rankingData={rankingFinal}
               rankingMeta={rankingMeta}
               filters={filters}
               loading={loadingEffective}
