@@ -564,6 +564,11 @@ export default function Downloads() {
   const [exportLoading, setExportLoading] = useState(false);
   const [exportError, setExportError] = useState("");
 
+  const [previewRows, setPreviewRows] = useState([]);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState("");
+  const [previewPage, setPreviewPage] = useState(1);
+
   // ✅ guard: normaliza range APENAS 1x por bounds (e reseta ao trocar UF)
   const didInitRangeFromBoundsRef = useRef(false);
 
@@ -748,6 +753,58 @@ export default function Downloads() {
     return lines;
   }, [normalizeRange, ufUi, label, fMonth, fDay, fDow, fHour, fAnimalGrupo, fPos]);
 
+  const fetchFilteredRows = useCallback(async () => {
+    const u = safeStr(ufQueryKey);
+    if (!u) return [];
+
+    const { from, to } = normalizeRange();
+
+    const out = await getKingResultsByRange({
+      uf: u,
+      dateFrom: from,
+      dateTo: to,
+      closeHour: null,
+      positions: null,
+      mode: "detailed",
+    });
+
+    const draws = Array.isArray(out) ? out : [];
+    const rows = buildRowsFromDraws(draws);
+    const filteredRows = applyFiltersToRows(rows);
+
+    filteredRows.sort((a, b) => {
+      const da = safeStr(a.ymd);
+      const db = safeStr(b.ymd);
+      if (da !== db) return da.localeCompare(db);
+      const ha = safeStr(a.hour);
+      const hb = safeStr(b.hour);
+      if (ha !== hb) return ha.localeCompare(hb);
+      return Number(a.pos) - Number(b.pos);
+    });
+
+    return filteredRows;
+  }, [ufQueryKey, normalizeRange, buildRowsFromDraws, applyFiltersToRows]);
+
+  const loadPreview = useCallback(async () => {
+    setPreviewLoading(true);
+    setPreviewError("");
+    setPreviewRows([]);
+    setPreviewPage(1);
+
+    try {
+      const rows = await fetchFilteredRows();
+      setPreviewRows(rows);
+
+      if (!rows.length) {
+        setPreviewError("Sem dados para visualizar com os filtros atuais.");
+      }
+    } catch (e) {
+      setPreviewError(String(e?.message || e || "Falha ao consultar resultados."));
+    } finally {
+      setPreviewLoading(false);
+    }
+  }, [fetchFilteredRows]);
+
   const runExport = useCallback(
     async (type) => {
       const u = safeStr(ufQueryKey);
@@ -759,33 +816,12 @@ export default function Downloads() {
       setExportError("");
 
       try {
-        const out = await getKingResultsByRange({
-          uf: u,
-          dateFrom: from,
-          dateTo: to,
-          closeHour: null,
-          positions: null,
-          mode: "detailed",
-        });
-
-        const draws = Array.isArray(out) ? out : [];
-        const rows = buildRowsFromDraws(draws);
-        const filteredRows = applyFiltersToRows(rows);
+        const filteredRows = await fetchFilteredRows();
 
         if (!filteredRows.length) {
           setExportError("Sem dados para exportar com os filtros atuais.");
           return;
         }
-
-        filteredRows.sort((a, b) => {
-          const da = safeStr(a.ymd);
-          const db = safeStr(b.ymd);
-          if (da !== db) return da.localeCompare(db);
-          const ha = safeStr(a.hour);
-          const hb = safeStr(b.hour);
-          if (ha !== hb) return ha.localeCompare(hb);
-          return Number(a.pos) - Number(b.pos);
-        });
 
         const columns = ["Data", "Horário", "Posição", "Grupo", "Animal", "Milhar", "Centena", "Dezena"];
         const data = filteredRows.map((r) => [
@@ -856,10 +892,18 @@ export default function Downloads() {
         setExportLoading(false);
       }
     },
-    [ufQueryKey, ufUi, normalizeRange, buildRowsFromDraws, applyFiltersToRows, buildMetaLines]
+    [ufQueryKey, ufUi, normalizeRange, fetchFilteredRows, buildMetaLines]
   );
 
   const { from: fromSafe, to: toSafe } = useMemo(() => normalizeRange(), [normalizeRange]);
+
+  const previewPageSize = 50;
+  const previewTotalPages = Math.max(1, Math.ceil(previewRows.length / previewPageSize));
+  const previewPageSafe = Math.min(previewPage, previewTotalPages);
+  const previewSlice = previewRows.slice(
+    (previewPageSafe - 1) * previewPageSize,
+    previewPageSafe * previewPageSize
+  );
 
   return (
     <div className="pp-wrap">
@@ -1073,6 +1117,63 @@ export default function Downloads() {
           font-size: 12.5px;
           line-height: 1.45;
         }
+
+        .pp-preview{
+          margin-top: 14px;
+          border-radius: 18px;
+          border: 1px solid rgba(255,255,255,0.10);
+          background: rgba(0,0,0,0.22);
+          overflow: hidden;
+        }
+
+        .pp-previewHead{
+          padding: 12px 14px;
+          display:flex;
+          justify-content:space-between;
+          gap:10px;
+          align-items:center;
+          color:${WHITE};
+          font-weight:950;
+          border-bottom:1px solid rgba(255,255,255,0.08);
+        }
+
+        .pp-tableWrap{
+          overflow:auto;
+          max-height: 420px;
+        }
+
+        .pp-table{
+          width:100%;
+          border-collapse:collapse;
+          font-size:12px;
+          min-width:760px;
+        }
+
+        .pp-table th,.pp-table td{
+          padding:9px 10px;
+          border-bottom:1px solid rgba(255,255,255,0.07);
+          text-align:center;
+          white-space:nowrap;
+        }
+
+        .pp-table th{
+          color:${GOLD};
+          font-weight:950;
+          background:rgba(0,0,0,0.24);
+          position:sticky;
+          top:0;
+        }
+
+        .pp-previewFoot{
+          padding:10px 14px;
+          display:flex;
+          justify-content:flex-end;
+          gap:10px;
+          align-items:center;
+          border-top:1px solid rgba(255,255,255,0.08);
+          color:${WHITE_78};
+          font-weight:850;
+        }
       `}</style>
 
       <div className="pp-panel">
@@ -1094,6 +1195,16 @@ export default function Downloads() {
           </div>
 
           <div className="pp-topActions">
+            <PillButton
+              tone="ghost"
+              disabled={previewLoading || exportLoading}
+              title="Consultar resultados"
+              onClick={loadPreview}
+              icon={<Icon name="file" />}
+            >
+              Consultar
+            </PillButton>
+
             <PillButton
               tone="ghost"
               disabled={exportLoading}
@@ -1228,6 +1339,16 @@ export default function Downloads() {
           <div className="pp-exportActions">
             <PillButton
               tone="ghost"
+              disabled={previewLoading || exportLoading}
+              title="Consultar resultados"
+              onClick={loadPreview}
+              icon={<Icon name="file" />}
+            >
+              Consultar
+            </PillButton>
+
+            <PillButton
+              tone="ghost"
               disabled={exportLoading}
               title="Baixar PDF (real)"
               onClick={() => runExport("pdf")}
@@ -1246,6 +1367,67 @@ export default function Downloads() {
               Baixar Excel
             </PillButton>
           </div>
+
+          {(previewLoading || previewError || previewRows.length > 0) && (
+            <div className="pp-preview">
+              <div className="pp-previewHead">
+                <span>
+                  Prévia dos resultados
+                  {previewRows.length ? ` • ${previewRows.length.toLocaleString("pt-BR")} registros` : ""}
+                </span>
+                {previewLoading ? <span style={{ color: GOLD }}>Consultando…</span> : null}
+              </div>
+
+              {previewError ? (
+                <div className="pp-stateBox" style={{ margin: 12 }}>{previewError}</div>
+              ) : null}
+
+              {previewSlice.length ? (
+                <>
+                  <div className="pp-tableWrap">
+                    <table className="pp-table">
+                      <thead>
+                        <tr>
+                          <th>Data</th>
+                          <th>Horário</th>
+                          <th>Posição</th>
+                          <th>Grupo</th>
+                          <th>Animal</th>
+                          <th>Milhar</th>
+                          <th>Centena</th>
+                          <th>Dezena</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {previewSlice.map((r, idx) => (
+                          <tr key={`${r.ymd}_${r.hour}_${r.pos}_${r.milhar}_${idx}`}>
+                            <td>{r.dateBR}</td>
+                            <td>{r.hour}</td>
+                            <td>{r.pos}º</td>
+                            <td>G{pad2(r.grupo)}</td>
+                            <td>{r.animal}</td>
+                            <td>{r.milhar}</td>
+                            <td>{r.centena}</td>
+                            <td>{r.dezena}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="pp-previewFoot">
+                    <button className="pp-btn pp-btn--ghost" type="button" disabled={previewPageSafe <= 1} onClick={() => setPreviewPage((p) => Math.max(1, p - 1))}>
+                      Anterior
+                    </button>
+                    <span>Página {previewPageSafe} / {previewTotalPages}</span>
+                    <button className="pp-btn pp-btn--ghost" type="button" disabled={previewPageSafe >= previewTotalPages} onClick={() => setPreviewPage((p) => Math.min(previewTotalPages, p + 1))}>
+                      Próxima
+                    </button>
+                  </div>
+                </>
+              ) : null}
+            </div>
+          )}
 
           {(exportLoading || exportError) && (
             <div className="pp-stateBox">
