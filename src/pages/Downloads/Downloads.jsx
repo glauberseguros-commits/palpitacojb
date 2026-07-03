@@ -184,7 +184,7 @@ function pickDrawYMD(draw) {
   return y;
 }
 
-const UF_TO_LOTTERY_KEY = { RJ: "PT_RIO" };
+const UF_TO_LOTTERY_KEY = { RJ: "PT_RIO", FEDERAL: "FEDERAL", BR: "FEDERAL" };
 
 function normalizeUfToQueryKey(input) {
   const s = safeStr(input).toUpperCase();
@@ -196,6 +196,7 @@ function normalizeUfToQueryKey(input) {
 function lotteryLabelFromKey(key) {
   const s = safeStr(key).toUpperCase();
   if (s === "PT_RIO") return "RIO";
+  if (s === "FEDERAL") return "FEDERAL";
   if (s.length === 2) return s;
   const parts = s.split("_");
   return parts[parts.length - 1] || s;
@@ -725,7 +726,7 @@ export default function Downloads() {
     const lines = [];
 
     // ✅ mais “humano”: RJ • RIO
-    const ufLabel = safeStr(ufUi).toUpperCase() === "PT_RIO" ? "RJ" : safeStr(ufUi).toUpperCase();
+    const ufLabel = safeStr(ufUi).toUpperCase() === "PT_RIO" ? "RJ" : safeStr(ufUi).toUpperCase() === "FEDERAL" ? "BR" : safeStr(ufUi).toUpperCase();
     lines.push(`UF: ${ufLabel} • ${label}`);
 
     lines.push(`Período: ${ymdToBR(from)} → ${ymdToBR(to)}`);
@@ -1121,6 +1122,7 @@ export default function Downloads() {
               <div className="pp-fieldLabel">UF</div>
               <select className="pp-select" value={ufUi} onChange={(e) => setUfUi(e.target.value)}>
                 <option value="PT_RIO">RJ</option>
+                <option value="FEDERAL">FEDERAL</option>
               </select>
             </div>
 
