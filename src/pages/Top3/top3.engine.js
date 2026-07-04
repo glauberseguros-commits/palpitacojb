@@ -3135,6 +3135,115 @@ export function computeStatisticalTop3V3({
 }
 
 
+
+/* =========================
+   TOP3 SCENE READER
+========================= */
+
+function scenePickMilhar4(prize) {
+  const candidates = [
+    prize?.milhar,
+    prize?.milhar4,
+    prize?.numero,
+    prize?.number,
+    prize?.value,
+    prize?.result,
+    prize?.resultado,
+    prize?.premio,
+  ];
+
+  for (const v of candidates) {
+    const dig = String(v ?? "").replace(/\D+/g, "");
+    if (dig) return dig.length >= 4 ? dig.slice(-4) : dig.padStart(4, "0");
+  }
+
+  return "";
+}
+
+function sceneGrupoFromMilhar4(m4) {
+  const s = String(m4 || "").replace(/\D+/g, "").padStart(4, "0").slice(-4);
+  if (!/^\d{4}$/.test(s)) return null;
+
+  const dzRaw = Number(s.slice(-2));
+  if (!Number.isFinite(dzRaw)) return null;
+
+  const dz = dzRaw === 0 ? 100 : dzRaw;
+  const grupo = Math.ceil(dz / 4);
+
+  return grupo >= 1 && grupo <= 25 ? grupo : null;
+}
+
+function buildSceneFromDraw(draw) {
+  const prizes = Array.isArray(draw?.prizes) ? draw.prizes : [];
+
+  const rows = prizes
+    .map((p) => {
+      const pos = Number(guessPrizePos(p));
+      const milhar = scenePickMilhar4(p);
+      const grupo = sceneGrupoFromMilhar4(milhar);
+
+      return {
+        pos,
+        milhar: String(milhar || "").replace(/\D+/g, "").padStart(4, "0").slice(-4),
+        centena: getCentena3(milhar),
+        dezena: getDezena2(milhar),
+        grupo,
+      };
+    })
+    .filter((x) => Number.isFinite(x.pos) && x.pos >= 1 && x.pos <= 7)
+    .sort((a, b) => a.pos - b.pos);
+
+  const grupos = rows.map((x) => x.grupo).filter((x) => Number.isFinite(x));
+  const dezenas = rows.map((x) => x.dezena).filter(Boolean);
+  const centenas = rows.map((x) => x.centena).filter(Boolean);
+  const milhares = rows.map((x) => x.milhar).filter(Boolean);
+
+  const countMap = (arr) => {
+    const m = new Map();
+    for (const x of arr) m.set(String(x), (m.get(String(x)) || 0) + 1);
+    return Array.from(m.entries())
+      .filter(([, n]) => n > 1)
+      .map(([value, count]) => ({ value, count }));
+  };
+
+  return {
+    ymd: pickDrawYMD(draw),
+    hour: toHourBucket(pickDrawHour(draw)),
+    firstGrupo: grupos[0] ?? null,
+    grupos,
+    dezenas,
+    centenas,
+    milhares,
+    repeatedGroups: countMap(grupos),
+    repeatedDezenas: countMap(dezenas),
+    repeatedCentenas: countMap(centenas),
+    rows,
+    signature: grupos.map((g) => String(g).padStart(2, "0")).join("-"),
+  };
+}
+
+function logTop3SceneDebug(label, scene, extra = {}) {
+  if (typeof window === "undefined") return;
+  if (!scene) return;
+
+  console.log(`[TOP3 SCENE] ${label}`, {
+    ...extra,
+    ymd: scene.ymd,
+    hour: scene.hour,
+    firstGrupo: scene.firstGrupo,
+    signature: scene.signature,
+    grupos: scene.grupos,
+    dezenas: scene.dezenas,
+    centenas: scene.centenas,
+    milhares: scene.milhares,
+    repeatedGroups: scene.repeatedGroups,
+    repeatedDezenas: scene.repeatedDezenas,
+    repeatedCentenas: scene.repeatedCentenas,
+    rows: scene.rows,
+  });
+}
+
+
 /* =========================
    16/20 milhares (por grupo) — POR TERMINAÇÃO (CORRETO)
 ========================= */
@@ -3345,6 +3454,13 @@ export function buildTimelineTop3({
   for (const slotHour of normalizedSchedule) {
     const currentDraw = realizedTodayMap.get(`${targetYmd}|${slotHour}`) || null;
     const slotTs = ymdHourToTs(targetYmd, slotHour);
+
+    if (currentDraw) {
+      logTop3SceneDebug("resultado_realizado", buildSceneFromDraw(currentDraw), {
+        targetYmd,
+        targetHour: slotHour,
+      });
+    }
 
     if (!currentDraw && pendingPredictionAlreadyShown) {
       timeline.push({
