@@ -32,10 +32,11 @@ import {
   buildMilharesForGrupo,
   getNextSlotForLottery,
   computeConditionalNextTop3V2,
-  buildTimelineTop3,
 } from "./top3.engine";
 
 import { lotteryLabel } from "./top3.selectors";
+
+import { buildTop3TimelineViewModel } from "./modules/top3.timeline";
 
 import { useTop3State } from "./modules/top3.state";
 
@@ -62,7 +63,7 @@ import {
   getKingBoundsByUf,
 } from "../../services/kingResultsService";
 
-import { getAnimalLabel, getImgFromGrupo } from "../../constants/bichoMap";
+import { getAnimalLabel } from "../../constants/bichoMap";
 
 import {
   normalizeImgSrc,
@@ -507,6 +508,15 @@ export function useTop3Controller() {
           ? maxDate
           : ymdSafe;
 
+      console.info("[TOP3 FEDERAL DATE DEBUG]", {
+        lKey,
+        ymdSafe,
+        minDate,
+        maxDate,
+        effectiveYmd,
+        isFederalDrawDay: isFederalDrawDay(ymdSafe),
+      });
+
       const perfToday = perfNow();
       const today =
         (await getKingResultsByDate({
@@ -838,9 +848,13 @@ export function useTop3Controller() {
   ]);
 
   const build20 = useCallback(
-    (grupo2) => {
+    (grupo2, item = null) => {
+      const scopedDraws = Array.isArray(item?.meta?.matchingDraws) && item.meta.matchingDraws.length
+        ? item.meta.matchingDraws
+        : rangeDraws;
+
       return buildMilharesForGrupo({
-        rangeDraws,
+        rangeDraws: scopedDraws,
         analysisHourBucket,
         schedule,
         grupo2,
@@ -868,86 +882,15 @@ export function useTop3Controller() {
   }, [analytics, build20]);
 
   const timelineTop3 = useMemo(() => {
-    const day = Array.isArray(todayDraws) ? todayDraws : [];
-    const range = Array.isArray(rangeDraws) ? rangeDraws : [];
-
-    const timelineYmd = isYMD(analysisYmd) ? analysisYmd : ymdSafe;
-
-    if (!isYMD(timelineYmd) || !range.length) return [];
-
-    const rawTimeline = buildTimelineTop3({
-      ymd: timelineYmd,
-      drawsToday: day,
-      drawsRange: range,
-      lotteryKey: lotteryKeySafe,
-      PT_RIO_SCHEDULE_NORMAL,
-      PT_RIO_SCHEDULE_WED_SAT,
-      FEDERAL_SCHEDULE,
+    return buildTop3TimelineViewModel({
+      todayDraws,
+      rangeDraws,
+      lotteryKeySafe,
+      ymdSafe,
+      analysisYmd,
+      publicBase: "",
     });
-
-    return (Array.isArray(rawTimeline) ? rawTimeline : []).map((slot) => {
-      const arr = Array.isArray(slot?.top3) ? slot.top3 : [];
-      const milharesCache = new Map();
-
-      const mappedTop3 = arr.map((x) => {
-        const g = Number(x?.grupo);
-        const animal = safeStr(getAnimalLabel(g) || "");
-
-        let out = milharesCache.get(g);
-        if (!out) {
-          out = buildMilharesForGrupo({
-            rangeDraws,
-            analysisHourBucket: slot?.targetHour,
-            schedule: getScheduleForLottery({
-              lotteryKey: lotteryKeySafe,
-              ymd: slot?.targetYmd,
-              PT_RIO_SCHEDULE_NORMAL,
-              PT_RIO_SCHEDULE_WED_SAT,
-              FEDERAL_SCHEDULE,
-            }),
-            grupo2: g,
-            count: 20,
-          });
-          milharesCache.set(g, out);
-        }
-
-        const milharesCols = build4ColsFromEngineOut(out, 4, 5);
-        const milhares20 = milharesCols.flatMap((c) => c.items).slice(0, 20);
-
-        const prob = resolveProbValue(x);
-        const probPct = prob * 100;
-
-        const bgPrimary = normalizeImgSrc(
-          safeStr(getImgFromGrupo?.(g, 512) || getImgFromGrupo?.(g) || "")
-        );
-
-        const iconVariants = buildResultStyleImgVariants(g, 96);
-
-        return {
-          ...x,
-          animal,
-          imgBg: [bgPrimary],
-          imgIcon: iconVariants,
-          prob,
-          probPct,
-          meta: x?.meta || null,
-          milharesCols,
-          milhares20,
-        };
-      });
-
-      return {
-        ...slot,
-        top3: mappedTop3,
-      };
-    });
-  }, [
-    todayDraws,
-    rangeDraws,
-    lotteryKeySafe,
-    ymdSafe,
-    analysisYmd,
-  ]);
+  }, [todayDraws, rangeDraws, lotteryKeySafe, ymdSafe, analysisYmd]);
 
   useEffect(() => {
     if (!analysisYmd || !analysisHourBucket) return;
@@ -1026,6 +969,9 @@ export function useTop3Controller() {
     normalizeImgSrc,
   };
 }
+
+
+
 
 
 
