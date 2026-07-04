@@ -2622,6 +2622,7 @@ export function computeConditionalNextTop3V2({
     });
   }
 
+
   const reasonsBase = [
     `Motor: V2_BICHO`,
     `Regime detectado: ${regime}`,
@@ -2793,6 +2794,346 @@ export function computeConditionalNextTop3V2({
     },
   };
 }
+
+
+/* =========================
+   Motor principal V3 (ESTATISTICO AUDITAVEL)
+========================= */
+
+function incMap(map, key, value = 1) {
+  const k = Number(key);
+  if (!Number.isFinite(k) || k < 1 || k > TOP3_GROUPS_K) return;
+  map.set(k, Number(map.get(k) || 0) + Number(value || 0));
+}
+
+function emptyGroupMap() {
+  const out = new Map();
+  for (let g = 1; g <= safeInt(TOP3_GROUPS_K, 25); g += 1) out.set(g, 0);
+  return out;
+}
+
+function getTop5GroupSet(draw) {
+  return new Set(
+    getAllTop5Groups(draw)
+      .map((x) => Number(x.grupo))
+      .filter((g) => Number.isFinite(g) && g >= 1 && g <= TOP3_GROUPS_K)
+  );
+}
+
+function layerProbability(freqMap, samples) {
+  const out = new Map();
+  const denom = Math.max(1, Number(samples || 0));
+
+  for (let g = 1; g <= safeInt(TOP3_GROUPS_K, 25); g += 1) {
+    out.set(g, Number(freqMap.get(g) || 0) / denom);
+  }
+
+  return out;
+}
+
+function sampleConfidence(samples, fullAt = 30) {
+  const n = Number(samples || 0);
+  const lim = Math.max(1, Number(fullAt || 30));
+  return Math.max(0, Math.min(1, n / lim));
+}
+
+export function computeStatisticalTop3V3({
+  lotteryKey,
+  drawsRange,
+  drawLast,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+  topN = 3,
+}) {
+  const list = sortDrawsAsc(Array.isArray(drawsRange) ? drawsRange : []);
+  if (!list.length || !drawLast) return { top: [], meta: null };
+
+  const key = safeStr(lotteryKey).toUpperCase();
+
+  const lastY = pickDrawYMD(drawLast);
+  const lastH = toHourBucket(pickDrawHour(drawLast));
+  const prevGrupo = getFirstGrupoFromDraw(drawLast);
+
+  if (
+    !isYMD(lastY) ||
+    !lastH ||
+    !Number.isFinite(Number(prevGrupo)) ||
+    Number(prevGrupo) < 1 ||
+    Number(prevGrupo) > TOP3_GROUPS_K
+  ) {
+    return { top: [], meta: null };
+  }
+
+  const nextSlot = getNextSlotForLottery({
+    lotteryKey: key,
+    ymd: lastY,
+    hourBucket: lastH,
+    PT_RIO_SCHEDULE_NORMAL,
+    PT_RIO_SCHEDULE_WED_SAT,
+    FEDERAL_SCHEDULE,
+  });
+
+  const targetY = safeStr(nextSlot?.ymd);
+  const targetH = toHourBucket(nextSlot?.hour);
+  const targetDow = getDowKey(targetY);
+  const targetDayOfMonth = getDayOfMonth(targetY);
+  const targetTs = ymdHourToTs(targetY, targetH);
+
+  if (!isYMD(targetY) || !targetH || !Number.isFinite(Number(targetDow))) {
+    return { top: [], meta: null };
+  }
+
+  const history = list.filter((d) => {
+    const y = pickDrawYMD(d);
+    const h = toHourBucket(pickDrawHour(d));
+    const ts = ymdHourToTs(y, h);
+    return isYMD(y) && h && Number.isFinite(ts) && ts < targetTs;
+  });
+
+  const layers = {
+    hour: { label: `frequência no horário ${targetH}`, samples: 0, first: emptyGroupMap(), top5: emptyGroupMap(), weight: 0.30 },
+    dowHour: { label: `frequência no dia da semana + horário`, samples: 0, first: emptyGroupMap(), top5: emptyGroupMap(), weight: 0.25 },
+    dayMonth: { label: `frequência no dia ${String(targetDayOfMonth).padStart(2, "0")}`, samples: 0, first: emptyGroupMap(), top5: emptyGroupMap(), weight: 0.10 },
+    transition: { label: `transição G${String(prevGrupo).padStart(2, "0")} @ ${lastH} → ${targetH}`, samples: 0, first: emptyGroupMap(), top5: emptyGroupMap(), weight: 0.25 },
+    recent: { label: `recência comparável`, samples: 0, first: emptyGroupMap(), top5: emptyGroupMap(), weight: 0.10 },
+  };
+
+  for (const d of history) {
+    const y = pickDrawYMD(d);
+    const h = toHourBucket(pickDrawHour(d));
+    const dow = getDowKey(y);
+    const dom = getDayOfMonth(y);
+    const g1 = getFirstGrupoFromDraw(d);
+    const top5Set = getTop5GroupSet(d);
+
+    const addToLayer = (layer) => {
+      layer.samples += 1;
+      incMap(layer.first, g1, 1);
+      for (const g of top5Set) incMap(layer.top5, g, 1);
+    };
+
+    if (h === targetH) addToLayer(layers.hour);
+    if (h === targetH && Number(dow) === Number(targetDow)) addToLayer(layers.dowHour);
+    if (Number(dom) === Number(targetDayOfMonth)) addToLayer(layers.dayMonth);
+  }
+
+  const indexed = indexDrawsByYmdHour(history);
+
+  for (const prev of history) {
+    const py = pickDrawYMD(prev);
+    const ph = toHourBucket(pickDrawHour(prev));
+    const pg = getFirstGrupoFromDraw(prev);
+
+    if (!isYMD(py) || !ph || Number(pg) !== Number(prevGrupo)) continue;
+
+    const ns = getNextSlotForLottery({
+      lotteryKey: key,
+      ymd: py,
+      hourBucket: ph,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+    });
+
+    if (toHourBucket(ns?.hour) !== targetH) continue;
+    if (ph !== lastH) continue;
+
+    const nextDraw = indexed.get(`${safeStr(ns?.ymd)}|${toHourBucket(ns?.hour)}`) || null;
+    if (!nextDraw) continue;
+
+    const g1 = getFirstGrupoFromDraw(nextDraw);
+    const top5Set = getTop5GroupSet(nextDraw);
+
+    layers.transition.samples += 1;
+    incMap(layers.transition.first, g1, 1);
+    for (const g of top5Set) incMap(layers.transition.top5, g, 1);
+  }
+
+  const recentComparable = history
+    .filter((d) => {
+      const y = pickDrawYMD(d);
+      const h = toHourBucket(pickDrawHour(d));
+      return h === targetH && Number(getDowKey(y)) === Number(targetDow);
+    })
+    .slice(-20);
+
+  for (const d of recentComparable) {
+    const g1 = getFirstGrupoFromDraw(d);
+    const top5Set = getTop5GroupSet(d);
+
+    layers.recent.samples += 1;
+    incMap(layers.recent.first, g1, 1);
+    for (const g of top5Set) incMap(layers.recent.top5, g, 1);
+  }
+
+  const activeWeights = {};
+  let totalWeight = 0;
+
+  for (const [keyLayer, layer] of Object.entries(layers)) {
+    const conf =
+      keyLayer === "transition"
+        ? sampleConfidence(layer.samples, 8)
+        : keyLayer === "recent"
+          ? sampleConfidence(layer.samples, 12)
+          : sampleConfidence(layer.samples, 30);
+
+    const w = layer.samples > 0 ? layer.weight * conf : 0;
+    activeWeights[keyLayer] = w;
+    totalWeight += w;
+  }
+
+  if (totalWeight <= 0) {
+    activeWeights.hour = 1;
+    totalWeight = 1;
+  }
+
+  for (const keyLayer of Object.keys(activeWeights)) {
+    activeWeights[keyLayer] = activeWeights[keyLayer] / totalWeight;
+  }
+
+  const ranked = Array.from({ length: safeInt(TOP3_GROUPS_K, 25) }, (_, idx) => {
+    const grupo = idx + 1;
+
+    let scoreProb = 0;
+    const details = {};
+
+    for (const [keyLayer, layer] of Object.entries(layers)) {
+      const pFirst = Number(layerProbability(layer.first, layer.samples).get(grupo) || 0);
+      const pTop5 = Number(layerProbability(layer.top5, Math.max(1, layer.samples * 5)).get(grupo) || 0);
+
+      const pLayer = (pFirst * 0.75) + (pTop5 * 0.25);
+      const w = Number(activeWeights[keyLayer] || 0);
+
+      scoreProb += pLayer * w;
+
+      details[keyLayer] = {
+        label: layer.label,
+        samples: layer.samples,
+        firstCount: Number(layer.first.get(grupo) || 0),
+        top5Count: Number(layer.top5.get(grupo) || 0),
+        probability: pLayer,
+        weight: w,
+      };
+    }
+
+    return {
+      grupo,
+      scoreProb,
+      score: scoreProb * 1000,
+      details,
+    };
+  })
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return a.grupo - b.grupo;
+    })
+    .slice(0, Math.max(1, Number(topN || 3)));
+
+  const top = ranked.map((x, idx) => {
+    const g2 = String(x.grupo).padStart(2, "0");
+    const strongest = Object.values(x.details)
+      .filter((d) => Number(d.probability || 0) > 0)
+      .sort((a, b) => (b.probability * b.weight) - (a.probability * a.weight))
+      .slice(0, 3);
+
+    return {
+      rank: idx + 1,
+      title:
+        idx === 0
+          ? "Mais provável"
+          : idx === 1
+            ? "2º mais provável"
+            : "3º mais provável",
+      grupo: x.grupo,
+      scoreProb: Number(x.scoreProb || 0),
+      probCond: Number(x.details.transition?.probability || 0),
+      probBase: Number(x.details.hour?.probability || 0),
+      lateBonus: 0,
+      freq: Number(x.details.hour?.firstCount || 0),
+      freqCond: Number(x.details.transition?.firstCount || 0),
+      freqBase: Number(x.details.hour?.firstCount || 0),
+      freqZeroWhy: "",
+      reasons: [
+        `Motor: V3_STATISTICAL`,
+        `Alvo: ${targetY} ${targetH} | DOW=${targetDow} | dia=${String(targetDayOfMonth).padStart(2, "0")}`,
+        `Base: G${String(prevGrupo).padStart(2, "0")} @ ${lastH}`,
+        `Score final G${g2}: ${(Number(x.scoreProb || 0) * 100).toFixed(2)}%`,
+        ...strongest.map((d) =>
+          `${d.label}: ${d.firstCount}x em 1º | ${d.top5Count}x no TOP5 | amostras=${d.samples} | peso=${(d.weight * 100).toFixed(0)}%`
+        ),
+      ],
+      meta: {
+        trigger: {
+          ymd: lastY,
+          hour: lastH,
+          grupo: Number(prevGrupo),
+        },
+        next: {
+          ymd: safeStr(targetY),
+          hour: safeStr(targetH),
+        },
+        samples: history.length,
+        scenario: "V3_STATISTICAL",
+        explain: {
+          engine: "V3_STATISTICAL",
+          targetDow,
+          targetDayOfMonth,
+          prevHour: lastH,
+          prevGrupo: Number(prevGrupo),
+          activeWeights,
+          layers: Object.fromEntries(
+            Object.entries(layers).map(([k, v]) => [
+              k,
+              {
+                label: v.label,
+                samples: v.samples,
+                weight: activeWeights[k],
+              },
+            ])
+          ),
+          details: x.details,
+        },
+      },
+    };
+  });
+
+  return {
+    top,
+    meta: {
+      trigger: {
+        ymd: lastY,
+        hour: lastH,
+        grupo: Number(prevGrupo),
+      },
+      next: {
+        ymd: safeStr(targetY),
+        hour: safeStr(targetH),
+      },
+      samples: history.length,
+      scenario: "V3_STATISTICAL",
+      explain: {
+        engine: "V3_STATISTICAL",
+        targetDow,
+        targetDayOfMonth,
+        prevHour: lastH,
+        prevGrupo: Number(prevGrupo),
+        activeWeights,
+        layers: Object.fromEntries(
+          Object.entries(layers).map(([k, v]) => [
+            k,
+            {
+              label: v.label,
+              samples: v.samples,
+              weight: activeWeights[k],
+            },
+          ])
+        ),
+      },
+    },
+  };
+}
+
 
 /* =========================
    16/20 milhares (por grupo) — POR TERMINAÇÃO (CORRETO)
@@ -3112,7 +3453,7 @@ export function buildTimelineTop3({
         return ta - tb;
       });
 
-    const computed = computeConditionalNextTop3V2({
+    const computed = computeStatisticalTop3V3({
       lotteryKey,
       drawsRange: [...usableHistory, ...usableTodayContext],
       drawLast: baseDraw,
