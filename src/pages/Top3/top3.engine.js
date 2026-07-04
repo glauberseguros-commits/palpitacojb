@@ -3088,6 +3088,17 @@ export function buildTimelineTop3({
       topN: 3,
     });
 
+    if (typeof window !== "undefined") {
+      console.log("[TOP3 COMPUTED DEBUG]", {
+        slotHour,
+        targetYmd,
+        baseYmd: pickDrawYMD(baseDraw),
+        baseHour: toHourBucket(pickDrawHour(baseDraw)),
+        computedTopLen: Array.isArray(computed?.top) ? computed.top.length : -1,
+        computedMeta: computed?.meta || null,
+      });
+    }
+
     const top3 = Array.isArray(computed?.top) ? computed.top.slice(0, 3) : [];
     const resultGrupo = currentDraw ? pickPrize1GrupoFromDraw(currentDraw) : null;
 

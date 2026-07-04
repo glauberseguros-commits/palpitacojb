@@ -2207,4 +2207,3 @@ const list = Array.isArray(forecastSlot?.top3)
     </div>
   );
 }
-
