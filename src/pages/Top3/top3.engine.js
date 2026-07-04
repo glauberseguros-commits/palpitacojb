@@ -3282,20 +3282,49 @@ function compareScenes(a, b) {
 
   let score = 0;
 
-  if (a.firstGrupo === b.firstGrupo) score += 30;
+  const ag = Array.isArray(a.grupos) ? a.grupos : [];
+  const bg = Array.isArray(b.grupos) ? b.grupos : [];
 
-  const ag = new Set(a.grupos || []);
-  const bg = new Set(b.grupos || []);
+  const ad = Array.isArray(a.dezenas) ? a.dezenas : [];
+  const bd = Array.isArray(b.dezenas) ? b.dezenas : [];
 
-  for (const g of ag) {
-    if (bg.has(g)) score += 5;
+  const ac = Array.isArray(a.centenas) ? a.centenas : [];
+  const bc = Array.isArray(b.centenas) ? b.centenas : [];
+
+  if (a.firstGrupo && b.firstGrupo && Number(a.firstGrupo) === Number(b.firstGrupo)) {
+    score += 45;
   }
 
-  const ad = new Set(a.dezenas || []);
-  const bd = new Set(b.dezenas || []);
+  for (let i = 0; i < Math.min(ag.length, bg.length, 7); i += 1) {
+    if (Number(ag[i]) === Number(bg[i])) {
+      score += i === 0 ? 20 : 10;
+    }
+  }
 
-  for (const d of ad) {
-    if (bd.has(d)) score += 2;
+  const groupOverlap = new Set(ag.filter((g) => bg.includes(g))).size;
+  score += groupOverlap * 6;
+
+  const dezenaOverlap = new Set(ad.filter((d) => bd.includes(d))).size;
+  score += dezenaOverlap * 3;
+
+  const centenaOverlap = new Set(ac.filter((c) => bc.includes(c))).size;
+  score += centenaOverlap * 1.5;
+
+  const repA = Array.isArray(a.repeatedGroups) ? a.repeatedGroups.length : 0;
+  const repB = Array.isArray(b.repeatedGroups) ? b.repeatedGroups.length : 0;
+
+  if (repA > 0 && repB > 0) score += 8;
+  if (repA === repB && repA > 0) score += 6;
+
+  const sigA = String(a.signature || "");
+  const sigB = String(b.signature || "");
+
+  if (sigA && sigB && sigA === sigB) {
+    score += 60;
+  }
+
+  if (a.hour && b.hour && a.hour === b.hour) {
+    score += 8;
   }
 
   return score;
