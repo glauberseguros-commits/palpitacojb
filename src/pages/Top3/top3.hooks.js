@@ -873,12 +873,7 @@ export function useTop3Controller() {
 
     if (!isYMD(ymdSafe) || !range.length) return [];
 
-    const timelineYmd =
-      lotteryKeySafe === "FEDERAL" &&
-      isFederalNonDrawDay &&
-      isYMD(lastInfo?.lastYmd)
-        ? lastInfo.lastYmd
-        : ymdSafe;
+    const timelineYmd = isYMD(analysisYmd) ? analysisYmd : ymdSafe;
 
     const rawTimeline = buildTimelineTop3({
       ymd: timelineYmd,
@@ -1030,4 +1025,5 @@ export function useTop3Controller() {
     normalizeImgSrc,
   };
 }
+
 
