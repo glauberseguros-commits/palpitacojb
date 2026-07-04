@@ -2575,6 +2575,53 @@ export function computeConditionalNextTop3V2({
     })
     .slice(0, Math.max(1, Number(topN || 3)));
 
+  if (typeof window !== "undefined") {
+    console.table(
+      ranked.map((x) => ({
+        slot: `${targetY} ${targetH}`,
+        grupo: x.grupo,
+        score: Number(x.score || 0).toFixed(2),
+        final: (Number(x.scoreProb || 0) * 100).toFixed(2),
+        transicao: (Number(x.probTransition || 0) * 100).toFixed(2),
+        estrutural1: (Number(x.probStructuralFirst || 0) * 100).toFixed(2),
+        estruturalTop5: (Number(x.probStructuralTop5 || 0) * 100).toFixed(2),
+        memoria: (Number(x.probMemory || 0) * 100).toFixed(2),
+        par: (Number(x.probPair || 0) * 100).toFixed(2),
+        duplicacao: (Number(x.probDuplication || 0) * 100).toFixed(2),
+        recencia: (Number(x.recentComposite || 0) * 100).toFixed(2),
+        atraso: (Number(x.lateNorm || 0) * 100).toFixed(2),
+        dayFreq: x.dayFreq,
+        dayFirst: x.dayFirstFreq,
+        dominante: x.isDominantToday,
+        pairSamples: x.pairSamples,
+        condFirstCount: x.condFirstCount,
+        structuralFirstCount: x.structuralFirstCount,
+        structuralTop5Count: x.structuralTop5Count,
+      }))
+    );
+
+    console.log("[TOP3 V2 CONTEXTO]", {
+      targetY,
+      targetH,
+      lastY,
+      lastH,
+      prevGrupo,
+      targetDow,
+      targetDayOfMonth,
+      mode,
+      regime,
+      dayContext,
+      currentState,
+      pairOut,
+      condSamples,
+      chosen,
+      structuralFirstSamples: structuralFirst?.totalSamples,
+      structuralTop5Samples: structuralTop5?.totalSamples,
+      duplicationSamples: duplication?.totalSamples,
+      memoryMatchedSamples: memoryOut?.matchedSamples,
+    });
+  }
+
   const reasonsBase = [
     `Motor: V2_BICHO`,
     `Regime detectado: ${regime}`,
@@ -2949,40 +2996,28 @@ export function buildTimelineTop3({
     realizedTodayMap.set(`${y}|${h}`, d);
   }
 
-  function makeSyntheticDrawFromTop1(targetHour, top1Grupo) {
-    const grupo = Number(top1Grupo);
-    if (!Number.isFinite(grupo) || grupo < 1 || grupo > 25) return null;
-
-    return {
-      ymd: targetYmd,
-      hour: targetHour,
-      close_hour: targetHour,
-      date: targetYmd,
-      source: "simulated_timeline",
-      simulated: true,
-      prizes: [
-        {
-          prizeId: "p01",
-          position: 1,
-          grupo2: grupo,
-          grupo,
-          group2: grupo,
-          group: grupo,
-          animal_grupo: grupo,
-          raw: "",
-          milhar: "",
-          numero: "",
-        },
-      ],
-    };
-  }
 
   const chainContextDraws = [];
   const timeline = [];
+  let pendingPredictionAlreadyShown = false;
 
   for (const slotHour of normalizedSchedule) {
     const currentDraw = realizedTodayMap.get(`${targetYmd}|${slotHour}`) || null;
     const slotTs = ymdHourToTs(targetYmd, slotHour);
+
+    if (!currentDraw && pendingPredictionAlreadyShown) {
+      timeline.push({
+        targetYmd,
+        targetHour: slotHour,
+        baseYmd: "",
+        baseHour: "",
+        top3: [],
+        resultGrupo: null,
+        hit: null,
+        status: "pending",
+      });
+      continue;
+    }
 
     let baseDraw = null;
 
@@ -3099,7 +3134,16 @@ export function buildTimelineTop3({
       });
     }
 
-    const top3 = Array.isArray(computed?.top) ? computed.top.slice(0, 3) : [];
+    const computedNextYmd = safeStr(computed?.meta?.next?.ymd || "");
+    const computedNextHour = toHourBucket(computed?.meta?.next?.hour || "");
+    const computedForSlot =
+      computedNextYmd === targetYmd && computedNextHour === slotHour;
+
+    const top3 =
+      computedForSlot && Array.isArray(computed?.top)
+        ? computed.top.slice(0, 3)
+        : [];
+
     const resultGrupo = currentDraw ? pickPrize1GrupoFromDraw(currentDraw) : null;
 
     const hit =
@@ -3120,14 +3164,10 @@ export function buildTimelineTop3({
 
     if (currentDraw) {
       chainContextDraws.push(currentDraw);
-    } else if (top3.length && Number.isFinite(Number(top3[0]?.grupo))) {
-      const synthetic = makeSyntheticDrawFromTop1(slotHour, top3[0].grupo);
-      if (synthetic) {
-        chainContextDraws.push(synthetic);
-      }
+    } else {
+      pendingPredictionAlreadyShown = true;
     }
   }
 
   return timeline;
 }
-
