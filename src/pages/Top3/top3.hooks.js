@@ -62,7 +62,7 @@ import {
   getKingBoundsByUf,
 } from "../../services/kingResultsService";
 
-import { getAnimalLabel } from "../../constants/bichoMap";
+import { getAnimalLabel, getImgFromGrupo } from "../../constants/bichoMap";
 
 import {
   normalizeImgSrc,
@@ -871,9 +871,9 @@ export function useTop3Controller() {
     const day = Array.isArray(todayDraws) ? todayDraws : [];
     const range = Array.isArray(rangeDraws) ? rangeDraws : [];
 
-    if (!isYMD(ymdSafe) || !range.length) return [];
-
     const timelineYmd = isYMD(analysisYmd) ? analysisYmd : ymdSafe;
+
+    if (!isYMD(timelineYmd) || !range.length) return [];
 
     const rawTimeline = buildTimelineTop3({
       ymd: timelineYmd,
@@ -917,7 +917,9 @@ export function useTop3Controller() {
         const prob = resolveProbValue(x);
         const probPct = prob * 100;
 
-        const bgPrimary = getGrupoImgSrc(g, 512);
+        const bgPrimary = normalizeImgSrc(
+          safeStr(getImgFromGrupo?.(g, 512) || getImgFromGrupo?.(g) || "")
+        );
 
         const iconVariants = buildResultStyleImgVariants(g, 96);
 
@@ -944,8 +946,7 @@ export function useTop3Controller() {
     rangeDraws,
     lotteryKeySafe,
     ymdSafe,
-    isFederalNonDrawDay,
-    lastInfo?.lastYmd,
+    analysisYmd,
   ]);
 
   useEffect(() => {
@@ -1025,6 +1026,8 @@ export function useTop3Controller() {
     normalizeImgSrc,
   };
 }
+
+
 
 
 
