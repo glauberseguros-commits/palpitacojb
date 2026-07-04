@@ -508,6 +508,7 @@ export function useTop3Controller() {
           ? maxDate
           : ymdSafe;
 
+      alert("TOP3 FEDERAL DEBUG");
       console.info("[TOP3 FEDERAL DATE DEBUG]", {
         lKey,
         ymdSafe,
