@@ -2967,6 +2967,38 @@ export function computeStatisticalTop3V3({
     for (const g of top5Set) incMap(layers.recent.top5, g, 1);
   }
 
+  const currentScene = buildSceneFromDraw(drawLast);
+  const sceneRanking = buildHistoricalSceneRanking(history, currentScene, 80);
+  const sceneHypothesis = buildSceneHypothesisDistribution(sceneRanking, TOP3_GROUPS_K);
+  const sceneWeight = sampleConfidence(sceneHypothesis?.samples || 0, 30) * 0.18;
+
+  if (typeof window !== "undefined") {
+    console.log("[TOP3 SCENE HYPOTHESIS]", {
+      targetY,
+      targetH,
+      baseYmd: lastY,
+      baseHour: lastH,
+      currentScene,
+      samples: sceneHypothesis?.samples || 0,
+      totalWeight: sceneHypothesis?.totalWeight || 0,
+      sceneWeight,
+      topRanking: sceneRanking.slice(0, 10).map((x) => ({
+        score: x.score,
+        scene: {
+          ymd: x.scene?.ymd,
+          hour: x.scene?.hour,
+          firstGrupo: x.scene?.firstGrupo,
+          signature: x.scene?.signature,
+        },
+        next: {
+          ymd: pickDrawYMD(x.nextDraw),
+          hour: toHourBucket(pickDrawHour(x.nextDraw)),
+          grupo: pickPrize1GrupoFromDraw(x.nextDraw),
+        },
+      })),
+    });
+  }
+
   const activeWeights = {};
   let totalWeight = 0;
 
@@ -3016,6 +3048,21 @@ export function computeStatisticalTop3V3({
         weight: w,
       };
     }
+
+    const pScene = Number(sceneHypothesis?.prob?.get?.(grupo) || 0);
+
+    if (sceneWeight > 0) {
+      scoreProb = (scoreProb * (1 - sceneWeight)) + (pScene * sceneWeight);
+    }
+
+    details.scene = {
+      label: "analogia histórica de cena",
+      samples: Number(sceneHypothesis?.samples || 0),
+      firstCount: Number(sceneHypothesis?.freq?.get?.(grupo) || 0),
+      top5Count: 0,
+      probability: pScene,
+      weight: sceneWeight,
+    };
 
     return {
       grupo,
@@ -3082,6 +3129,12 @@ export function computeStatisticalTop3V3({
           prevHour: lastH,
           prevGrupo: Number(prevGrupo),
           activeWeights,
+          scene: {
+            samples: Number(sceneHypothesis?.samples || 0),
+            totalWeight: Number(sceneHypothesis?.totalWeight || 0),
+            weight: Number(sceneWeight || 0),
+            currentSignature: currentScene?.signature || "",
+          },
           layers: Object.fromEntries(
             Object.entries(layers).map(([k, v]) => [
               k,
@@ -3221,6 +3274,114 @@ function buildSceneFromDraw(draw) {
     signature: grupos.map((g) => String(g).padStart(2, "0")).join("-"),
   };
 }
+
+
+
+function compareScenes(a, b) {
+  if (!a || !b) return 0;
+
+  let score = 0;
+
+  if (a.firstGrupo === b.firstGrupo) score += 30;
+
+  const ag = new Set(a.grupos || []);
+  const bg = new Set(b.grupos || []);
+
+  for (const g of ag) {
+    if (bg.has(g)) score += 5;
+  }
+
+  const ad = new Set(a.dezenas || []);
+  const bd = new Set(b.dezenas || []);
+
+  for (const d of ad) {
+    if (bd.has(d)) score += 2;
+  }
+
+  return score;
+}
+
+
+
+
+function buildHistoricalSceneRanking(draws, currentScene, limit = 100) {
+  const list = Array.isArray(draws) ? draws : [];
+  if (!currentScene) return [];
+
+  const ordered = list
+    .map((draw) => ({
+      draw,
+      scene: buildSceneFromDraw(draw),
+    }))
+    .filter((x) => x.scene)
+    .sort((a, b) => {
+      const ta = ymdHourToTs(a.scene?.ymd, a.scene?.hour);
+      const tb = ymdHourToTs(b.scene?.ymd, b.scene?.hour);
+      return Number(ta || 0) - Number(tb || 0);
+    });
+
+  return ordered
+    .map((item, idx) => {
+      const next = ordered[idx + 1] || null;
+      const score = compareScenes(currentScene, item.scene);
+
+      return {
+        draw: item.draw,
+        scene: item.scene,
+        nextDraw: next?.draw || null,
+        nextScene: next?.scene || null,
+        score,
+      };
+    })
+    .filter((x) => x.scene && x.nextDraw && Number(x.score) > 0)
+    .sort((a, b) => {
+      if (Number(b.score) !== Number(a.score)) {
+        return Number(b.score) - Number(a.score);
+      }
+
+      const ta = ymdHourToTs(a.scene?.ymd, a.scene?.hour);
+      const tb = ymdHourToTs(b.scene?.ymd, b.scene?.hour);
+      return Number(tb || 0) - Number(ta || 0);
+    })
+    .slice(0, Math.max(1, Number(limit || 100)));
+}
+
+
+
+
+function buildSceneHypothesisDistribution(sceneRanking, groupsK = TOP3_GROUPS_K) {
+  const ranking = Array.isArray(sceneRanking) ? sceneRanking : [];
+  const k = safeInt(groupsK, 25);
+
+  const freq = new Map();
+  for (let g = 1; g <= k; g += 1) freq.set(g, 0);
+
+  let totalWeight = 0;
+
+  for (const item of ranking) {
+    const score = Math.max(0, Number(item?.score || 0));
+    const nextGrupo = Number(item?.nextDraw ? pickPrize1GrupoFromDraw(item.nextDraw) : null);
+
+    if (!Number.isFinite(nextGrupo) || nextGrupo < 1 || nextGrupo > k) continue;
+    if (score <= 0) continue;
+
+    freq.set(nextGrupo, Number(freq.get(nextGrupo) || 0) + score);
+    totalWeight += score;
+  }
+
+  const prob = new Map();
+  for (let g = 1; g <= k; g += 1) {
+    prob.set(g, totalWeight > 0 ? Number(freq.get(g) || 0) / totalWeight : 0);
+  }
+
+  return {
+    freq,
+    prob,
+    samples: ranking.length,
+    totalWeight,
+  };
+}
+
 
 function logTop3SceneDebug(label, scene, extra = {}) {
   if (typeof window === "undefined") return;
