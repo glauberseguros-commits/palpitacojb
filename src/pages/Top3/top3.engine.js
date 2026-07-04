@@ -3277,10 +3277,17 @@ function buildSceneFromDraw(draw) {
 
 
 
-function compareScenes(a, b) {
-  if (!a || !b) return 0;
+function compareScenes(a, b, explain = false) {
+  if (!a || !b) return explain ? { score: 0, details: {} } : 0;
 
   let score = 0;
+  const details = {};
+
+  const add = (key, value) => {
+    if (!value) return;
+    score += value;
+    details[key] = value;
+  };
 
   const ag = Array.isArray(a.grupos) ? a.grupos : [];
   const bg = Array.isArray(b.grupos) ? b.grupos : [];
@@ -3291,43 +3298,45 @@ function compareScenes(a, b) {
   const ac = Array.isArray(a.centenas) ? a.centenas : [];
   const bc = Array.isArray(b.centenas) ? b.centenas : [];
 
-  if (a.firstGrupo && b.firstGrupo && Number(a.firstGrupo) === Number(b.firstGrupo)) {
-    score += 45;
+  if (Number(a.firstGrupo) === Number(b.firstGrupo))
+    add("firstGrupo",45);
+
+  for (let i = 0; i < Math.min(ag.length,bg.length,7); i++) {
+    if (Number(ag[i]) === Number(bg[i]))
+      add("order_"+i, i===0 ? 20 : 10);
   }
 
-  for (let i = 0; i < Math.min(ag.length, bg.length, 7); i += 1) {
-    if (Number(ag[i]) === Number(bg[i])) {
-      score += i === 0 ? 20 : 10;
-    }
-  }
+  add(
+    "groupOverlap",
+    new Set(ag.filter(g => bg.includes(g))).size * 6
+  );
 
-  const groupOverlap = new Set(ag.filter((g) => bg.includes(g))).size;
-  score += groupOverlap * 6;
+  add(
+    "dezenaOverlap",
+    new Set(ad.filter(d => bd.includes(d))).size * 3
+  );
 
-  const dezenaOverlap = new Set(ad.filter((d) => bd.includes(d))).size;
-  score += dezenaOverlap * 3;
-
-  const centenaOverlap = new Set(ac.filter((c) => bc.includes(c))).size;
-  score += centenaOverlap * 1.5;
+  add(
+    "centenaOverlap",
+    new Set(ac.filter(c => bc.includes(c))).size * 1.5
+  );
 
   const repA = Array.isArray(a.repeatedGroups) ? a.repeatedGroups.length : 0;
   const repB = Array.isArray(b.repeatedGroups) ? b.repeatedGroups.length : 0;
 
-  if (repA > 0 && repB > 0) score += 8;
-  if (repA === repB && repA > 0) score += 6;
+  if (repA > 0 && repB > 0)
+    add("repeatExists",8);
 
-  const sigA = String(a.signature || "");
-  const sigB = String(b.signature || "");
+  if (repA === repB && repA > 0)
+    add("repeatEqual",6);
 
-  if (sigA && sigB && sigA === sigB) {
-    score += 60;
-  }
+  if (String(a.signature||"") === String(b.signature||""))
+    add("signature",60);
 
-  if (a.hour && b.hour && a.hour === b.hour) {
-    score += 8;
-  }
+  if (a.hour === b.hour)
+    add("hour",8);
 
-  return score;
+  return explain ? { score, details } : score;
 }
 
 
