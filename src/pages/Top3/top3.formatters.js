@@ -47,21 +47,23 @@ export function brToYMD(br) {
   return isYMD(ymd) ? ymd : null;
 }
 
+function dateToLocalYMD(d) {
+  if (!(d instanceof Date) || Number.isNaN(d.getTime())) return null;
+
+  const ymd = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(
+    d.getDate()
+  )}`;
+
+  return isYMD(ymd) ? ymd : null;
+}
+
 export function normalizeToYMD(input) {
   if (input == null) return null;
 
-  // Firestore Timestamp / compat com toDate()
   if (typeof input === "object" && typeof input.toDate === "function") {
-    const d = input.toDate();
-    if (d instanceof Date && !Number.isNaN(d.getTime())) {
-      const ymd = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(
-        d.getDate()
-      )}`;
-      return isYMD(ymd) ? ymd : null;
-    }
+    return dateToLocalYMD(input.toDate());
   }
 
-  // Timestamp-like { seconds } / { _seconds }
   if (
     typeof input === "object" &&
     (Number.isFinite(Number(input.seconds)) ||
@@ -71,49 +73,25 @@ export function normalizeToYMD(input) {
       ? Number(input.seconds)
       : Number(input._seconds);
 
-    const d = new Date(sec * 1000);
-    if (!Number.isNaN(d.getTime())) {
-      const ymd = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(
-        d.getDate()
-      )}`;
-      return isYMD(ymd) ? ymd : null;
-    }
+    return dateToLocalYMD(new Date(sec * 1000));
   }
 
-  // Date
-  if (input instanceof Date && !Number.isNaN(input.getTime())) {
-    const ymd = `${input.getFullYear()}-${pad2(input.getMonth() + 1)}-${pad2(
-      input.getDate()
-    )}`;
-    return isYMD(ymd) ? ymd : null;
+  if (input instanceof Date) {
+    return dateToLocalYMD(input);
   }
 
-  // epoch number (ms ou sec)
   if (typeof input === "number" && Number.isFinite(input)) {
     const ms = input > 1e12 ? input : input * 1000;
-    const d = new Date(ms);
-    if (!Number.isNaN(d.getTime())) {
-      const ymd = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(
-        d.getDate()
-      )}`;
-      return isYMD(ymd) ? ymd : null;
-    }
+    return dateToLocalYMD(new Date(ms));
   }
 
   const s = safeStr(input);
   if (!s) return null;
 
-  // string numérica epoch
   if (/^\d{10,13}$/.test(s)) {
     const n = Number(s);
     const ms = s.length >= 13 ? n : n * 1000;
-    const d = new Date(ms);
-    if (!Number.isNaN(d.getTime())) {
-      const ymd = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(
-        d.getDate()
-      )}`;
-      return isYMD(ymd) ? ymd : null;
-    }
+    return dateToLocalYMD(new Date(ms));
   }
 
   const isoFull = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -152,11 +130,15 @@ export function todayYMDLocal() {
 }
 
 export function addDaysYMD(ymd, deltaDays) {
-  if (!isYMD(ymd)) return ymd;
-  const [Y, M, D] = ymd.split("-").map((x) => Number(x));
+  const y = safeStr(ymd);
+  if (!isYMD(y)) return y;
+
+  const [Y, M, D] = y.split("-").map((x) => Number(x));
   const base = Date.UTC(Y, M - 1, D);
   const dt = new Date(base);
+
   dt.setUTCDate(dt.getUTCDate() + Number(deltaDays || 0));
+
   return `${dt.getUTCFullYear()}-${pad2(dt.getUTCMonth() + 1)}-${pad2(
     dt.getUTCDate()
   )}`;
@@ -165,6 +147,7 @@ export function addDaysYMD(ymd, deltaDays) {
 function isValidHourMinute(hh, mm) {
   const h = Number(hh);
   const m = Number(mm);
+
   return (
     Number.isFinite(h) &&
     Number.isFinite(m) &&
@@ -176,18 +159,16 @@ function isValidHourMinute(hh, mm) {
 }
 
 /**
- * Normaliza diversos formatos para "HH:MM"
- * - "9" => "09:00"
- * - "9h" => "09:00"
- * - "09:0" => "09:00"
- * - "09:00" => "09:00"
- * Se inválido, retorna "".
+ * Normaliza diversos formatos para "HH:MM".
  */
 export function normalizeHourLike(value) {
   const s0 = safeStr(value);
   if (!s0) return "";
 
-  const s = s0.replace(/\s+/g, "");
+  const s = s0
+    .replace(/\s+/g, "")
+    .replace(/[–—]/g, "-")
+    .toLowerCase();
 
   const mhx = s.match(/^(\d{1,2})(?:h|hs|hr|hrs)$/i);
   if (mhx) {
@@ -195,10 +176,24 @@ export function normalizeHourLike(value) {
     return isValidHourMinute(hh, 0) ? `${pad2(hh)}:00` : "";
   }
 
+  const mhm = s.match(/^(\d{1,2})(?:h|hs|hr|hrs)(\d{1,2})$/i);
+  if (mhm) {
+    const hh = Number(mhm[1]);
+    const mm = Number(mhm[2]);
+    return isValidHourMinute(hh, mm) ? `${pad2(hh)}:${pad2(mm)}` : "";
+  }
+
   const mISO = s.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
   if (mISO) {
     const hh = Number(mISO[1]);
     const mm = Number(mISO[2]);
+    return isValidHourMinute(hh, mm) ? `${pad2(hh)}:${pad2(mm)}` : "";
+  }
+
+  const mDot = s.match(/^(\d{1,2})\.(\d{1,2})$/);
+  if (mDot) {
+    const hh = Number(mDot[1]);
+    const mm = Number(mDot[2]);
     return isValidHourMinute(hh, mm) ? `${pad2(hh)}:${pad2(mm)}` : "";
   }
 
@@ -212,11 +207,7 @@ export function normalizeHourLike(value) {
 }
 
 /**
- * ✅ BUCKET CANÔNICO DO PROJETO: "HHh"
- * - "09:00" => "09h"
- * - "9h" => "09h"
- * - "09" => "09h"
- * Se não reconhecer hora válida, devolve "".
+ * BUCKET CANÔNICO DO PROJETO: "HHh".
  */
 export function toHourBucket(hhmm) {
   const s = normalizeHourLike(hhmm);
@@ -227,51 +218,48 @@ export function toHourBucket(hhmm) {
 
   const hh = Number(m[1]);
   const mm = Number(m[2]);
+
   if (!isValidHourMinute(hh, mm)) return "";
 
   return `${pad2(hh)}h`;
 }
 
 /**
- * Converte hora em minutos (para sorting)
- * Aceita:
- * - "09h"
- * - "09:00"
- * - "9h"
- * - "9"
+ * Converte hora em minutos.
  */
 export function hourToInt(hhmm) {
   const raw = safeStr(hhmm);
   if (!raw) return -1;
 
-  const b = toHourBucket(raw);
-  const mh = safeStr(b).match(/^(\d{2})h$/i);
-  if (mh) return Number(mh[1]) * 60;
-
   const s = normalizeHourLike(raw);
   const m = safeStr(s).match(/^(\d{2}):(\d{2})$/);
-  if (!m) return -1;
 
-  const hh = Number(m[1]);
-  const mm = Number(m[2]);
-  if (!isValidHourMinute(hh, mm)) return -1;
+  if (m) {
+    const hh = Number(m[1]);
+    const mm = Number(m[2]);
 
-  return hh * 60 + mm;
+    if (!isValidHourMinute(hh, mm)) return -1;
+
+    return hh * 60 + mm;
+  }
+
+  const b = safeStr(raw).match(/^(\d{1,2})h$/i);
+  if (b) {
+    const hh = Number(b[1]);
+    return isValidHourMinute(hh, 0) ? hh * 60 : -1;
+  }
+
+  return -1;
 }
 
 export function getDowKey(ymd) {
-  if (!isYMD(ymd)) return NaN;
+  const y = safeStr(ymd);
+  if (!isYMD(y)) return NaN;
 
-  const s = String(ymd || "").trim();
-  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!m) return NaN;
+  const [Y, M, D] = y.split("-").map((x) => Number(x));
+  const dt = new Date(Date.UTC(Y, M - 1, D));
 
-  const y = Number(m[1]);
-  const mo = Number(m[2]);
-  const d = Number(m[3]);
-
-  const dt = new Date(y, mo - 1, d);
-  return dt.getDay(); // 0=dom ... 3=qua ... 6=sáb
+  return dt.getUTCDay(); // 0=dom ... 3=qua ... 6=sáb
 }
 
 /* =========================
@@ -319,29 +307,27 @@ export function dezenaCompareAsc(a, b) {
 export function milharCompareByCentenaAsc(a, b) {
   const ca = getCentena3(a);
   const cb = getCentena3(b);
+
   if (ca && cb && ca !== cb) {
     return String(ca).localeCompare(String(cb), "en", { numeric: true });
   }
+
   return milharCompareAsc(a, b);
 }
 
 /**
  * Wrap cíclico de 2 dígitos para montagem de grupos.
- * ATENÇÃO:
- * - isto NÃO transforma centena em dezena no domínio do jogo
- * - serve apenas para fechar sequências cíclicas, ex. grupo 25 => 97,98,99,00
  */
 export function wrapToDezena2(n) {
   const x = Number(n);
   if (!Number.isFinite(x)) return null;
+
   const d = ((x % 100) + 100) % 100;
   return pad2(d);
 }
 
 /**
- * Dezenas de um grupo (1..25) no padrão do bicho
- * grupo 1  => 01,02,03,04
- * grupo 25 => 97,98,99,00
+ * Dezenas de um grupo (1..25) no padrão do bicho.
  */
 export function dezenasFromGrupo(grupo) {
   const g = Number(grupo);

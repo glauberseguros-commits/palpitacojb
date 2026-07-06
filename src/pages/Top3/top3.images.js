@@ -18,7 +18,7 @@ export function normalizeImgSrc(src) {
 
 export function getGrupoImgSrc(grupo, size = 512) {
   const g = Number(grupo);
-  if (!Number.isFinite(g) || g <= 0) return "";
+  if (!Number.isFinite(g) || g < 1 || g > 25) return "";
 
   return normalizeImgSrc(
     getImgFromGrupo?.(g, size) || getImgFromGrupo?.(g) || ""
@@ -27,7 +27,7 @@ export function getGrupoImgSrc(grupo, size = 512) {
 
 export function buildResultStyleImgVariants(grupo, size = 96) {
   const g = Number(grupo);
-  if (!Number.isFinite(g) || g <= 0) return [];
+  if (!Number.isFinite(g) || g < 1 || g > 25) return [];
 
   const seeds = [getImgFromGrupo?.(g, size), getImgFromGrupo?.(g)]
     .map(normalizeImgSrc)

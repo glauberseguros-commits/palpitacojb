@@ -16,7 +16,6 @@ function joinPublic(base, path) {
 }
 
 export function normalizeImgSrc(src) {
-
   const s0 = safeStr(src);
   if (!s0) return "";
 
@@ -42,7 +41,6 @@ export function normalizeImgSrc(src) {
 }
 
 function slugifyLabel(label) {
-
   const l = safeStr(label);
   if (!l) return "";
 
@@ -55,21 +53,46 @@ function slugifyLabel(label) {
 }
 
 function stripQuery(url) {
-
   const s = safeStr(url);
   if (!s) return "";
 
   const q = s.indexOf("?");
+  const h = s.indexOf("#");
 
-  return q >= 0 ? s.slice(0, q) : s;
+  const cut =
+    q >= 0 && h >= 0
+      ? Math.min(q, h)
+      : q >= 0
+        ? q
+        : h >= 0
+          ? h
+          : -1;
+
+  return cut >= 0 ? s.slice(0, cut) : s;
 }
 
 function addCacheBust(url, token = "v=1") {
-
   const s = safeStr(url);
   if (!s) return "";
 
   return s.includes("?") ? `${s}&${token}` : `${s}?${token}`;
+}
+
+function pushExtensionVariants(out, clean) {
+  const s = safeStr(clean);
+  if (!s) return;
+
+  out.push(s);
+
+  const m = s.match(/\.(png|jpg|jpeg|webp)$/i);
+  if (!m) return;
+
+  const base = s.slice(0, -m[0].length);
+
+  out.push(`${base}.png`);
+  out.push(`${base}.jpg`);
+  out.push(`${base}.jpeg`);
+  out.push(`${base}.webp`);
 }
 
 export function makeImgVariantsFromGrupo({
@@ -78,12 +101,11 @@ export function makeImgVariantsFromGrupo({
   getImgFromGrupo,
   getAnimalLabel,
 }) {
-
   const g = Number(grupo);
 
-  if (!Number.isFinite(g) || g <= 0) return [];
+  if (!Number.isFinite(g) || g < 1 || g > 25) return [];
 
-  const s = Number(size) || 96;
+  const s = Math.max(1, Number(size) || 96);
 
   const base = publicBase();
   const g2 = pad2(g);
@@ -95,66 +117,40 @@ export function makeImgVariantsFromGrupo({
     getImgFromGrupo?.(g, s) || getImgFromGrupo?.(g) || ""
   );
 
-  const bySlugPng = slug ? joinPublic(base, `img/${slug}_${s}.png`) : "";
-  const bySlugJpg = slug ? joinPublic(base, `img/${slug}_${s}.jpg`) : "";
-  const bySlugJpeg = slug ? joinPublic(base, `img/${slug}_${s}.jpeg`) : "";
-  const bySlugWebp = slug ? joinPublic(base, `img/${slug}_${s}.webp`) : "";
-
-  const byGroupPng = joinPublic(base, `img/g${g2}_${s}.png`);
-  const byGroupJpg = joinPublic(base, `img/g${g2}_${s}.jpg`);
-  const byGroupJpeg = joinPublic(base, `img/g${g2}_${s}.jpeg`);
-  const byGroupWebp = joinPublic(base, `img/g${g2}_${s}.webp`);
-
   const seeds = [
     primary,
-    bySlugPng,
-    bySlugJpg,
-    bySlugJpeg,
-    bySlugWebp,
-    byGroupPng,
-    byGroupJpg,
-    byGroupJpeg,
-    byGroupWebp,
+
+    slug ? joinPublic(base, `img/${slug}_${s}.png`) : "",
+    slug ? joinPublic(base, `img/${slug}_${s}.jpg`) : "",
+    slug ? joinPublic(base, `img/${slug}_${s}.jpeg`) : "",
+    slug ? joinPublic(base, `img/${slug}_${s}.webp`) : "",
+
+    joinPublic(base, `img/g${g2}_${s}.png`),
+    joinPublic(base, `img/g${g2}_${s}.jpg`),
+    joinPublic(base, `img/g${g2}_${s}.jpeg`),
+    joinPublic(base, `img/g${g2}_${s}.webp`),
   ].filter(Boolean);
 
   const out = [];
 
-  const push = (v) => {
-    const x = safeStr(v);
-    if (x) out.push(x);
-  };
-
   for (const seed of seeds) {
-
     const original = safeStr(seed);
     if (!original) continue;
 
-    push(original);
+    out.push(original);
 
     const clean = stripQuery(original);
-
     if (!clean) continue;
 
-    push(clean);
+    pushExtensionVariants(out, clean);
 
-    if (clean.endsWith(".png")) push(clean.slice(0, -4) + ".PNG");
-    if (clean.endsWith(".PNG")) push(clean.slice(0, -4) + ".png");
-
-    if (/\.(png|PNG|jpg|jpeg|webp)$/i.test(clean)) {
-
-      push(clean.replace(/\.(png|PNG)$/i, ".jpg"));
-      push(clean.replace(/\.(png|PNG|jpg|jpeg|webp)$/i, ".jpeg"));
-    }
-
-    push(addCacheBust(clean, "v=1"));
-    push(addCacheBust(original, "v=1"));
+    out.push(addCacheBust(clean, "v=1"));
   }
 
   return Array.from(new Set(out.filter(Boolean)));
 }
 
 export function lotteryLabel(lotteryKey) {
-
   const k = safeStr(lotteryKey).toUpperCase();
 
   if (k === "FEDERAL") return "FEDERAL (20h • qua/sáb)";

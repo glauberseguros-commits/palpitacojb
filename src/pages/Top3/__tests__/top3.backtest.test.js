@@ -33,31 +33,132 @@ function drawTs(draw) {
   const base = Date.UTC(Y, M - 1, D);
   const mins = hourToInt(h);
   const add = mins >= 0 ? mins * 60 * 1000 : 0;
+
   return base + add;
+}
+
+function drawKey(draw) {
+  const y = pickDrawYMD(draw);
+  const h = toHourBucket(pickDrawHour(draw));
+  if (!y || !h) return "";
+  return `${y}|${h}`;
 }
 
 function dedupeAndSort(draws) {
   const map = new Map();
+
   for (const d of Array.isArray(draws) ? draws : []) {
-    const y = pickDrawYMD(d);
-    const h = toHourBucket(pickDrawHour(d));
-    if (!y || !h) continue;
-    const key = `${y}|${h}`;
+    const key = drawKey(d);
+    if (!key) continue;
     if (!map.has(key)) map.set(key, d);
   }
+
   return Array.from(map.values()).sort((a, b) => drawTs(a) - drawTs(b));
 }
 
 function top5Groups(draw) {
   const out = [];
+
   for (const p of Array.isArray(draw?.prizes) ? draw.prizes : []) {
-    const pos = guessPrizePos(p);
-    const g = guessPrizeGrupo(p);
-    if (!Number.isFinite(Number(pos)) || pos < 1 || pos > 5) continue;
-    if (!Number.isFinite(Number(g)) || g < 1 || g > 25) continue;
-    out.push({ pos: Number(pos), grupo: Number(g) });
+    const pos = Number(guessPrizePos(p));
+    const g = Number(guessPrizeGrupo(p));
+
+    if (!Number.isFinite(pos) || pos < 1 || pos > 5) continue;
+    if (!Number.isFinite(g) || g < 1 || g > 25) continue;
+
+    out.push({ pos, grupo: g });
   }
+
   return out.sort((a, b) => a.pos - b.pos);
+}
+
+function pct(n, d) {
+  return d ? ((n / d) * 100).toFixed(2) : "0.00";
+}
+
+function ensureHourRow(map, hour) {
+  const key = toHourBucket(hour || "") || "SEM_HORA";
+
+  if (!map.has(key)) {
+    map.set(key, { total: 0, hitTop5: 0, hitFirst: 0 });
+  }
+
+  return map.get(key);
+}
+
+function assertComputedSlotMatchesNextDraw({ computed, found, nextSlot, drawLast }) {
+  const computedNextYmd = computed?.meta?.next?.ymd || "";
+  const computedNextHour = toHourBucket(computed?.meta?.next?.hour || "");
+
+  const expectedYmd = found?.ymd || found?.slot?.ymd || nextSlot?.ymd || "";
+  const expectedHour = toHourBucket(
+    found?.hour || found?.slot?.hour || nextSlot?.hour || ""
+  );
+
+  if (computedNextYmd !== expectedYmd || computedNextHour !== expectedHour) {
+    throw new Error(
+      [
+        "TOP3 calculou slot diferente do próximo sorteio real.",
+        `Último sorteio: ${pickDrawYMD(drawLast)} ${toHourBucket(
+          pickDrawHour(drawLast)
+        )}`,
+        `Esperado: ${expectedYmd} ${expectedHour}`,
+        `Calculado: ${computedNextYmd} ${computedNextHour}`,
+        `Scenario: ${computed?.meta?.scenario || "NONE"}`,
+      ].join("\n")
+    );
+  }
+}
+
+function assertPredictionIntegrity({ computed, drawLast, nextDraw }) {
+  const top = Array.isArray(computed?.top) ? computed.top.slice(0, 3) : [];
+
+  if (!top.length) {
+    throw new Error(
+      [
+        "TOP3 vazio para caso com próximo sorteio real.",
+        `Último sorteio: ${pickDrawYMD(drawLast)} ${toHourBucket(
+          pickDrawHour(drawLast)
+        )}`,
+        `Próximo sorteio: ${pickDrawYMD(nextDraw)} ${toHourBucket(
+          pickDrawHour(nextDraw)
+        )}`,
+        `Scenario: ${computed?.meta?.scenario || "NONE"}`,
+      ].join("\n")
+    );
+  }
+
+  const seen = new Set();
+
+  for (const item of top) {
+    const grupo = Number(item?.grupo);
+
+    if (!Number.isFinite(grupo) || grupo < 1 || grupo > 25) {
+      throw new Error(`Grupo inválido no TOP3: ${JSON.stringify(item)}`);
+    }
+
+    if (seen.has(grupo)) {
+      throw new Error(`Grupo repetido no TOP3: ${JSON.stringify(top)}`);
+    }
+
+    seen.add(grupo);
+
+    const confidence = Number(
+      item?.displayConfidence ??
+        item?.confidence ??
+        item?.scoreProb ??
+        item?.prob ??
+        0
+    );
+
+    if (!Number.isFinite(confidence)) {
+      throw new Error(`Confiança inválida no TOP3: ${JSON.stringify(item)}`);
+    }
+
+    if (confidence < 0) {
+      throw new Error(`Confiança negativa no TOP3: ${JSON.stringify(item)}`);
+    }
+  }
 }
 
 test("backtest TOP3 PT_RIO - últimos 180 dias", async () => {
@@ -120,6 +221,10 @@ test("backtest TOP3 PT_RIO - últimos 180 dias", async () => {
     const nextDraw = found?.draw || null;
     if (!nextDraw) continue;
 
+    if (drawKey(history[history.length - 1]) === drawKey(nextDraw)) {
+      throw new Error(`Vazamento de futuro no histórico: ${drawKey(nextDraw)}`);
+    }
+
     const computed = computeConditionalNextTop3({
       lotteryKey: "PT_RIO",
       drawsRange: history,
@@ -130,15 +235,30 @@ test("backtest TOP3 PT_RIO - últimos 180 dias", async () => {
       topN: 3,
     });
 
-    const pred = Array.isArray(computed?.top)
-      ? computed.top.map((x) => Number(x.grupo))
-      : [];
+    assertComputedSlotMatchesNextDraw({
+      computed,
+      found,
+      nextSlot,
+      drawLast,
+    });
 
-    if (!pred.length) continue;
+    assertPredictionIntegrity({
+      computed,
+      drawLast,
+      nextDraw,
+    });
+
+    const pred = Array.isArray(computed?.top)
+      ? computed.top.slice(0, 3).map((x) => Number(x.grupo))
+      : [];
 
     const actualTop5 = top5Groups(nextDraw);
     const actualGroups = actualTop5.map((x) => Number(x.grupo));
     const actualFirst = actualTop5.find((x) => x.pos === 1)?.grupo ?? null;
+
+    if (!actualGroups.length || !Number.isFinite(Number(actualFirst))) {
+      continue;
+    }
 
     const hasTop5 = pred.some((g) => actualGroups.includes(g));
     const hasFirst = pred.includes(Number(actualFirst));
@@ -147,12 +267,10 @@ test("backtest TOP3 PT_RIO - últimos 180 dias", async () => {
     if (hasTop5) hitTop5 += 1;
     if (hasFirst) hitFirst += 1;
 
-    const hh = toHourBucket(found?.slot?.hour || pickDrawHour(nextDraw) || "");
-    if (!byTargetHour.has(hh)) {
-      byTargetHour.set(hh, { total: 0, hitTop5: 0, hitFirst: 0 });
-    }
+    const targetHour =
+      found?.hour || found?.slot?.hour || pickDrawHour(nextDraw) || "";
 
-    const row = byTargetHour.get(hh);
+    const row = ensureHourRow(byTargetHour, targetHour);
     row.total += 1;
     if (hasTop5) row.hitTop5 += 1;
     if (hasFirst) row.hitFirst += 1;
@@ -161,15 +279,29 @@ test("backtest TOP3 PT_RIO - últimos 180 dias", async () => {
   console.log("\n================ BACKTEST TOP3 PT_RIO ================");
   console.log(`Janela: ${from} até ${maxDate}`);
   console.log(`Casos testados: ${totalCases}`);
-  console.log(`Acerto TOP3 dentro do TOP5: ${hitTop5} / ${totalCases} = ${totalCases ? ((hitTop5 / totalCases) * 100).toFixed(2) : "0.00"}%`);
-  console.log(`Acerto TOP3 contendo o 1º prêmio: ${hitFirst} / ${totalCases} = ${totalCases ? ((hitFirst / totalCases) * 100).toFixed(2) : "0.00"}%`);
+  console.log(
+    `Acerto TOP3 dentro do TOP5: ${hitTop5} / ${totalCases} = ${pct(
+      hitTop5,
+      totalCases
+    )}%`
+  );
+  console.log(
+    `Acerto TOP3 contendo o 1º prêmio: ${hitFirst} / ${totalCases} = ${pct(
+      hitFirst,
+      totalCases
+    )}%`
+  );
   console.log("------------------------------------------------------");
 
   for (const [hour, row] of Array.from(byTargetHour.entries()).sort()) {
-    const top5Pct = row.total ? ((row.hitTop5 / row.total) * 100).toFixed(2) : "0.00";
-    const firstPct = row.total ? ((row.hitFirst / row.total) * 100).toFixed(2) : "0.00";
     console.log(
-      `${hour} | casos=${row.total} | top5=${row.hitTop5}/${row.total} (${top5Pct}%) | primeiro=${row.hitFirst}/${row.total} (${firstPct}%)`
+      `${hour} | casos=${row.total} | top5=${row.hitTop5}/${row.total} (${pct(
+        row.hitTop5,
+        row.total
+      )}%) | primeiro=${row.hitFirst}/${row.total} (${pct(
+        row.hitFirst,
+        row.total
+      )}%)`
     );
   }
 

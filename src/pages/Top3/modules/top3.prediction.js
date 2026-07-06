@@ -16,6 +16,7 @@ export function buildTop3Predictions({
   analytics,
   build20,
   safeStr,
+  toHourBucket,
   getAnimalLabel,
   build4ColsFromEngineOut,
   resolveProbValue,
@@ -33,7 +34,10 @@ export function buildTop3Predictions({
       const animal = safeStr(getAnimalLabel(g) || "");
 
       const nextY = safeStr(x?.meta?.next?.ymd || "");
-      const nextH = safeStr(x?.meta?.next?.hour || "");
+      const nextH = toHourBucket
+        ? toHourBucket(x?.meta?.next?.hour || "")
+        : safeStr(x?.meta?.next?.hour || "");
+
       const cacheKey = `${g}|${nextY}|${nextH}`;
 
       let out = milharesCache.get(cacheKey);

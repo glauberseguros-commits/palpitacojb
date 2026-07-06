@@ -9,22 +9,25 @@ export async function fallbackBaseSearch({
   uf,
 }) {
   const key = String(lotteryKey || "").trim().toUpperCase();
+  const safeUf = String(uf || "").trim().toUpperCase();
+  const safeTargetYmd = String(targetYmd || "").trim();
+  const safeTargetHour = String(targetHourBucket || "").trim();
 
-  if (!targetYmd || !targetHourBucket || !uf) {
+  if (!safeTargetYmd || !safeTargetHour || !safeUf) {
     return { draw: null, ymd: "", hour: "", source: "none" };
   }
 
   const searchFrom =
-    minDate ||
+    String(minDate || "").trim() ||
     (key === "FEDERAL"
-      ? addDaysYMD(targetYmd, -240)
-      : addDaysYMD(targetYmd, -90));
+      ? addDaysYMD(safeTargetYmd, -240)
+      : addDaysYMD(safeTargetYmd, -90));
 
   const hist =
     (await getKingResultsByRange({
-      uf,
+      uf: safeUf,
       dateFrom: searchFrom,
-      dateTo: targetYmd,
+      dateTo: safeTargetYmd,
       mode: "detailed",
       readPolicy: "server",
     })) || [];
@@ -32,8 +35,8 @@ export async function fallbackBaseSearch({
   return findLatestHistoricalBaseDraw({
     draws: hist,
     lotteryKey: key,
-    targetYmd,
-    targetHourBucket,
+    targetYmd: safeTargetYmd,
+    targetHourBucket: safeTargetHour,
   });
 }
 
@@ -44,13 +47,17 @@ export async function loadHistoryRange({
   dateTo,
   readPolicy = "server",
 }) {
-  if (!uf || !dateFrom || !dateTo) return [];
+  const safeUf = String(uf || "").trim().toUpperCase();
+  const safeDateFrom = String(dateFrom || "").trim();
+  const safeDateTo = String(dateTo || "").trim();
+
+  if (!safeUf || !safeDateFrom || !safeDateTo) return [];
 
   return (
     (await getKingResultsByRange({
-      uf,
-      dateFrom,
-      dateTo,
+      uf: safeUf,
+      dateFrom: safeDateFrom,
+      dateTo: safeDateTo,
       mode: "detailed",
       readPolicy,
     })) || []

@@ -129,7 +129,9 @@ export function buildTop3TimelineViewModel({
   const day = Array.isArray(todayDraws) ? todayDraws : [];
   const range = Array.isArray(rangeDraws) ? rangeDraws : [];
 
-  const timelineYmd = isYMD(analysisYmd) ? analysisYmd : ymdSafe;
+  const safeAnalysisYmd = safeStr(analysisYmd || "");
+  const safeYmd = safeStr(ymdSafe || "");
+  const timelineYmd = isYMD(safeAnalysisYmd) ? safeAnalysisYmd : safeYmd;
 
   if (!isYMD(timelineYmd) || !range.length) return [];
 
@@ -143,9 +145,13 @@ export function buildTop3TimelineViewModel({
     FEDERAL_SCHEDULE,
   });
 
+  const milharesCache = new Map();
+
   return (Array.isArray(rawTimeline) ? rawTimeline : []).map((slot) => {
     const arr = Array.isArray(slot?.top3) ? slot.top3 : [];
-    const milharesCache = new Map();
+
+    const slotYmd = safeStr(slot?.targetYmd || "");
+    const slotHour = toHourBucket(slot?.targetHour || "");
 
     const mappedTop3 = arr
       .filter((x) => {
@@ -158,21 +164,17 @@ export function buildTop3TimelineViewModel({
         const g = Number(x?.grupo);
         const animal = safeStr(getAnimalLabel(g) || "");
 
-        const cacheKey = [
-          g,
-          safeStr(slot?.targetYmd || ""),
-          toHourBucket(slot?.targetHour || ""),
-        ].join("|");
+        const cacheKey = [g, slotYmd, slotHour].join("|");
 
         let out = milharesCache.get(cacheKey);
 
         if (!out) {
           out = buildMilharesForGrupo({
             rangeDraws: range,
-            analysisHourBucket: slot?.targetHour,
+            analysisHourBucket: slotHour,
             schedule: getScheduleForLottery({
               lotteryKey: lotteryKeySafe,
-              ymd: slot?.targetYmd,
+              ymd: slotYmd,
               PT_RIO_SCHEDULE_NORMAL,
               PT_RIO_SCHEDULE_WED_SAT,
               FEDERAL_SCHEDULE,

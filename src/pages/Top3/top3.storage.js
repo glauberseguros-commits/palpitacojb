@@ -1,8 +1,4 @@
-import {
-  safeStr,
-  isYMD,
-  toHourBucket,
-} from "./top3.formatters";
+import { safeStr, isYMD, toHourBucket } from "./top3.formatters";
 
 import {
   pickDrawYMD,
@@ -22,21 +18,19 @@ import {
 // ===============================
 
 function normHour(h) {
-  const m = String(h || "").match(/(\d{1,2})/);
-  const hh = m ? String(m[1]).padStart(2, "0") : "";
-  return hh ? `${hh}h` : "";
+  return toHourBucket(h) || "";
 }
 
 function makeKey(ymd, hour) {
-  const y = String(ymd || "").trim();
+  const y = safeStr(ymd);
   const h = normHour(hour);
-  return y && h ? `${y}_${h}` : "";
+  return isYMD(y) && h ? `${y}_${h}` : "";
 }
 
 function parseTargetDate(ymd, hour) {
   if (!isYMD(ymd)) return null;
 
-  const hourBucket = toHourBucket(hour);
+  const hourBucket = normHour(hour);
   const m = String(hourBucket || "").match(/^(\d{2})h$/);
   if (!m) return null;
 
@@ -59,6 +53,21 @@ function resolvePendingStatus(ymd, hour, picks) {
   return isFutureTarget(ymd, hour) ? "future" : "pending_result";
 }
 
+function normalizePicks(picks) {
+  return Array.from(
+    new Set(
+      (Array.isArray(picks) ? picks : [])
+        .map(Number)
+        .filter((n) => Number.isFinite(n) && n >= 1 && n <= 25)
+    )
+  ).slice(0, 3);
+}
+
+function normalizeResult(resultValue) {
+  const n = Number(resultValue);
+  return Number.isFinite(n) && n >= 1 && n <= 25 ? n : null;
+}
+
 function normalizeLogEntry(entry) {
   if (!entry || typeof entry !== "object") return null;
 
@@ -66,27 +75,20 @@ function normalizeLogEntry(entry) {
   const hour = normHour(entry?.target?.hour || "");
   const targetKey = makeKey(ymd, hour);
 
-  if (!isYMD(ymd) || !hour || !targetKey) return null;
+  if (!targetKey) return null;
 
-  const picks = Array.isArray(entry?.picks)
-    ? entry.picks
-        .map(Number)
-        .filter((n) => Number.isFinite(n) && n >= 1 && n <= 25)
-    : [];
+  const picks = normalizePicks(entry?.picks);
+  const result = normalizeResult(entry?.result);
 
-  const resultNum = Number(entry?.result);
-  const result =
-    entry?.result != null &&
-    Number.isFinite(resultNum) &&
-    resultNum >= 1 &&
-    resultNum <= 25
-      ? resultNum
-      : null;
+  const hit =
+    result != null && picks.length
+      ? picks.includes(result)
+      : typeof entry?.hit === "boolean"
+        ? entry.hit
+        : null;
 
-  const normalizedStatus =
-    result != null
-      ? "validated"
-      : resolvePendingStatus(ymd, hour, picks);
+  const status =
+    result != null ? "validated" : resolvePendingStatus(ymd, hour, picks);
 
   return {
     ...entry,
@@ -94,15 +96,13 @@ function normalizeLogEntry(entry) {
     target: { ymd, hour },
     picks,
     result,
-    hit:
-      typeof entry?.hit === "boolean"
-        ? entry.hit
-        : result != null && picks.length
-          ? picks.includes(result)
-          : null,
+    hit,
     createdAt: Number(entry?.createdAt) || Date.now(),
-    validatedAt: Number(entry?.validatedAt) || undefined,
-    status: safeStr(entry?.status || "") || normalizedStatus,
+    validatedAt:
+      result != null && Number(entry?.validatedAt)
+        ? Number(entry.validatedAt)
+        : undefined,
+    status,
   };
 }
 
@@ -127,15 +127,11 @@ function normalizeAndDedupeLog(log) {
     const entry = normalizeLogEntry(raw);
     if (!entry) continue;
 
-    const key = entry.targetKey;
-    const prev = byKey.get(key);
+    const prev = byKey.get(entry.targetKey);
 
-    if (!prev) {
-      byKey.set(key, entry);
-      continue;
+    if (!prev || scoreLogEntry(entry) >= scoreLogEntry(prev)) {
+      byKey.set(entry.targetKey, entry);
     }
-
-    byKey.set(key, scoreLogEntry(entry) >= scoreLogEntry(prev) ? entry : prev);
   }
 
   return [...byKey.values()].sort((a, b) => {
@@ -162,21 +158,22 @@ function saveTop3Log(log) {
 }
 
 function registerPrediction({ targetKey, targetYmd, targetHour, picks }) {
-  const normalizedHour = normHour(targetHour);
-  const normalizedKey = targetKey || makeKey(targetYmd, normalizedHour);
+  const ymd = safeStr(targetYmd);
+  const hour = normHour(targetHour);
+  const normalizedKey = targetKey || makeKey(ymd, hour);
 
-  if (!normalizedKey || !Array.isArray(picks) || !picks.length) return;
+  if (!isYMD(ymd) || !hour || !normalizedKey) return;
+
+  const normalizedPicks = normalizePicks(picks);
+  if (!normalizedPicks.length) return;
 
   const log = getTop3Log();
-  const normalizedPicks = picks
-    .map(Number)
-    .filter((n) => Number.isFinite(n) && n >= 1 && n <= 25);
 
   const idx = log.findIndex(
     (l) => String(l?.targetKey || "") === String(normalizedKey)
   );
 
-  const status = resolvePendingStatus(targetYmd, normalizedHour, normalizedPicks);
+  const status = resolvePendingStatus(ymd, hour, normalizedPicks);
 
   if (idx >= 0) {
     const prev = log[idx] || {};
@@ -186,20 +183,17 @@ function registerPrediction({ targetKey, targetYmd, targetHour, picks }) {
     log[idx] = {
       ...prev,
       targetKey: normalizedKey,
-      target: { ymd: targetYmd || "", hour: normalizedHour || "" },
+      target: { ymd, hour },
       picks: normalizedPicks,
+      result: null,
+      hit: null,
       createdAt: prev.createdAt || Date.now(),
-      result: prev.result ?? null,
-      hit:
-        prev.result != null
-          ? normalizedPicks.includes(Number(prev.result))
-          : null,
       status,
     };
   } else {
     log.push({
       targetKey: normalizedKey,
-      target: { ymd: targetYmd || "", hour: normalizedHour || "" },
+      target: { ymd, hour },
       picks: normalizedPicks,
       result: null,
       hit: null,
@@ -213,9 +207,10 @@ function registerPrediction({ targetKey, targetYmd, targetHour, picks }) {
 
 function registerResult({ targetKey, resultGrupo }) {
   const log = getTop3Log();
-  const normalizedTargetKey = String(targetKey || "").trim();
+  const normalizedTargetKey = safeStr(targetKey);
+  const result = normalizeResult(resultGrupo);
 
-  if (!normalizedTargetKey || !Number.isFinite(Number(resultGrupo))) return;
+  if (!normalizedTargetKey || result == null) return;
 
   const idx = log.findIndex(
     (l) => String(l?.targetKey || "") === String(normalizedTargetKey)
@@ -223,14 +218,13 @@ function registerResult({ targetKey, resultGrupo }) {
 
   if (idx === -1) return;
 
-  const picks = Array.isArray(log[idx]?.picks)
-    ? log[idx].picks.map(Number)
-    : [];
+  const picks = normalizePicks(log[idx]?.picks);
 
   log[idx] = {
     ...log[idx],
-    result: Number(resultGrupo),
-    hit: picks.includes(Number(resultGrupo)),
+    picks,
+    result,
+    hit: picks.includes(result),
     validatedAt: Date.now(),
     status: "validated",
   };
@@ -239,11 +233,13 @@ function registerResult({ targetKey, resultGrupo }) {
 }
 
 function findRealDrawByTarget({ targetYmd, targetHour, todayDraws, rangeDraws }) {
-  const normalizedHour = normHour(targetHour);
+  const ymd = safeStr(targetYmd);
+  const hour = normHour(targetHour);
+
+  if (!isYMD(ymd) || !hour) return null;
 
   const sameTarget = (d) =>
-    pickDrawYMD(d) === targetYmd &&
-    normHour(toHourBucket(pickDrawHour(d))) === normalizedHour;
+    pickDrawYMD(d) === ymd && normHour(pickDrawHour(d)) === hour;
 
   const realToday =
     (Array.isArray(todayDraws) ? todayDraws : []).find(sameTarget) || null;
@@ -258,14 +254,16 @@ function reconcilePendingTop3Log({ todayDraws, rangeDraws }) {
   const log = getTop3Log();
   if (!Array.isArray(log) || !log.length) return;
 
-  for (const entry of log) {
-    if (!entry || entry.result != null) continue;
+  let changed = false;
+
+  const nextLog = log.map((entry) => {
+    if (!entry || entry.result != null) return entry;
 
     const targetYmd = safeStr(entry?.target?.ymd || "");
     const targetHour = normHour(entry?.target?.hour || "");
 
-    if (!isYMD(targetYmd) || !targetHour) continue;
-    if (isFutureTarget(targetYmd, targetHour)) continue;
+    if (!isYMD(targetYmd) || !targetHour) return entry;
+    if (isFutureTarget(targetYmd, targetHour)) return entry;
 
     const real = findRealDrawByTarget({
       targetYmd,
@@ -274,16 +272,26 @@ function reconcilePendingTop3Log({ todayDraws, rangeDraws }) {
       rangeDraws,
     });
 
-    if (!real) continue;
+    if (!real) return entry;
 
-    const resultGrupo = pickPrize1GrupoFromDraw(real);
-    if (!Number.isFinite(Number(resultGrupo))) continue;
+    const result = normalizeResult(pickPrize1GrupoFromDraw(real));
+    if (result == null) return entry;
 
-    registerResult({
-      targetKey: entry.targetKey,
-      resultGrupo: Number(resultGrupo),
-    });
-  }
+    const picks = normalizePicks(entry?.picks);
+
+    changed = true;
+
+    return {
+      ...entry,
+      picks,
+      result,
+      hit: picks.includes(result),
+      validatedAt: Date.now(),
+      status: "validated",
+    };
+  });
+
+  if (changed) saveTop3Log(nextLog);
 }
 
 function ensureDayTimeline({ ymd, lotteryKey }) {
@@ -302,7 +310,7 @@ function ensureDayTimeline({ ymd, lotteryKey }) {
   const log = getTop3Log();
 
   for (const h of schedule) {
-    const hour = normHour(toHourBucket(h));
+    const hour = normHour(h);
     const targetKey = makeKey(ymd, hour);
 
     if (!targetKey) continue;
@@ -313,20 +321,20 @@ function ensureDayTimeline({ ymd, lotteryKey }) {
 
     if (idx >= 0) {
       const prev = log[idx] || {};
-      const picks = Array.isArray(prev?.picks) ? prev.picks : [];
+      const picks = normalizePicks(prev?.picks);
+      const result = normalizeResult(prev?.result);
       const status =
-        prev?.result != null
-          ? "validated"
-          : resolvePendingStatus(ymd, hour, picks);
+        result != null ? "validated" : resolvePendingStatus(ymd, hour, picks);
 
       log[idx] = {
         ...prev,
         targetKey,
         target: { ymd, hour },
         picks,
-        result: prev?.result ?? null,
-        hit: prev?.hit ?? null,
+        result,
+        hit: result != null ? picks.includes(result) : prev?.hit ?? null,
         createdAt: prev?.createdAt || Date.now(),
+        validatedAt: result != null ? prev?.validatedAt : undefined,
         status,
       };
     } else {

@@ -5,9 +5,11 @@ export function useTop3State({ defaultLottery, defaultYmd, defaultLookback }) {
   const boundsCacheRef = useRef(new Map());
   const analyticsCacheRef = useRef({ key: "", value: { top: [], meta: null } });
 
-  const [lotteryKey, setLotteryKey] = useState(defaultLottery);
-  const [ymd, setYmd] = useState(() => defaultYmd);
-  const [lookback, setLookback] = useState(defaultLookback);
+  const [lotteryKey, setLotteryKey] = useState(
+    String(defaultLottery || "").trim().toUpperCase()
+  );
+  const [ymd, setYmd] = useState(() => String(defaultYmd || "").trim());
+  const [lookback, setLookback] = useState(Number(defaultLookback) || 120);
 
   const [loading, setLoading] = useState(false);
   const [loadingStage, setLoadingStage] = useState({

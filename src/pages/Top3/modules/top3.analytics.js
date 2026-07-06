@@ -17,10 +17,55 @@ function emptyAnalytics() {
   return { top: [], meta: null };
 }
 
+function safeCacheRef(ref) {
+  if (!ref || typeof ref !== "object") {
+    return { current: { key: "", value: emptyAnalytics() } };
+  }
+
+  if (!ref.current || typeof ref.current !== "object") {
+    ref.current = { key: "", value: emptyAnalytics() };
+  }
+
+  return ref;
+}
+
 function sameSlot(meta, targetYmd, targetHour) {
+  const targetY = String(targetYmd || "").trim();
+  const targetH = toHourBucket(targetHour || "");
+
   const y = String(meta?.next?.ymd || "").trim();
   const h = toHourBucket(meta?.next?.hour || "");
-  return isYMD(targetYmd) && targetHour && y === targetYmd && h === targetHour;
+
+  return isYMD(targetY) && !!targetH && y === targetY && h === targetH;
+}
+
+function sanitizeTop3(top) {
+  const out = [];
+  const seen = new Set();
+
+  for (const item of Array.isArray(top) ? top : []) {
+    const g = Number(item?.grupo);
+
+    if (!Number.isFinite(g) || g < 1 || g > 25) continue;
+    if (seen.has(g)) continue;
+
+    const confidence = Number(
+      item?.displayConfidence ??
+        item?.confidence ??
+        item?.scoreProb ??
+        item?.prob ??
+        0
+    );
+
+    if (!Number.isFinite(confidence) || confidence < 0) continue;
+
+    seen.add(g);
+    out.push(item);
+
+    if (out.length >= 3) break;
+  }
+
+  return out;
 }
 
 export function computeTop3Analytics({
@@ -35,12 +80,15 @@ export function computeTop3Analytics({
   targetYmd = "",
   targetHourBucket = "",
 }) {
-  const rawList = Array.isArray(rangeDraws) ? rangeDraws : [];
-  const drawLast = baseDrawState;
+  const cacheRef = safeCacheRef(analyticsCacheRef);
+  const lotteryKey = String(lotteryKeySafe || "").trim();
 
-  if (!rawList.length || !drawLast) {
+  const rawList = Array.isArray(rangeDraws) ? rangeDraws : [];
+  const drawLast = baseDrawState || null;
+
+  if (!rawList.length || !drawLast || !lotteryKey) {
     const empty = emptyAnalytics();
-    analyticsCacheRef.current = { key: "", value: empty };
+    cacheRef.current = { key: "", value: empty };
     return empty;
   }
 
@@ -61,24 +109,31 @@ export function computeTop3Analytics({
     !forcedTargetH
   ) {
     const empty = emptyAnalytics();
-    analyticsCacheRef.current = { key: "", value: empty };
+    cacheRef.current = { key: "", value: empty };
     return empty;
   }
 
-  const historicalList = sanitizeHistoricalDraws({
-    draws: rawList,
-    lotteryKey: lotteryKeySafe,
-    baseDraw: drawLast,
-  });
+  const historicalList =
+    typeof sanitizeHistoricalDraws === "function"
+      ? sanitizeHistoricalDraws({
+          draws: rawList,
+          lotteryKey,
+          baseDraw: drawLast,
+        })
+      : rawList;
 
-  if (!historicalList.length) {
+  const safeHistoricalList = Array.isArray(historicalList)
+    ? historicalList
+    : [];
+
+  if (!safeHistoricalList.length) {
     const empty = emptyAnalytics();
-    analyticsCacheRef.current = { key: "", value: empty };
+    cacheRef.current = { key: "", value: empty };
     return empty;
   }
 
-  const firstDraw = historicalList[0] || null;
-  const lastDrawInRange = historicalList[historicalList.length - 1] || null;
+  const firstDraw = safeHistoricalList[0] || null;
+  const lastDrawInRange = safeHistoricalList[safeHistoricalList.length - 1] || null;
 
   const todaySignature = (Array.isArray(todayDraws) ? todayDraws : [])
     .map((d) => `${pickDrawYMD(d) || ""}@${toHourBucket(pickDrawHour(d)) || ""}`)
@@ -87,11 +142,11 @@ export function computeTop3Analytics({
 
   const cacheKey = [
     "V3",
-    lotteryKeySafe,
+    lotteryKey,
     lookback,
     rangeInfo?.from || "",
     rangeInfo?.to || "",
-    historicalList.length,
+    safeHistoricalList.length,
     rawList.length,
     todaySignature,
     firstDraw ? pickDrawYMD(firstDraw) || "" : "",
@@ -105,14 +160,14 @@ export function computeTop3Analytics({
     forcedTargetH,
   ].join("|");
 
-  if (analyticsCacheRef.current.key === cacheKey) {
-    return analyticsCacheRef.current.value;
+  if (cacheRef.current?.key === cacheKey) {
+    return cacheRef.current.value || emptyAnalytics();
   }
 
   const computed =
     computeStatisticalTop3V3({
-      lotteryKey: lotteryKeySafe,
-      drawsRange: historicalList,
+      lotteryKey,
+      drawsRange: safeHistoricalList,
       drawLast,
       drawsToday: Array.isArray(todayDraws) ? todayDraws : [],
       PT_RIO_SCHEDULE_NORMAL,
@@ -125,22 +180,15 @@ export function computeTop3Analytics({
 
   if (!sameSlot(computed?.meta, forcedTargetY, forcedTargetH)) {
     const empty = emptyAnalytics();
-    analyticsCacheRef.current = { key: cacheKey, value: empty };
+    cacheRef.current = { key: cacheKey, value: empty };
     return empty;
   }
 
-  const top = Array.isArray(computed?.top)
-    ? computed.top.filter((x) => {
-        const g = Number(x?.grupo);
-        return Number.isFinite(g) && g >= 1 && g <= 25;
-      })
-    : [];
-
   const value = {
     ...computed,
-    top: top.slice(0, 3),
+    top: sanitizeTop3(computed?.top),
   };
 
-  analyticsCacheRef.current = { key: cacheKey, value };
+  cacheRef.current = { key: cacheKey, value };
   return value;
 }

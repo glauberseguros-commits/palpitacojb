@@ -36,27 +36,38 @@ function drawTs(draw) {
   return base + add;
 }
 
+function drawKey(draw) {
+  const y = pickDrawYMD(draw);
+  const h = toHourBucket(pickDrawHour(draw));
+  if (!y || !h) return "";
+  return `${y}|${h}`;
+}
+
 function dedupeAndSort(draws) {
   const map = new Map();
+
   for (const d of Array.isArray(draws) ? draws : []) {
-    const y = pickDrawYMD(d);
-    const h = toHourBucket(pickDrawHour(d));
-    if (!y || !h) continue;
-    const key = `${y}|${h}`;
+    const key = drawKey(d);
+    if (!key) continue;
     if (!map.has(key)) map.set(key, d);
   }
+
   return Array.from(map.values()).sort((a, b) => drawTs(a) - drawTs(b));
 }
 
 function top5Groups(draw) {
   const out = [];
+
   for (const p of Array.isArray(draw?.prizes) ? draw.prizes : []) {
-    const pos = guessPrizePos(p);
-    const g = guessPrizeGrupo(p);
-    if (!Number.isFinite(Number(pos)) || pos < 1 || pos > 5) continue;
-    if (!Number.isFinite(Number(g)) || g < 1 || g > 25) continue;
-    out.push({ pos: Number(pos), grupo: Number(g) });
+    const pos = Number(guessPrizePos(p));
+    const g = Number(guessPrizeGrupo(p));
+
+    if (!Number.isFinite(pos) || pos < 1 || pos > 5) continue;
+    if (!Number.isFinite(g) || g < 1 || g > 25) continue;
+
+    out.push({ pos, grupo: g });
   }
+
   return out.sort((a, b) => a.pos - b.pos);
 }
 
@@ -64,11 +75,79 @@ function ensureRow(map, key) {
   if (!map.has(key)) {
     map.set(key, { total: 0, hitTop5: 0, hitFirst: 0 });
   }
+
   return map.get(key);
 }
 
 function pct(n, d) {
   return d ? ((n / d) * 100).toFixed(2) : "0.00";
+}
+
+function assertComputedSlotMatchesNextDraw({ computed, found, nextSlot, drawLast }) {
+  const computedNextYmd = computed?.meta?.next?.ymd || "";
+  const computedNextHour = toHourBucket(computed?.meta?.next?.hour || "");
+
+  const expectedYmd = found?.ymd || nextSlot?.ymd || "";
+  const expectedHour = toHourBucket(found?.hour || nextSlot?.hour || "");
+
+  if (computedNextYmd !== expectedYmd || computedNextHour !== expectedHour) {
+    throw new Error(
+      [
+        "TOP3 calculou slot diferente do próximo sorteio real.",
+        `Último sorteio: ${pickDrawYMD(drawLast)} ${toHourBucket(pickDrawHour(drawLast))}`,
+        `Esperado: ${expectedYmd} ${expectedHour}`,
+        `Calculado: ${computedNextYmd} ${computedNextHour}`,
+        `Scenario: ${computed?.meta?.scenario || "NONE"}`,
+      ].join("\n")
+    );
+  }
+}
+
+function assertPredictionIntegrity({ computed, drawLast, nextDraw }) {
+  const top = Array.isArray(computed?.top) ? computed.top.slice(0, 3) : [];
+
+  if (!top.length) {
+    throw new Error(
+      [
+        "TOP3 vazio para caso com próximo sorteio real.",
+        `Último sorteio: ${pickDrawYMD(drawLast)} ${toHourBucket(pickDrawHour(drawLast))}`,
+        `Próximo sorteio: ${pickDrawYMD(nextDraw)} ${toHourBucket(pickDrawHour(nextDraw))}`,
+        `Scenario: ${computed?.meta?.scenario || "NONE"}`,
+      ].join("\n")
+    );
+  }
+
+  const seen = new Set();
+
+  for (const item of top) {
+    const grupo = Number(item?.grupo);
+
+    if (!Number.isFinite(grupo) || grupo < 1 || grupo > 25) {
+      throw new Error(`Grupo inválido no TOP3: ${JSON.stringify(item)}`);
+    }
+
+    if (seen.has(grupo)) {
+      throw new Error(`Grupo repetido no TOP3: ${JSON.stringify(top)}`);
+    }
+
+    seen.add(grupo);
+
+    const confidence = Number(
+      item?.displayConfidence ??
+        item?.confidence ??
+        item?.scoreProb ??
+        item?.prob ??
+        0
+    );
+
+    if (!Number.isFinite(confidence)) {
+      throw new Error(`Confiança inválida no TOP3: ${JSON.stringify(item)}`);
+    }
+
+    if (confidence < 0) {
+      throw new Error(`Confiança negativa no TOP3: ${JSON.stringify(item)}`);
+    }
+  }
 }
 
 test("backtest TOP3 PT_RIO - camadas e transições", async () => {
@@ -131,6 +210,13 @@ test("backtest TOP3 PT_RIO - camadas e transições", async () => {
     const nextDraw = found?.draw || null;
     if (!nextDraw) continue;
 
+    const historyLastKey = drawKey(history[history.length - 1]);
+    const nextDrawKey = drawKey(nextDraw);
+
+    if (historyLastKey === nextDrawKey) {
+      throw new Error(`Vazamento de futuro no histórico: ${nextDrawKey}`);
+    }
+
     const computed = computeConditionalNextTop3({
       lotteryKey: "PT_RIO",
       drawsRange: history,
@@ -141,15 +227,30 @@ test("backtest TOP3 PT_RIO - camadas e transições", async () => {
       topN: 3,
     });
 
-    const pred = Array.isArray(computed?.top)
-      ? computed.top.map((x) => Number(x.grupo))
-      : [];
+    assertComputedSlotMatchesNextDraw({
+      computed,
+      found,
+      nextSlot,
+      drawLast,
+    });
 
-    if (!pred.length) continue;
+    assertPredictionIntegrity({
+      computed,
+      drawLast,
+      nextDraw,
+    });
+
+    const pred = Array.isArray(computed?.top)
+      ? computed.top.slice(0, 3).map((x) => Number(x.grupo))
+      : [];
 
     const actualTop5 = top5Groups(nextDraw);
     const actualGroups = actualTop5.map((x) => Number(x.grupo));
     const actualFirst = actualTop5.find((x) => x.pos === 1)?.grupo ?? null;
+
+    if (!actualGroups.length || !Number.isFinite(Number(actualFirst))) {
+      continue;
+    }
 
     const hasTop5 = pred.some((g) => actualGroups.includes(g));
     const hasFirst = pred.includes(Number(actualFirst));
@@ -159,8 +260,8 @@ test("backtest TOP3 PT_RIO - camadas e transições", async () => {
     if (hasFirst) hitFirst += 1;
 
     const scenario = computed?.meta?.scenario || "NONE";
-    const prevHour = computed?.meta?.trigger?.hour || "";
-    const nextHour = computed?.meta?.next?.hour || "";
+    const prevHour = toHourBucket(computed?.meta?.trigger?.hour || "") || "";
+    const nextHour = toHourBucket(computed?.meta?.next?.hour || "") || "";
     const prevGrupo = Number(computed?.meta?.trigger?.grupo || 0);
     const edge = `${prevHour}->${nextHour}`;
 
@@ -187,20 +288,52 @@ test("backtest TOP3 PT_RIO - camadas e transições", async () => {
   console.log(`TOP5 geral: ${hitTop5}/${totalCases} (${pct(hitTop5, totalCases)}%)`);
   console.log(`1º geral: ${hitFirst}/${totalCases} (${pct(hitFirst, totalCases)}%)`);
   console.log("----------------------------------------------------------------");
+
   console.log("POR CENÁRIO:");
-  for (const [key, row] of Array.from(byScenario.entries()).sort((a, b) => b[1].total - a[1].total)) {
-    console.log(`${key} | casos=${row.total} | top5=${row.hitTop5}/${row.total} (${pct(row.hitTop5, row.total)}%) | primeiro=${row.hitFirst}/${row.total} (${pct(row.hitFirst, row.total)}%)`);
+  for (const [key, row] of Array.from(byScenario.entries()).sort(
+    (a, b) => b[1].total - a[1].total
+  )) {
+    console.log(
+      `${key} | casos=${row.total} | top5=${row.hitTop5}/${row.total} (${pct(
+        row.hitTop5,
+        row.total
+      )}%) | primeiro=${row.hitFirst}/${row.total} (${pct(
+        row.hitFirst,
+        row.total
+      )}%)`
+    );
   }
+
   console.log("----------------------------------------------------------------");
   console.log("POR TRANSIÇÃO:");
   for (const [key, row] of Array.from(byEdge.entries()).sort()) {
-    console.log(`${key} | casos=${row.total} | top5=${row.hitTop5}/${row.total} (${pct(row.hitTop5, row.total)}%) | primeiro=${row.hitFirst}/${row.total} (${pct(row.hitFirst, row.total)}%)`);
+    console.log(
+      `${key} | casos=${row.total} | top5=${row.hitTop5}/${row.total} (${pct(
+        row.hitTop5,
+        row.total
+      )}%) | primeiro=${row.hitFirst}/${row.total} (${pct(
+        row.hitFirst,
+        row.total
+      )}%)`
+    );
   }
+
   console.log("----------------------------------------------------------------");
   console.log("TOP 15 GATILHOS ANTERIORES (por volume):");
-  for (const [key, row] of Array.from(byPrevGrupo.entries()).sort((a, b) => b[1].total - a[1].total).slice(0, 15)) {
-    console.log(`G${key} | casos=${row.total} | top5=${row.hitTop5}/${row.total} (${pct(row.hitTop5, row.total)}%) | primeiro=${row.hitFirst}/${row.total} (${pct(row.hitFirst, row.total)}%)`);
+  for (const [key, row] of Array.from(byPrevGrupo.entries())
+    .sort((a, b) => b[1].total - a[1].total)
+    .slice(0, 15)) {
+    console.log(
+      `G${key} | casos=${row.total} | top5=${row.hitTop5}/${row.total} (${pct(
+        row.hitTop5,
+        row.total
+      )}%) | primeiro=${row.hitFirst}/${row.total} (${pct(
+        row.hitFirst,
+        row.total
+      )}%)`
+    );
   }
+
   console.log("================================================================\n");
 
   expect(totalCases).toBeGreaterThan(0);

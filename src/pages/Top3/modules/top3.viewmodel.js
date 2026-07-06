@@ -1,4 +1,4 @@
-import { safeStr } from "../top3.formatters";
+import { safeStr, toHourBucket } from "../top3.formatters";
 import { buildMilharesForGrupo } from "../top3.engine";
 import { getAnimalLabel, getImgFromGrupo } from "../../../constants/bichoMap";
 
@@ -115,15 +115,17 @@ export function buildTop3CardViewModel({
 
   const animal = safeStr(getAnimalLabel(g) || "");
   const nextY = safeStr(item?.meta?.next?.ymd || "");
-  const nextH = safeStr(item?.meta?.next?.hour || "");
-  const cacheKey = `${g}|${nextY}|${nextH}|${analysisHourBucket || ""}`;
+  const nextH = toHourBucket(item?.meta?.next?.hour || "");
+  const safeAnalysisHour = toHourBucket(analysisHourBucket || "");
+
+  const cacheKey = `${g}|${nextY}|${nextH}|${safeAnalysisHour}`;
 
   let out = milharesCache?.get?.(cacheKey);
 
   if (!out) {
     out = buildMilharesForGrupo({
       rangeDraws,
-      analysisHourBucket,
+      analysisHourBucket: safeAnalysisHour,
       schedule,
       grupo2: g,
       count: 20,

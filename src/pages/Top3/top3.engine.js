@@ -191,12 +191,20 @@ function getDayOfMonth(ymd) {
 }
 
 function ymdHourToTs(ymd, hourBucket) {
-  if (!isYMD(ymd)) return Number.POSITIVE_INFINITY;
-  const [Y, M, D] = ymd.split("-").map((x) => Number(x));
+  const y = safeStr(ymd);
+  const h = toHourBucket(hourBucket);
+
+  if (!isYMD(y) || !h) return Number.POSITIVE_INFINITY;
+
+  const mins = hourToInt(h);
+  if (!Number.isFinite(mins) || mins < 0) {
+    return Number.POSITIVE_INFINITY;
+  }
+
+  const [Y, M, D] = y.split("-").map((x) => Number(x));
   const base = Date.UTC(Y, M - 1, D);
-  const mins = hourToInt(hourBucket);
-  const add = mins >= 0 ? mins * 60 * 1000 : 0;
-  return base + add;
+
+  return base + mins * 60 * 1000;
 }
 
 /* =========================
@@ -255,11 +263,9 @@ export function findLastDrawInList(draws, schedule) {
   const sorted = [...list]
     .filter((d) => isHourInSchedule(schedule, pickDrawHour(d)))
     .sort((a, b) => {
-      const ha0 = hourToInt(pickDrawHour(a));
-      const hb0 = hourToInt(pickDrawHour(b));
-      const ha = Number.isFinite(ha0) && ha0 >= 0 ? ha0 : -1;
-      const hb = Number.isFinite(hb0) && hb0 >= 0 ? hb0 : -1;
-      return hb - ha;
+      const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+      const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+      return tb - ta;
     });
 
   return sorted[0] || null;
