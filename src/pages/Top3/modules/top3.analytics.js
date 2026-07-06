@@ -13,7 +13,7 @@ import {
   pickDrawHour,
   pickDrawYMD,
   pickPrize1GrupoFromDraw,
-  computeConditionalNextTop3V2,
+  computeStatisticalTop3V3,
 } from "../top3.engine";
 
 export function computeTop3Analytics({
@@ -52,7 +52,7 @@ export function computeTop3Analytics({
   });
 
   if (!historicalList.length) {
-    const fallback = computeConditionalNextTop3V2({
+    const fallback = computeStatisticalTop3V3({
       lotteryKey: lotteryKeySafe,
       drawsRange: rawList,
       drawLast,
@@ -91,7 +91,7 @@ export function computeTop3Analytics({
     return analyticsCacheRef.current.value;
   }
 
-  const computed = computeConditionalNextTop3V2({
+  const computed = computeStatisticalTop3V3({
     lotteryKey: lotteryKeySafe,
     drawsRange: historicalList,
     drawLast,

@@ -638,6 +638,36 @@ export function useTop3Controller() {
           FEDERAL_SCHEDULE,
         });
 
+        if (typeof window !== "undefined") {
+          console.info("[TOP3 FIRST SLOT DEBUG]", {
+            effectiveYmd,
+            firstHourToday,
+            previousForFirstSlot: previousForFirstSlot
+              ? {
+                  ymd: previousForFirstSlot.ymd,
+                  hour: previousForFirstSlot.hour,
+                  source: previousForFirstSlot.source,
+                  hasDraw: !!previousForFirstSlot.draw,
+                }
+              : null,
+          });
+        }
+
+        if (typeof window !== "undefined") {
+          console.info("[TOP3 FIRST SLOT DEBUG]", {
+            effectiveYmd,
+            firstHourToday,
+            previousForFirstSlot: previousForFirstSlot
+              ? {
+                  ymd: previousForFirstSlot.ymd,
+                  hour: previousForFirstSlot.hour,
+                  source: previousForFirstSlot.source,
+                  hasDraw: !!previousForFirstSlot.draw,
+                }
+              : null,
+          });
+        }
+
         const previousResolved = previousForFirstSlot?.draw
           ? previousForFirstSlot
           : await fallbackBaseSearch({
