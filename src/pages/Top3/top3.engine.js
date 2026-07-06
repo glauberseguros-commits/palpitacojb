@@ -981,6 +981,7 @@ function buildConditionalLayerDistribution({
     samples: 0,
     freq: new Map(),
     firstFreq: new Map(),
+    matchingDraws: [],
   }));
 
   for (const d of list) {
@@ -1032,6 +1033,7 @@ function buildConditionalLayerDistribution({
       if (!layer.match(ctx)) continue;
 
       layerResults[i].samples += 1;
+      layerResults[i].matchingDraws.push(nextDraw);
       mergeMapsAdd(layerResults[i].freq, nextMaps.freq);
       mergeMapsAdd(layerResults[i].firstFreq, nextMaps.firstMap);
     }
@@ -1050,6 +1052,7 @@ function buildConditionalLayerDistribution({
       samples: 0,
       freq: new Map(),
       firstFreq: new Map(),
+      matchingDraws: [],
     };
   }
 
@@ -1071,6 +1074,8 @@ export function computeConditionalNextTop3({
   PT_RIO_SCHEDULE_WED_SAT,
   FEDERAL_SCHEDULE,
   topN = 3,
+  targetYmdOverride = "",
+  targetHourOverride = "",
 }) {
   const list = Array.isArray(drawsRange) ? drawsRange : [];
   if (!list.length || !drawLast) {
@@ -1101,8 +1106,16 @@ export function computeConditionalNextTop3({
     FEDERAL_SCHEDULE,
   });
 
-  const targetY = safeStr(nextSlot?.ymd);
-  const targetH = toHourBucket(nextSlot?.hour);
+  const forcedTargetY = safeStr(targetYmdOverride);
+  const forcedTargetH = toHourBucket(targetHourOverride);
+
+  const targetY = isYMD(forcedTargetY) && forcedTargetH
+    ? forcedTargetY
+    : safeStr(nextSlot?.ymd);
+
+  const targetH = isYMD(forcedTargetY) && forcedTargetH
+    ? forcedTargetH
+    : toHourBucket(nextSlot?.hour);
   const targetDow = getDowKey(targetY);
   const targetDayOfMonth = getDayOfMonth(targetY);
   const transition = `${lastH}->${targetH}`;
@@ -2182,6 +2195,8 @@ export function computeConditionalNextTop3V2({
   PT_RIO_SCHEDULE_WED_SAT,
   FEDERAL_SCHEDULE,
   topN = 3,
+  targetYmdOverride = "",
+  targetHourOverride = "",
 }) {
   const list = Array.isArray(drawsRange) ? drawsRange : [];
   if (!list.length || !drawLast) {
@@ -2212,8 +2227,16 @@ export function computeConditionalNextTop3V2({
     FEDERAL_SCHEDULE,
   });
 
-  const targetY = safeStr(nextSlot?.ymd);
-  const targetH = toHourBucket(nextSlot?.hour);
+  const forcedTargetY = safeStr(targetYmdOverride);
+  const forcedTargetH = toHourBucket(targetHourOverride);
+
+  const targetY = isYMD(forcedTargetY) && forcedTargetH
+    ? forcedTargetY
+    : safeStr(nextSlot?.ymd);
+
+  const targetH = isYMD(forcedTargetY) && forcedTargetH
+    ? forcedTargetH
+    : toHourBucket(nextSlot?.hour);
   const targetDow = getDowKey(targetY);
   const targetDayOfMonth = getDayOfMonth(targetY);
 
@@ -2845,6 +2868,8 @@ export function computeStatisticalTop3V3({
   PT_RIO_SCHEDULE_WED_SAT,
   FEDERAL_SCHEDULE,
   topN = 3,
+  targetYmdOverride = "",
+  targetHourOverride = "",
 }) {
   const list = sortDrawsAsc(Array.isArray(drawsRange) ? drawsRange : []);
   if (!list.length || !drawLast) return { top: [], meta: null };
@@ -2874,8 +2899,16 @@ export function computeStatisticalTop3V3({
     FEDERAL_SCHEDULE,
   });
 
-  const targetY = safeStr(nextSlot?.ymd);
-  const targetH = toHourBucket(nextSlot?.hour);
+  const forcedTargetY = safeStr(targetYmdOverride);
+  const forcedTargetH = toHourBucket(targetHourOverride);
+
+  const targetY = isYMD(forcedTargetY) && forcedTargetH
+    ? forcedTargetY
+    : safeStr(nextSlot?.ymd);
+
+  const targetH = isYMD(forcedTargetY) && forcedTargetH
+    ? forcedTargetH
+    : toHourBucket(nextSlot?.hour);
   const targetDow = getDowKey(targetY);
   const targetDayOfMonth = getDayOfMonth(targetY);
   const targetTs = ymdHourToTs(targetY, targetH);
@@ -2970,7 +3003,7 @@ export function computeStatisticalTop3V3({
   const currentScene = buildSceneFromDraw(drawLast);
   const sceneRanking = buildHistoricalSceneRanking(history, currentScene, 80);
   const sceneHypothesis = buildSceneHypothesisDistribution(sceneRanking, TOP3_GROUPS_K);
-  const sceneWeight = sampleConfidence(sceneHypothesis?.samples || 0, 30) * 0.18;
+  const sceneWeight = sampleConfidence(sceneHypothesis?.samples || 0, 60) * 0.06;
 
   if (typeof window !== "undefined") {
     console.log("[TOP3 SCENE HYPOTHESIS]", {
@@ -3049,7 +3082,8 @@ export function computeStatisticalTop3V3({
       };
     }
 
-    const pScene = Number(sceneHypothesis?.prob?.get?.(grupo) || 0);
+    const pSceneRaw = Number(sceneHypothesis?.prob?.get?.(grupo) || 0);
+    const pScene = (pSceneRaw * 0.55) + ((1 / TOP3_GROUPS_K) * 0.45);
 
     if (sceneWeight > 0) {
       scoreProb = (scoreProb * (1 - sceneWeight)) + (pScene * sceneWeight);
@@ -3834,6 +3868,8 @@ export function buildTimelineTop3({
       PT_RIO_SCHEDULE_WED_SAT,
       FEDERAL_SCHEDULE,
       topN: 3,
+      targetYmdOverride: targetYmd,
+      targetHourOverride: slotHour,
     });
 
     if (typeof window !== "undefined") {
