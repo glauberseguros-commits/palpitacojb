@@ -31,7 +31,7 @@ import {
   build16MilharesForGrupo,
   buildMilharesForGrupo,
   getNextSlotForLottery,
-  computeConditionalNextTop3V2,
+  computeStatisticalTop3V3,
 } from "./top3.engine";
 
 import { lotteryLabel } from "./top3.selectors";
@@ -232,7 +232,7 @@ function backfillDayTop3({ draws, lotteryKey, rangeDraws }) {
 
     if (!usableHistory.length) continue;
 
-    const computed = computeConditionalNextTop3V2({
+    const computed = computeStatisticalTop3V3({
       lotteryKey,
       drawsRange: usableHistory,
       drawLast: prev,
