@@ -39,6 +39,15 @@ function sameSlot(meta, targetYmd, targetHour) {
   return isYMD(targetY) && !!targetH && y === targetY && h === targetH;
 }
 
+function firstFiniteNumber(...values) {
+  for (const v of values) {
+    const n = Number(v);
+    if (Number.isFinite(n)) return n;
+  }
+
+  return NaN;
+}
+
 function sanitizeTop3(top) {
   const out = [];
   const seen = new Set();
@@ -47,20 +56,35 @@ function sanitizeTop3(top) {
     const g = Number(item?.grupo);
 
     if (!Number.isFinite(g) || g < 1 || g > 25) continue;
-    if (seen.has(g)) continue;
 
-    const confidence = Number(
-      item?.displayConfidence ??
-        item?.confidence ??
-        item?.scoreProb ??
-        item?.prob ??
-        0
+    const grupo = Math.trunc(g);
+    if (seen.has(grupo)) continue;
+
+    const confidence = firstFiniteNumber(
+      item?.displayConfidence,
+      item?.confidence,
+      item?.scoreProb,
+      item?.prob,
+      0
     );
 
     if (!Number.isFinite(confidence) || confidence < 0) continue;
 
-    seen.add(g);
-    out.push(item);
+    seen.add(grupo);
+
+    out.push({
+      ...item,
+      grupo,
+      displayConfidence: Number.isFinite(Number(item?.displayConfidence))
+        ? Number(item.displayConfidence)
+        : confidence,
+      confidence: Number.isFinite(Number(item?.confidence))
+        ? Number(item.confidence)
+        : confidence,
+      scoreProb: Number.isFinite(Number(item?.scoreProb))
+        ? Number(item.scoreProb)
+        : confidence,
+    });
 
     if (out.length >= 3) break;
   }
@@ -133,7 +157,8 @@ export function computeTop3Analytics({
   }
 
   const firstDraw = safeHistoricalList[0] || null;
-  const lastDrawInRange = safeHistoricalList[safeHistoricalList.length - 1] || null;
+  const lastDrawInRange =
+    safeHistoricalList[safeHistoricalList.length - 1] || null;
 
   const todaySignature = (Array.isArray(todayDraws) ? todayDraws : [])
     .map((d) => `${pickDrawYMD(d) || ""}@${toHourBucket(pickDrawHour(d)) || ""}`)
@@ -155,7 +180,7 @@ export function computeTop3Analytics({
     lastDrawInRange ? toHourBucket(pickDrawHour(lastDrawInRange)) || "" : "",
     lastY,
     lastH,
-    lastG,
+    Math.trunc(lastG),
     forcedTargetY,
     forcedTargetH,
   ].join("|");
