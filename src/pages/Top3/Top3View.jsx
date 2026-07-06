@@ -466,6 +466,36 @@ function Top3Card({
   const title =
     idx === 0 ? "1º MAIS FORTE" : idx === 1 ? "2º MAIS FORTE" : "3º MAIS FORTE";
 
+  const engineScore = Number(item?.score ?? 0);
+  const engineConfidence = Number(item?.confidence ?? pct);
+  const evidenceCount = Number(item?.evidenceCount ?? 0);
+  const evidenceModules = Array.isArray(item?.evidenceModules)
+    ? item.evidenceModules.filter(Boolean)
+    : [];
+
+  const evidenceReasons = Array.isArray(item?.reasons)
+    ? item.reasons.filter(Boolean).slice(0, 4)
+    : [];
+
+  const strengthLabel =
+    engineConfidence >= 75
+      ? "FORÇA ALTA"
+      : engineConfidence >= 50
+        ? "FORÇA MÉDIA"
+        : "FORÇA MODERADA";
+
+  const riskLabel =
+    engineConfidence >= 75
+      ? "RISCO BAIXO"
+      : engineConfidence >= 50
+        ? "RISCO MÉDIO"
+        : "RISCO ALTO";
+
+  const trendLabel =
+    engineScore >= pct
+      ? "TENDÊNCIA POSITIVA"
+      : "TENDÊNCIA NEUTRA";
+
   const doCopyAll = async () => {
     const payload = flat20.join(" ").trim();
     if (!payload) return;
@@ -517,6 +547,78 @@ function Top3Card({
             />
           </div>
         </div>
+      </div>
+
+      <div
+        className="top3-card__engine"
+        style={{
+          borderTop: "1px solid rgba(255,255,255,0.07)",
+          paddingTop: 12,
+          display: "grid",
+          gap: 10,
+        }}
+      >
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+            gap: 8,
+          }}
+        >
+          <div className="top3-metaItem">
+            <div className="top3-metaItem__label">Score IA</div>
+            <div className="top3-metaItem__value">
+              {Number.isFinite(engineScore) ? engineScore.toFixed(0) : "—"}
+            </div>
+          </div>
+
+          <div className="top3-metaItem">
+            <div className="top3-metaItem__label">Força</div>
+            <div className="top3-metaItem__value">{strengthLabel}</div>
+          </div>
+
+          <div className="top3-metaItem">
+            <div className="top3-metaItem__label">Risco</div>
+            <div className="top3-metaItem__value">{riskLabel}</div>
+          </div>
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 8,
+            alignItems: "center",
+          }}
+        >
+          <span className="pp-chip">{trendLabel}</span>
+          <span className="pp-chip">
+            {evidenceCount || evidenceModules.length || 0} evidências
+          </span>
+          {evidenceModules.slice(0, 3).map((m) => (
+            <span key={m} className="pp-chip">
+              {String(m).toUpperCase()}
+            </span>
+          ))}
+        </div>
+
+        {evidenceReasons.length ? (
+          <div style={{ display: "grid", gap: 5 }}>
+            <div className="top3-card__sectionTitle">Por que este grupo?</div>
+            {evidenceReasons.map((reason, rIdx) => (
+              <div
+                key={`${key}_reason_${rIdx}`}
+                style={{
+                  color: "rgba(255,255,255,0.74)",
+                  fontSize: 12,
+                  lineHeight: 1.35,
+                }}
+              >
+                • {reason}
+              </div>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       <div className="top3-card__body">
