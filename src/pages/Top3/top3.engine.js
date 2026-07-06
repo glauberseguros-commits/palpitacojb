@@ -15,6 +15,8 @@ import {
   wrapToDezena2,
 } from "./top3.formatters";
 
+import { scoreRanking } from "./modules/scoreEngine/scoreEngineV2";
+
 import {
   TOP3_NEXTDRAW_SCAN_MAX_STEPS,
   TOP3_NEXTDRAW_SCAN_MAX_DAYS,
@@ -3103,7 +3105,19 @@ export function computeStatisticalTop3V3({
       return a.grupo - b.grupo;
     })
     .slice(0, Math.max(1, Number(topN || 3)));
-  const top = ranked.map((x, idx) => {
+
+  const rankedScored = scoreRanking(
+    ranked,
+    {
+      lotteryKey,
+      targetYmd: targetY,
+      targetHour: targetH,
+      previousGroup: prevGrupo,
+      totalDraws: history.length,
+    }
+  );
+
+  const top = rankedScored.map((x, idx) => {
     const g2 = String(x.grupo).padStart(2, "0");
     const rawScoreProb = Number(x.scoreProb || 0);
 
