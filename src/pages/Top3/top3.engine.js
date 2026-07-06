@@ -19,6 +19,11 @@ import {
   TOP3_NEXTDRAW_SCAN_MAX_STEPS,
   TOP3_NEXTDRAW_SCAN_MAX_DAYS,
   TOP3_GROUPS_K,
+  TOP3_SMOOTH_ALPHA,
+  TOP3_SCENE_WEIGHT,
+  TOP3_SCENE_SAMPLE_TARGET,
+  TOP3_SCENE_BLEND_SCENE,
+  TOP3_SCENE_BLEND_UNIFORM,
   PT_RIO_SCHEDULE_SUNDAY,
 } from "./top3.constants";
 
@@ -2843,12 +2848,16 @@ function getTop5GroupSet(draw) {
   );
 }
 
-function layerProbability(freqMap, samples) {
+function layerProbability(freqMap, samples, alpha = TOP3_SMOOTH_ALPHA) {
   const out = new Map();
-  const denom = Math.max(1, Number(samples || 0));
+  const k = safeInt(TOP3_GROUPS_K, 25);
+  const a = Math.max(0, Number(alpha || 0));
+  const base = Math.max(0, Number(samples || 0));
+  const denom = Math.max(1, base + (a * k));
 
-  for (let g = 1; g <= safeInt(TOP3_GROUPS_K, 25); g += 1) {
-    out.set(g, Number(freqMap.get(g) || 0) / denom);
+  for (let g = 1; g <= k; g += 1) {
+    const count = Math.max(0, Number(freqMap?.get?.(g) || 0));
+    out.set(g, (count + a) / denom);
   }
 
   return out;
@@ -3003,7 +3012,9 @@ export function computeStatisticalTop3V3({
   const currentScene = buildSceneFromDraw(drawLast);
   const sceneRanking = buildHistoricalSceneRanking(history, currentScene, 80);
   const sceneHypothesis = buildSceneHypothesisDistribution(sceneRanking, TOP3_GROUPS_K);
-  const sceneWeight = sampleConfidence(sceneHypothesis?.samples || 0, 60) * 0.06;
+  const sceneWeight =
+    sampleConfidence(sceneHypothesis?.samples || 0, TOP3_SCENE_SAMPLE_TARGET) *
+    TOP3_SCENE_WEIGHT;
 
   if (typeof window !== "undefined") {
     console.log("[TOP3 SCENE HYPOTHESIS]", {
@@ -3083,7 +3094,9 @@ export function computeStatisticalTop3V3({
     }
 
     const pSceneRaw = Number(sceneHypothesis?.prob?.get?.(grupo) || 0);
-    const pScene = (pSceneRaw * 0.55) + ((1 / TOP3_GROUPS_K) * 0.45);
+    const pScene =
+      (pSceneRaw * TOP3_SCENE_BLEND_SCENE) +
+      ((1 / TOP3_GROUPS_K) * TOP3_SCENE_BLEND_UNIFORM);
 
     if (sceneWeight > 0) {
       scoreProb = (scoreProb * (1 - sceneWeight)) + (pScene * sceneWeight);

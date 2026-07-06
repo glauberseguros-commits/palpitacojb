@@ -83,3 +83,27 @@ export const TOP3_NEXTDRAW_SCAN_MAX_DAYS = 7;
 
 // Quantos grupos existem (Jogo do Bicho = 25)
 export const TOP3_GROUPS_K = 25;
+
+/* =========================
+   Calibração Estatística
+========================= */
+
+/**
+ * Peso máximo da evidência de cena.
+ */
+export const TOP3_SCENE_WEIGHT = 0.06;
+
+/**
+ * Quantidade de amostras para confiança máxima da cena.
+ */
+export const TOP3_SCENE_SAMPLE_TARGET = 60;
+
+/**
+ * Mistura da probabilidade da cena.
+ */
+export const TOP3_SCENE_BLEND_SCENE = 0.55;
+
+/**
+ * Mistura da distribuição uniforme.
+ */
+export const TOP3_SCENE_BLEND_UNIFORM = 0.45;
