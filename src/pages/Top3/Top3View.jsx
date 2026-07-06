@@ -473,9 +473,87 @@ function Top3Card({
     ? item.evidenceModules.filter(Boolean)
     : [];
 
-  const evidenceReasons = Array.isArray(item?.reasons)
-    ? item.reasons.filter(Boolean).slice(0, 4)
-    : [];
+  const explain = item?.meta?.explain || {};
+  const detailMap =
+    explain?.details && typeof explain.details === "object"
+      ? explain.details
+      : {};
+
+  const transitionDetail = detailMap.transition || null;
+  const hourDetail = detailMap.hour || null;
+  const dowDetail = detailMap.dow || detailMap.weekday || null;
+  const sceneDetail = detailMap.scene || null;
+
+  const periodFrom = String(item?.meta?.period?.from || "").trim();
+  const periodTo = String(item?.meta?.period?.to || "").trim();
+
+  const periodLabel =
+    periodFrom && periodTo
+      ? `Período analisado: ${ymdToBR(periodFrom)} até ${ymdToBR(periodTo)}`
+      : samples > 0
+        ? `Amostra analisada: ${samples} sorteios`
+        : "";
+
+  const baseGrupo = formatGrupo(item?.meta?.trigger?.grupo);
+  const baseHour = String(item?.meta?.trigger?.hour || "").trim();
+  const targetHour = String(item?.meta?.next?.hour || "").trim();
+
+  const smartReasons = [];
+
+  if (periodLabel) {
+    smartReasons.push(periodLabel);
+  }
+
+  if (transitionDetail) {
+    const first = Number(transitionDetail.firstCount || 0);
+    const top5 = Number(transitionDetail.top5Count || 0);
+    const amostras = Number(transitionDetail.samples || 0);
+
+    smartReasons.push(
+      `Após G${baseGrupo} às ${baseHour}, G${grupoTxt} apareceu ${first}x em 1º e ${top5}x no TOP5 para o alvo ${targetHour}.`
+    );
+
+    if (amostras > 0) {
+      smartReasons.push(`Cenários de transição avaliados: ${amostras}.`);
+    }
+  }
+
+  if (hourDetail) {
+    const first = Number(hourDetail.firstCount || 0);
+    const top5 = Number(hourDetail.top5Count || 0);
+
+    smartReasons.push(
+      `No horário ${targetHour}, G${grupoTxt} apareceu ${first}x em 1º e ${top5}x no TOP5.`
+    );
+  }
+
+  if (dowDetail) {
+    const first = Number(dowDetail.firstCount || 0);
+    const top5 = Number(dowDetail.top5Count || 0);
+
+    smartReasons.push(
+      `No mesmo dia da semana, G${grupoTxt} apareceu ${first}x em 1º e ${top5}x no TOP5.`
+    );
+  }
+
+  if (sceneDetail && Number(sceneDetail.samples || 0) > 0) {
+    smartReasons.push(
+      `Cenários semelhantes encontrados: ${Number(sceneDetail.samples || 0)}.`
+    );
+  }
+
+  smartReasons.push(`Probabilidade final do G${grupoTxt}: ${pct.toFixed(2)}%.`);
+
+  const evidenceReasons = smartReasons
+    .concat(Array.isArray(item?.reasons) ? item.reasons.filter(Boolean) : [])
+    .filter(Boolean)
+    .slice(0, 7);
+
+  const visibleEvidenceCount = Math.max(
+    evidenceCount || 0,
+    evidenceModules.length || 0,
+    evidenceReasons.length || 0
+  );
 
   const strengthLabel =
     engineConfidence >= 75
@@ -484,12 +562,14 @@ function Top3Card({
         ? "FORÇA MÉDIA"
         : "FORÇA MODERADA";
 
-  const riskLabel =
+  const reliabilityLabel =
     engineConfidence >= 75
-      ? "RISCO BAIXO"
+      ? "ALTA"
       : engineConfidence >= 50
-        ? "RISCO MÉDIO"
-        : "RISCO ALTO";
+        ? "MÉDIA"
+        : visibleEvidenceCount > 0
+          ? "EM FORMAÇÃO"
+          : "SEM EVIDÊNCIAS";
 
   const trendLabel =
     engineScore >= pct
@@ -578,8 +658,8 @@ function Top3Card({
           </div>
 
           <div className="top3-metaItem">
-            <div className="top3-metaItem__label">Risco</div>
-            <div className="top3-metaItem__value">{riskLabel}</div>
+            <div className="top3-metaItem__label">Confiabilidade</div>
+            <div className="top3-metaItem__value">{reliabilityLabel}</div>
           </div>
         </div>
 
@@ -593,7 +673,7 @@ function Top3Card({
         >
           <span className="pp-chip">{trendLabel}</span>
           <span className="pp-chip">
-            {evidenceCount || evidenceModules.length || 0} evidências
+            {visibleEvidenceCount} evidências
           </span>
           {evidenceModules.slice(0, 3).map((m) => (
             <span key={m} className="pp-chip">

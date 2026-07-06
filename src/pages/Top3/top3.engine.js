@@ -3164,6 +3164,10 @@ export function computeStatisticalTop3V3({
           hour: safeStr(targetH),
         },
         samples: history.length,
+        period: {
+          from: pickDrawYMD(history[0]) || "",
+          to: pickDrawYMD(history[history.length - 1]) || "",
+        },
         scenario: "V3_STATISTICAL",
         explain: {
           engine: "V3_STATISTICAL",
