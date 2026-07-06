@@ -3123,35 +3123,9 @@ export function computeStatisticalTop3V3({
       return a.grupo - b.grupo;
     })
     .slice(0, Math.max(1, Number(topN || 3)));
-
-
-  const v3TopMaxScoreProb = Math.max(
-    0,
-    ...ranked.map((x) => Number(x?.scoreProb || 0))
-  );
-
-  function calibrateV3DisplayConfidence(rawScoreProb) {
-    const raw = Math.max(0, Number(rawScoreProb || 0));
-    const max = Math.max(0, Number(v3TopMaxScoreProb || 0));
-
-    if (!Number.isFinite(raw) || raw <= 0 || !Number.isFinite(max) || max <= 0) {
-      return 0;
-    }
-
-    const absoluteComponent = Math.min(1, raw);
-    const relativeComponent = Math.sqrt(Math.max(0, Math.min(1, raw / max)));
-
-    const display =
-      (absoluteComponent * 0.35) +
-      ((0.06 + (relativeComponent * 0.16)) * 0.65);
-
-    return Math.max(0, Math.min(0.35, display));
-  }
-
   const top = ranked.map((x, idx) => {
     const g2 = String(x.grupo).padStart(2, "0");
     const rawScoreProb = Number(x.scoreProb || 0);
-    const displayScoreProb = calibrateV3DisplayConfidence(rawScoreProb);
 
     const strongest = Object.values(x.details)
       .filter((d) => Number(d.probability || 0) > 0)
@@ -3167,7 +3141,7 @@ export function computeStatisticalTop3V3({
             ? "2º mais provável"
             : "3º mais provável",
       grupo: x.grupo,
-      scoreProb: Number(displayScoreProb || 0),
+      scoreProb: Number(rawScoreProb || 0),
       rawScoreProb: Number(rawScoreProb || 0),
       probCond: Number(x.details.transition?.probability || 0),
       probBase: Number(x.details.hour?.probability || 0),
@@ -3180,8 +3154,7 @@ export function computeStatisticalTop3V3({
         `Motor: V3_STATISTICAL`,
         `Alvo: ${targetY} ${targetH} | DOW=${targetDow} | dia=${String(targetDayOfMonth).padStart(2, "0")}`,
         `Base: G${String(prevGrupo).padStart(2, "0")} @ ${lastH}`,
-        `Confiança calibrada G${g2}: ${(Number(displayScoreProb || 0) * 100).toFixed(2)}%`,
-        `Score estatístico bruto G${g2}: ${(Number(rawScoreProb || 0) * 100).toFixed(2)}%`,
+        `Probabilidade final G${g2}: ${(Number(rawScoreProb || 0) * 100).toFixed(2)}%`,
         ...strongest.map((d) =>
           `${d.label}: ${d.firstCount}x em 1º | ${d.top5Count}x no TOP5 | amostras=${d.samples} | peso=${(d.weight * 100).toFixed(0)}%`
         ),
