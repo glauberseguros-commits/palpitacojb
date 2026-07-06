@@ -2934,10 +2934,10 @@ export function computeStatisticalTop3V3({
   });
 
   const layers = {
-    hour: { label: `frequência no horário ${targetH}`, samples: 0, first: emptyGroupMap(), top5: emptyGroupMap(), weight: 0.30 },
-    dowHour: { label: `frequência no dia da semana + horário`, samples: 0, first: emptyGroupMap(), top5: emptyGroupMap(), weight: 0.25 },
-    dayMonth: { label: `frequência no dia ${String(targetDayOfMonth).padStart(2, "0")}`, samples: 0, first: emptyGroupMap(), top5: emptyGroupMap(), weight: 0.10 },
-    transition: { label: `transição G${String(prevGrupo).padStart(2, "0")} @ ${lastH} → ${targetH}`, samples: 0, first: emptyGroupMap(), top5: emptyGroupMap(), weight: 0.25 },
+    hour: { label: `frequência no horário ${targetH}`, samples: 0, first: emptyGroupMap(), top5: emptyGroupMap(), weight: 0.33 },
+    dowHour: { label: `frequência no dia da semana + horário`, samples: 0, first: emptyGroupMap(), top5: emptyGroupMap(), weight: 0.27 },
+    dayMonth: { label: `frequência no dia ${String(targetDayOfMonth).padStart(2, "0")}`, samples: 0, first: emptyGroupMap(), top5: emptyGroupMap(), weight: 0.04 },
+    transition: { label: `transição G${String(prevGrupo).padStart(2, "0")} @ ${lastH} → ${targetH}`, samples: 0, first: emptyGroupMap(), top5: emptyGroupMap(), weight: 0.26 },
     recent: { label: `recência comparável`, samples: 0, first: emptyGroupMap(), top5: emptyGroupMap(), weight: 0.10 },
   };
 
@@ -3016,32 +3016,6 @@ export function computeStatisticalTop3V3({
     sampleConfidence(sceneHypothesis?.samples || 0, TOP3_SCENE_SAMPLE_TARGET) *
     TOP3_SCENE_WEIGHT;
 
-  if (typeof window !== "undefined") {
-    console.log("[TOP3 SCENE HYPOTHESIS]", {
-      targetY,
-      targetH,
-      baseYmd: lastY,
-      baseHour: lastH,
-      currentScene,
-      samples: sceneHypothesis?.samples || 0,
-      totalWeight: sceneHypothesis?.totalWeight || 0,
-      sceneWeight,
-      topRanking: sceneRanking.slice(0, 10).map((x) => ({
-        score: x.score,
-        scene: {
-          ymd: x.scene?.ymd,
-          hour: x.scene?.hour,
-          firstGrupo: x.scene?.firstGrupo,
-          signature: x.scene?.signature,
-        },
-        next: {
-          ymd: pickDrawYMD(x.nextDraw),
-          hour: toHourBucket(pickDrawHour(x.nextDraw)),
-          grupo: pickPrize1GrupoFromDraw(x.nextDraw),
-        },
-      })),
-    });
-  }
 
   const activeWeights = {};
   let totalWeight = 0;
@@ -3744,12 +3718,6 @@ export function buildTimelineTop3({
     const currentDraw = realizedTodayMap.get(`${targetYmd}|${slotHour}`) || null;
     const slotTs = ymdHourToTs(targetYmd, slotHour);
 
-    if (currentDraw) {
-      logTop3SceneDebug("resultado_realizado", buildSceneFromDraw(currentDraw), {
-        targetYmd,
-        targetHour: slotHour,
-      });
-    }
 
     if (!currentDraw && pendingPredictionAlreadyShown) {
       timeline.push({
@@ -3871,16 +3839,6 @@ export function buildTimelineTop3({
       targetHourOverride: slotHour,
     });
 
-    if (typeof window !== "undefined") {
-      console.log("[TOP3 COMPUTED DEBUG]", {
-        slotHour,
-        targetYmd,
-        baseYmd: pickDrawYMD(baseDraw),
-        baseHour: toHourBucket(pickDrawHour(baseDraw)),
-        computedTopLen: Array.isArray(computed?.top) ? computed.top.length : -1,
-        computedMeta: computed?.meta || null,
-      });
-    }
 
     const computedNextYmd = safeStr(computed?.meta?.next?.ymd || "");
     const computedNextHour = toHourBucket(computed?.meta?.next?.hour || "");

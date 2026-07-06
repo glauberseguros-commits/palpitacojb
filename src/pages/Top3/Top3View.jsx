@@ -846,16 +846,7 @@ const list = Array.isArray(forecastSlot?.top3)
 
   const [copiedAllKey, setCopiedAllKey] = useState("");
   const [copiedCellKey, setCopiedCellKey] = useState("");
-  const [log, setLog] = useState([]);
 
-  useEffect(() => {
-    try {
-      const data = JSON.parse(localStorage.getItem("top3_log") || "[]");
-      setLog(Array.isArray(data) ? data : []);
-    } catch {
-      setLog([]);
-    }
-  }, []);
 
   useEffect(() => {
     if (!copiedAllKey) return;
