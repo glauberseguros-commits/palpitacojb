@@ -3076,7 +3076,7 @@ export function computeStatisticalTop3V3({
 
     for (const [keyLayer, layer] of Object.entries(layers)) {
       const pFirst = Number(layerProbability(layer.first, layer.samples).get(grupo) || 0);
-      const pTop5 = Number(layerProbability(layer.top5, Math.max(1, layer.samples * 5)).get(grupo) || 0);
+      const pTop5 = Number(layerProbability(layer.top5, layer.samples).get(grupo) || 0);
 
       const pLayer = (pFirst * 0.75) + (pTop5 * 0.25);
       const w = Number(activeWeights[keyLayer] || 0);
@@ -3510,22 +3510,6 @@ function getDezenasFixasFromGrupo(grupo2) {
   return out.filter(Boolean);
 }
 
-function pickRepresentativeMilharForCentena(prizes, centena3) {
-  const counts = new Map();
-
-  for (const m4 of prizes) {
-    if (!m4) continue;
-    const c3 = getCentena3(m4);
-    if (c3 !== centena3) continue;
-    counts.set(m4, (counts.get(m4) || 0) + 1);
-  }
-
-  if (!counts.size) return "";
-
-  return Array.from(counts.entries())
-    .sort((a, b) => b[1] - a[1] || milharCompareAsc(a[0], b[0]))
-    .map((x) => x[0])[0];
-}
 
 export function buildMilharesForGrupo({
   rangeDraws,
