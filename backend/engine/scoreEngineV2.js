@@ -1,0 +1,95 @@
+"use strict";
+
+const scoreConfig = require("./scoreConfig");
+const { collectEvidence } = require("./evidenceEngine");
+
+/**
+ * Score Engine V2 inicial
+ *
+ * Consome evidências.
+ * Não aplica regra cega isolada.
+ */
+
+function normalizeEvidenceValue(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return n;
+}
+
+function calculateEvidenceStrength(evidenceList = []) {
+  const list = Array.isArray(evidenceList) ? evidenceList : [];
+
+  if (!list.length) {
+    return {
+      score: 0,
+      confidence: 0,
+      reasons: ["Sem evidências suficientes."],
+      signals: {},
+    };
+  }
+
+  const values = list.map((e) => normalizeEvidenceValue(e.value));
+  const total = values.reduce((acc, v) => acc + v, 0);
+  const max = Math.max(...values, 1);
+
+  const score = Math.min(100, Math.round((total / max) * 50));
+  const confidence = Math.min(100, Math.round(score * Math.min(1, list.length / 3)));
+
+  const reasons = list.flatMap((e) => Array.isArray(e.reasons) ? e.reasons : []);
+
+  const signals = {};
+  for (const e of list) {
+    signals[e.module] = e.evidence || {};
+  }
+
+  return {
+    score,
+    confidence,
+    reasons,
+    signals,
+  };
+}
+
+function scoreItem(item = {}, context = {}) {
+  const collected = collectEvidence({
+    item,
+    context,
+    config: scoreConfig,
+  });
+
+  const strength = calculateEvidenceStrength(collected.evidence);
+
+  return {
+    ...item,
+    score: strength.score,
+    confidence: strength.confidence,
+    reasons: strength.reasons,
+    signals: strength.signals,
+    evidenceCount: collected.count,
+    evidenceModules: collected.modules,
+  };
+}
+
+function scoreRanking(items = [], context = {}) {
+
+  return (Array.isArray(items) ? items : [])
+    .map(item => scoreItem(item, context))
+    .sort((a, b) => {
+
+      if (b.score !== a.score)
+        return b.score - a.score;
+
+      if (b.confidence !== a.confidence)
+        return b.confidence - a.confidence;
+
+      return (Number(b.scoreProb || 0) - Number(a.scoreProb || 0));
+
+    });
+
+}
+
+module.exports = {
+  scoreItem,
+  scoreRanking,
+  calculateEvidenceStrength,
+};
