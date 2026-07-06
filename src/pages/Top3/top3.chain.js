@@ -3,15 +3,17 @@ import {
   pickDrawYMD,
   pickDrawHour,
 } from "./top3.engine";
+
 import { isYMD, toHourBucket, hourToInt } from "./top3.formatters";
 
 /*
 TOP3+ — Cadeia de Bichos
 Modelo de transição de grupos
-✅ Corrigido para funcionar por SLOT ALVO
-- entende targetYmd / targetHourBucket
-- encontra o draw imediatamente anterior ao alvo
-- separa transições por faixa de horário
+
+- Entende targetYmd / targetHourBucket
+- Encontra o draw imediatamente anterior ao alvo
+- Separa transições por faixa de horário
+- Evita ordenar sorteio sem hora como 00h
 */
 
 function safeInt(v, fallback = 0) {
@@ -23,25 +25,29 @@ function drawSortTs(draw) {
   const y = pickDrawYMD(draw);
   const h = toHourBucket(pickDrawHour(draw));
 
-  if (!isYMD(y)) return Number.POSITIVE_INFINITY;
+  if (!isYMD(y) || !h) return Number.POSITIVE_INFINITY;
+
+  const mins = hourToInt(h);
+  if (!Number.isFinite(mins) || mins < 0) return Number.POSITIVE_INFINITY;
 
   const [Y, M, D] = y.split("-").map(Number);
   const base = Date.UTC(Y, M - 1, D);
-  const mins = hourToInt(h);
-  const add = mins >= 0 ? mins * 60 * 1000 : 0;
 
-  return base + add;
+  return base + mins * 60 * 1000;
 }
 
 function slotTs(ymd, hourBucket) {
-  if (!isYMD(ymd)) return Number.POSITIVE_INFINITY;
+  const h = toHourBucket(hourBucket);
+
+  if (!isYMD(ymd) || !h) return Number.POSITIVE_INFINITY;
+
+  const mins = hourToInt(h);
+  if (!Number.isFinite(mins) || mins < 0) return Number.POSITIVE_INFINITY;
 
   const [Y, M, D] = String(ymd).split("-").map(Number);
   const base = Date.UTC(Y, M - 1, D);
-  const mins = hourToInt(toHourBucket(hourBucket));
-  const add = mins >= 0 ? mins * 60 * 1000 : 0;
 
-  return base + add;
+  return base + mins * 60 * 1000;
 }
 
 function dedupeAndSortDraws(draws) {
@@ -56,14 +62,25 @@ function dedupeAndSortDraws(draws) {
       (isYMD(y) && h ? `${y}|${h}` : "");
 
     if (!key) continue;
-    if (!map.has(key)) map.set(key, d);
+
+    const prev = map.get(key);
+    if (!prev || drawSortTs(d) < drawSortTs(prev)) {
+      map.set(key, d);
+    }
   }
 
-  return Array.from(map.values()).sort((a, b) => drawSortTs(a) - drawSortTs(b));
+  return Array.from(map.values())
+    .filter((d) => Number.isFinite(drawSortTs(d)))
+    .sort((a, b) => drawSortTs(a) - drawSortTs(b));
 }
 
 function makeEdgeKey(fromHour, toHour) {
-  return `${String(fromHour || "").trim()}->${String(toHour || "").trim()}`;
+  const from = toHourBucket(fromHour);
+  const to = toHourBucket(toHour);
+
+  if (!from || !to) return "";
+
+  return `${from}->${to}`;
 }
 
 function getNestedMap(map, key) {
@@ -71,11 +88,6 @@ function getNestedMap(map, key) {
   return map.get(key);
 }
 
-/**
- * Gera:
- * - transitionsAny: fromGrupo -> toGrupo
- * - transitionsByEdge: "fromHour->toHour" -> fromGrupo -> toGrupo
- */
 export function computeChainTransitions(draws) {
   const list = dedupeAndSortDraws(draws);
   const transitionsAny = new Map();
@@ -85,28 +97,25 @@ export function computeChainTransitions(draws) {
     const fromDraw = list[i];
     const toDraw = list[i + 1];
 
-    const fromGrupo = pickPrize1GrupoFromDraw(fromDraw);
-    const toGrupo = pickPrize1GrupoFromDraw(toDraw);
+    const fromGrupo = Number(pickPrize1GrupoFromDraw(fromDraw));
+    const toGrupo = Number(pickPrize1GrupoFromDraw(toDraw));
     const fromHour = toHourBucket(pickDrawHour(fromDraw));
     const toHour = toHourBucket(pickDrawHour(toDraw));
 
-    if (!Number.isFinite(Number(fromGrupo)) || !Number.isFinite(Number(toGrupo))) continue;
-    if (Number(fromGrupo) < 1 || Number(fromGrupo) > 25) continue;
-    if (Number(toGrupo) < 1 || Number(toGrupo) > 25) continue;
+    if (!Number.isFinite(fromGrupo) || !Number.isFinite(toGrupo)) continue;
+    if (fromGrupo < 1 || fromGrupo > 25) continue;
+    if (toGrupo < 1 || toGrupo > 25) continue;
     if (!fromHour || !toHour) continue;
 
-    const from = Number(fromGrupo);
-    const to = Number(toGrupo);
+    const anyRow = getNestedMap(transitionsAny, fromGrupo);
+    anyRow.set(toGrupo, safeInt(anyRow.get(toGrupo), 0) + 1);
 
-    // transição geral
-    const anyRow = getNestedMap(transitionsAny, from);
-    anyRow.set(to, safeInt(anyRow.get(to), 0) + 1);
-
-    // transição por aresta horária
     const edgeKey = makeEdgeKey(fromHour, toHour);
+    if (!edgeKey) continue;
+
     const edgeMap = getNestedMap(transitionsByEdge, edgeKey);
-    const edgeRow = getNestedMap(edgeMap, from);
-    edgeRow.set(to, safeInt(edgeRow.get(to), 0) + 1);
+    const edgeRow = getNestedMap(edgeMap, fromGrupo);
+    edgeRow.set(toGrupo, safeInt(edgeRow.get(toGrupo), 0) + 1);
   }
 
   return { transitionsAny, transitionsByEdge };
@@ -116,8 +125,8 @@ function findPreviousDrawForTarget(draws, targetYmd, targetHourBucket) {
   const list = dedupeAndSortDraws(draws);
   if (!list.length) return null;
 
-  const targetTs = slotTs(targetYmd, targetHourBucket);
-  if (!Number.isFinite(targetTs)) return null;
+  const target = slotTs(targetYmd, targetHourBucket);
+  if (!Number.isFinite(target)) return null;
 
   let prev = null;
 
@@ -125,8 +134,11 @@ function findPreviousDrawForTarget(draws, targetYmd, targetHourBucket) {
     const ts = drawSortTs(d);
     if (!Number.isFinite(ts)) continue;
 
-    if (ts < targetTs) prev = d;
-    else break;
+    if (ts < target) {
+      prev = d;
+    } else {
+      break;
+    }
   }
 
   return prev;
@@ -140,39 +152,30 @@ function rankTransitionMap(rowMap, basedOnGrupo, topN) {
     0
   );
 
+  if (total <= 0) return [];
+
   return Array.from(rowMap.entries())
     .sort((a, b) => {
-      if (b[1] !== a[1]) return b[1] - a[1];
+      if (Number(b[1]) !== Number(a[1])) return Number(b[1]) - Number(a[1]);
       return Number(a[0]) - Number(b[0]);
     })
     .slice(0, Math.max(1, safeInt(topN, 3)))
-    .map(([grupo, freq], i) => ({
-      rank: i + 1,
-      grupo: Number(grupo),
-      freq: Number(freq),
-      prob: total > 0 ? Number(freq) / total : 0,
-      probPct: total > 0 ? Number(((Number(freq) / total) * 100).toFixed(2)) : 0,
-      basedOnGrupo: Number(basedOnGrupo),
-      totalTransitionsFromGrupo: total,
-    }));
+    .map(([grupo, freq], i) => {
+      const prob = Number(freq) / total;
+
+      return {
+        rank: i + 1,
+        grupo: Number(grupo),
+        freq: Number(freq),
+        prob,
+        probPct: Number((prob * 100).toFixed(2)),
+        basedOnGrupo: Number(basedOnGrupo),
+        totalTransitionsFromGrupo: total,
+      };
+    });
 }
 
-/**
- * Compatível com 2 modos:
- *
- * Antigo:
- * predictNextGrupoFromChain(draws, topN)
- *
- * Novo:
- * predictNextGrupoFromChain({
- *   draws,
- *   targetYmd,
- *   targetHourBucket,
- *   topN
- * })
- */
 export function predictNextGrupoFromChain(arg1, arg2 = 3) {
-  // modo legado
   if (Array.isArray(arg1)) {
     const draws = arg1;
     const topN = arg2;
@@ -182,11 +185,13 @@ export function predictNextGrupoFromChain(arg1, arg2 = 3) {
 
     const { transitionsAny } = computeChainTransitions(list);
     const lastDraw = list[list.length - 1];
-    const lastGrupo = pickPrize1GrupoFromDraw(lastDraw);
+    const lastGrupo = Number(pickPrize1GrupoFromDraw(lastDraw));
 
-    if (!Number.isFinite(Number(lastGrupo))) return [];
+    if (!Number.isFinite(lastGrupo) || lastGrupo < 1 || lastGrupo > 25) {
+      return [];
+    }
 
-    const rowMap = transitionsAny.get(Number(lastGrupo));
+    const rowMap = transitionsAny.get(lastGrupo);
     const ranked = rankTransitionMap(rowMap, lastGrupo, topN);
 
     return ranked.map((x) => ({
@@ -201,7 +206,6 @@ export function predictNextGrupoFromChain(arg1, arg2 = 3) {
     }));
   }
 
-  // modo correto por slot alvo
   const {
     draws,
     targetYmd,
@@ -218,25 +222,31 @@ export function predictNextGrupoFromChain(arg1, arg2 = 3) {
   const prevDraw = findPreviousDrawForTarget(list, targetYmd, targetHour);
   if (!prevDraw) return [];
 
-  const prevGrupo = pickPrize1GrupoFromDraw(prevDraw);
+  const prevGrupo = Number(pickPrize1GrupoFromDraw(prevDraw));
   const prevHour = toHourBucket(pickDrawHour(prevDraw));
   const prevYmd = pickDrawYMD(prevDraw);
 
-  if (!Number.isFinite(Number(prevGrupo)) || !prevHour || !isYMD(prevYmd)) {
+  if (
+    !Number.isFinite(prevGrupo) ||
+    prevGrupo < 1 ||
+    prevGrupo > 25 ||
+    !prevHour ||
+    !isYMD(prevYmd)
+  ) {
     return [];
   }
 
   const { transitionsAny, transitionsByEdge } = computeChainTransitions(list);
 
   const edgeKey = makeEdgeKey(prevHour, targetHour);
-  const edgeMap = transitionsByEdge.get(edgeKey) || null;
-  const edgeRow = edgeMap ? edgeMap.get(Number(prevGrupo)) : null;
+  const edgeMap = edgeKey ? transitionsByEdge.get(edgeKey) || null : null;
+  const edgeRow = edgeMap ? edgeMap.get(prevGrupo) : null;
 
   let ranked = rankTransitionMap(edgeRow, prevGrupo, topN);
   let transitionType = "EDGE";
 
   if (!ranked.length) {
-    const anyRow = transitionsAny.get(Number(prevGrupo)) || null;
+    const anyRow = transitionsAny.get(prevGrupo) || null;
     ranked = rankTransitionMap(anyRow, prevGrupo, topN);
     transitionType = "ANY_FALLBACK";
   }

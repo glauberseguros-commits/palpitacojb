@@ -8,42 +8,51 @@ export async function fallbackBaseSearch({
   targetHourBucket,
   uf,
 }) {
+  const key = String(lotteryKey || "").trim().toUpperCase();
+
+  if (!targetYmd || !targetHourBucket || !uf) {
+    return { draw: null, ymd: "", hour: "", source: "none" };
+  }
 
   const searchFrom =
     minDate ||
-    (lotteryKey === "FEDERAL"
-      ? addDaysYMD(targetYmd, -180)
-      : addDaysYMD(targetYmd, -60));
+    (key === "FEDERAL"
+      ? addDaysYMD(targetYmd, -240)
+      : addDaysYMD(targetYmd, -90));
 
   const hist =
     (await getKingResultsByRange({
       uf,
       dateFrom: searchFrom,
       dateTo: targetYmd,
-      mode: "aggregated",
-      readPolicy: "cache",
+      mode: "detailed",
+      readPolicy: "server",
     })) || [];
 
   return findLatestHistoricalBaseDraw({
     draws: hist,
-    lotteryKey,
+    lotteryKey: key,
     targetYmd,
     targetHourBucket,
   });
 }
+
 export async function loadHistoryRange({
   getKingResultsByRange,
   uf,
   dateFrom,
   dateTo,
+  readPolicy = "server",
 }) {
+  if (!uf || !dateFrom || !dateTo) return [];
+
   return (
     (await getKingResultsByRange({
       uf,
       dateFrom,
       dateTo,
-      mode: "aggregated",
-      readPolicy: "cache",
+      mode: "detailed",
+      readPolicy,
     })) || []
   );
 }
