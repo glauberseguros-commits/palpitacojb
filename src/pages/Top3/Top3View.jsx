@@ -721,7 +721,7 @@ function Top3Card({
                   overflow: "hidden",
                   border: "1px solid rgba(212,175,55,0.35)",
                   minHeight: 180,
-                  display: "grid",
+                  display: "none",
                   placeItems: "center",
                   background: "rgba(0,0,0,0.28)",
                 }}
