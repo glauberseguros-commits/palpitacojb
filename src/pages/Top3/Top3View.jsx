@@ -467,7 +467,6 @@ function Top3Card({
     idx === 0 ? "1º MAIS FORTE" : idx === 1 ? "2º MAIS FORTE" : "3º MAIS FORTE";
 
   const engineScore = Number(item?.score ?? 0);
-  const engineConfidence = Number(item?.confidence ?? pct);
   const evidenceCount = Number(item?.evidenceCount ?? 0);
   const evidenceModules = Array.isArray(item?.evidenceModules)
     ? item.evidenceModules.filter(Boolean)
@@ -555,26 +554,63 @@ function Top3Card({
     evidenceReasons.length || 0
   );
 
-  const strengthLabel =
-    engineConfidence >= 75
-      ? "FORÇA ALTA"
-      : engineConfidence >= 50
-        ? "FORÇA MÉDIA"
-        : "FORÇA MODERADA";
-
-  const reliabilityLabel =
-    engineConfidence >= 75
-      ? "ALTA"
-      : engineConfidence >= 50
-        ? "MÉDIA"
-        : visibleEvidenceCount > 0
-          ? "EM FORMAÇÃO"
-          : "SEM EVIDÊNCIAS";
-
   const trendLabel =
     engineScore >= pct
       ? "TENDÊNCIA POSITIVA"
       : "TENDÊNCIA NEUTRA";
+
+  const displayScore = Math.round(
+    Math.max(
+      1,
+      Math.min(
+        99,
+        Number.isFinite(engineScore) && engineScore > 0
+          ? engineScore
+          : pct * 10
+      )
+    )
+  );
+
+  const scoreBarPct = Math.max(4, Math.min(100, displayScore));
+
+  const baseAnimalName =
+    typeof getAnimalLabel === "function"
+      ? String(getAnimalLabel(Number(item?.meta?.trigger?.grupo)) || "").trim()
+      : "";
+
+  const baseLabel = baseAnimalName
+    ? `${baseAnimalName} (G${baseGrupo})`
+    : `G${baseGrupo}`;
+
+  const targetLabel = animal
+    ? `${animal} (G${grupoTxt})`
+    : `G${grupoTxt}`;
+
+  const transitionFirst = Number(transitionDetail?.firstCount || 0);
+  const transitionTop3 = Number(transitionDetail?.top3Count || transitionDetail?.top5Count || 0);
+  const transitionSamples = Number(transitionDetail?.samples || 0);
+
+  const hourFirst = Number(hourDetail?.firstCount || 0);
+  const dowFirst = Number(dowDetail?.firstCount || 0);
+  const sceneSamples = Number(sceneDetail?.samples || 0);
+
+  const premiumForceLabel =
+    displayScore >= 90
+      ? "MUITO FORTE"
+      : displayScore >= 75
+        ? "FORTE"
+        : displayScore >= 60
+          ? "MODERADA"
+          : "BAIXA";
+
+  const premiumReliabilityLabel =
+    displayScore >= 85
+      ? "ALTA"
+      : displayScore >= 70
+        ? "MÉDIA"
+        : visibleEvidenceCount > 0
+          ? "EM FORMAÇÃO"
+          : "SEM EVIDÊNCIAS";
 
   const doCopyAll = async () => {
     const payload = flat20.join(" ").trim();
@@ -630,75 +666,227 @@ function Top3Card({
       </div>
 
       <div
-        className="top3-card__engine"
+        className="top3-card__engine top3-card__engine--premium"
         style={{
-          borderTop: "1px solid rgba(255,255,255,0.07)",
-          paddingTop: 12,
+          borderTop: "1px solid rgba(212,175,55,0.22)",
+          paddingTop: 14,
           display: "grid",
-          gap: 10,
+          gridTemplateColumns: isHero ? "300px minmax(0, 1fr)" : "1fr",
+          gap: 14,
+          alignItems: "stretch",
         }}
       >
+        {isHero ? (
+          <div
+            style={{
+              border: "1px solid rgba(212,175,55,0.30)",
+              borderRadius: 18,
+              padding: 14,
+              background:
+                "radial-gradient(circle at 50% 0%, rgba(212,175,55,0.18), rgba(0,0,0,0.12) 48%, rgba(0,0,0,0.28))",
+              boxShadow: "0 18px 45px rgba(0,0,0,0.32)",
+            }}
+          >
+            <div style={{ display: "grid", gap: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div className="top3-rankBadge">{rank}</div>
+                <div className="top3-card__label">⭐ {title}</div>
+              </div>
+
+              <div
+                style={{
+                  borderRadius: 16,
+                  overflow: "hidden",
+                  border: "1px solid rgba(212,175,55,0.35)",
+                  minHeight: 180,
+                  display: "grid",
+                  placeItems: "center",
+                  background: "rgba(0,0,0,0.28)",
+                }}
+              >
+                <ImgWithFallback
+                  srcs={iconSrcs}
+                  alt={animal ? animal : `G${grupoTxt}`}
+                  size={168}
+                  style={{ borderRadius: 14 }}
+                />
+              </div>
+
+              <div>
+                <div className="top3-card__group">GRUPO {grupoTxt}</div>
+                <div className="top3-card__animal">
+                  {animal ? animal.toUpperCase() : "—"}
+                </div>
+              </div>
+
+              <div
+                style={{
+                  border: "1px solid rgba(212,175,55,0.28)",
+                  borderRadius: 14,
+                  padding: 14,
+                  background: "rgba(0,0,0,0.22)",
+                }}
+              >
+                <div className="top3-card__confidenceLabel">SCORE IA</div>
+                <div
+                  style={{
+                    fontSize: 42,
+                    fontWeight: 900,
+                    letterSpacing: 1,
+                    color: t.accent,
+                    lineHeight: 1,
+                  }}
+                >
+                  {displayScore}
+                  <span style={{ color: "rgba(255,255,255,0.78)", fontSize: 24 }}>
+                    /100
+                  </span>
+                </div>
+
+                <div className="top3-card__confidenceBar" style={{ marginTop: 12 }}>
+                  <div
+                    className="top3-card__confidenceBarFill"
+                    style={{ width: `${scoreBarPct}%`, background: t.accent }}
+                  />
+                </div>
+              </div>
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 8,
+                }}
+              >
+                <div className="top3-metaItem">
+                  <div className="top3-metaItem__label">Força</div>
+                  <div className="top3-metaItem__value">{premiumForceLabel}</div>
+                </div>
+
+                <div className="top3-metaItem">
+                  <div className="top3-metaItem__label">Confiabilidade</div>
+                  <div className="top3-metaItem__value">{premiumReliabilityLabel}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-            gap: 8,
+            border: "1px solid rgba(212,175,55,0.22)",
+            borderRadius: 18,
+            padding: 14,
+            background:
+              "linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012))",
           }}
         >
-          <div className="top3-metaItem">
-            <div className="top3-metaItem__label">Score IA</div>
-            <div className="top3-metaItem__value">
-              {Number.isFinite(engineScore) ? engineScore.toFixed(0) : "—"}
+          <div
+            style={{
+              color: t.accent,
+              fontSize: 16,
+              fontWeight: 900,
+              letterSpacing: 0.5,
+              marginBottom: 12,
+              textTransform: "uppercase",
+            }}
+          >
+            Explicação IA — Por que {animal ? animal.toUpperCase() : `G${grupoTxt}`} é o {rank}º?
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: isHero
+                ? "repeat(3, minmax(0, 1fr))"
+                : "1fr",
+              gap: 10,
+            }}
+          >
+            <div className="top3-metaItem">
+              <div className="top3-metaItem__label">📊 Base estatística</div>
+              <div className="top3-metaItem__value">
+                {periodFrom && periodTo
+                  ? `${ymdToBR(periodFrom)} → ${ymdToBR(periodTo)}`
+                  : `${samples} sorteios`}
+              </div>
+            </div>
+
+            <div className="top3-metaItem">
+              <div className="top3-metaItem__label">🔄 Transição</div>
+              <div className="top3-metaItem__value">
+                Após {baseLabel} às {baseHour}
+                <br />
+                {targetLabel} em 1º: {transitionFirst}x
+                <br />
+                {targetLabel} no TOP3: {transitionTop3}x
+              </div>
+            </div>
+
+            <div className="top3-metaItem">
+              <div className="top3-metaItem__label">🕘 Horário</div>
+              <div className="top3-metaItem__value">
+                Às {targetHour || "—"}
+                <br />
+                {targetLabel} em 1º: {hourFirst}x
+              </div>
+            </div>
+
+            <div className="top3-metaItem">
+              <div className="top3-metaItem__label">📅 Dia da semana</div>
+              <div className="top3-metaItem__value">
+                Mesmo dia da semana
+                <br />
+                {targetLabel} em 1º: {dowFirst}x
+              </div>
+            </div>
+
+            <div className="top3-metaItem">
+              <div className="top3-metaItem__label">🧠 Cenários semelhantes</div>
+              <div className="top3-metaItem__value">
+                {sceneSamples || transitionSamples || samples || 0} encontrados
+              </div>
+            </div>
+
+            <div className="top3-metaItem">
+              <div className="top3-metaItem__label">🎯 Precisão histórica</div>
+              <div className="top3-metaItem__value">
+                {transitionFirst > 0 && transitionSamples > 0
+                  ? `${transitionFirst} acertos em ${transitionSamples} análises`
+                  : "Em apuração"}
+              </div>
             </div>
           </div>
 
-          <div className="top3-metaItem">
-            <div className="top3-metaItem__label">Força</div>
-            <div className="top3-metaItem__value">{strengthLabel}</div>
-          </div>
-
-          <div className="top3-metaItem">
-            <div className="top3-metaItem__label">Confiabilidade</div>
-            <div className="top3-metaItem__value">{reliabilityLabel}</div>
-          </div>
-        </div>
-
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 8,
-            alignItems: "center",
-          }}
-        >
-          <span className="pp-chip">{trendLabel}</span>
-          <span className="pp-chip">
-            {visibleEvidenceCount} evidências
-          </span>
-          {evidenceModules.slice(0, 3).map((m) => (
-            <span key={m} className="pp-chip">
-              {String(m).toUpperCase()}
-            </span>
-          ))}
-        </div>
-
-        {evidenceReasons.length ? (
-          <div style={{ display: "grid", gap: 5 }}>
-            <div className="top3-card__sectionTitle">Por que este grupo?</div>
-            {evidenceReasons.map((reason, rIdx) => (
+          <div
+            style={{
+              marginTop: 12,
+              border: "1px solid rgba(212,175,55,0.20)",
+              borderRadius: 14,
+              padding: 12,
+              display: "flex",
+              gap: 10,
+              alignItems: "center",
+              background: "rgba(212,175,55,0.055)",
+            }}
+          >
+            <div style={{ fontSize: 26 }}>⭐</div>
+            <div>
               <div
-                key={`${key}_reason_${rIdx}`}
                 style={{
-                  color: "rgba(255,255,255,0.74)",
-                  fontSize: 12,
-                  lineHeight: 1.35,
+                  color: t.accent,
+                  fontWeight: 900,
+                  textTransform: "uppercase",
                 }}
               >
-                • {reason}
+                Score IA — confiança da análise
               </div>
-            ))}
+              <div style={{ color: "rgba(255,255,255,0.82)", fontSize: 13 }}>
+                {displayScore}/100 · {visibleEvidenceCount} evidências estatísticas · {trendLabel}
+              </div>
+            </div>
           </div>
-        ) : null}
+        </div>
       </div>
 
       <div className="top3-card__body">
