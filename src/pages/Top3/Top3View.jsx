@@ -353,6 +353,26 @@ function ImgWithFallback({ srcs, alt, size = 84, style }) {
   );
 }
 
+
+function getWeekdayNameBR(ymd) {
+  const s = String(ymd || "").trim();
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return "Dia da semana";
+
+  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+  const names = [
+    "Domingo",
+    "Segunda-feira",
+    "Terça-feira",
+    "Quarta-feira",
+    "Quinta-feira",
+    "Sexta-feira",
+    "Sábado",
+  ];
+
+  return names[d.getUTCDay()] || "Dia da semana";
+}
+
 function Top3Card({
   item,
   idx,
@@ -586,6 +606,8 @@ function Top3Card({
     ? `${animal} (G${grupoTxt})`
     : `G${grupoTxt}`;
 
+  const targetWeekdayName = getWeekdayNameBR(item?.meta?.next?.ymd || item?.targetYmd || "");
+
   const transitionFirst = Number(transitionDetail?.firstCount || 0);
   const transitionTop3 = Number(transitionDetail?.top3Count || transitionDetail?.top5Count || 0);
   const transitionSamples = Number(transitionDetail?.samples || 0);
@@ -727,7 +749,7 @@ function Top3Card({
                   background: "rgba(0,0,0,0.22)",
                 }}
               >
-                <div className="top3-card__confidenceLabel">SCORE IA</div>
+                <div className="top3-card__confidenceLabel">SCORE</div>
                 <div
                   style={{
                     fontSize: 42,
@@ -783,19 +805,6 @@ function Top3Card({
         >
           <div
             style={{
-              color: t.accent,
-              fontSize: 16,
-              fontWeight: 900,
-              letterSpacing: 0.5,
-              marginBottom: 12,
-              textTransform: "uppercase",
-            }}
-          >
-            Explicação IA — Por que {animal ? animal.toUpperCase() : `G${grupoTxt}`} é o {rank}º?
-          </div>
-
-          <div
-            style={{
               display: "grid",
               gridTemplateColumns: isHero
                 ? "repeat(3, minmax(0, 1fr))"
@@ -835,7 +844,7 @@ function Top3Card({
             <div className="top3-metaItem">
               <div className="top3-metaItem__label">📅 Dia da semana</div>
               <div className="top3-metaItem__value">
-                Mesmo dia da semana
+                {targetWeekdayName}
                 <br />
                 {targetLabel} em 1º: {dowFirst}x
               </div>
@@ -879,7 +888,7 @@ function Top3Card({
                   textTransform: "uppercase",
                 }}
               >
-                Score IA — confiança da análise
+                Score — confiança da análise
               </div>
               <div style={{ color: "rgba(255,255,255,0.82)", fontSize: 13 }}>
                 {displayScore}/100 · {visibleEvidenceCount} evidências estatísticas · {trendLabel}
@@ -1059,7 +1068,7 @@ function TimelineSlot({
       : analysis.type === "hit_exact"
         ? `🎯 ACERTO TOTAL (${analysis.score}%)`
         : analysis.type === "hit_centena"
-          ? `🟡 CENTENA (${analysis.score}%)`
+          ? `🟡 CENTENA (ORDEM) (${analysis.score}%)`
           : analysis.type === "hit_grupo"
             ? `✅ GRUPO (${analysis.score}%)`
             : "❌ ERRO (0%)";
