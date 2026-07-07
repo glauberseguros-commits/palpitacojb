@@ -1357,7 +1357,7 @@ export function computeConditionalNextTop3({
         ...reasonsBase,
         `Grupo G${g2}: aparições=${x.aparicoes} em ${samples} amostras do próximo sorteio`,
         `Grupo G${g2}: primeiros lugares=${x.primeiros}`,
-        `Probabilidade final estimada no TOP5: ${pct}%`,
+        `Probabilidade final estimada no TOP3: ${pct}%`,
         `Composição da probabilidade: condicional=${pctCond}% | estrutural=${pctBase}%`,
         `Presença indireta recente (2º-4º): ${x.recentIndirect}`,
         `Persistência curta recente: ${x.recentTop5}`,
@@ -2701,7 +2701,7 @@ export function computeConditionalNextTop3V2({
         ...reasonsBase,
         `Grupo G${g2}: transição para 1º=${(x.probTransition * 100).toFixed(2)}%`,
         `Grupo G${g2}: estrutural de 1º=${(x.probStructuralFirst * 100).toFixed(2)}%`,
-        `Grupo G${g2}: estrutural de TOP5=${(x.probStructuralTop5 * 100).toFixed(2)}%`,
+        `Grupo G${g2}: estrutural de TOP3=${(x.probStructuralTop5 * 100).toFixed(2)}%`,
         `Grupo G${g2}: duplicação histórica=${(x.probDuplication * 100).toFixed(2)}%`,
         `Grupo G${g2}: sequência ordem 2=${(x.probSeq2 * 100).toFixed(2)}%`,
         `Grupo G${g2}: par do dia=${(x.probPair * 100).toFixed(2)}% | confiança=${(x.pairConfidence * 100).toFixed(2)}%`,
@@ -2711,7 +2711,7 @@ export function computeConditionalNextTop3V2({
         `Grupo G${g2}: atraso normalizado=${(x.lateNorm * 100).toFixed(2)}%`,
         `Grupo G${g2}: 1ºs na camada=${x.condFirstCount}`,
         `Grupo G${g2}: 1ºs estruturais=${x.structuralFirstCount}`,
-        `Grupo G${g2}: TOP5 estruturais=${x.structuralTop5Count}`,
+        `Grupo G${g2}: TOP3 estruturais=${x.structuralTop5Count}`,
         `Grupo G${g2}: draws com duplicação=${x.duplicationCount}`,
         `Grupo G${g2}: peso de memória=${Number(x.memoryWeight || 0).toFixed(2)}`,
         `Grupo G${g2}: frequência no dia=${x.dayFreq}`,
@@ -3069,7 +3069,7 @@ export function computeStatisticalTop3V3({
         label: layer.label,
         samples: layer.samples,
         firstCount: Number(layer.first.get(grupo) || 0),
-        top5Count: Number(layer.top5.get(grupo) || 0),
+        top3Count: Number(layer.top5.get(grupo) || 0),
         probability: pLayer,
         weight: w,
       };
@@ -3088,7 +3088,7 @@ export function computeStatisticalTop3V3({
       label: "analogia histórica de cena",
       samples: Number(sceneHypothesis?.samples || 0),
       firstCount: Number(sceneHypothesis?.freq?.get?.(grupo) || 0),
-      top5Count: 0,
+      top3Count: 0,
       probability: pScene,
       weight: sceneWeight,
     };
@@ -3150,7 +3150,7 @@ export function computeStatisticalTop3V3({
         `Base: G${String(prevGrupo).padStart(2, "0")} @ ${lastH}`,
         `Probabilidade final G${g2}: ${(Number(rawScoreProb || 0) * 100).toFixed(2)}%`,
         ...strongest.map((d) =>
-          `${d.label}: ${d.firstCount}x em 1º | ${d.top5Count}x no TOP5 | amostras=${d.samples} | peso=${(d.weight * 100).toFixed(0)}%`
+          `${d.label}: ${d.firstCount}x em 1º | ${d.top3Count}x no TOP3 | amostras=${d.samples} | peso=${(d.weight * 100).toFixed(0)}%`
         ),
       ],
       meta: {

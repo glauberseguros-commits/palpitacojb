@@ -506,11 +506,11 @@ function Top3Card({
 
   if (transitionDetail) {
     const first = Number(transitionDetail.firstCount || 0);
-    const top5 = Number(transitionDetail.top5Count || 0);
+    const top5 = Number(transitionDetail.top3Count || 0);
     const amostras = Number(transitionDetail.samples || 0);
 
     smartReasons.push(
-      `Após G${baseGrupo} às ${baseHour}, G${grupoTxt} apareceu ${first}x em 1º e ${top5}x no TOP5 para o alvo ${targetHour}.`
+      `Após G${baseGrupo} às ${baseHour}, G${grupoTxt} apareceu ${first}x em 1º e ${top5}x no TOP3 para o alvo ${targetHour}.`
     );
 
     if (amostras > 0) {
@@ -520,19 +520,19 @@ function Top3Card({
 
   if (hourDetail) {
     const first = Number(hourDetail.firstCount || 0);
-    const top5 = Number(hourDetail.top5Count || 0);
+    const top5 = Number(hourDetail.top3Count || 0);
 
     smartReasons.push(
-      `No horário ${targetHour}, G${grupoTxt} apareceu ${first}x em 1º e ${top5}x no TOP5.`
+      `No horário ${targetHour}, G${grupoTxt} apareceu ${first}x em 1º e ${top5}x no TOP3.`
     );
   }
 
   if (dowDetail) {
     const first = Number(dowDetail.firstCount || 0);
-    const top5 = Number(dowDetail.top5Count || 0);
+    const top5 = Number(dowDetail.top3Count || 0);
 
     smartReasons.push(
-      `No mesmo dia da semana, G${grupoTxt} apareceu ${first}x em 1º e ${top5}x no TOP5.`
+      `No mesmo dia da semana, G${grupoTxt} apareceu ${first}x em 1º e ${top5}x no TOP3.`
     );
   }
 
