@@ -2524,11 +2524,11 @@ const list = Array.isArray(forecastSlot?.top3)
 
                 const hitMark = !hasResult
                   ? "⏳"
-                  : hitType === "milhar"
+                  : hitType === "hit_exact"
                     ? "🏆 100%"
-                    : hitType === "centena"
+                    : hitType === "hit_centena"
                       ? "✅✅ 66,67%"
-                      : hitType === "grupo"
+                      : hitType === "hit_grupo"
                         ? "✅ 33,33%"
                         : "❌ 0%";
 
