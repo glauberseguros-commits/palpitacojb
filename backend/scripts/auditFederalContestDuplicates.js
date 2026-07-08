@@ -70,6 +70,20 @@ function pickResultHash(d) {
   return JSON.stringify(prizes);
 }
 
+
+function keyFor(row) {
+  const prizes = Array.isArray(row.prizes)
+    ? row.prizes
+    : Object.values(row.prizes || {});
+
+  const normalized = prizes
+    .map((p) => String(p || "").padStart(4, "0"))
+    .join("|");
+
+  return `${row.date}::${normalized}`;
+}
+
+
 function scoreDoc(d) {
   let score = 0;
   if (pickDate(d)) score += 10;
@@ -83,12 +97,7 @@ function scoreDoc(d) {
   return score;
 }
 
-function makeKey(d) {
-  const date = pickDate(d);
-  const hash = safeStr(d.contestHash || d.resultHash || d.contentHash || "");
-  if (date && hash) return `${date}:${hash}`;
-  return `${date}:${pickResultHash(d)}`;
-}
+
 
 async function main() {
   if (!admin.apps.length) {
@@ -115,7 +124,14 @@ async function main() {
         data,
         date,
         hour: pickHour(data),
-        key: makeKey(data),
+        key: keyFor({
+          date,
+          prizes:
+            data.prizes ||
+            data.results ||
+            data.result ||
+            [],
+        }),
         score: scoreDoc(data),
       });
     }
