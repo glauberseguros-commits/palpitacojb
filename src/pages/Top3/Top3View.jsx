@@ -1169,6 +1169,8 @@ export default function Top3View(props) {
     build20,
     analysisYmd,
     analysisHourBucket,
+    loadedYmd,
+    ymdSafe,
     lastHourBucket,
   } = props || {};
 
@@ -1302,16 +1304,24 @@ const list = Array.isArray(forecastSlot?.top3)
   const secondaryItems = list.slice(1, 3);
 
   const historyAnchorYmd = useMemo(() => {
-  const y = String(analysisYmd || "").trim();
-  if (isYMD(y)) return y;
+  const loaded = String(loadedYmd || "").trim();
+  if (isYMD(loaded)) return loaded;
 
-  const lastTimeline = Array.isArray(timeline) && timeline.length
-    ? timeline[timeline.length - 1]
-    : null;
+  const selected = String(ymdSafe || "").trim();
+  if (isYMD(selected)) return selected;
 
-  const fallback = String(lastTimeline?.targetYmd || "").trim();
+  const realized = (Array.isArray(timeline) ? timeline : [])
+    .filter((slot) => String(slot?.status || "").toLowerCase() === "validated")
+    .slice()
+    .sort((a, b) => {
+      const ta = `${a?.targetYmd || ""} ${a?.targetHour || ""}`;
+      const tb = `${b?.targetYmd || ""} ${b?.targetHour || ""}`;
+      return tb.localeCompare(ta);
+    });
+
+  const fallback = String(realized?.[0]?.targetYmd || "").trim();
   return isYMD(fallback) ? fallback : "";
-}, [analysisYmd, timeline]);
+}, [loadedYmd, ymdSafe, timeline]);
 
   const historyRows = useMemo(() => {
   if (!Array.isArray(timeline) || !timeline.length || !historyAnchorYmd) return [];
