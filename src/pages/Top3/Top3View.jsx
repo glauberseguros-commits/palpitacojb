@@ -1343,10 +1343,19 @@ const list = Array.isArray(forecastSlot?.top3)
         },
         picks: slotTop3.map((t) => Number(t?.grupo)).filter((g) => Number.isFinite(g)),
         top3: slotTop3,
+
         result: hasResult ? Number(resultGrupo) : null,
         grupo: hasResult ? Number(resultGrupo) : null,
         animal: hasResult ? getAnimalLabel(resultGrupo) : "",
+
+        resultMilhar: extractResultMilhar(slot),
+
+        analysis,
+
         hit: analysis.type !== "miss" && analysis.type !== "none",
+        hitType: analysis.type,
+        hitScore: Number(analysis.score || 0),
+        hitPosition: Number(analysis.position ?? -1),
       };
     });
 }, [timeline, historyAnchorYmd]);
@@ -2511,11 +2520,17 @@ const list = Array.isArray(forecastSlot?.top3)
                   ? getImgFromGrupo(resultGrupo, 64)
                   : "";
 
+                const hitType = String(item?.hitType || item?.analysis?.type || "").trim();
+
                 const hitMark = !hasResult
                   ? "⏳"
-                  : item?.hit === true
-                    ? "✅"
-                    : "❌";
+                  : hitType === "milhar"
+                    ? "🏆 100%"
+                    : hitType === "centena"
+                      ? "✅✅ 66,67%"
+                      : hitType === "grupo"
+                        ? "✅ 33,33%"
+                        : "❌ 0%";
 
                 return (
                   <div
