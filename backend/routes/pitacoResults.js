@@ -523,6 +523,27 @@ async function mapWithConcurrency(items, limitN, mapper) {
    ROUTE
 ========================= */
 
+function buildCalendarStatus({ slotsSummary, blocked = false, blockedReason = "", isToday = false }) {
+  const expected = Number(slotsSummary?.expectedTotal || 0);
+  const found = Number(slotsSummary?.foundTotal || 0);
+  const missing = Number(slotsSummary?.missingTotal || 0);
+
+  let status = "empty";
+  if (blocked) status = blockedReason === "future_date" ? "future" : "blocked";
+  else if (isToday && missing > 0) status = "pending";
+  else if (expected > 0 && missing === 0) status = "complete";
+  else if (found > 0 && missing > 0) status = "partial";
+  else if (expected > 0 && found === 0) status = "empty";
+
+  return {
+    status,
+    expected,
+    found,
+    missing,
+    completionPct: Number(slotsSummary?.completionPct ?? 0),
+  };
+}
+
 function buildSlots(opts) {
   const {
     scheduleAll,
@@ -779,11 +800,26 @@ router.get("/results", async (req, res) => {
         scheduleAll: scheduleAll.length,
         expectedHard: expectedHard.length,
         expectedSoft: expectedSoft.length,
+        expectedTotal: expectedHard.length + expectedSoft.length,
         presentHours: presentHours.length,
+        foundTotal: presentHours.length,
         removedHard: removedHardApplied.size,
         removedSoft: removedSoftApplied.size,
         missingHard: slots.filter((s) => s.status === "missing").length,
         missingSoft: slots.filter((s) => s.status === "soft_missing").length,
+        missingTotal:
+          slots.filter((s) => s.status === "missing").length +
+          slots.filter((s) => s.status === "soft_missing").length,
+        completionPct:
+          expectedHard.length + expectedSoft.length
+            ? Number(
+                (
+                  (presentHours.length /
+                    (expectedHard.length + expectedSoft.length)) *
+                  100
+                ).toFixed(1)
+              )
+            : 100,
       };
 
       return res.json({
@@ -803,6 +839,7 @@ router.get("/results", async (req, res) => {
         expectedSoft,
         presentHours,
         slotsSummary,
+        calendarStatus: buildCalendarStatus({ slotsSummary, blocked: false, isToday }),
         slots,
       });
     }
@@ -865,11 +902,26 @@ router.get("/results", async (req, res) => {
       scheduleAll: scheduleAll.length,
       expectedHard: expectedHard.length,
       expectedSoft: expectedSoft.length,
+      expectedTotal: expectedHard.length + expectedSoft.length,
       presentHours: presentHours.length,
+      foundTotal: presentHours.length,
       removedHard: removedHardApplied.size,
       removedSoft: removedSoftApplied.size,
       missingHard: slots.filter((s) => s.status === "missing").length,
       missingSoft: slots.filter((s) => s.status === "soft_missing").length,
+      missingTotal:
+        slots.filter((s) => s.status === "missing").length +
+        slots.filter((s) => s.status === "soft_missing").length,
+      completionPct:
+        expectedHard.length + expectedSoft.length
+          ? Number(
+              (
+                (presentHours.length /
+                  (expectedHard.length + expectedSoft.length)) *
+                100
+              ).toFixed(1)
+            )
+          : 100,
     };
 
     return res.json({
@@ -889,6 +941,7 @@ router.get("/results", async (req, res) => {
       expectedSoft,
       presentHours,
       slotsSummary,
+      calendarStatus: buildCalendarStatus({ slotsSummary, blocked: false, isToday }),
       slots,
     });
   } catch (e) {
