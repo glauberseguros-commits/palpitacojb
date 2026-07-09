@@ -152,7 +152,25 @@ export function buildTop3TimelineViewModel({
   });
 
   if (typeof window !== "undefined") {
-    console.log("[TOP3 AUDIT]", timelineAudit);
+    window.__TOP3_AUDIT__ = timelineAudit;
+
+    console.groupCollapsed("[TOP3 AUDIT]");
+    console.table([
+      {
+        Loteria: timelineAudit.lotteryKey,
+        Previsoes: timelineAudit.total,
+        "TOP1 %": timelineAudit.top1Rate,
+        "TOP3 %": timelineAudit.top3Rate,
+      },
+    ]);
+
+    console.log("Por horário");
+    console.table(timelineAudit.byHour);
+
+    console.log("Por data");
+    console.table(timelineAudit.byDate);
+
+    console.groupEnd();
   }
 
 
