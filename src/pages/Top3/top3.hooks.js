@@ -737,6 +737,17 @@ export function useTop3Controller() {
       setRangeInfo({ from: rangeFrom, to: rangeTo });
       setLoadingStage({ today: false, range: true });
 
+      if (typeof window !== "undefined") {
+        window.__TOP3_BEFORE_HISTORY__ = {
+          baseY,
+          baseH,
+          resolvedTargetY,
+          resolvedTargetH,
+          lottery: lKey,
+        };
+        console.log("[TOP3 BEFORE HISTORY]", window.__TOP3_BEFORE_HISTORY__);
+      }
+
       const histRaw = await loadHistoryRange({
         getKingResultsByRange,
         uf: ufResolved,
@@ -766,6 +777,17 @@ export function useTop3Controller() {
 
       setRangeDraws(hist);
     } catch (e) {
+
+      if (typeof window !== "undefined") {
+        window.__TOP3_LOAD_ERROR__ = {
+          name: e?.name || null,
+          message: e?.message || String(e),
+          stack: e?.stack || null,
+        };
+
+        console.error("[TOP3 LOAD ERROR]", e);
+      }
+
       if (requestIdRef.current === currentRequestId) {
         setError(String(e?.message || e || "Falha ao carregar dados do TOP3."));
         setBaseDrawState(null);
