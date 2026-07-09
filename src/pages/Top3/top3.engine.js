@@ -3692,58 +3692,98 @@ export function buildMilharesForGrupo({
         const milhar = String(x.milhar || "").padStart(4, "0").slice(-4);
         const prefix = milhar.slice(0, 1);
         const centena = milhar.slice(1);
+        const centenaScore = Number(centenaScoreMap.get(centena) || 0);
 
         return {
           ...x,
           milhar,
           prefix,
           centena,
-          centenaScore: Number(centenaScoreMap.get(centena) || 0),
+          centenaScore,
           adjustedScore:
-            Number(centenaScoreMap.get(centena) || 0) * 2 +
+            centenaScore * 2 +
             Number(x.score || 0) -
             (prefix === "0" ? 80 : 0),
         };
+      });
+
+    const byCentena = new Map();
+
+    for (const item of candidates) {
+      if (!byCentena.has(item.centena)) byCentena.set(item.centena, []);
+      byCentena.get(item.centena).push(item);
+    }
+
+    const centenaGroups = Array.from(byCentena.entries())
+      .map(([centena, items]) => {
+        const sortedItems = items.slice().sort((a, b) => {
+          if (Number(b.adjustedScore) !== Number(a.adjustedScore)) {
+            return Number(b.adjustedScore) - Number(a.adjustedScore);
+          }
+          if (Number(b.score) !== Number(a.score)) return Number(b.score) - Number(a.score);
+          if (Number(b.targetHits) !== Number(a.targetHits)) return Number(b.targetHits) - Number(a.targetHits);
+          if (Number(b.freq) !== Number(a.freq)) return Number(b.freq) - Number(a.freq);
+          return milharCompareAsc(a.milhar, b.milhar);
+        });
+
+        const top = sortedItems[0] || {};
+
+        return {
+          centena,
+          centenaScore: Number(top.centenaScore || 0),
+          bestScore: Number(top.adjustedScore || 0),
+          items: sortedItems,
+        };
       })
       .sort((a, b) => {
-        if (Number(b.adjustedScore) !== Number(a.adjustedScore)) {
-          return Number(b.adjustedScore) - Number(a.adjustedScore);
+        if (Number(b.centenaScore) !== Number(a.centenaScore)) {
+          return Number(b.centenaScore) - Number(a.centenaScore);
         }
-        if (Number(b.score) !== Number(a.score)) return Number(b.score) - Number(a.score);
-        if (Number(b.targetHits) !== Number(a.targetHits)) return Number(b.targetHits) - Number(a.targetHits);
-        if (Number(b.freq) !== Number(a.freq)) return Number(b.freq) - Number(a.freq);
-        return milharCompareAsc(a.milhar, b.milhar);
+        if (Number(b.bestScore) !== Number(a.bestScore)) {
+          return Number(b.bestScore) - Number(a.bestScore);
+        }
+        return String(a.centena).localeCompare(String(b.centena));
       });
 
     const picked = [];
     const usedPrefixes = new Set();
     const usedCentenas = new Set();
 
-    for (const item of candidates) {
+    // Fase 1: uma melhor milhar por centena forte, evitando repetir prefixo.
+    for (const group of centenaGroups) {
       if (picked.length >= limit) break;
-      if (usedPrefixes.has(item.prefix)) continue;
-      if (usedCentenas.has(item.centena)) continue;
+
+      const item = group.items.find((x) => !usedPrefixes.has(x.prefix));
+      if (!item) continue;
 
       picked.push(item);
       usedPrefixes.add(item.prefix);
       usedCentenas.add(item.centena);
     }
 
-    for (const item of candidates) {
+    // Fase 2: se faltar, pega novas centenas fortes mesmo repetindo prefixo.
+    for (const group of centenaGroups) {
       if (picked.length >= limit) break;
-      if (picked.some((x) => x.milhar === item.milhar)) continue;
-      if (usedCentenas.has(item.centena)) continue;
+      if (usedCentenas.has(group.centena)) continue;
+
+      const item = group.items.find((x) => !picked.some((p) => p.milhar === x.milhar));
+      if (!item) continue;
 
       picked.push(item);
       usedPrefixes.add(item.prefix);
       usedCentenas.add(item.centena);
     }
 
-    for (const item of candidates) {
+    // Fase 3: se ainda faltar, permite mais de uma milhar da mesma centena.
+    for (const group of centenaGroups) {
       if (picked.length >= limit) break;
-      if (picked.some((x) => x.milhar === item.milhar)) continue;
 
-      picked.push(item);
+      for (const item of group.items) {
+        if (picked.length >= limit) break;
+        if (picked.some((p) => p.milhar === item.milhar)) continue;
+
+        picked.push(item);
+      }
     }
 
     return picked.slice(0, limit);
