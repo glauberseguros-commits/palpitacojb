@@ -417,7 +417,10 @@ export function useTop3Controller() {
 
   const load = useCallback(async () => {
     const lKey = safeStr(lotteryKeySafe).toUpperCase();
-    if (!lKey || !isYMD(ymdSafe)) return;
+    if (!lKey || !isYMD(ymdSafe)) {
+      if (typeof window !== "undefined") window.__TOP3_LOAD_STOP__ = { step: "guard_initial", lKey, ymdSafe };
+      return;
+    }
 
     setLoading(true);
     setLoadingStage({ today: true, range: false });
@@ -463,7 +466,10 @@ export function useTop3Controller() {
           readPolicy: "server",
         })) || [];
 
-      if (requestIdRef.current !== currentRequestId) return;
+      if (requestIdRef.current !== currentRequestId) {
+        if (typeof window !== "undefined") window.__TOP3_LOAD_STOP__ = { step: "stale_after_today", currentRequestId, active: requestIdRef.current };
+        return;
+      }
 
       setLoadedYmd(effectiveYmd);
       setTodayDraws(today);
@@ -507,6 +513,7 @@ export function useTop3Controller() {
       setSkipPtRio18ByFederal(Boolean(shouldSkipPtRio18));
 
       if (!Array.isArray(todaySchedule) || !todaySchedule.length) {
+        if (typeof window !== "undefined") window.__TOP3_LOAD_STOP__ = { step: "no_schedule", lKey, effectiveYmd, todayLength: Array.isArray(today) ? today.length : -1, todaySchedule };
         resetStateForNoData();
         setError("Não há grade de sorteio válida para esta data/loteria.");
         return;
@@ -561,6 +568,7 @@ export function useTop3Controller() {
         const firstHourToday = toHourBucket(todaySchedule?.[0]);
 
         if (!firstHourToday) {
+          if (typeof window !== "undefined") window.__TOP3_LOAD_STOP__ = { step: "no_first_hour", lKey, effectiveYmd, todaySchedule };
           resetStateForNoData();
           setError(
             "Não foi possível determinar o primeiro horário válido para esta loteria."
@@ -597,6 +605,7 @@ export function useTop3Controller() {
             });
 
         if (!previousResolved?.draw) {
+          if (typeof window !== "undefined") window.__TOP3_LOAD_STOP__ = { step: "no_previous_base", lKey, effectiveYmd, firstHourToday, todayLength: Array.isArray(today) ? today.length : -1, minDate };
           resetStateForNoData();
           setError(
             "Não foi possível localizar a base anterior ao primeiro sorteio do dia."
@@ -622,6 +631,17 @@ export function useTop3Controller() {
         !isYMD(resolvedTargetY) ||
         !resolvedTargetH
       ) {
+        if (typeof window !== "undefined") window.__TOP3_LOAD_STOP__ = {
+          step: "invalid_base_or_target",
+          lKey,
+          effectiveYmd,
+          baseDraw: !!baseDraw,
+          baseY,
+          baseH,
+          baseGrupo,
+          resolvedTargetY,
+          resolvedTargetH,
+        };
         resetStateForNoData();
         setError("Base ou alvo inválido para cálculo do TOP3.");
         return;
