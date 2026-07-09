@@ -23,7 +23,6 @@ import {
 
 import {
   getScheduleForLottery,
-  isFederalDrawDay,
   findLastDrawInList,
   pickDrawHour,
   pickDrawYMD,
@@ -32,6 +31,7 @@ import {
   build16MilharesForGrupo,
   buildMilharesForGrupo,
   getNextSlotForLottery,
+  isFederalDrawDay,
 } from "./top3.engine";
 
 import { lotteryLabel } from "./top3.selectors";
@@ -96,6 +96,16 @@ function drawKey(draw) {
   const y = pickDrawYMD(draw);
   const h = toHourBucket(pickDrawHour(draw));
   return isYMD(y) && h ? `${y}|${h}` : "";
+}
+
+function hasDrawAtHour(draws, hourBucket) {
+  const target = toHourBucket(hourBucket);
+  if (!target) return false;
+
+  return (Array.isArray(draws) ? draws : []).some((d) => {
+    const h = toHourBucket(pickDrawHour(d));
+    return h === target;
+  });
 }
 
 function mergeBaseIntoRange(rangeDraws, baseDraw) {
@@ -268,6 +278,7 @@ export function useTop3Controller() {
   const [lastHourBucket, setLastHourBucket] = useState("");
   const [targetHourBucket, setTargetHourBucket] = useState("");
   const [targetYmd, setTargetYmd] = useState("");
+  const [skipPtRio18ByFederal, setSkipPtRio18ByFederal] = useState(false);
 
   const [lastInfo, setLastInfo] = useState({
     lastYmd: "",
@@ -381,6 +392,7 @@ export function useTop3Controller() {
     setLastHourBucket("");
     setTargetHourBucket("");
     setTargetYmd("");
+    setSkipPtRio18ByFederal(false);
     setBaseDrawState(null);
 
     setLastInfo({
@@ -456,13 +468,43 @@ export function useTop3Controller() {
       setLoadedYmd(effectiveYmd);
       setTodayDraws(today);
 
-      const todaySchedule = getScheduleForLottery({
+      let todaySchedule = getScheduleForLottery({
         lotteryKey: lKey,
         ymd: effectiveYmd,
         PT_RIO_SCHEDULE_NORMAL,
         PT_RIO_SCHEDULE_WED_SAT,
         FEDERAL_SCHEDULE,
       });
+
+      let shouldSkipPtRio18 = false;
+
+      if (lKey === "PT_RIO" && isFederalDrawDay(effectiveYmd)) {
+        let federalToday = [];
+
+        try {
+          federalToday =
+            (await getKingResultsByDate({
+              uf: "FEDERAL",
+              date: effectiveYmd,
+              readPolicy: "server",
+            })) || [];
+        } catch {
+          federalToday = [];
+        }
+
+        const federal20Exists = hasDrawAtHour(federalToday, "20:00");
+        const ptRio18Exists = hasDrawAtHour(today, "18:00");
+
+        shouldSkipPtRio18 = federal20Exists && !ptRio18Exists;
+
+        if (shouldSkipPtRio18) {
+          todaySchedule = (Array.isArray(todaySchedule) ? todaySchedule : [])
+            .map(toHourBucket)
+            .filter((h) => h && h !== "18:00");
+        }
+      }
+
+      setSkipPtRio18ByFederal(Boolean(shouldSkipPtRio18));
 
       if (!Array.isArray(todaySchedule) || !todaySchedule.length) {
         resetStateForNoData();
@@ -491,17 +533,30 @@ export function useTop3Controller() {
         baseY = pickDrawYMD(todayLast) || effectiveYmd;
         baseH = toHourBucket(pickDrawHour(todayLast));
 
-        const nextSlot = getNextSlotForLottery({
-          lotteryKey: lKey,
-          ymd: baseY,
-          hourBucket: baseH,
-          PT_RIO_SCHEDULE_NORMAL,
-          PT_RIO_SCHEDULE_WED_SAT,
-          FEDERAL_SCHEDULE,
-        });
+        const effectiveTodaySchedule = (Array.isArray(todaySchedule) ? todaySchedule : [])
+          .map(toHourBucket)
+          .filter(Boolean);
 
-        resolvedTargetY = safeStr(nextSlot?.ymd || "");
-        resolvedTargetH = toHourBucket(nextSlot?.hour || "");
+        const baseIdx = baseY === effectiveYmd
+          ? effectiveTodaySchedule.indexOf(baseH)
+          : -1;
+
+        if (baseIdx >= 0 && baseIdx < effectiveTodaySchedule.length - 1) {
+          resolvedTargetY = effectiveYmd;
+          resolvedTargetH = effectiveTodaySchedule[baseIdx + 1];
+        } else {
+          const nextSlot = getNextSlotForLottery({
+            lotteryKey: lKey,
+            ymd: baseY,
+            hourBucket: baseH,
+            PT_RIO_SCHEDULE_NORMAL,
+            PT_RIO_SCHEDULE_WED_SAT,
+            FEDERAL_SCHEDULE,
+          });
+
+          resolvedTargetY = safeStr(nextSlot?.ymd || "");
+          resolvedTargetH = toHourBucket(nextSlot?.hour || "");
+        }
       } else {
         const firstHourToday = toHourBucket(todaySchedule?.[0]);
 
@@ -753,7 +808,7 @@ export function useTop3Controller() {
   }, [analytics, build20]);
 
   const timelineTop3 = useMemo(() => {
-    return buildTop3TimelineViewModel({
+    const built = buildTop3TimelineViewModel({
       todayDraws,
       rangeDraws,
       lotteryKeySafe,
@@ -761,7 +816,28 @@ export function useTop3Controller() {
       analysisYmd,
       publicBase: String(process.env.PUBLIC_URL || "").trim(),
     });
-  }, [todayDraws, rangeDraws, lotteryKeySafe, timelineYmd, analysisYmd]);
+
+    if (
+      lotteryKeySafe === "PT_RIO" &&
+      skipPtRio18ByFederal &&
+      isYMD(timelineYmd)
+    ) {
+      return (Array.isArray(built) ? built : []).filter((slot) => {
+        const y = String(slot?.targetYmd || "").trim();
+        const h = toHourBucket(slot?.targetHour || "");
+        return !(y === timelineYmd && h === "18:00");
+      });
+    }
+
+    return built;
+  }, [
+    todayDraws,
+    rangeDraws,
+    lotteryKeySafe,
+    timelineYmd,
+    analysisYmd,
+    skipPtRio18ByFederal,
+  ]);
 
   useEffect(() => {
     if (!analysisYmd || !analysisHourBucket) return;
