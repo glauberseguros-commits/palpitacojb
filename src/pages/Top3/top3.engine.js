@@ -3614,13 +3614,33 @@ export function buildMilharesForGrupo({
     }
   }
 
-  const ranked = Array.from(byMilhar.values()).sort((a, b) => {
-    if (Number(b.score) !== Number(a.score)) return Number(b.score) - Number(a.score);
-    if (Number(b.targetHits) !== Number(a.targetHits)) return Number(b.targetHits) - Number(a.targetHits);
-    if (Number(b.freq) !== Number(a.freq)) return Number(b.freq) - Number(a.freq);
-    if (Number(b.lastTs) !== Number(a.lastTs)) return Number(b.lastTs) - Number(a.lastTs);
-    return milharCompareAsc(a.milhar, b.milhar);
-  });
+  const ranked = Array.from(byMilhar.values())
+    .map((m) => {
+      const freq = Number(m.freq || 0);
+      const targetHits = Number(m.targetHits || 0);
+      const scheduleHits = Number(m.scheduleHits || 0);
+      const sameDowHits = Number(m.sameDowHits || 0);
+      const firstPrizeHits = Number(m.firstPrizeHits || 0);
+      const recencyBoost = Number(m.lastTs || 0) > 0 ? 1 : 0;
+
+      return {
+        ...m,
+        score:
+          freq * 100 +
+          targetHits * 70 +
+          scheduleHits * 35 +
+          sameDowHits * 25 +
+          firstPrizeHits * 45 +
+          recencyBoost * 5,
+      };
+    })
+    .sort((a, b) => {
+      if (Number(b.score) !== Number(a.score)) return Number(b.score) - Number(a.score);
+      if (Number(b.targetHits) !== Number(a.targetHits)) return Number(b.targetHits) - Number(a.targetHits);
+      if (Number(b.freq) !== Number(a.freq)) return Number(b.freq) - Number(a.freq);
+      if (Number(b.lastTs) !== Number(a.lastTs)) return Number(b.lastTs) - Number(a.lastTs);
+      return milharCompareAsc(a.milhar, b.milhar);
+    });
 
   const usedMilhares = new Set();
   const slots = [];
