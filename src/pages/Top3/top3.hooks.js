@@ -728,6 +728,22 @@ export function useTop3Controller() {
       if (requestIdRef.current !== currentRequestId) return;
 
       const hist = mergeBaseIntoRange(histRaw, baseDraw);
+
+      if (typeof window !== "undefined") {
+        window.__TOP3_RANGE_DEBUG__ = {
+          histRaw: Array.isArray(histRaw) ? histRaw.length : -1,
+          hist: Array.isArray(hist) ? hist.length : -1,
+          baseDraw: !!baseDraw,
+          baseConcurso:
+            baseDraw?.concurso ??
+            baseDraw?.contest ??
+            baseDraw?.numero ??
+            null,
+        };
+
+        console.log("[TOP3 RANGE DEBUG]", window.__TOP3_RANGE_DEBUG__);
+      }
+
       setRangeDraws(hist);
     } catch (e) {
       if (requestIdRef.current === currentRequestId) {
