@@ -478,7 +478,7 @@ export function useTop3Controller() {
 
       let shouldSkipPtRio18 = false;
 
-      if (lKey === "PT_RIO" && isFederalDrawDay(effectiveYmd)) {
+      if ((lKey === "PT_RIO" || lKey === "RJ") && isFederalDrawDay(effectiveYmd)) {
         let federalToday = [];
 
         try {
@@ -818,7 +818,7 @@ export function useTop3Controller() {
     });
 
     if (
-      lotteryKeySafe === "PT_RIO" &&
+      (lotteryKeySafe === "PT_RIO" || lotteryKeySafe === "RJ") &&
       skipPtRio18ByFederal &&
       isYMD(timelineYmd)
     ) {
