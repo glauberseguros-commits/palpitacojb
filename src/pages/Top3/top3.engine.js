@@ -3515,10 +3515,13 @@ export function buildMilharesForGrupo({
   schedule,
   grupo2,
   count = 20,
+  targetYmd = "",
 }) {
   const list = Array.isArray(rangeDraws) ? rangeDraws : [];
   const target = toHourBucket(analysisHourBucket);
   const schSet = scheduleSet(schedule);
+  const targetDay = safeStr(targetYmd);
+  const targetDow = isYMD(targetDay) ? getDowKey(targetDay) : null;
 
   const N = Number.isFinite(Number(count))
     ? Math.max(4, Math.trunc(Number(count)))
@@ -3533,125 +3536,114 @@ export function buildMilharesForGrupo({
   const dezenasFixas = getDezenasFixasFromGrupo(grupoNum);
   if (!dezenasFixas.length) return { dezenas: [], slots: [] };
 
-  const collectMilhares = (mode) => {
-    const out = [];
-
-    for (const d of list) {
-      const h = toHourBucket(pickDrawHour(d));
-      if (!h) continue;
-
-      if (mode === "target_only" && target && h !== target) continue;
-      if (mode === "schedule_only" && schSet.size && !schSet.has(h)) continue;
-
-      const ps = Array.isArray(d?.prizes) ? d.prizes : [];
-
-      for (const prize of ps) {
-        const pos = guessPrizePos(prize);
-        if (!Number.isFinite(Number(pos)) || Number(pos) < 1 || Number(pos) > 7) continue;
-
-        const g = guessPrizeGrupo(prize);
-        if (Number(g) !== grupoNum) continue;
-
-        const m4 = pickPrizeMilhar4(prize);
-        if (!m4 || !/^\d{4}$/.test(String(m4))) continue;
-
-        const dz = getDezena2(m4);
-        if (!dz || !dezenasFixas.includes(dz)) continue;
-
-        out.push(String(m4));
-      }
-    }
-
-    return out;
-  };
-
-  const targetPrizes = collectMilhares("target_only");
-  const schedulePrizes = collectMilhares("schedule_only");
-  const allPrizes = collectMilhares("all");
-
   const perDezena = Math.max(1, Math.ceil(N / dezenasFixas.length));
-  const slots = [];
-  const usedCentenas = new Set();
-  const usedMilhares = new Set();
+  const byMilhar = new Map();
 
-  const bestMilharForCentena = (centena3, pools) => {
-    const counts = new Map();
+  for (const d of list) {
+    const y = pickDrawYMD(d);
+    const h = toHourBucket(pickDrawHour(d));
+    if (!h) continue;
 
-    for (const { prizes, weight } of pools) {
-      for (const m4 of prizes) {
-        if (getCentena3(m4) !== centena3) continue;
-        counts.set(m4, Number(counts.get(m4) || 0) + Number(weight || 1));
+    const isTargetHour = target && h === target;
+    const isScheduleHour = schSet.size && schSet.has(h);
+    const isSameDow = targetDow !== null && Number(getDowKey(y)) === Number(targetDow);
+    const ts = ymdHourToTs(y, h);
+
+    const ps = Array.isArray(d?.prizes) ? d.prizes : [];
+
+    for (const prize of ps) {
+      const pos = Number(guessPrizePos(prize));
+      if (!Number.isFinite(pos) || pos < 1 || pos > 7) continue;
+
+      const g = Number(guessPrizeGrupo(prize));
+      if (g !== grupoNum) continue;
+
+      const m4 = String(pickPrizeMilhar4(prize) || "").replace(/\D+/g, "").padStart(4, "0").slice(-4);
+      if (!/^\d{4}$/.test(m4)) continue;
+
+      const dz = getDezena2(m4);
+      const c3 = getCentena3(m4);
+
+      if (!dz || !c3 || !dezenasFixas.includes(dz)) continue;
+
+      const current = byMilhar.get(m4) || {
+        milhar: m4,
+        dezena: dz,
+        centena: c3,
+        freq: 0,
+        score: 0,
+        targetHits: 0,
+        scheduleHits: 0,
+        sameDowHits: 0,
+        firstPrizeHits: 0,
+        lastTs: 0,
+      };
+
+      let inc = 1;
+
+      if (isTargetHour) {
+        inc += 8;
+        current.targetHits += 1;
       }
+
+      if (isScheduleHour) {
+        inc += 3;
+        current.scheduleHits += 1;
+      }
+
+      if (isSameDow) {
+        inc += 2;
+        current.sameDowHits += 1;
+      }
+
+      if (pos === 1) {
+        inc += 3;
+        current.firstPrizeHits += 1;
+      } else if (pos <= 3) {
+        inc += 1;
+      }
+
+      current.freq += 1;
+      current.score += inc;
+
+      if (Number.isFinite(ts)) {
+        current.lastTs = Math.max(Number(current.lastTs || 0), ts);
+      }
+
+      byMilhar.set(m4, current);
     }
+  }
 
-    return Array.from(counts.entries())
-      .sort((a, b) => b[1] - a[1] || milharCompareAsc(a[0], b[0]))
-      .map((x) => x[0])[0] || "";
-  };
+  const ranked = Array.from(byMilhar.values()).sort((a, b) => {
+    if (Number(b.score) !== Number(a.score)) return Number(b.score) - Number(a.score);
+    if (Number(b.targetHits) !== Number(a.targetHits)) return Number(b.targetHits) - Number(a.targetHits);
+    if (Number(b.freq) !== Number(a.freq)) return Number(b.freq) - Number(a.freq);
+    if (Number(b.lastTs) !== Number(a.lastTs)) return Number(b.lastTs) - Number(a.lastTs);
+    return milharCompareAsc(a.milhar, b.milhar);
+  });
 
-  const makeFallbackMilhar = (centena3, seed = 0) => {
-    const c3 = String(centena3 || "").replace(/\D+/g, "").padStart(3, "0").slice(-3);
-
-    for (let i = 0; i <= 9; i += 1) {
-      const prefix = String((grupoNum + seed + i) % 10);
-      const m4 = `${prefix}${c3}`;
-      if (!usedMilhares.has(m4)) return m4;
-    }
-
-    return `0${c3}`;
-  };
-
-  const pools = [
-    { prizes: targetPrizes, weight: 5 },
-    { prizes: schedulePrizes, weight: 2 },
-    { prizes: allPrizes, weight: 1 },
-  ];
+  const usedMilhares = new Set();
+  const slots = [];
 
   for (const dz of dezenasFixas) {
-    const centenaScores = new Map();
-
-    for (const { prizes, weight } of pools) {
-      for (const m4 of prizes) {
-        if (getDezena2(m4) !== dz) continue;
-        const c3 = getCentena3(m4);
-        if (!c3) continue;
-
-        centenaScores.set(c3, Number(centenaScores.get(c3) || 0) + Number(weight || 1));
-      }
-    }
-
-    for (let h = 0; h <= 9; h += 1) {
-      const c3 = `${h}${dz}`;
-      if (!centenaScores.has(c3)) centenaScores.set(c3, 0);
-    }
-
-    const rankedCentenas = Array.from(centenaScores.entries())
-      .sort((a, b) => {
-        if (Number(b[1]) !== Number(a[1])) return Number(b[1]) - Number(a[1]);
-        return String(a[0]).localeCompare(String(b[0]), "en", { numeric: true });
-      })
-      .map(([centena]) => centena);
+    const items = ranked
+      .filter((x) => x.dezena === dz && !usedMilhares.has(x.milhar))
+      .slice(0, perDezena);
 
     let pushed = 0;
 
-    for (const c3 of rankedCentenas) {
-      if (pushed >= perDezena) break;
-      if (usedCentenas.has(c3)) continue;
-
-      let m4 = bestMilharForCentena(c3, pools) || makeFallbackMilhar(c3, pushed);
-
-      if (!/^\d{4}$/.test(String(m4))) {
-        m4 = makeFallbackMilhar(c3, pushed);
-      }
-
-      if (usedMilhares.has(m4)) {
-        m4 = makeFallbackMilhar(c3, pushed + 4);
-      }
-
-      usedCentenas.add(c3);
-      usedMilhares.add(m4);
-
-      slots.push({ dezena: dz, milhar: m4 });
+    for (const item of items) {
+      usedMilhares.add(item.milhar);
+      slots.push({
+        dezena: dz,
+        milhar: item.milhar,
+        score: item.score,
+        freq: item.freq,
+        targetHits: item.targetHits,
+        scheduleHits: item.scheduleHits,
+        sameDowHits: item.sameDowHits,
+        firstPrizeHits: item.firstPrizeHits,
+      });
       pushed += 1;
     }
 

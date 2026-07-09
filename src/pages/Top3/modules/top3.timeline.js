@@ -181,6 +181,7 @@ export function buildTop3TimelineViewModel({
             }),
             grupo2: g,
             count: 20,
+            targetYmd: slotYmd,
           });
 
           milharesCache.set(cacheKey, out);

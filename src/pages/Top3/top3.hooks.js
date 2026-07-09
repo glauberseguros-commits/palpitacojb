@@ -778,16 +778,17 @@ export function useTop3Controller() {
   ]);
 
   const build20 = useCallback(
-    (grupo2) => {
+    (grupo2, item = null) => {
       return buildMilharesForGrupo({
         rangeDraws,
         analysisHourBucket,
         schedule,
         grupo2,
         count: 20,
+        targetYmd: item?.meta?.next?.ymd || analysisYmd,
       });
     },
-    [rangeDraws, analysisHourBucket, schedule]
+    [rangeDraws, analysisHourBucket, schedule, analysisYmd]
   );
 
   const layerMetaText = useMemo(() => {
@@ -913,6 +914,7 @@ export function useTop3Controller() {
         analysisHourBucket,
         schedule,
         grupo2,
+        targetYmd: analysisYmd,
       }),
 
     build20,

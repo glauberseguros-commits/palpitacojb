@@ -129,6 +129,7 @@ export function buildTop3CardViewModel({
       schedule,
       grupo2: g,
       count: 20,
+      targetYmd: nextY,
     });
 
     milharesCache?.set?.(cacheKey, out);
