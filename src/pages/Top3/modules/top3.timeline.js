@@ -10,6 +10,7 @@ import {
   getScheduleForLottery,
   buildMilharesForGrupo,
   buildTimelineTop3,
+  auditTop3Timeline,
 } from "../top3.engine";
 
 import { getAnimalLabel, getImgFromGrupo } from "../../../constants/bichoMap";
@@ -144,6 +145,16 @@ export function buildTop3TimelineViewModel({
     PT_RIO_SCHEDULE_WED_SAT,
     FEDERAL_SCHEDULE,
   });
+
+  const timelineAudit = auditTop3Timeline({
+    timeline: rawTimeline,
+    lotteryKey: lotteryKeySafe,
+  });
+
+  if (typeof window !== "undefined") {
+    console.log("[TOP3 AUDIT]", timelineAudit);
+  }
+
 
   const milharesCache = new Map();
 

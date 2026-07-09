@@ -3835,6 +3835,102 @@ export function build20MilharesForGrupo(args) {
    TIMELINE DO DIA (CADEIA PREDITIVA)
 ========================= */
 
+
+
+export function auditTop3Timeline({
+  timeline,
+  lotteryKey = "",
+}) {
+  const rows = Array.isArray(timeline) ? timeline : [];
+
+  const validated = rows.filter((slot) => {
+    const status = String(slot?.status || "").toLowerCase();
+    return status === "validated" && Number.isFinite(Number(slot?.resultGrupo));
+  });
+
+  const total = validated.length;
+
+  const top1Hits = validated.filter((slot) => {
+    const result = Number(slot.resultGrupo);
+    const first = Number(slot?.top3?.[0]?.grupo);
+    return Number.isFinite(first) && first === result;
+  }).length;
+
+  const top3Hits = validated.filter((slot) => {
+    const result = Number(slot.resultGrupo);
+    return (Array.isArray(slot?.top3) ? slot.top3 : [])
+      .slice(0, 3)
+      .some((item) => Number(item?.grupo) === result);
+  }).length;
+
+  function pct(n, d) {
+    if (!d) return 0;
+    return Number(((Number(n || 0) / Number(d || 1)) * 100).toFixed(2));
+  }
+
+  function groupBy(keyFn) {
+    const map = new Map();
+
+    for (const slot of validated) {
+      const key = keyFn(slot);
+      const current = map.get(key) || {
+        key,
+        total: 0,
+        top1Hits: 0,
+        top3Hits: 0,
+      };
+
+      const result = Number(slot.resultGrupo);
+      const first = Number(slot?.top3?.[0]?.grupo);
+      const picks = Array.isArray(slot?.top3) ? slot.top3.slice(0, 3) : [];
+
+      current.total += 1;
+      if (Number.isFinite(first) && first === result) current.top1Hits += 1;
+      if (picks.some((item) => Number(item?.grupo) === result)) current.top3Hits += 1;
+
+      map.set(key, current);
+    }
+
+    return Array.from(map.values())
+      .map((x) => ({
+        ...x,
+        top1Rate: pct(x.top1Hits, x.total),
+        top3Rate: pct(x.top3Hits, x.total),
+      }))
+      .sort((a, b) => {
+        if (b.top3Rate !== a.top3Rate) return b.top3Rate - a.top3Rate;
+        return b.total - a.total;
+      });
+  }
+
+  return {
+    lotteryKey,
+    total,
+    top1Hits,
+    top3Hits,
+    top1Rate: pct(top1Hits, total),
+    top3Rate: pct(top3Hits, total),
+    byHour: groupBy((slot) => String(slot?.targetHour || "")),
+    byDate: groupBy((slot) => String(slot?.targetYmd || "")),
+    rows: validated.map((slot) => ({
+      ymd: slot.targetYmd,
+      hour: slot.targetHour,
+      baseYmd: slot.baseYmd,
+      baseHour: slot.baseHour,
+      resultGrupo: slot.resultGrupo,
+      top3: (Array.isArray(slot.top3) ? slot.top3 : [])
+        .slice(0, 3)
+        .map((x) => Number(x?.grupo)),
+      top1Hit:
+        Number(slot?.top3?.[0]?.grupo) === Number(slot.resultGrupo),
+      top3Hit: (Array.isArray(slot.top3) ? slot.top3 : [])
+        .slice(0, 3)
+        .some((x) => Number(x?.grupo) === Number(slot.resultGrupo)),
+    })),
+  };
+}
+
+
 export function buildTimelineTop3({
   ymd,
   drawsToday,
