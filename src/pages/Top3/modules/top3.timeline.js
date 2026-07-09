@@ -135,18 +135,6 @@ export function buildTop3TimelineViewModel({
   const safeYmd = safeStr(ymdSafe || "");
   const timelineYmd = isYMD(safeAnalysisYmd) ? safeAnalysisYmd : safeYmd;
 
-  if (typeof window !== "undefined") {
-    window.__TOP3_TIMELINE_INPUT__ = {
-      timelineYmd,
-      ymdSafe: safeYmd,
-      analysisYmd: safeAnalysisYmd,
-      todayDraws: day.length,
-      rangeDraws: range.length,
-      lotteryKeySafe,
-    };
-    console.log("[TOP3 TIMELINE INPUT]", window.__TOP3_TIMELINE_INPUT__);
-  }
-
   if (!isYMD(timelineYmd) || !range.length) return [];
 
   const rawTimeline = buildTimelineTop3({
