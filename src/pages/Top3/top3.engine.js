@@ -3645,10 +3645,70 @@ export function buildMilharesForGrupo({
   const usedMilhares = new Set();
   const slots = [];
 
-  for (const dz of dezenasFixas) {
-    const items = ranked
+  function pickDiversifiedMilharesForDezena(dz, limit) {
+    const candidates = ranked
       .filter((x) => x.dezena === dz && !usedMilhares.has(x.milhar))
-      .slice(0, perDezena);
+      .map((x) => {
+        const milhar = String(x.milhar || "").padStart(4, "0").slice(-4);
+        const prefix = milhar.slice(0, 1);
+        const centena = milhar.slice(1);
+
+        return {
+          ...x,
+          milhar,
+          prefix,
+          centena,
+          adjustedScore:
+            Number(x.score || 0) -
+            (prefix === "0" ? 80 : 0),
+        };
+      })
+      .sort((a, b) => {
+        if (Number(b.adjustedScore) !== Number(a.adjustedScore)) {
+          return Number(b.adjustedScore) - Number(a.adjustedScore);
+        }
+        if (Number(b.score) !== Number(a.score)) return Number(b.score) - Number(a.score);
+        if (Number(b.targetHits) !== Number(a.targetHits)) return Number(b.targetHits) - Number(a.targetHits);
+        if (Number(b.freq) !== Number(a.freq)) return Number(b.freq) - Number(a.freq);
+        return milharCompareAsc(a.milhar, b.milhar);
+      });
+
+    const picked = [];
+    const usedPrefixes = new Set();
+    const usedCentenas = new Set();
+
+    for (const item of candidates) {
+      if (picked.length >= limit) break;
+      if (usedPrefixes.has(item.prefix)) continue;
+      if (usedCentenas.has(item.centena)) continue;
+
+      picked.push(item);
+      usedPrefixes.add(item.prefix);
+      usedCentenas.add(item.centena);
+    }
+
+    for (const item of candidates) {
+      if (picked.length >= limit) break;
+      if (picked.some((x) => x.milhar === item.milhar)) continue;
+      if (usedCentenas.has(item.centena)) continue;
+
+      picked.push(item);
+      usedPrefixes.add(item.prefix);
+      usedCentenas.add(item.centena);
+    }
+
+    for (const item of candidates) {
+      if (picked.length >= limit) break;
+      if (picked.some((x) => x.milhar === item.milhar)) continue;
+
+      picked.push(item);
+    }
+
+    return picked.slice(0, limit);
+  }
+
+  for (const dz of dezenasFixas) {
+    const items = pickDiversifiedMilharesForDezena(dz, perDezena);
 
     let pushed = 0;
 
@@ -3658,6 +3718,7 @@ export function buildMilharesForGrupo({
         dezena: dz,
         milhar: item.milhar,
         score: item.score,
+        adjustedScore: item.adjustedScore,
         freq: item.freq,
         targetHits: item.targetHits,
         scheduleHits: item.scheduleHits,
