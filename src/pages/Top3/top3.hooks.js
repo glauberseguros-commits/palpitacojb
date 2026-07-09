@@ -664,6 +664,19 @@ export function useTop3Controller() {
         FEDERAL_SCHEDULE,
       });
 
+      if (typeof window !== "undefined") {
+        window.__TOP3_PREV_DEBUG__ = {
+          step: "before_getPreviousDrawRobust",
+          baseY,
+          baseH,
+          baseDayDraws: Array.isArray(baseDayDraws) ? baseDayDraws.length : -1,
+          baseDaySchedule,
+          currentRequestId,
+          active: requestIdRef.current,
+        };
+        console.log("[TOP3 PREV DEBUG]", window.__TOP3_PREV_DEBUG__);
+      }
+
       resolvedPrev = await getPreviousDrawRobust({
         getKingResultsByDate,
         lotteryKey: lKey,
@@ -676,7 +689,32 @@ export function useTop3Controller() {
         FEDERAL_SCHEDULE,
       });
 
+      if (typeof window !== "undefined") {
+        window.__TOP3_PREV_DEBUG__ = {
+          step: "after_getPreviousDrawRobust",
+          hasDraw: !!resolvedPrev?.draw,
+          ymd: resolvedPrev?.ymd || "",
+          hour: resolvedPrev?.hour || "",
+          source: resolvedPrev?.source || "",
+          currentRequestId,
+          active: requestIdRef.current,
+        };
+        console.log("[TOP3 PREV DEBUG]", window.__TOP3_PREV_DEBUG__);
+      }
+
       if (!resolvedPrev?.draw) {
+        if (typeof window !== "undefined") {
+          window.__TOP3_PREV_DEBUG__ = {
+            step: "before_fallbackBaseSearch",
+            baseY,
+            baseH,
+            minDate,
+            currentRequestId,
+            active: requestIdRef.current,
+          };
+          console.log("[TOP3 PREV DEBUG]", window.__TOP3_PREV_DEBUG__);
+        }
+
         resolvedPrev = await fallbackBaseSearch({
           getKingResultsByRange,
           findLatestHistoricalBaseDraw,
@@ -687,9 +725,32 @@ export function useTop3Controller() {
           targetHourBucket: baseH,
           uf: ufResolved,
         });
+
+        if (typeof window !== "undefined") {
+          window.__TOP3_PREV_DEBUG__ = {
+            step: "after_fallbackBaseSearch",
+            hasDraw: !!resolvedPrev?.draw,
+            ymd: resolvedPrev?.ymd || "",
+            hour: resolvedPrev?.hour || "",
+            source: resolvedPrev?.source || "",
+            currentRequestId,
+            active: requestIdRef.current,
+          };
+          console.log("[TOP3 PREV DEBUG]", window.__TOP3_PREV_DEBUG__);
+        }
       }
 
-      if (requestIdRef.current !== currentRequestId) return;
+      if (requestIdRef.current !== currentRequestId) {
+        if (typeof window !== "undefined") {
+          window.__TOP3_PREV_DEBUG__ = {
+            step: "stale_after_resolvedPrev",
+            currentRequestId,
+            active: requestIdRef.current,
+          };
+          console.log("[TOP3 PREV DEBUG]", window.__TOP3_PREV_DEBUG__);
+        }
+        return;
+      }
 
       setBaseDrawState(baseDraw);
       setLastHourBucket(baseH);
