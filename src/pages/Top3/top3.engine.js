@@ -3931,7 +3931,7 @@ export function auditTop3Timeline({
 }
 
 
-export function buildTimelineTop3({
+function buildTimelineForDate({
   ymd,
   drawsToday,
   drawsRange,
@@ -4153,4 +4153,49 @@ export function buildTimelineTop3({
   }
 
   return timeline;
+
+}
+
+export function buildTimelineTop3(args) {
+  return buildTimelineForDate(args || {});
+}
+
+export function auditTop3Backtest({
+  drawsRange,
+  lotteryKey,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+}) {
+  const range = Array.isArray(drawsRange) ? drawsRange : [];
+  const dates = Array.from(
+    new Set(
+      range
+        .map((d) => pickDrawYMD(d))
+        .filter((ymd) => isYMD(ymd))
+    )
+  ).sort();
+
+  const allTimeline = [];
+
+  for (const ymd of dates) {
+    const drawsToday = range.filter((d) => pickDrawYMD(d) === ymd);
+
+    const dayTimeline = buildTimelineForDate({
+      ymd,
+      drawsToday,
+      drawsRange: range,
+      lotteryKey,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+    });
+
+    allTimeline.push(...(Array.isArray(dayTimeline) ? dayTimeline : []));
+  }
+
+  return auditTop3Timeline({
+    timeline: allTimeline,
+    lotteryKey,
+  });
 }
