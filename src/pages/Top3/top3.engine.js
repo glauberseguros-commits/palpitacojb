@@ -3642,6 +3642,46 @@ export function buildMilharesForGrupo({
       return milharCompareAsc(a.milhar, b.milhar);
     });
 
+  const centenaStats = new Map();
+
+  for (const item of ranked) {
+    const centena = String(item?.centena || "").trim();
+    if (!centena) continue;
+
+    const current = centenaStats.get(centena) || {
+      centena,
+      freq: 0,
+      score: 0,
+      targetHits: 0,
+      sameDowHits: 0,
+      firstPrizeHits: 0,
+      lastTs: 0,
+    };
+
+    current.freq += Number(item.freq || 0);
+    current.score += Number(item.score || 0);
+    current.targetHits += Number(item.targetHits || 0);
+    current.sameDowHits += Number(item.sameDowHits || 0);
+    current.firstPrizeHits += Number(item.firstPrizeHits || 0);
+    current.lastTs = Math.max(Number(current.lastTs || 0), Number(item.lastTs || 0));
+
+    centenaStats.set(centena, current);
+  }
+
+  const centenaScoreMap = new Map();
+
+  for (const c of centenaStats.values()) {
+    centenaScoreMap.set(
+      c.centena,
+      Number(c.score || 0) +
+        Number(c.freq || 0) * 25 +
+        Number(c.targetHits || 0) * 60 +
+        Number(c.sameDowHits || 0) * 30 +
+        Number(c.firstPrizeHits || 0) * 40 +
+        (Number(c.lastTs || 0) > 0 ? 10 : 0)
+    );
+  }
+
   const usedMilhares = new Set();
   const slots = [];
 
@@ -3658,7 +3698,9 @@ export function buildMilharesForGrupo({
           milhar,
           prefix,
           centena,
+          centenaScore: Number(centenaScoreMap.get(centena) || 0),
           adjustedScore:
+            Number(centenaScoreMap.get(centena) || 0) * 2 +
             Number(x.score || 0) -
             (prefix === "0" ? 80 : 0),
         };
@@ -3719,6 +3761,8 @@ export function buildMilharesForGrupo({
         milhar: item.milhar,
         score: item.score,
         adjustedScore: item.adjustedScore,
+        centena: item.centena,
+        centenaScore: item.centenaScore,
         freq: item.freq,
         targetHits: item.targetHits,
         scheduleHits: item.scheduleHits,
