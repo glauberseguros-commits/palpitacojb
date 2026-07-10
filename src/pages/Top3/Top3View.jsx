@@ -902,23 +902,21 @@ function Top3Card({
         <div
           className="top3-card__actions"
           style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            alignItems: "center",
+            display: "grid",
+            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
             gap: 8,
-            flexWrap: "wrap",
+            alignItems: "center",
           }}
         >
-          <div
-            className="top3-card__sectionTitle"
-            style={{ flex: 1 }}
-          ></div>
+          <div aria-hidden="true"></div>
+          <div aria-hidden="true"></div>
 
           <button
             type="button"
             onClick={doCopyAll}
             className="pp-btn"
             title="Copiar as 20 milhares"
+            style={{ width: "100%" }}
           >
             {copiedAllKey === key ? "✅ Copiado" : "📋 Copiar"}
           </button>
@@ -930,6 +928,7 @@ function Top3Card({
             onClick={() => {
               alert("Em breve você poderá enviar automaticamente estas milhares para a banca.");
             }}
+            style={{ width: "100%" }}
           >
             🎯 Apostar
           </button>
