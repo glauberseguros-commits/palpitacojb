@@ -899,8 +899,20 @@ function Top3Card({
       </div>
 
       <div className="top3-card__body">
-        <div className="top3-card__actions">
-          <div className="top3-card__sectionTitle"></div>
+        <div
+          className="top3-card__actions"
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            alignItems: "center",
+            gap: 8,
+            flexWrap: "wrap",
+          }}
+        >
+          <div
+            className="top3-card__sectionTitle"
+            style={{ flex: 1 }}
+          ></div>
 
           <button
             type="button"
