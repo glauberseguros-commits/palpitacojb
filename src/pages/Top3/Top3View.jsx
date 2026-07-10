@@ -908,7 +908,18 @@ function Top3Card({
             className="pp-btn"
             title="Copiar as 20 milhares"
           >
-            {copiedAllKey === key ? "✅ Copiado" : "Apostar"}
+            {copiedAllKey === key ? "✅ Copiado" : "📋 Copiar"}
+          </button>
+
+          <button
+            type="button"
+            className="pp-btn"
+            title="Integração automática com banca (em desenvolvimento)"
+            onClick={() => {
+              alert("Em breve você poderá enviar automaticamente estas milhares para a banca.");
+            }}
+          >
+            🎯 Apostar
           </button>
         </div>
 
