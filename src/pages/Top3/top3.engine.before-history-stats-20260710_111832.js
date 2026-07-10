@@ -3926,7 +3926,6 @@ export function auditTop3Timeline({
       top3Hit: (Array.isArray(slot.top3) ? slot.top3 : [])
         .slice(0, 3)
         .some((x) => Number(x?.grupo) === Number(slot.resultGrupo)),
-      historyStats: slot.historyStats || null,
     })),
   };
 }
@@ -4090,39 +4089,6 @@ function buildTimelineForDate({
       return Number.isFinite(ts) && ts <= baseTs;
     });
 
-    const historyStats = (() => {
-      const MS_DAY = 24 * 60 * 60 * 1000;
-
-      let d30 = 0;
-      let d90 = 0;
-      let d180 = 0;
-      let d365 = 0;
-
-      for (const historicalDraw of usableHistory) {
-        const historicalTs = ymdHourToTs(
-          pickDrawYMD(historicalDraw),
-          toHourBucket(pickDrawHour(historicalDraw))
-        );
-
-        if (!Number.isFinite(historicalTs)) continue;
-
-        const diffDays = (baseTs - historicalTs) / MS_DAY;
-
-        if (diffDays >= 0 && diffDays <= 30) d30 += 1;
-        if (diffDays >= 0 && diffDays <= 90) d90 += 1;
-        if (diffDays >= 0 && diffDays <= 180) d180 += 1;
-        if (diffDays >= 0 && diffDays <= 365) d365 += 1;
-      }
-
-      return {
-        total: usableHistory.length,
-        d30,
-        d90,
-        d180,
-        d365,
-      };
-    })();
-
     const usableTodayContext = [...chainContextDraws]
       .filter((d) => {
         const ts = ymdHourToTs(
@@ -4177,7 +4143,6 @@ function buildTimelineForDate({
       resultGrupo: Number.isFinite(Number(resultGrupo)) ? Number(resultGrupo) : null,
       hit,
       status: Number.isFinite(Number(resultGrupo)) ? "validated" : "pending",
-      historyStats,
     });
 
     if (currentDraw) {

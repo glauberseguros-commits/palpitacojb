@@ -1305,6 +1305,8 @@ export async function getKingResultsByRange({
   closeHourBucket = null,
   positions = null,
   mode = "detailed",
+  readPolicy = DEFAULT_READ_POLICY,
+  bypassCache = false,
 }) {
   if (!uf || !dateFrom || !dateTo) {
     throw new Error("Parâmetros obrigatórios: uf, dateFrom, dateTo");
@@ -1334,8 +1336,10 @@ export async function getKingResultsByRange({
     hourFilter,
     mode: effectiveMode,
   });
-  const cached = cacheGet(DRAWS_CACHE, rangeKey);
-  if (cached) return cached;
+  if (!bypassCache) {
+    const cached = cacheGet(DRAWS_CACHE, rangeKey);
+    if (cached) return cached;
+  }
 
   const DOC_ID = documentId();
   const rangeOrder = [orderBy("ymd", "asc"), orderBy(DOC_ID)];
@@ -1344,7 +1348,7 @@ export async function getKingResultsByRange({
     uf,
     extraWheres: [where("ymd", ">=", ymdFrom), where("ymd", "<=", ymdTo)],
     extraOrderBy: rangeOrder,
-    policy: DEFAULT_READ_POLICY,
+    policy: readPolicy,
   });
 
   if (error) {
@@ -1368,7 +1372,9 @@ export async function getKingResultsByRange({
 
           let out = dedupeDrawsLocal(sortDrawsLocal(base));
 
-          cacheSet(DRAWS_CACHE, rangeKey, out);
+          if (!bypassCache) {
+      cacheSet(DRAWS_CACHE, rangeKey, out);
+    }
           return out;
         }
 
@@ -1392,7 +1398,9 @@ export async function getKingResultsByRange({
 
         let out = dedupeDrawsLocal(sortDrawsLocal(base));
 
-        cacheSet(DRAWS_CACHE, rangeKey, out);
+        if (!bypassCache) {
+      cacheSet(DRAWS_CACHE, rangeKey, out);
+    }
         return out;
       }
 
@@ -1434,7 +1442,9 @@ export async function getKingResultsByRange({
 
         let out = dedupeDrawsLocal(sortDrawsLocal(base));
 
-        cacheSet(DRAWS_CACHE, rangeKey, out);
+        if (!bypassCache) {
+      cacheSet(DRAWS_CACHE, rangeKey, out);
+    }
         return out;
       }
 
@@ -1466,7 +1476,9 @@ export async function getKingResultsByRange({
       });
 
       const out = dedupeDrawsLocal(results);
+      if (!bypassCache) {
       cacheSet(DRAWS_CACHE, rangeKey, out);
+    }
       return out;
     }
 
@@ -1494,7 +1506,9 @@ export async function getKingResultsByRange({
         };
       })
     );
-    cacheSet(DRAWS_CACHE, rangeKey, out);
+    if (!bypassCache) {
+      cacheSet(DRAWS_CACHE, rangeKey, out);
+    }
     return out;
   }
 
@@ -1507,7 +1521,9 @@ export async function getKingResultsByRange({
   });
 
   const out = dedupeDrawsLocal(results);
-  cacheSet(DRAWS_CACHE, rangeKey, out);
+  if (!bypassCache) {
+      cacheSet(DRAWS_CACHE, rangeKey, out);
+    }
   return out;
 }
 

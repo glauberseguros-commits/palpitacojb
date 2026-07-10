@@ -864,15 +864,21 @@ function Top3Card({
             <div className="top3-metaItem">
               <div className="top3-metaItem__label">🧠 Cenários semelhantes</div>
               <div className="top3-metaItem__value">
-                {sceneSamples || transitionSamples || samples || 0} encontrados
+                {
+      sceneSamples > 0
+        ? `${sceneSamples} cenários semelhantes`
+        : transitionSamples > 0
+          ? `${transitionSamples} transições históricas`
+          : `${samples} registros históricos`
+    }
               </div>
             </div>
 
             <div className="top3-metaItem">
-              <div className="top3-metaItem__label">🎯 Precisão histórica</div>
+              <div className="top3-metaItem__label">🎯 Frequência histórica da transição</div>
               <div className="top3-metaItem__value">
                 {transitionFirst > 0 && transitionSamples > 0
-                  ? `${transitionFirst} acertos em ${transitionSamples} análises`
+                  ? `${transitionFirst} ocorrências em ${transitionSamples} transições`
                   : "Em apuração"}
               </div>
             </div>
@@ -1207,7 +1213,14 @@ export default function Top3View(props) {
     lastHourBucket,
   } = props || {};
 
-  const forecastSlot = useMemo(() => {
+  // TODO_BACKTEST_REAL
+// Os cards estatísticos deverão consumir auditTop3Backtest()
+// evitando cálculos paralelos na interface.
+//
+// Fase atual:
+// apenas corrigindo nomenclatura para refletir o cálculo existente.
+
+const forecastSlot = useMemo(() => {
   if (!Array.isArray(timelineTop3) || !timelineTop3.length) return null;
 
   return timelineTop3.find((slot) =>

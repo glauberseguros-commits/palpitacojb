@@ -255,6 +255,10 @@ function resolveLayerMetaText(analytics) {
 export function useTop3Controller() {
   const DEFAULT_LOTTERY = "PT_RIO";
 
+  const debugTop3 =
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("debugTop3") === "1";
+
   const requestIdRef = useRef(0);
   const boundsCacheRef = useRef(new Map());
   const analyticsCacheRef = useRef({ key: "", value: emptyAnalytics() });
@@ -676,6 +680,30 @@ export function useTop3Controller() {
       setTargetYmd(resolvedTargetY);
       setTargetHourBucket(resolvedTargetH);
 
+      if (debugTop3) console.log(
+        "[TOP3 STATE]",
+        JSON.stringify(
+          {
+            loadedYmd: effectiveYmd,
+
+            baseYmd: baseY,
+            baseHour: baseH,
+            baseGrupo,
+
+            targetYmd: resolvedTargetY,
+            targetHour: resolvedTargetH,
+
+            previousYmd: resolvedPrev?.ymd || "",
+            previousHour: resolvedPrev?.hour || "",
+            previousSource: resolvedPrev?.source || "",
+
+            todayDraws: Array.isArray(today) ? today.length : 0,
+          },
+          null,
+          2
+        )
+      );
+
       setLastInfo({
         lastYmd: baseY,
         lastHour: baseH,
@@ -728,6 +756,54 @@ export function useTop3Controller() {
       if (requestIdRef.current !== currentRequestId) return;
 
       const hist = mergeBaseIntoRange(histRaw, baseDraw);
+
+      if (debugTop3) console.log(
+        "[TOP3 HISTORY]",
+        JSON.stringify(
+          {
+            period: {
+              from: rangeFrom,
+              to: rangeTo,
+            },
+
+            firestoreDraws: Array.isArray(histRaw)
+              ? histRaw.length
+              : 0,
+
+            mergedDraws: Array.isArray(hist)
+              ? hist.length
+              : 0,
+
+            baseIncluded: Array.isArray(hist)
+              ? hist.some(
+                  (d) =>
+                    drawKey(d) === drawKey(baseDraw)
+                )
+              : false,
+
+            firstDraw:
+              Array.isArray(hist) && hist.length
+                ? {
+                    ymd: pickDrawYMD(hist[0]),
+                    hour: toHourBucket(pickDrawHour(hist[0])),
+                  }
+                : null,
+
+            lastDraw:
+              Array.isArray(hist) && hist.length
+                ? {
+                    ymd: pickDrawYMD(hist[hist.length - 1]),
+                    hour: toHourBucket(
+                      pickDrawHour(hist[hist.length - 1])
+                    ),
+                  }
+                : null,
+          },
+          null,
+          2
+        )
+      );
+
       setRangeDraws(hist);
     } catch (e) {
       if (requestIdRef.current === currentRequestId) {
