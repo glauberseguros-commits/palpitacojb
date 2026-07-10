@@ -1642,9 +1642,6 @@ export default function CentenasView() {
           {loading ? "Carregando..." : "Atualizar"}
         </button>
 
-        <button className="cx0_btn" onClick={handleEnviarKing} disabled={sendingKing || !groups.length}>
-          {sendingKing ? "Preparando..." : "Enviar p/ King"}
-        </button>
       </div>
 
       {loading && progress?.total ? (
@@ -1731,7 +1728,9 @@ export default function CentenasView() {
                           <button
                             className="cx0_toggle"
                             type="button"
-                            onClick={handleEnviarKing}
+                            onClick={() => {
+                              alert("A integração com a banca estará disponível em breve.");
+                            }}
                           >
                             🎯 Apostar
                           </button>
