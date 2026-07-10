@@ -11,7 +11,6 @@ import {
   buildMilharesForGrupo,
   buildTimelineTop3,
   auditTop3Timeline,
-  auditTop3Backtest,
 } from "../top3.engine";
 
 import { getAnimalLabel, getImgFromGrupo } from "../../../constants/bichoMap";
@@ -152,17 +151,8 @@ export function buildTop3TimelineViewModel({
     lotteryKey: lotteryKeySafe,
   });
 
-  const backtestAudit = auditTop3Backtest({
-    drawsRange: rangeDraws,
-    lotteryKey: lotteryKeySafe,
-    PT_RIO_SCHEDULE_NORMAL,
-    PT_RIO_SCHEDULE_WED_SAT,
-    FEDERAL_SCHEDULE,
-  });
-
   if (typeof window !== "undefined") {
     window.__TOP3_AUDIT__ = timelineAudit;
-    window.__TOP3_BACKTEST__ = backtestAudit;
 
     console.groupCollapsed("[TOP3 AUDIT]");
     console.table([
@@ -179,19 +169,6 @@ export function buildTop3TimelineViewModel({
 
     console.log("Por data");
     console.table(timelineAudit.byDate);
-
-    console.log("Backtest histórico");
-    console.table([
-      {
-        Loteria: backtestAudit.lotteryKey,
-        Previsoes: backtestAudit.total,
-        "TOP1 %": backtestAudit.top1Rate,
-        "TOP3 %": backtestAudit.top3Rate,
-      },
-    ]);
-
-    console.log("Backtest por horário");
-    console.table(backtestAudit.byHour);
 
     console.groupEnd();
   }
