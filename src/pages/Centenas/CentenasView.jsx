@@ -1745,7 +1745,7 @@ export default function CentenasView() {
                             type="button"
                             onClick={() => setShowOnlyHits((v) => !v)}
                           >
-                            {showOnlyHits ? "Mostrar todas (40)" : "Mostrar só ocorridas"}
+                            {showOnlyHits ? "Todas" : "Ocorridas"}
                           </button>
                         </div>
                       </div>
