@@ -220,8 +220,13 @@ function monthNamePTBR(m) {
 function dezenasDoGrupo(grupo) {
   const g = Number(grupo);
   if (!Number.isFinite(g) || g < 1 || g > 25) return [];
+
   const start = (g - 1) * 4 + 1;
-  return [start, start + 1, start + 2, start + 3].map((n) => pad2(n));
+
+  return [start, start + 1, start + 2, start + 3].map((n) => {
+    const dezena = n % 100;
+    return pad2(dezena);
+  });
 }
 function centenas40DoGrupo(grupo) {
   const dezenas = dezenasDoGrupo(grupo);
