@@ -1358,6 +1358,43 @@ export default function CentenasView() {
   }, []);
 
   const [sendingKing, setSendingKing] = useState(false);
+  const [copiedMilhares, setCopiedMilhares] = useState(false);
+
+
+  const handleCopyMilhares = async () => {
+    if (!groups || !groups.length) return;
+
+    const targetGrupo =
+      (Number.isFinite(Number(openGrupo)) && Number(openGrupo)) ||
+      (Number.isFinite(Number(bannerGrupo)) && Number(bannerGrupo)) ||
+      Number(groups?.[0]?.grupo || 0);
+
+    const grupoAtual =
+      groups.find((g) => Number(g.grupo) === Number(targetGrupo)) || null;
+
+    if (!grupoAtual) return;
+
+    const today = todayYMDLocal();
+
+    const rows = showOnlyHits
+      ? (grupoAtual.list40 || []).filter((x) => (Number(x.count) || 0) > 0)
+      : grupoAtual.list40 || [];
+
+    const milhares = rows.map((it) => {
+      const dig = dailyDigitForRow(today, grupoAtual.grupo2, it.centena);
+      return `${dig}${it.centena}`;
+    });
+
+    try {
+      await navigator.clipboard.writeText(milhares.join("\n"));
+      setCopiedMilhares(true);
+      setTimeout(() => setCopiedMilhares(false), 2000);
+    } catch (e) {
+      console.error(e);
+      alert("Não foi possível copiar as milhares.");
+    }
+  };
+
 
   const handleEnviarKing = async () => {
     if (sendingKing) return;
@@ -1675,9 +1712,38 @@ export default function CentenasView() {
                           Mostrando <b>{rows.length}</b> de <b>40</b>
                         </div>
 
-                        <button className="cx0_toggle" type="button" onClick={() => setShowOnlyHits((v) => !v)}>
-                          {showOnlyHits ? "Mostrar todas (40)" : "Mostrar só ocorridas"}
-                        </button>
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: 8,
+                            flexWrap: "wrap",
+                            alignItems: "center",
+                          }}
+                        >
+                          <button
+                            className="cx0_toggle"
+                            type="button"
+                            onClick={handleCopyMilhares}
+                          >
+                            {copiedMilhares ? "✅ Copiado" : "📋 Copiar"}
+                          </button>
+
+                          <button
+                            className="cx0_toggle"
+                            type="button"
+                            onClick={handleEnviarKing}
+                          >
+                            🎯 Apostar
+                          </button>
+
+                          <button
+                            className="cx0_toggle"
+                            type="button"
+                            onClick={() => setShowOnlyHits((v) => !v)}
+                          >
+                            {showOnlyHits ? "Mostrar todas (40)" : "Mostrar só ocorridas"}
+                          </button>
+                        </div>
                       </div>
 
                       <div className="cx0_tbl">
