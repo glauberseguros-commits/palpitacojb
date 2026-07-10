@@ -241,7 +241,7 @@ function hasOfficialResult(slot) {
 
 function analyzeTop3Hit(top3, resultGrupo, resultMilhar) {
   if (!Array.isArray(top3) || !top3.length) {
-    return { type: "none", score: 0, position: -1 };
+    return { type: "none", score: 0, position: -1, matchedValue: "" };
   }
 
   const grupoNum = Number(resultGrupo);
@@ -252,34 +252,44 @@ function analyzeTop3Hit(top3, resultGrupo, resultMilhar) {
   const hasMilhar = /^\d{4}$/.test(milhar);
 
   if (!hasGrupo && !hasMilhar) {
-    return { type: "none", score: 0, position: -1 };
+    return { type: "none", score: 0, position: -1, matchedValue: "" };
   }
 
-  let best = { type: "miss", score: 0, position: -1 };
+  let best = { type: "miss", score: 0, position: -1, matchedValue: "" };
 
   top3.forEach((item, idx) => {
     const g = Number(item?.grupo);
 
-    const milhares = Array.isArray(item?.milhares20)
+    const milharesRaw = Array.isArray(item?.milhares20)
       ? item.milhares20
       : Array.isArray(item?.milhares)
         ? item.milhares
         : [];
 
-    const centenas = milhares.map((m) => centenaFromMilhar(m));
+    const milhares = milharesRaw
+      .map((m) => normalizeMilharStr(m))
+      .filter((m) => /^\d{4}$/.test(m));
+
+    const centenas = milhares
+      .map((m) => centenaFromMilhar(m))
+      .filter((c) => /^\d{3}$/.test(c));
 
     let score = 0;
     let type = "miss";
+    let matchedValue = "";
 
     if (hasMilhar && milhares.includes(milhar)) {
       score = 100;
       type = "hit_exact";
+      matchedValue = milhar;
     } else if (centena && centenas.includes(centena)) {
-      score = 66;
+      score = 66.67;
       type = "hit_centena";
+      matchedValue = centena;
     } else if (hasGrupo && g === grupoNum) {
-      score = 33;
+      score = 33.33;
       type = "hit_grupo";
+      matchedValue = hasMilhar ? milhar.slice(-2) : formatGrupo(grupoNum);
     }
 
     if (score > best.score) {
@@ -287,6 +297,7 @@ function analyzeTop3Hit(top3, resultGrupo, resultMilhar) {
         type,
         score,
         position: idx + 1,
+        matchedValue,
       };
     }
   });
@@ -1088,11 +1099,11 @@ function TimelineSlot({
     !hasResult
       ? "⏳ PENDENTE"
       : analysis.type === "hit_exact"
-        ? `🎯 ACERTO TOTAL (${analysis.score}%)`
+        ? "🎯 MILHAR (100%)"
         : analysis.type === "hit_centena"
-          ? `🟡 CENTENA (ORDEM) (${analysis.score}%)`
+          ? "🟡 CENTENA (66,67%)"
           : analysis.type === "hit_grupo"
-            ? `✅ GRUPO (${analysis.score}%)`
+            ? "✅ DEZENA/GRUPO (33,33%)"
             : "❌ ERRO (0%)";
 
   const statusDetail =
@@ -2553,15 +2564,16 @@ const list = Array.isArray(forecastSlot?.top3)
                   : "";
 
                 const hitType = String(item?.hitType || item?.analysis?.type || "").trim();
+                const matchedValue = String(item?.analysis?.matchedValue || "").trim();
 
                 const hitMark = !hasResult
                   ? "⏳"
                   : hitType === "hit_exact"
-                    ? "🏆 100%"
+                    ? `🏆 100% · Milhar ${matchedValue || "—"}`
                     : hitType === "hit_centena"
-                      ? "✅✅ 66,67%"
+                      ? `✅✅ 66,67% · Centena ${matchedValue || "—"}`
                       : hitType === "hit_grupo"
-                        ? "✅ 33,33%"
+                        ? `✅ 33,33% · Dezena ${matchedValue || "—"}`
                         : "❌ 0%";
 
                 return (
