@@ -2460,10 +2460,6 @@ const list = Array.isArray(forecastSlot?.top3)
                 <div className="top3-metaItem__value">{meta.prev}</div>
               </div>
 
-              <div className="top3-metaItem">
-                <div className="top3-metaItem__label">Condição</div>
-                <div className="top3-metaItem__value">{meta.layer}</div>
-              </div>
             </div>
           </div>
         </section>
