@@ -413,9 +413,7 @@ function digitFromKey(key) {
   for (let i = 0; i < s.length; i += 1) h = (h * 31 + s.charCodeAt(i)) >>> 0;
   return String(h % 10);
 }
-function dailyDigitForRow(ymd, grupo2, centena3) {
-  return digitFromKey(`${String(ymd || "")}#${String(grupo2 || "")}#${String(centena3 || "")}`);
-}
+
 
 /* ========= utils: concorrência ========= */
 
@@ -483,9 +481,7 @@ export default function CentenasView() {
   );
 
   const prizePositions = useMemo(() => [1, 2, 3, 4, 5, 6, 7], []);
-  const todayYmd = todayYMDLocal();
-
-  // filtros
+// filtros
   const [lotteryOptId, setLotteryOptId] = useState("ALL");
   const [fMes, setFMes] = useState("Todos");
   const [fDiaMes, setFDiaMes] = useState("Todos");
@@ -1746,11 +1742,10 @@ const rows = showOnlyHits
                           <button
                             className="cx0_toggle"
                             type="button"
-                            onClick={() => {
-                              alert("A integração com a banca estará disponível em breve.");
-                            }}
+                            onClick={handleEnviarKing}
+                            disabled={sendingKing}
                           >
-                            🎯 Apostar
+                            {sendingKing ? "Enviando..." : "🎯 Apostar"}
                           </button>
 
                           <button
