@@ -139,6 +139,9 @@ export function rankMilharCandidates({
 
   const totalRows = rows.length;
 
+  // Sem evidência histórica, não produz recomendação arbitrária.
+  if (totalRows === 0) return [];
+
   const exactCount = new Map();
   const exactLastSeen = new Map();
   const prefixSameDezenaCount = new Map();
@@ -269,6 +272,119 @@ export function chooseBestMilhar(args = {}) {
     ranking,
     sampleSize: Array.isArray(args.prizes) ? args.prizes.length : 0,
     weights: normalizeWeights(args.weights),
-    model: "MILHAR_PROBABILITY_V1",
+    model: "MILHAR_PROBABILITY_V2",
+  };
+}
+/*
+==========================================================
+Recomendação consolidada — V2
+==========================================================
+
+Esta função será a futura fonte única para:
+
+- exibição na tabela;
+- botão Copiar;
+- envio para aposta.
+
+Ela ainda não está conectada à interface.
+*/
+
+function classifySampleQuality(sampleSize) {
+  const n = Number(sampleSize) || 0;
+
+  if (n <= 0) return "none";
+  if (n < 30) return "low";
+  if (n < 100) return "medium";
+  return "high";
+}
+
+export function buildMilharRecommendation(args = {}) {
+  const result = chooseBestMilhar(args);
+  const winner = result?.winner || null;
+  const sampleSize = Number(result?.sampleSize || 0);
+
+  if (!winner) {
+    return {
+      ok: false,
+      status: "insufficient_evidence",
+      model: "MILHAR_PROBABILITY_V2",
+      centena: normalizeCentena3(args?.centena),
+      milhar: null,
+      prefixo: null,
+      score: 0,
+      confidence: 0,
+      sampleSize,
+      sampleQuality: classifySampleQuality(sampleSize),
+      evidence: null,
+      alternatives: [],
+    };
+  }
+
+  const alternatives = (result.ranking || [])
+    .slice(0, 3)
+    .map((item) => ({
+      position: item.position,
+      milhar: item.milhar,
+      prefixo: item.prefix,
+      score: item.score,
+    }));
+
+  return {
+    ok: true,
+    status: "recommended",
+    model: "MILHAR_PROBABILITY_V2",
+
+    centena: result.centena,
+    milhar: winner.milhar,
+    prefixo: winner.prefix,
+
+    score: winner.score,
+    confidence: Number((winner.score / 100).toFixed(6)),
+
+    sampleSize,
+    sampleQuality: classifySampleQuality(sampleSize),
+
+    evidence: {
+      exactFrequency: {
+        count: Number(
+          winner?.evidence?.exactFrequency?.count || 0
+        ),
+        normalized: Number(
+          winner?.evidence?.exactFrequency?.normalized || 0
+        ),
+      },
+
+      prefixSameDezena: {
+        count: Number(
+          winner?.evidence?.prefixSameDezena?.count || 0
+        ),
+        normalized: Number(
+          winner?.evidence?.prefixSameDezena?.normalized || 0
+        ),
+      },
+
+      prefixOverall: {
+        count: Number(
+          winner?.evidence?.prefixOverall?.count || 0
+        ),
+        normalized: Number(
+          winner?.evidence?.prefixOverall?.normalized || 0
+        ),
+      },
+
+      exactRecency: {
+        lastSeen: Number(
+          winner?.evidence?.exactRecency?.lastSeen || 0
+        ),
+        totalRows: Number(
+          winner?.evidence?.exactRecency?.totalRows || 0
+        ),
+        normalized: Number(
+          winner?.evidence?.exactRecency?.normalized || 0
+        ),
+      },
+    },
+
+    alternatives,
   };
 }
