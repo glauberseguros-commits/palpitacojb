@@ -1,7 +1,6 @@
 // src/pages/Centenas/CentenasView.jsx
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getKingBoundsByUf, getKingResultsByRange } from "../../services/kingResultsService";
-import { chooseBestMilhar } from "../../utils/milharProbability";
 import {
   getAnimalLabel as getAnimalLabelFn,
   getImgFromGrupo as getImgFromGrupoFn,
@@ -1762,11 +1761,8 @@ export default function CentenasView() {
                         <div className="cx0_scroll">
                           {(rows || []).map((it, idx) => {
                             const posTxt = `${idx + 1}º`;
-                            const melhorMilhar =
-                              chooseBestMilhar(it.centena)?.winner?.milhar ||
-                              it.centena.padStart(4,"0");
-
-                            const milharPalpite = melhorMilhar;
+                            const dig = dailyDigitForRow(todayYmd, g.grupo2, it.centena);
+                            const milharPalpite = `${dig}${it.centena}`;
                             return (
                               <div className="cx0_row" key={`${g.grupo}-${it.centena}`}>
                                 <div style={{ color: "rgba(233,233,233,0.70)" }}>{posTxt}</div>
