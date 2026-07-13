@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import "./Admin.css";
+import MilharEnginePage from "./modules/MilharEngine/MilharEnginePage";
 
 const SECTIONS = [
   {
@@ -9,10 +10,10 @@ const SECTIONS = [
     description: "Visão geral da infraestrutura interna.",
   },
   {
-    key: "engines",
-    short: "EN",
-    title: "Engines",
-    description: "Motores estatísticos e versões ativas.",
+    key: "milhar-engine",
+    short: "MI",
+    title: "Motor de Milhares",
+    description: "Auditoria interna do motor probabilístico.",
   },
   {
     key: "audits",
@@ -253,6 +254,8 @@ export default function Admin({ onExit, onLogout }) {
         <div className="admin-content">
           {active === "dashboard" ? (
             <DashboardTechnical />
+          ) : active === "milhar-engine" ? (
+            <MilharEnginePage />
           ) : (
             <PlaceholderSection section={activeSection} />
           )}
