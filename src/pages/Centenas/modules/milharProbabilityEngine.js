@@ -139,18 +139,41 @@ export function rankMilharCandidates({
 
   const totalRows = rows.length;
 
-  // Sem evidência histórica, não produz recomendação arbitrária.
-  if (totalRows === 0) return [];
+  /*
+   * A recomendação precisa ser individual por centena.
+   *
+   * Antes, todos os prêmios do grupo participavam diretamente das
+   * métricas de prefixo. Isso permitia que um prefixo dominante do
+   * grupo fosse repetido mecanicamente em várias centenas diferentes.
+   *
+   * Agora, somente ocorrências históricas da própria centena podem
+   * produzir e ranquear uma recomendação.
+   */
+  const centenaRows = rows.filter(
+    (row) => row.centena === centena3
+  );
+
+  // Sem ocorrência histórica da própria centena, não inventa milhar.
+  if (centenaRows.length === 0) return [];
 
   const exactCount = new Map();
   const exactLastSeen = new Map();
   const prefixSameDezenaCount = new Map();
   const prefixOverallCount = new Map();
 
-  for (const row of rows) {
-    exactCount.set(row.milhar, (exactCount.get(row.milhar) || 0) + 1);
+  for (const row of centenaRows) {
+    exactCount.set(
+      row.milhar,
+      (exactCount.get(row.milhar) || 0) + 1
+    );
+
     exactLastSeen.set(row.milhar, row.sequence);
 
+    /*
+     * Estas métricas permanecem no contrato do modelo, mas passam
+     * a refletir somente o histórico da centena analisada.
+     * Prêmios de outras centenas não podem favorecer um prefixo.
+     */
     prefixOverallCount.set(
       row.prefix,
       (prefixOverallCount.get(row.prefix) || 0) + 1
@@ -270,7 +293,14 @@ export function chooseBestMilhar(args = {}) {
     centena: normalizeCentena3(args.centena),
     winner: ranking[0] || null,
     ranking,
-    sampleSize: Array.isArray(args.prizes) ? args.prizes.length : 0,
+    sampleSize: Array.isArray(args.prizes)
+      ? args.prizes.reduce((total, prize) => {
+          const milhar = pickMilharFromPrize(prize);
+          return milhar.slice(-3) === normalizeCentena3(args.centena)
+            ? total + 1
+            : total;
+        }, 0)
+      : 0,
     weights: normalizeWeights(args.weights),
     model: "MILHAR_PROBABILITY_V2",
   };
