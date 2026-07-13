@@ -818,12 +818,42 @@ export default function CentenasView() {
         baseCacheRef.current.set(buildBaseKey, { entries: entriesBase });
       }
 
-      // aplica filtros por draw (data/hora) e junta prizes
+      /*
+       * Histórico amplo:
+       * mantém posição/animal, mas não restringe mês, dia,
+       * dia da semana ou horário.
+       *
+       * É usado somente quando uma centena não ocorreu no
+       * recorte atual, garantindo milhar para todas as 40.
+       */
+      const prizesHistoricalRaw = [];
+
+      for (const e of entriesBase || []) {
+        const prizes = Array.isArray(e?.prizes)
+          ? e.prizes
+          : [];
+
+        for (const p of prizes) {
+          prizesHistoricalRaw.push(p);
+        }
+      }
+
+      const allHistoricalPrizes =
+        applyPrizeFilters(prizesHistoricalRaw);
+
+      // Recorte atual da página.
       const prizesAll = [];
+
       for (const e of entriesBase || []) {
         if (!applyDrawFiltersToEntry(e)) continue;
-        const prizes = Array.isArray(e?.prizes) ? e.prizes : [];
-        for (const p of prizes) prizesAll.push(p);
+
+        const prizes = Array.isArray(e?.prizes)
+          ? e.prizes
+          : [];
+
+        for (const p of prizes) {
+          prizesAll.push(p);
+        }
       }
 
       const allPrizes = applyPrizeFilters(prizesAll);
@@ -842,8 +872,17 @@ export default function CentenasView() {
         const set40 = new Set(c40);
         const counts = new Map();
         const groupPrizes = [];
+        const groupHistoricalPrizes = [];
 
         for (const c of c40) counts.set(c, 0);
+
+        for (const p of allHistoricalPrizes) {
+          const pg = inferGrupoFromPrize(p);
+
+          if (pg === g) {
+            groupHistoricalPrizes.push(p);
+          }
+        }
 
         for (const p of allPrizes) {
           const pg = inferGrupoFromPrize(p);
@@ -863,6 +902,7 @@ export default function CentenasView() {
             const recommendation = buildMilharRecommendation({
               centena: c,
               prizes: groupPrizes,
+              fallbackPrizes: groupHistoricalPrizes,
             });
 
             return {

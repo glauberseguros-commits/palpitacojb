@@ -114,6 +114,7 @@ function normalizeWeights(customWeights = {}) {
 export function rankMilharCandidates({
   centena,
   prizes = [],
+  fallbackPrizes = [],
   weights = DEFAULT_WEIGHTS,
 } = {}) {
   const centena3 = normalizeCentena3(centena);
@@ -137,43 +138,88 @@ export function rankMilharCandidates({
     });
   }
 
-  const totalRows = rows.length;
+  const fallbackRows = [];
+
+  for (
+    let index = 0;
+    index < fallbackPrizes.length;
+    index += 1
+  ) {
+    const milhar = pickMilharFromPrize(
+      fallbackPrizes[index]
+    );
+
+    if (!milhar) continue;
+
+    fallbackRows.push({
+      milhar,
+      prefix: milhar.slice(0, 1),
+      centena: milhar.slice(-3),
+      dezena: milhar.slice(-2),
+      sequence: index + 1,
+    });
+  }
 
   /*
-   * A recomendação precisa ser individual por centena.
+   * Hierarquia da evidência:
    *
-   * Antes, todos os prêmios do grupo participavam diretamente das
-   * métricas de prefixo. Isso permitia que um prefixo dominante do
-   * grupo fosse repetido mecanicamente em várias centenas diferentes.
+   * 1. ocorrências da própria centena no recorte atual;
+   * 2. ocorrências históricas da própria centena;
+   * 3. contexto de prefixos do recorte atual;
+   * 4. contexto histórico, quando o recorte estiver vazio.
    *
-   * Agora, somente ocorrências históricas da própria centena podem
-   * produzir e ranquear uma recomendação.
+   * Assim, todas as 40 centenas recebem uma milhar sem voltar
+   * a aplicar mecanicamente um único prefixo ao grupo inteiro.
    */
-  const centenaRows = rows.filter(
+  const currentCentenaRows = rows.filter(
     (row) => row.centena === centena3
   );
 
-  // Sem ocorrência histórica da própria centena, não inventa milhar.
-  if (centenaRows.length === 0) return [];
+  const historicalCentenaRows = fallbackRows.filter(
+    (row) => row.centena === centena3
+  );
+
+  const centenaRows = currentCentenaRows.length
+    ? currentCentenaRows
+    : historicalCentenaRows;
+
+  const contextRows = rows.length
+    ? rows
+    : fallbackRows;
+
+  if (
+    centenaRows.length === 0 &&
+    contextRows.length === 0
+  ) {
+    return [];
+  }
+
+  const totalRows = centenaRows.length;
 
   const exactCount = new Map();
   const exactLastSeen = new Map();
   const prefixSameDezenaCount = new Map();
   const prefixOverallCount = new Map();
 
-  for (const row of centenaRows) {
+  for (
+    let index = 0;
+    index < centenaRows.length;
+    index += 1
+  ) {
+    const row = centenaRows[index];
+
     exactCount.set(
       row.milhar,
       (exactCount.get(row.milhar) || 0) + 1
     );
 
-    exactLastSeen.set(row.milhar, row.sequence);
+    exactLastSeen.set(
+      row.milhar,
+      index + 1
+    );
+  }
 
-    /*
-     * Estas métricas permanecem no contrato do modelo, mas passam
-     * a refletir somente o histórico da centena analisada.
-     * Prêmios de outras centenas não podem favorecer um prefixo.
-     */
+  for (const row of contextRows) {
     prefixOverallCount.set(
       row.prefix,
       (prefixOverallCount.get(row.prefix) || 0) + 1
@@ -225,7 +271,9 @@ export function rankMilharCandidates({
       countPrefixOverall,
       maxPrefixOverall
     );
-    const exactRecency = normalizeRatio(lastSeen, totalRows);
+    const exactRecency = totalRows > 0
+      ? normalizeRatio(lastSeen, totalRows)
+      : 0;
 
     const score =
       exactFrequency * normalizedWeights.exactFrequency +
@@ -293,14 +341,34 @@ export function chooseBestMilhar(args = {}) {
     centena: normalizeCentena3(args.centena),
     winner: ranking[0] || null,
     ranking,
-    sampleSize: Array.isArray(args.prizes)
-      ? args.prizes.reduce((total, prize) => {
-          const milhar = pickMilharFromPrize(prize);
-          return milhar.slice(-3) === normalizeCentena3(args.centena)
-            ? total + 1
-            : total;
-        }, 0)
-      : 0,
+    sampleSize: (() => {
+      const centena3 = normalizeCentena3(args.centena);
+
+      const currentCount = Array.isArray(args.prizes)
+        ? args.prizes.reduce((total, prize) => {
+            const milhar = pickMilharFromPrize(prize);
+
+            return milhar.slice(-3) === centena3
+              ? total + 1
+              : total;
+          }, 0)
+        : 0;
+
+      if (currentCount > 0) return currentCount;
+
+      return Array.isArray(args.fallbackPrizes)
+        ? args.fallbackPrizes.reduce(
+            (total, prize) => {
+              const milhar = pickMilharFromPrize(prize);
+
+              return milhar.slice(-3) === centena3
+                ? total + 1
+                : total;
+            },
+            0
+          )
+        : 0;
+    })(),
     weights: normalizeWeights(args.weights),
     model: "MILHAR_PROBABILITY_V2",
   };
