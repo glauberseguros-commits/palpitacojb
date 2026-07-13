@@ -1,6 +1,7 @@
 // src/pages/Centenas/CentenasView.jsx
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getKingBoundsByUf, getKingResultsByRange } from "../../services/kingResultsService";
+import { buildMilharRecommendation } from "./modules/milharProbabilityEngine";
 import {
   getAnimalLabel as getAnimalLabelFn,
   getImgFromGrupo as getImgFromGrupoFn,
@@ -844,11 +845,15 @@ export default function CentenasView() {
         const c40 = centenas40DoGrupo(g);
         const set40 = new Set(c40);
         const counts = new Map();
+        const groupPrizes = [];
+
         for (const c of c40) counts.set(c, 0);
 
         for (const p of allPrizes) {
           const pg = inferGrupoFromPrize(p);
           if (pg !== g) continue;
+
+          groupPrizes.push(p);
 
           const c3 = pickCentena3(p);
           if (!/^\d{3}$/.test(c3)) continue;
@@ -858,7 +863,21 @@ export default function CentenasView() {
         }
 
         const list40 = c40
-          .map((c) => ({ centena: c, count: counts.get(c) || 0 }))
+          .map((c) => {
+            const recommendation = buildMilharRecommendation({
+              centena: c,
+              prizes: groupPrizes,
+            });
+
+            return {
+              centena: c,
+              count: counts.get(c) || 0,
+              milhar: recommendation.ok
+                ? recommendation.milhar
+                : null,
+              recommendation,
+            };
+          })
           .sort((a, b) => {
             if (b.count !== a.count) return b.count - a.count;
             return String(a.centena).localeCompare(String(b.centena));
@@ -1379,16 +1398,13 @@ export default function CentenasView() {
 
     if (!grupoAtual) return;
 
-    const today = todayYMDLocal();
-
-    const rows = showOnlyHits
+const rows = showOnlyHits
       ? (grupoAtual.list40 || []).filter((x) => (Number(x.count) || 0) > 0)
       : grupoAtual.list40 || [];
 
-    const milhares = rows.map((it) => {
-      const dig = dailyDigitForRow(today, grupoAtual.grupo2, it.centena);
-      return `${dig}${it.centena}`;
-    });
+    const milhares = rows
+      .map((it) => String(it?.milhar || "").trim())
+      .filter((milhar) => /^\d{4}$/.test(milhar));
 
     try {
       await navigator.clipboard.writeText(milhares.join("\n"));
@@ -1417,18 +1433,15 @@ export default function CentenasView() {
     setSendingKing(true);
 
     try {
-      const today = todayYMDLocal();
-
       // respeita o toggle "Mostrar só ocorridas"
       const rows = showOnlyHits
         ? (grupoAtual.list40 || []).filter((x) => (Number(x.count) || 0) > 0)
         : grupoAtual.list40 || [];
 
       // 1 palpite por linha (compatível com a King)
-      const milhares = rows.map((it) => {
-        const dig = dailyDigitForRow(today, grupoAtual.grupo2, it.centena);
-        return `${dig}${it.centena}`; // 4 dígitos (string) preservando zero
-      });
+      const milhares = rows
+        .map((it) => String(it?.milhar || "").trim())
+        .filter((milhar) => /^\d{4}$/.test(milhar));
 
       const texto = milhares.join("\n");
       const url = buildKingGuessUrlFromPalpites(milhares);
@@ -1761,8 +1774,8 @@ export default function CentenasView() {
                         <div className="cx0_scroll">
                           {(rows || []).map((it, idx) => {
                             const posTxt = `${idx + 1}º`;
-                            const dig = dailyDigitForRow(todayYmd, g.grupo2, it.centena);
-                            const milharPalpite = `${dig}${it.centena}`;
+                            const milhar = String(it?.milhar || "").trim();
+                            const milharPalpite = milhar;
                             return (
                               <div className="cx0_row" key={`${g.grupo}-${it.centena}`}>
                                 <div style={{ color: "rgba(233,233,233,0.70)" }}>{posTxt}</div>
