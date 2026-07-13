@@ -784,6 +784,73 @@ async function guardPersistedOrCritical({ date, slotHHMM, calendar, closeHourTri
   return { ok: false, verified: false, reason: v.reason || "NOT_PERSISTED", file };
 }
 
+/**
+ * Reconcilia o state temporário do runner com os horários
+ * realmente presentes no backend/Firestore.
+ */
+function syncStateFromBackendSnapshot({
+  state,
+  statusMap,
+  daySnapshot,
+  isoNow,
+}) {
+  const rawPresentHours = Array.isArray(daySnapshot?.presentHours)
+    ? daySnapshot.presentHours
+    : [];
+
+  const presentHours = new Set(
+    rawPresentHours
+      .map((value) => {
+        const match = String(value ?? "").trim().match(/(\d{1,2})/);
+        if (!match) return "";
+
+        const hour = Number(match[1]);
+        if (!Number.isFinite(hour) || hour < 0 || hour > 23) return "";
+
+        return pad2(hour);
+      })
+      .filter(Boolean)
+  );
+
+  if (!presentHours.size) return 0;
+
+  let touched = 0;
+
+  for (const sched of SCHEDULE) {
+    const slot = state?.[sched.hour];
+    if (!slot || slot.done || slot.na) continue;
+
+    const calendar = statusMap.get(sched.hour) || "OFF";
+    if (calendar !== "HARD" && calendar !== "SOFT") continue;
+
+    const hour = String(sched.hour || "").slice(0, 2);
+    if (!presentHours.has(hour)) continue;
+
+    slot.done = true;
+    slot.na = false;
+    slot.naReason = null;
+    slot.lastTryISO = slot.lastTryISO || isoNow;
+    slot.lastResult = {
+      ...(slot.lastResult || {}),
+      ok: true,
+      reconciledFromBackend: true,
+      reason: "BACKEND_PRESENT_HOUR",
+      presentHour: hour,
+    };
+    slot.alertMissedWindow = false;
+    slot.alertCritical = false;
+
+    touched += 1;
+
+    logLine(
+      `[STATE-SYNC] backend confirmou slot=${sched.hour} presente -> DONE`,
+      "INFO"
+    );
+  }
+
+  return touched;
+}
+
 /* =========================
    Auditoria de Furos (warning/critical)
 ========================= */
@@ -949,6 +1016,23 @@ async function main() {
     } else {
       statusMap = new Map();
       for (const sched of SCHEDULE) statusMap.set(sched.hour, "HARD");
+    }
+
+    // O workspace do GitHub Actions é novo a cada execução.
+    // Antes de auditar, sincroniza o state local com a fonte real.
+    const syncedFromBackend = syncStateFromBackendSnapshot({
+      state,
+      statusMap,
+      daySnapshot: ds,
+      isoNow,
+    });
+
+    if (syncedFromBackend > 0) {
+      saveState(date, state);
+      logLine(
+        `[STATE-SYNC] slots reconciliados pelo backend=${syncedFromBackend}`,
+        "INFO"
+      );
     }
 
     // ✅ Se o dia já está completo, gera audit e encerra
