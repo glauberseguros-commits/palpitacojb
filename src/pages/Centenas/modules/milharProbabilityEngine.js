@@ -388,3 +388,137 @@ export function buildMilharRecommendation(args = {}) {
     alternatives,
   };
 }
+/*
+==========================================================
+Auditoria interna do Motor de Milhares
+==========================================================
+
+Uso exclusivo das áreas administrativas e de desenvolvimento.
+
+Esta saída não deve ser consumida pela interface pública.
+*/
+
+function auditEvidence(item) {
+  if (!item) return null;
+
+  return {
+    exactFrequency: {
+      count: Number(
+        item?.evidence?.exactFrequency?.count || 0
+      ),
+      normalized: Number(
+        item?.evidence?.exactFrequency?.normalized || 0
+      ),
+    },
+
+    prefixSameDezena: {
+      count: Number(
+        item?.evidence?.prefixSameDezena?.count || 0
+      ),
+      normalized: Number(
+        item?.evidence?.prefixSameDezena?.normalized || 0
+      ),
+    },
+
+    prefixOverall: {
+      count: Number(
+        item?.evidence?.prefixOverall?.count || 0
+      ),
+      normalized: Number(
+        item?.evidence?.prefixOverall?.normalized || 0
+      ),
+    },
+
+    exactRecency: {
+      lastSeen: Number(
+        item?.evidence?.exactRecency?.lastSeen || 0
+      ),
+      totalRows: Number(
+        item?.evidence?.exactRecency?.totalRows || 0
+      ),
+      normalized: Number(
+        item?.evidence?.exactRecency?.normalized || 0
+      ),
+    },
+  };
+}
+
+function auditCandidate(item) {
+  return {
+    position: Number(item?.position || 0),
+    prefixo: String(item?.prefix ?? ""),
+    milhar: String(item?.milhar || ""),
+    score: Number(item?.score || 0),
+    evidence: auditEvidence(item),
+  };
+}
+
+export function buildMilharAudit(args = {}) {
+  const result = chooseBestMilhar(args);
+  const recommendation = buildMilharRecommendation(args);
+
+  const ranking = Array.isArray(result?.ranking)
+    ? result.ranking.map(auditCandidate)
+    : [];
+
+  const winner = ranking[0] || null;
+  const runnerUp = ranking[1] || null;
+
+  const scoreGap =
+    winner && runnerUp
+      ? Number(
+          (
+            Number(winner.score || 0) -
+            Number(runnerUp.score || 0)
+          ).toFixed(6)
+        )
+      : 0;
+
+  return {
+    scope: "internal_developer_only",
+    publicExposureAllowed: false,
+
+    ok: recommendation.ok === true,
+    status: recommendation.status,
+
+    model: String(
+      recommendation.model ||
+      result?.model ||
+      "MILHAR_PROBABILITY_V2"
+    ),
+
+    centena: recommendation.centena,
+    selectedMilhar: recommendation.milhar,
+    selectedPrefixo: recommendation.prefixo,
+
+    score: Number(recommendation.score || 0),
+    confidence: Number(recommendation.confidence || 0),
+    scoreGap,
+
+    sample: {
+      size: Number(recommendation.sampleSize || 0),
+      quality: String(
+        recommendation.sampleQuality || "none"
+      ),
+    },
+
+    weights: {
+      ...(result?.weights || {}),
+    },
+
+    winner,
+    runnerUp,
+    ranking,
+
+    alternatives: Array.isArray(
+      recommendation.alternatives
+    )
+      ? recommendation.alternatives.map((item) => ({
+          position: Number(item?.position || 0),
+          milhar: String(item?.milhar || ""),
+          prefixo: String(item?.prefixo ?? ""),
+          score: Number(item?.score || 0),
+        }))
+      : [],
+  };
+}
