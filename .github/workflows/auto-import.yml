@@ -100,7 +100,7 @@ jobs:
           FAIL_ON_CRITICAL: "1"
           AUDIT_WARN_MIN: "20"
           AUDIT_CRIT_MIN: "60"
-        run: node backend/scripts/autoImportToday.js
+        run: node scripts/autoImportToday.js
 
   # ==========================================================
   # FEDERAL
@@ -145,4 +145,4 @@ jobs:
           FAIL_ON_CRITICAL: "1"
           AUDIT_WARN_MIN: "20"
           AUDIT_CRIT_MIN: "60"
-        run: node backend/scripts/autoImportToday.js
+        run: node scripts/autoImportToday.js
