@@ -28,7 +28,7 @@ jobs:
     timeout-minutes: 45
     env:
       TZ: America/Sao_Paulo
-
+      PITACO_API_BASE: ${{ vars.PITACO_API_BASE }}
       # ✅ robusto no Actions (sem quebra de newline)
       FIREBASE_ADMIN_SA_BASE64: ${{ secrets.FIREBASE_ADMIN_SA_BASE64 }}
 
@@ -97,4 +97,4 @@ jobs:
           echo "  LIMIT_DAYS=$LIMIT_DAYS"
 
       - name: Run autoMaintainBackfill (PT_RIO)
-        run: node backend/scripts/autoMaintainBackfill.js --lottery=PT_RIO --days=${{ env.DAYS }} --limitDays=${{ env.LIMIT_DAYS }} --baseMins=0,9 --tolMin=2
+        run: node backend/scripts/autoMaintainBackfill.js --lottery=PT_RIO --days=${{ env.DAYS }} --limitDays=${{ env.LIMIT_DAYS }} --baseMins=0,9 --tolMin=2 --baseUrl="${{ vars.PITACO_API_BASE }}"

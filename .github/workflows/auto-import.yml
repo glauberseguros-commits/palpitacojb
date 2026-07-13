@@ -53,6 +53,7 @@ permissions:
 # Garante que o Node rode em BRT (importante para regras de janela/slot no script)
 env:
   TZ: America/Sao_Paulo
+  PITACO_API_BASE: ${{ vars.PITACO_API_BASE }}
 
 jobs:
   # ==========================================================
