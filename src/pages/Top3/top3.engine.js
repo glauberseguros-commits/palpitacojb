@@ -2474,8 +2474,8 @@ export function computeConditionalNextTop3V2({
     const recentLast2Norm = normalizeMetric(rm.recentLast2PrizePresence, 2);
 
     const recentComposite =
-      (recentFirstNorm * 0.34) +
-      (recentPrizePresenceNorm * 0.24) +
+      (recentFirstNorm * 0.52) +
+      (recentPrizePresenceNorm * 0.08) +
       (recentDupNorm * 0.18) +
       (recentLast2Norm * 0.14) +
       (recentLast1Norm * 0.1);
@@ -3060,7 +3060,7 @@ export function computeStatisticalTop3V3({
       const pFirst = Number(layerProbability(layer.first, layer.samples).get(grupo) || 0);
       const pPrizePresence = Number(layerProbability(layer.prizePresence, layer.samples).get(grupo) || 0);
 
-      const pLayer = (pFirst * 0.75) + (pPrizePresence * 0.25);
+      const pLayer = (pFirst * 0.92) + (pPrizePresence * 0.08);
       const w = Number(activeWeights[keyLayer] || 0);
 
       scoreProb += pLayer * w;
