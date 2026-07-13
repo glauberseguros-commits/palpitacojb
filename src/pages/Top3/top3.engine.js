@@ -631,7 +631,7 @@ function getFirstGrupoFromDraw(draw) {
   return pickPrize1GrupoFromDraw(draw);
 }
 
-function getAllTop5Groups(draw) {
+function getAllPrizePresenceGroups(draw) {
   const out = [];
   const ps = Array.isArray(draw?.prizes) ? draw.prizes : [];
   for (const p of ps) {
@@ -649,7 +649,7 @@ function getAllTop5Groups(draw) {
 function buildFreqAndFirstMaps(nextDraw) {
   const freq = new Map();
   const firstMap = new Map();
-  const items = getAllTop5Groups(nextDraw);
+  const items = getAllPrizePresenceGroups(nextDraw);
 
   for (const it of items) {
     freq.set(it.grupo, (freq.get(it.grupo) || 0) + 1);
@@ -707,7 +707,7 @@ function computeStructuralBaseDistribution(
       if (h !== target) continue;
     }
 
-    const items = getAllTop5Groups(d);
+    const items = getAllPrizePresenceGroups(d);
     if (!items.length) continue;
 
     totalSamples += 1;
@@ -769,11 +769,11 @@ function computeRecentPressureMetrics(recentDraws, groupsK = TOP3_GROUPS_K) {
 
   for (let g = 1; g <= k; g += 1) {
     out.set(g, {
-      recentTop5: 0,
+      recentPrizePresence: 0,
       recentIndirect: 0,
       recentFirst: 0,
       recentLast1First: 0,
-      recentLast2Top5: 0,
+      recentLast2PrizePresence: 0,
     });
   }
 
@@ -782,7 +782,7 @@ function computeRecentPressureMetrics(recentDraws, groupsK = TOP3_GROUPS_K) {
   const last2 = list.slice(-2);
 
   for (const d of list) {
-    const items = getAllTop5Groups(d);
+    const items = getAllPrizePresenceGroups(d);
 
     for (const it of items) {
       const g = Number(it.grupo);
@@ -790,7 +790,7 @@ function computeRecentPressureMetrics(recentDraws, groupsK = TOP3_GROUPS_K) {
       if (!Number.isFinite(g) || g < 1 || g > k) continue;
 
       const row = out.get(g);
-      row.recentTop5 += 1;
+      row.recentPrizePresence += 1;
 
       if (pos >= 2 && pos <= 4) row.recentIndirect += 1;
       if (pos === 1) row.recentFirst += 1;
@@ -798,7 +798,7 @@ function computeRecentPressureMetrics(recentDraws, groupsK = TOP3_GROUPS_K) {
   }
 
   for (const d of last1) {
-    const items = getAllTop5Groups(d);
+    const items = getAllPrizePresenceGroups(d);
     for (const it of items) {
       const g = Number(it.grupo);
       const pos = Number(it.pos);
@@ -810,14 +810,14 @@ function computeRecentPressureMetrics(recentDraws, groupsK = TOP3_GROUPS_K) {
   }
 
   for (const d of last2) {
-    const items = getAllTop5Groups(d);
+    const items = getAllPrizePresenceGroups(d);
     const seen = new Set();
     for (const it of items) {
       const g = Number(it.grupo);
       if (!Number.isFinite(g) || g < 1 || g > k) continue;
       if (seen.has(g)) continue;
       seen.add(g);
-      out.get(g).recentLast2Top5 += 1;
+      out.get(g).recentLast2PrizePresence += 1;
     }
   }
 
@@ -1199,9 +1199,9 @@ export function computeConditionalNextTop3({
   const recentDraws = getRecentDrawsBefore(list, drawLast, 6);
   const recentMetrics = computeRecentPressureMetrics(recentDraws, TOP3_GROUPS_K);
 
-  const recentMaxTop5 = Math.max(
+  const recentMaxPrizePresence = Math.max(
     1,
-    ...Array.from(recentMetrics.values()).map((x) => Number(x.recentTop5 || 0))
+    ...Array.from(recentMetrics.values()).map((x) => Number(x.recentPrizePresence || 0))
   );
   const recentMaxIndirect = Math.max(
     1,
@@ -1235,18 +1235,18 @@ export function computeConditionalNextTop3({
     const lateBonus = Math.max(0, Math.min(1, lateBonusRaw));
 
     const rm = recentMetrics.get(grupo) || {
-      recentTop5: 0,
+      recentPrizePresence: 0,
       recentIndirect: 0,
       recentFirst: 0,
       recentLast1First: 0,
-      recentLast2Top5: 0,
+      recentLast2PrizePresence: 0,
     };
 
-    const recentTop5Norm = normalizeMetric(rm.recentTop5, recentMaxTop5);
+    const recentPrizePresenceNorm = normalizeMetric(rm.recentPrizePresence, recentMaxPrizePresence);
     const recentIndirectNorm = normalizeMetric(rm.recentIndirect, recentMaxIndirect);
     const recentFirstNorm = normalizeMetric(rm.recentFirst, recentMaxFirst);
     const recentLast1FirstNorm = normalizeMetric(rm.recentLast1First, 1);
-    const recentLast2Top5Norm = normalizeMetric(rm.recentLast2Top5, 2);
+    const recentLast2PrizePresenceNorm = normalizeMetric(rm.recentLast2PrizePresence, 2);
 
     const recencyCoolingFactor =
       rm.recentLast1First > 0
@@ -1257,11 +1257,11 @@ export function computeConditionalNextTop3({
 
     const smartLateBoost =
       lateBonus *
-      (0.45 + (recentIndirectNorm * 0.35) + (recentLast2Top5Norm * 0.2)) *
+      (0.45 + (recentIndirectNorm * 0.35) + (recentLast2PrizePresenceNorm * 0.2)) *
       recencyCoolingFactor;
 
     const recentComposite =
-      (recentTop5Norm * 0.45) +
+      (recentPrizePresenceNorm * 0.45) +
       (recentIndirectNorm * 0.35) +
       (recentFirstNorm * 0.2);
 
@@ -1299,11 +1299,11 @@ export function computeConditionalNextTop3({
       score: baseScore,
       lateBonus,
       smartLateBoost,
-      recentTop5: rm.recentTop5,
+      recentPrizePresence: rm.recentPrizePresence,
       recentIndirect: rm.recentIndirect,
       recentFirst: rm.recentFirst,
       recentLast1First: rm.recentLast1First,
-      recentLast2Top5: rm.recentLast2Top5,
+      recentLast2PrizePresence: rm.recentLast2PrizePresence,
       recentComposite,
       lastSeenTs,
       gapMs,
@@ -1360,7 +1360,7 @@ export function computeConditionalNextTop3({
         `Probabilidade final estimada no TOP3: ${pct}%`,
         `Composição da probabilidade: condicional=${pctCond}% | estrutural=${pctBase}%`,
         `Presença indireta recente (2º-4º): ${x.recentIndirect}`,
-        `Persistência curta recente: ${x.recentTop5}`,
+        `Persistência curta recente: ${x.recentPrizePresence}`,
         `Bônus de atraso ajustado: ${(Number(x.smartLateBoost || 0) * 100).toFixed(2)}%`,
       ],
       meta: {
@@ -1386,11 +1386,11 @@ export function computeConditionalNextTop3({
           targetDayOfMonth,
           prevHour: lastH,
           prevGrupo: Number(prevGrupo),
-          recentTop5: x.recentTop5,
+          recentPrizePresence: x.recentPrizePresence,
           recentIndirect: x.recentIndirect,
           recentFirst: x.recentFirst,
           recentLast1First: x.recentLast1First,
-          recentLast2Top5: x.recentLast2Top5,
+          recentLast2PrizePresence: x.recentLast2PrizePresence,
           allLayers: (layerOut?.layers || []).map((layer) => ({
             key: layer.key,
             label: layer.label,
@@ -1680,7 +1680,7 @@ function detectRegimeFromComparableSequence(seqRecent) {
   };
 }
 
-function computeComparableTop5Distribution(
+function computeComparablePrizePresenceDistribution(
   draws,
   lotteryKey,
   targetHour,
@@ -1703,7 +1703,7 @@ function computeComparableTop5Distribution(
   }
 
   for (const d of list) {
-    const items = getAllTop5Groups(d);
+    const items = getAllPrizePresenceGroups(d);
     if (!items.length) continue;
 
     totalSamples += 1;
@@ -1795,12 +1795,12 @@ function computeRecentBichoMetrics(draws, groupsK = TOP3_GROUPS_K) {
 
   for (let g = 1; g <= k; g += 1) {
     out.set(g, {
-      recentTop5: 0,
+      recentPrizePresence: 0,
       recentFirst: 0,
       recentDupDraws: 0,
-      recentLast1Top5: 0,
-      recentLast2Top5: 0,
-      recentLast3Top5: 0,
+      recentLast1PrizePresence: 0,
+      recentLast2PrizePresence: 0,
+      recentLast3PrizePresence: 0,
     });
   }
 
@@ -1810,7 +1810,7 @@ function computeRecentBichoMetrics(draws, groupsK = TOP3_GROUPS_K) {
   const last3 = list.slice(-3);
 
   for (const d of list) {
-    const items = getAllTop5Groups(d);
+    const items = getAllPrizePresenceGroups(d);
     const perDrawCounts = new Map();
 
     for (const it of items) {
@@ -1818,7 +1818,7 @@ function computeRecentBichoMetrics(draws, groupsK = TOP3_GROUPS_K) {
       if (!Number.isFinite(g) || g < 1 || g > k) continue;
 
       const row = out.get(g);
-      row.recentTop5 += 1;
+      row.recentPrizePresence += 1;
 
       if (Number(it.pos) === 1) {
         row.recentFirst += 1;
@@ -1836,31 +1836,31 @@ function computeRecentBichoMetrics(draws, groupsK = TOP3_GROUPS_K) {
 
   for (const d of last1) {
     const seen = new Set();
-    for (const it of getAllTop5Groups(d)) {
+    for (const it of getAllPrizePresenceGroups(d)) {
       const g = Number(it.grupo);
       if (!Number.isFinite(g) || g < 1 || g > k || seen.has(g)) continue;
       seen.add(g);
-      out.get(g).recentLast1Top5 += 1;
+      out.get(g).recentLast1PrizePresence += 1;
     }
   }
 
   for (const d of last2) {
     const seen = new Set();
-    for (const it of getAllTop5Groups(d)) {
+    for (const it of getAllPrizePresenceGroups(d)) {
       const g = Number(it.grupo);
       if (!Number.isFinite(g) || g < 1 || g > k || seen.has(g)) continue;
       seen.add(g);
-      out.get(g).recentLast2Top5 += 1;
+      out.get(g).recentLast2PrizePresence += 1;
     }
   }
 
   for (const d of last3) {
     const seen = new Set();
-    for (const it of getAllTop5Groups(d)) {
+    for (const it of getAllPrizePresenceGroups(d)) {
       const g = Number(it.grupo);
       if (!Number.isFinite(g) || g < 1 || g > k || seen.has(g)) continue;
       seen.add(g);
-      out.get(g).recentLast3Top5 += 1;
+      out.get(g).recentLast3PrizePresence += 1;
     }
   }
 
@@ -1957,7 +1957,7 @@ function computeComparableLastSeenByGrupo(
     const y = pickDrawYMD(d);
     const h = toHourBucket(pickDrawHour(d));
     const ts = ymdHourToTs(y, h);
-    const items = getAllTop5Groups(d);
+    const items = getAllPrizePresenceGroups(d);
 
     for (const it of items) {
       const g = Number(it.grupo);
@@ -1987,7 +1987,7 @@ function buildDayContext(drawsToday = []) {
     seq.push(gg);
     freq.set(gg, Number(freq.get(gg) || 0) + 1);
 
-    const items = getAllTop5Groups(d);
+    const items = getAllPrizePresenceGroups(d);
     if (items.some((it) => Number(it.grupo) === gg && Number(it.pos) === 1)) {
       firstFreq.set(gg, Number(firstFreq.get(gg) || 0) + 1);
     }
@@ -2317,14 +2317,14 @@ export function computeConditionalNextTop3V2({
   );
   const pStructuralFirst = structuralFirst?.prob || new Map();
 
-  const structuralTop5 = computeComparableTop5Distribution(
+  const structuralPrizePresence = computeComparablePrizePresenceDistribution(
     list,
     key,
     targetH,
     targetDow,
     TOP3_GROUPS_K
   );
-  const pStructuralTop5 = structuralTop5?.prob || new Map();
+  const pStructuralPrizePresence = structuralPrizePresence?.prob || new Map();
 
   const duplication = computeComparableDuplicationDistribution(
     list,
@@ -2399,9 +2399,9 @@ export function computeConditionalNextTop3V2({
   );
   const recentMetrics = computeRecentBichoMetrics(recentContextDraws, TOP3_GROUPS_K);
 
-  const recentMaxTop5 = Math.max(
+  const recentMaxPrizePresence = Math.max(
     1,
-    ...Array.from(recentMetrics.values()).map((x) => Number(x.recentTop5 || 0))
+    ...Array.from(recentMetrics.values()).map((x) => Number(x.recentPrizePresence || 0))
   );
   const recentMaxFirst = Math.max(
     1,
@@ -2451,7 +2451,7 @@ export function computeConditionalNextTop3V2({
 
     const pT = Number(pTransitionFirst.get(grupo) || 0);
     const pSF = Number(pStructuralFirst.get(grupo) || 0);
-    const pST = Number(pStructuralTop5.get(grupo) || 0);
+    const pST = Number(pStructuralPrizePresence.get(grupo) || 0);
     const pM = Number(pMemory.get(grupo) || 0);
     const pD = Number(pDuplication.get(grupo) || 0);
     const pSeq = Number(pSeq2.get(grupo) || 0);
@@ -2459,23 +2459,23 @@ export function computeConditionalNextTop3V2({
     const pPair = Number(pairOut?.prob?.get?.(grupo) || 0);
 
     const rm = recentMetrics.get(grupo) || {
-      recentTop5: 0,
+      recentPrizePresence: 0,
       recentFirst: 0,
       recentDupDraws: 0,
-      recentLast1Top5: 0,
-      recentLast2Top5: 0,
-      recentLast3Top5: 0,
+      recentLast1PrizePresence: 0,
+      recentLast2PrizePresence: 0,
+      recentLast3PrizePresence: 0,
     };
 
-    const recentTop5Norm = normalizeMetric(rm.recentTop5, recentMaxTop5);
+    const recentPrizePresenceNorm = normalizeMetric(rm.recentPrizePresence, recentMaxPrizePresence);
     const recentFirstNorm = normalizeMetric(rm.recentFirst, recentMaxFirst);
     const recentDupNorm = normalizeMetric(rm.recentDupDraws, recentMaxDup);
-    const recentLast1Norm = normalizeMetric(rm.recentLast1Top5, 1);
-    const recentLast2Norm = normalizeMetric(rm.recentLast2Top5, 2);
+    const recentLast1Norm = normalizeMetric(rm.recentLast1PrizePresence, 1);
+    const recentLast2Norm = normalizeMetric(rm.recentLast2PrizePresence, 2);
 
     const recentComposite =
       (recentFirstNorm * 0.34) +
-      (recentTop5Norm * 0.24) +
+      (recentPrizePresenceNorm * 0.24) +
       (recentDupNorm * 0.18) +
       (recentLast2Norm * 0.14) +
       (recentLast1Norm * 0.1);
@@ -2563,7 +2563,7 @@ export function computeConditionalNextTop3V2({
       score,
       probTransition: pT,
       probStructuralFirst: pSF,
-      probStructuralTop5: pST,
+      probStructuralPrizePresence: pST,
       probMemory: pM,
       probDuplication: pD,
       probSeq2: pSeq,
@@ -2573,17 +2573,17 @@ export function computeConditionalNextTop3V2({
       repeatBoost,
       dominanceScore,
       recentComposite,
-      recentTop5: rm.recentTop5,
+      recentPrizePresence: rm.recentPrizePresence,
       recentFirst: rm.recentFirst,
       recentDupDraws: rm.recentDupDraws,
-      recentLast1Top5: rm.recentLast1Top5,
-      recentLast2Top5: rm.recentLast2Top5,
-      recentLast3Top5: rm.recentLast3Top5,
+      recentLast1PrizePresence: rm.recentLast1PrizePresence,
+      recentLast2PrizePresence: rm.recentLast2PrizePresence,
+      recentLast3PrizePresence: rm.recentLast3PrizePresence,
       lateNorm,
       gapMs,
       condFirstCount: Number(condFirstFreq.get(grupo) || 0),
       structuralFirstCount: Number(structuralFirst?.firstFreq?.get(grupo) || 0),
-      structuralTop5Count: Number(structuralTop5?.freq?.get(grupo) || 0),
+      structuralPrizePresenceCount: Number(structuralPrizePresence?.freq?.get(grupo) || 0),
       duplicationCount: Number(duplication?.freq?.get(grupo) || 0),
       memoryWeight: Number(memoryOut?.freq?.get(grupo) || 0),
       dayFreq,
@@ -2606,7 +2606,7 @@ export function computeConditionalNextTop3V2({
       if (b.probPair !== a.probPair) return b.probPair - a.probPair;
       if (b.probDuplication !== a.probDuplication) return b.probDuplication - a.probDuplication;
       if (b.probStructuralFirst !== a.probStructuralFirst) return b.probStructuralFirst - a.probStructuralFirst;
-      if (b.probStructuralTop5 !== a.probStructuralTop5) return b.probStructuralTop5 - a.probStructuralTop5;
+      if (b.probStructuralPrizePresence !== a.probStructuralPrizePresence) return b.probStructuralPrizePresence - a.probStructuralPrizePresence;
       return a.grupo - b.grupo;
     })
     .slice(0, Math.max(1, Number(topN || 3)));
@@ -2620,7 +2620,7 @@ export function computeConditionalNextTop3V2({
         final: (Number(x.scoreProb || 0) * 100).toFixed(2),
         transicao: (Number(x.probTransition || 0) * 100).toFixed(2),
         estrutural1: (Number(x.probStructuralFirst || 0) * 100).toFixed(2),
-        estruturalTop5: (Number(x.probStructuralTop5 || 0) * 100).toFixed(2),
+        estruturalPrizePresence: (Number(x.probStructuralPrizePresence || 0) * 100).toFixed(2),
         memoria: (Number(x.probMemory || 0) * 100).toFixed(2),
         par: (Number(x.probPair || 0) * 100).toFixed(2),
         duplicacao: (Number(x.probDuplication || 0) * 100).toFixed(2),
@@ -2632,7 +2632,7 @@ export function computeConditionalNextTop3V2({
         pairSamples: x.pairSamples,
         condFirstCount: x.condFirstCount,
         structuralFirstCount: x.structuralFirstCount,
-        structuralTop5Count: x.structuralTop5Count,
+        structuralPrizePresenceCount: x.structuralPrizePresenceCount,
       }))
     );
 
@@ -2652,7 +2652,7 @@ export function computeConditionalNextTop3V2({
       condSamples,
       chosen,
       structuralFirstSamples: structuralFirst?.totalSamples,
-      structuralTop5Samples: structuralTop5?.totalSamples,
+      structuralPrizePresenceSamples: structuralPrizePresence?.totalSamples,
       duplicationSamples: duplication?.totalSamples,
       memoryMatchedSamples: memoryOut?.matchedSamples,
     });
@@ -2667,7 +2667,7 @@ export function computeConditionalNextTop3V2({
     `Estado atual: prev=${String(prevGrupo).padStart(2, "0")} @ ${lastH} → alvo ${targetH}`,
     `Estado curto comparável: [${currentState.map((g) => String(g).padStart(2, "0")).join(", ")}]`,
     `Camada condicional: ${chosen?.label || "—"} | amostras=${condSamples}`,
-    `Amostra estrutural 1º=${Number(structuralFirst?.totalSamples || 0)} | TOP5=${Number(structuralTop5?.totalSamples || 0)} | duplicação=${Number(duplication?.totalSamples || 0)}`,
+    `Amostra estrutural 1º=${Number(structuralFirst?.totalSamples || 0)} | PRIZE_PRESENCE=${Number(structuralPrizePresence?.totalSamples || 0)} | duplicação=${Number(duplication?.totalSamples || 0)}`,
     `Amostra memória: matches=${Number(memoryOut?.matchedSamples || 0)} | peso=${Number(memoryOut?.totalWeight || 0).toFixed(2)}`,
     `Par do dia: ${Array.isArray(prevPair) && prevPair.length === 2 ? prevPair.map((n) => String(n).padStart(2, "0")).join("→") : "--"} | matches=${Number(pairOut?.samples || 0)} | matches DOM=${Number(pairOut?.exactDomSamples || 0)} | confiança=${(pairConfidence * 100).toFixed(0)}%`,
     `Fluxo do dia: draws=${Number(dayContext?.total || 0)} | confiança=${(dayFlowConfidence * 100).toFixed(0)}%`,
@@ -2701,7 +2701,7 @@ export function computeConditionalNextTop3V2({
         ...reasonsBase,
         `Grupo G${g2}: transição para 1º=${(x.probTransition * 100).toFixed(2)}%`,
         `Grupo G${g2}: estrutural de 1º=${(x.probStructuralFirst * 100).toFixed(2)}%`,
-        `Grupo G${g2}: estrutural de TOP3=${(x.probStructuralTop5 * 100).toFixed(2)}%`,
+        `Grupo G${g2}: estrutural de TOP3=${(x.probStructuralPrizePresence * 100).toFixed(2)}%`,
         `Grupo G${g2}: duplicação histórica=${(x.probDuplication * 100).toFixed(2)}%`,
         `Grupo G${g2}: sequência ordem 2=${(x.probSeq2 * 100).toFixed(2)}%`,
         `Grupo G${g2}: par do dia=${(x.probPair * 100).toFixed(2)}% | confiança=${(x.pairConfidence * 100).toFixed(2)}%`,
@@ -2711,7 +2711,7 @@ export function computeConditionalNextTop3V2({
         `Grupo G${g2}: atraso normalizado=${(x.lateNorm * 100).toFixed(2)}%`,
         `Grupo G${g2}: 1ºs na camada=${x.condFirstCount}`,
         `Grupo G${g2}: 1ºs estruturais=${x.structuralFirstCount}`,
-        `Grupo G${g2}: TOP3 estruturais=${x.structuralTop5Count}`,
+        `Grupo G${g2}: TOP3 estruturais=${x.structuralPrizePresenceCount}`,
         `Grupo G${g2}: draws com duplicação=${x.duplicationCount}`,
         `Grupo G${g2}: peso de memória=${Number(x.memoryWeight || 0).toFixed(2)}`,
         `Grupo G${g2}: frequência no dia=${x.dayFreq}`,
@@ -2744,7 +2744,7 @@ export function computeConditionalNextTop3V2({
           layerLabel: chosen?.label || "—",
           layerSamples: condSamples,
           structuralFirstSamples: Number(structuralFirst?.totalSamples || 0),
-          structuralTop5Samples: Number(structuralTop5?.totalSamples || 0),
+          structuralPrizePresenceSamples: Number(structuralPrizePresence?.totalSamples || 0),
           duplicationSamples: Number(duplication?.totalSamples || 0),
           memoryMatchedSamples: Number(memoryOut?.matchedSamples || 0),
           memoryTotalWeight: Number(memoryOut?.totalWeight || 0),
@@ -2766,7 +2766,7 @@ export function computeConditionalNextTop3V2({
           dayFlowConfidence,
           dominanceScore: x.dominanceScore,
           recentComposite: x.recentComposite,
-          recentTop5: x.recentTop5,
+          recentPrizePresence: x.recentPrizePresence,
           recentFirst: x.recentFirst,
           recentDupDraws: x.recentDupDraws,
           allLayers: (layerOut?.layers || []).map((layer) => ({
@@ -2805,7 +2805,7 @@ export function computeConditionalNextTop3V2({
         layerLabel: chosen?.label || "—",
         layerSamples: condSamples,
         structuralFirstSamples: Number(structuralFirst?.totalSamples || 0),
-        structuralTop5Samples: Number(structuralTop5?.totalSamples || 0),
+        structuralPrizePresenceSamples: Number(structuralPrizePresence?.totalSamples || 0),
         duplicationSamples: Number(duplication?.totalSamples || 0),
         memoryMatchedSamples: Number(memoryOut?.matchedSamples || 0),
         memoryTotalWeight: Number(memoryOut?.totalWeight || 0),
@@ -2848,9 +2848,9 @@ function emptyGroupMap() {
   return out;
 }
 
-function getTop5GroupSet(draw) {
+function getPrizePresenceGroupSet(draw) {
   return new Set(
-    getAllTop5Groups(draw)
+    getAllPrizePresenceGroups(draw)
       .map((x) => Number(x.grupo))
       .filter((g) => Number.isFinite(g) && g >= 1 && g <= TOP3_GROUPS_K)
   );
@@ -2942,11 +2942,11 @@ export function computeStatisticalTop3V3({
   });
 
   const layers = {
-    hour: { label: `frequência no horário ${targetH}`, samples: 0, first: emptyGroupMap(), top5: emptyGroupMap(), weight: 0.33 },
-    dowHour: { label: `frequência no dia da semana + horário`, samples: 0, first: emptyGroupMap(), top5: emptyGroupMap(), weight: 0.27 },
-    dayMonth: { label: `frequência no dia ${String(targetDayOfMonth).padStart(2, "0")}`, samples: 0, first: emptyGroupMap(), top5: emptyGroupMap(), weight: 0.04 },
-    transition: { label: `transição G${String(prevGrupo).padStart(2, "0")} @ ${lastH} → ${targetH}`, samples: 0, first: emptyGroupMap(), top5: emptyGroupMap(), weight: 0.26 },
-    recent: { label: `recência comparável`, samples: 0, first: emptyGroupMap(), top5: emptyGroupMap(), weight: 0.10 },
+    hour: { label: `frequência no horário ${targetH}`, samples: 0, first: emptyGroupMap(), prizePresence: emptyGroupMap(), weight: 0.33 },
+    dowHour: { label: `frequência no dia da semana + horário`, samples: 0, first: emptyGroupMap(), prizePresence: emptyGroupMap(), weight: 0.27 },
+    dayMonth: { label: `frequência no dia ${String(targetDayOfMonth).padStart(2, "0")}`, samples: 0, first: emptyGroupMap(), prizePresence: emptyGroupMap(), weight: 0.04 },
+    transition: { label: `transição G${String(prevGrupo).padStart(2, "0")} @ ${lastH} → ${targetH}`, samples: 0, first: emptyGroupMap(), prizePresence: emptyGroupMap(), weight: 0.26 },
+    recent: { label: `recência comparável`, samples: 0, first: emptyGroupMap(), prizePresence: emptyGroupMap(), weight: 0.10 },
   };
 
   for (const d of history) {
@@ -2955,12 +2955,12 @@ export function computeStatisticalTop3V3({
     const dow = getDowKey(y);
     const dom = getDayOfMonth(y);
     const g1 = getFirstGrupoFromDraw(d);
-    const top5Set = getTop5GroupSet(d);
+    const prizePresenceSet = getPrizePresenceGroupSet(d);
 
     const addToLayer = (layer) => {
       layer.samples += 1;
       incMap(layer.first, g1, 1);
-      for (const g of top5Set) incMap(layer.top5, g, 1);
+      for (const g of prizePresenceSet) incMap(layer.prizePresence, g, 1);
     };
 
     if (h === targetH) addToLayer(layers.hour);
@@ -2993,11 +2993,11 @@ export function computeStatisticalTop3V3({
     if (!nextDraw) continue;
 
     const g1 = getFirstGrupoFromDraw(nextDraw);
-    const top5Set = getTop5GroupSet(nextDraw);
+    const prizePresenceSet = getPrizePresenceGroupSet(nextDraw);
 
     layers.transition.samples += 1;
     incMap(layers.transition.first, g1, 1);
-    for (const g of top5Set) incMap(layers.transition.top5, g, 1);
+    for (const g of prizePresenceSet) incMap(layers.transition.prizePresence, g, 1);
   }
 
   const recentComparable = history
@@ -3010,11 +3010,11 @@ export function computeStatisticalTop3V3({
 
   for (const d of recentComparable) {
     const g1 = getFirstGrupoFromDraw(d);
-    const top5Set = getTop5GroupSet(d);
+    const prizePresenceSet = getPrizePresenceGroupSet(d);
 
     layers.recent.samples += 1;
     incMap(layers.recent.first, g1, 1);
-    for (const g of top5Set) incMap(layers.recent.top5, g, 1);
+    for (const g of prizePresenceSet) incMap(layers.recent.prizePresence, g, 1);
   }
 
   const currentScene = buildSceneFromDraw(drawLast);
@@ -3058,9 +3058,9 @@ export function computeStatisticalTop3V3({
 
     for (const [keyLayer, layer] of Object.entries(layers)) {
       const pFirst = Number(layerProbability(layer.first, layer.samples).get(grupo) || 0);
-      const pTop5 = Number(layerProbability(layer.top5, layer.samples).get(grupo) || 0);
+      const pPrizePresence = Number(layerProbability(layer.prizePresence, layer.samples).get(grupo) || 0);
 
-      const pLayer = (pFirst * 0.75) + (pTop5 * 0.25);
+      const pLayer = (pFirst * 0.75) + (pPrizePresence * 0.25);
       const w = Number(activeWeights[keyLayer] || 0);
 
       scoreProb += pLayer * w;
@@ -3069,7 +3069,7 @@ export function computeStatisticalTop3V3({
         label: layer.label,
         samples: layer.samples,
         firstCount: Number(layer.first.get(grupo) || 0),
-        top3Count: Number(layer.top5.get(grupo) || 0),
+        top3Count: Number(layer.prizePresence.get(grupo) || 0),
         probability: pLayer,
         weight: w,
       };
