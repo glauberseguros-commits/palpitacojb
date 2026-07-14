@@ -1,5 +1,7 @@
 "use strict";
 
+const { isPtRio18Expected } = require("../scripts/ptRioCalendar");
+
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
@@ -695,10 +697,83 @@ router.get("/results", async (req, res) => {
     const docsCapped = docs.length !== docsFound;
 
     const include09FromDefault = "2024-01-05";
-    const expectedBase = getExpectedForDate(lottery, date, include09FromDefault);
+    const expectedBase = getExpectedForDate(
+      lottery,
+      date,
+      include09FromDefault
+    );
 
-    const baseHard = expectedBase?.hard || [];
-    const baseSoft = expectedBase?.soft || [];
+    let baseHard = Array.isArray(expectedBase?.hard)
+      ? [...expectedBase.hard]
+      : [];
+
+    let baseSoft = Array.isArray(expectedBase?.soft)
+      ? [...expectedBase.soft]
+      : [];
+
+    let federal20Exists = false;
+    let ptRio18Expected = true;
+    let operationalRulesApplied = [];
+
+    if (lottery === "PT_RIO") {
+      const federalExpectedBase =
+        getExpectedForDate(
+          "FEDERAL",
+          date,
+          include09FromDefault
+        );
+
+      const federalExpectedHours = [
+        ...(Array.isArray(
+          federalExpectedBase?.hard
+        )
+          ? federalExpectedBase.hard
+          : []),
+        ...(Array.isArray(
+          federalExpectedBase?.soft
+        )
+          ? federalExpectedBase.soft
+          : []),
+      ]
+        .map((value) =>
+          String(value ?? "")
+            .trim()
+            .replace(/:00$/, "")
+            .replace(/h$/i, "")
+            .padStart(2, "0")
+        )
+        .filter(Boolean);
+
+      federal20Exists =
+        federalExpectedHours.includes("20");
+
+      ptRio18Expected =
+        isPtRio18Expected(
+          date,
+          { federal20Exists }
+        );
+
+      if (!ptRio18Expected) {
+        const remove18 = (hours) =>
+          hours.filter((value) => {
+            const normalized =
+              String(value ?? "")
+                .trim()
+                .replace(/:00$/, "")
+                .replace(/h$/i, "")
+                .padStart(2, "0");
+
+            return normalized !== "18";
+          });
+
+        baseHard = remove18(baseHard);
+        baseSoft = remove18(baseSoft);
+
+        operationalRulesApplied.push(
+          "FEDERAL_20_REMOVES_PT_RIO_18"
+        );
+      }
+    }
 
     const todayBR = todayYMDInSaoPaulo();
     const isToday = date === todayBR;
@@ -784,6 +859,9 @@ router.get("/results", async (req, res) => {
         removedSoftApplied,
         expectedHard,
         expectedSoft,
+        federal20Exists,
+        ptRio18Expected,
+        operationalRulesApplied,
         expectedHardPublished,
         expectedSoftPublished,
         capToday,
@@ -837,6 +915,9 @@ router.get("/results", async (req, res) => {
         draws: drawsNoPrizes,
         expectedHard,
         expectedSoft,
+        federal20Exists,
+        ptRio18Expected,
+        operationalRulesApplied,
         presentHours,
         slotsSummary,
         calendarStatus: buildCalendarStatus({ slotsSummary, blocked: false, isToday }),
@@ -886,6 +967,9 @@ router.get("/results", async (req, res) => {
       removedSoftApplied,
       expectedHard,
       expectedSoft,
+      federal20Exists,
+      ptRio18Expected,
+      operationalRulesApplied,
       expectedHardPublished,
       expectedSoftPublished,
       capToday,
@@ -939,6 +1023,9 @@ router.get("/results", async (req, res) => {
       draws,
       expectedHard,
       expectedSoft,
+      federal20Exists,
+      ptRio18Expected,
+      operationalRulesApplied,
       presentHours,
       slotsSummary,
       calendarStatus: buildCalendarStatus({ slotsSummary, blocked: false, isToday }),

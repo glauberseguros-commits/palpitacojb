@@ -18,6 +18,7 @@ function dowFromYMD(dateYMD) {
 }
 
 const { runImport } = require("./importKingApostas");
+const { isPtRio18Expected } = require("./ptRioCalendar");
 
 // ✅ LOTTERY parametrizável por env (default PT_RIO)
 const LOTTERY = String(process.env.LOTTERY || "PT_RIO").trim().toUpperCase() || "PT_RIO";
@@ -79,8 +80,16 @@ try {
  */
 const DAYSTATUS_CACHE_TTL_SEC = Number(process.env.DAYSTATUS_CACHE_TTL_SEC || 600);
 
-function dayStatusCacheFile(dateYMD) {
-  return path.join(LOG_DIR, `dayStatusCache-${LOTTERY}-${dateYMD}.json`);
+function dayStatusCacheFile(dateYMD, lottery = LOTTERY) {
+  const key =
+    String(lottery || LOTTERY)
+      .trim()
+      .toUpperCase() || LOTTERY;
+
+  return path.join(
+    LOG_DIR,
+    `dayStatusCache-${key}-${dateYMD}.json`
+  );
 }
 
 function readJsonSafeFile(p) {
@@ -102,7 +111,7 @@ function writeJsonSafeFile(p, obj) {
 }
 
 async function fetchDayStatusCached({ date, lottery }) {
-  const f = dayStatusCacheFile(date);
+  const f = dayStatusCacheFile(date, lottery);
   const nowMs = Date.now();
   const cached = readJsonSafeFile(f);
 
@@ -408,10 +417,75 @@ function resultMatchesSlotHour(r, slotHHMM) {
   return ids.some((id) => String(id).includes("__" + key + "__"));
 }
 
+function normalizeExpectedHour(value) {
+  const raw = String(value ?? "").trim();
+
+  if (!raw) {
+    return null;
+  }
+
+  const match = raw.match(
+    /^(\d{1,2})(?::(\d{1,2}))?/
+  );
+
+  if (!match) {
+    return null;
+  }
+
+  const hh = Number(match[1]);
+  const mm =
+    match[2] == null
+      ? 0
+      : Number(match[2]);
+
+  if (
+    !Number.isInteger(hh) ||
+    !Number.isInteger(mm) ||
+    hh < 0 ||
+    hh > 23 ||
+    mm < 0 ||
+    mm > 59
+  ) {
+    return null;
+  }
+
+  return (
+    String(hh).padStart(2, "0") +
+    ":" +
+    String(mm).padStart(2, "0")
+  );
+}
+
+function hasFederal20Scheduled(dayStatus) {
+  const hard = Array.isArray(
+    dayStatus?.expectedHard
+  )
+    ? dayStatus.expectedHard
+    : [];
+
+  const soft = Array.isArray(
+    dayStatus?.expectedSoft
+  )
+    ? dayStatus.expectedSoft
+    : [];
+
+  const expected = new Set(
+    [...hard, ...soft]
+      .map(normalizeExpectedHour)
+      .filter(Boolean)
+  );
+
+  return expected.has("20:00");
+}
+
 /* =========================
    Regras de aplicabilidade
 ========================= */
-function buildTodaySlotStatusMapPT_RIO(dateYMD, dow) {
+function buildTodaySlotStatusMapPT_RIO(
+  dateYMD,
+  dow,
+  { federal20Exists = false } = {}
+) {
   const map = new Map();
 
   const isSunday = dow === 0;
@@ -422,27 +496,75 @@ function buildTodaySlotStatusMapPT_RIO(dateYMD, dow) {
     const hh = sched.hour;
 
     if (isSunday) {
-      if (hh === "18:00" || hh === "21:00") map.set(hh, "OFF");
-      else map.set(hh, "HARD");
+      if (
+        hh === "18:00" ||
+        hh === "21:00"
+      ) {
+        map.set(hh, "OFF");
+      } else {
+        map.set(hh, "HARD");
+      }
+
       continue;
     }
 
     if (isWed || isSat) {
-      if (hh === "18:00") map.set(hh, "SOFT");
-      else map.set(hh, "HARD");
+      if (hh === "18:00") {
+        map.set(hh, "SOFT");
+      } else {
+        map.set(hh, "HARD");
+      }
+
       continue;
     }
 
     map.set(hh, "HARD");
   }
 
-  if (isSunday) {
-    logLine(`[CAL] PT_RIO domingo: date=${dateYMD} dow=${dow} => HARD=[09,11,14,16] OFF=[18,21]`, "INFO");
-  } else if (isWed || isSat) {
-    logLine(`[CAL] PT_RIO qua/sab: date=${dateYMD} dow=${dow} => HARD=[09,11,14,16,21] SOFT=[18]`, "INFO");
-  } else {
-    logLine(`[CAL] PT_RIO seg-sex: date=${dateYMD} dow=${dow} => HARD=[09,11,14,16,18,21]`, "INFO");
+  const ptRio18Expected =
+    isPtRio18Expected(
+      dateYMD,
+      { federal20Exists }
+    );
+
+  if (!ptRio18Expected) {
+    map.set("18:00", "OFF");
+
+    logLine(
+      `[CAL] PT_RIO 18:00 OFF: ` +
+        `date=${dateYMD} ` +
+        `reason=FEDERAL_20_SCHEDULED`,
+      "INFO"
+    );
   }
+
+  const hard = [];
+  const soft = [];
+  const off = [];
+
+  for (const sched of SCHEDULE) {
+    const status =
+      map.get(sched.hour) || "OFF";
+
+    if (status === "HARD") {
+      hard.push(sched.hour);
+    } else if (status === "SOFT") {
+      soft.push(sched.hour);
+    } else {
+      off.push(sched.hour);
+    }
+  }
+
+  logLine(
+    `[CAL] PT_RIO resolved: ` +
+      `date=${dateYMD} ` +
+      `dow=${dow} ` +
+      `federal20=${federal20Exists ? "1" : "0"} ` +
+      `HARD=[${hard.join(",")}] ` +
+      `SOFT=[${soft.join(",")}] ` +
+      `OFF=[${off.join(",")}]`,
+    "INFO"
+  );
 
   return map;
 }
@@ -1009,13 +1131,62 @@ async function main() {
     const ds = await fetchDayStatusCached({ date, lottery: LOTTERY });
 
     let statusMap = null;
+
     if (LOTTERY === "PT_RIO") {
-      statusMap = buildTodaySlotStatusMapPT_RIO(date, dow);
+      const federalDayStatus =
+        await fetchDayStatusCached({
+          date,
+          lottery: "FEDERAL",
+        });
+
+      const federal20Exists =
+        hasFederal20Scheduled(
+          federalDayStatus
+        );
+
+      if (!federalDayStatus) {
+        logLine(
+          `[CAL] FEDERAL dayStatus indisponível: ` +
+            `date=${date}; mantendo regra PT_RIO base`,
+          "ERROR"
+        );
+      } else {
+        logLine(
+          `[CAL] FEDERAL schedule: ` +
+            `date=${date} ` +
+            `has20=${federal20Exists ? "1" : "0"} ` +
+            `expectedHard=[${(
+              federalDayStatus.expectedHard || []
+            ).join(",")}] ` +
+            `expectedSoft=[${(
+              federalDayStatus.expectedSoft || []
+            ).join(",")}]`,
+          "INFO"
+        );
+      }
+
+      statusMap =
+        buildTodaySlotStatusMapPT_RIO(
+          date,
+          dow,
+          { federal20Exists }
+        );
     } else if (LOTTERY === "FEDERAL") {
-      statusMap = buildTodaySlotStatusMapFEDERAL({ dateYMD: date, dow, ds });
+      statusMap =
+        buildTodaySlotStatusMapFEDERAL({
+          dateYMD: date,
+          dow,
+          ds,
+        });
     } else {
       statusMap = new Map();
-      for (const sched of SCHEDULE) statusMap.set(sched.hour, "HARD");
+
+      for (const sched of SCHEDULE) {
+        statusMap.set(
+          sched.hour,
+          "HARD"
+        );
+      }
     }
 
     // O workspace do GitHub Actions é novo a cada execução.
