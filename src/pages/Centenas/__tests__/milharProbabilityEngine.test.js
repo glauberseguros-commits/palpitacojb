@@ -1,5 +1,6 @@
 import {
   buildMilharRecommendation,
+  diversifyMilharRecommendations,
   rankMilharCandidates,
 } from "../modules/milharProbabilityEngine";
 
@@ -106,4 +107,69 @@ describe("Motor de milhares com fallback individual", () => {
       expect(item.milhar.endsWith("160")).toBe(true);
     }
   });
+
+  test("diversifica prefixos sem alterar a centena", () => {
+    const rows = Array.from(
+      { length: 40 },
+      (_, index) => {
+        const centena = String(
+          100 + index
+        ).padStart(3, "0");
+
+        const candidates = Array.from(
+          { length: 10 },
+          (_, prefix) => ({
+            position: prefix + 1,
+            milhar: `${prefix}${centena}`,
+            prefixo: String(prefix),
+            score: prefix === 6
+              ? 100
+              : 99 - prefix,
+          })
+        );
+
+        return {
+          centena,
+          count: 0,
+          milhar: `6${centena}`,
+          recommendation: {
+            ok: true,
+            milhar: `6${centena}`,
+            prefixo: "6",
+            candidates,
+          },
+        };
+      }
+    );
+
+    const diversified =
+      diversifyMilharRecommendations(rows, {
+        maxPerPrefix: 4,
+        repeatPenalty: 12,
+      });
+
+    expect(diversified).toHaveLength(40);
+
+    const usage = new Map();
+
+    for (const row of diversified) {
+      expect(row.milhar.endsWith(row.centena)).toBe(true);
+
+      const prefix = row.milhar.slice(0, 1);
+
+      usage.set(
+        prefix,
+        (usage.get(prefix) || 0) + 1
+      );
+    }
+
+    expect(usage.size).toBeGreaterThanOrEqual(8);
+
+    const maxUsage = Math.max(
+      ...Array.from(usage.values())
+    );
+
+    expect(maxUsage).toBeLessThanOrEqual(4);
+  });
+
 });

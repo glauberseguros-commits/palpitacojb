@@ -313,14 +313,10 @@ export function rankMilharCandidates({
     const bExact = b.evidence.exactFrequency.count;
     if (bExact !== aExact) return bExact - aExact;
 
-    const aSame = a.evidence.prefixSameDezena.count;
-    const bSame = b.evidence.prefixSameDezena.count;
-    if (bSame !== aSame) return bSame - aSame;
-
-    const aOverall = a.evidence.prefixOverall.count;
-    const bOverall = b.evidence.prefixOverall.count;
-    if (bOverall !== aOverall) return bOverall - aOverall;
-
+    /*
+     * O prefixo já participa do score.
+     * Não pode voltar a dominar o desempate.
+     */
     const aLastSeen = a.evidence.exactRecency.lastSeen;
     const bLastSeen = b.evidence.exactRecency.lastSeen;
     if (bLastSeen !== aLastSeen) return bLastSeen - aLastSeen;
@@ -415,17 +411,19 @@ export function buildMilharRecommendation(args = {}) {
       sampleQuality: classifySampleQuality(sampleSize),
       evidence: null,
       alternatives: [],
+      candidates: [],
     };
   }
 
-  const alternatives = (result.ranking || [])
-    .slice(0, 3)
+  const candidates = (result.ranking || [])
     .map((item) => ({
       position: item.position,
       milhar: item.milhar,
       prefixo: item.prefix,
       score: item.score,
     }));
+
+  const alternatives = candidates.slice(0, 3);
 
   return {
     ok: true,
@@ -484,8 +482,129 @@ export function buildMilharRecommendation(args = {}) {
     },
 
     alternatives,
+    candidates,
   };
 }
+
+/*
+==========================================================
+Diversificação global das 40 recomendações
+==========================================================
+
+- preserva a centena de cada linha;
+- prioriza o score individual;
+- penaliza prefixos já utilizados;
+- evita concentração mecânica em poucas famílias;
+- mantém resultado determinístico.
+*/
+
+export function diversifyMilharRecommendations(
+  rows = [],
+  {
+    maxPerPrefix = 4,
+    repeatPenalty = 12,
+  } = {}
+) {
+  const source = Array.isArray(rows) ? rows : [];
+  const usage = new Map();
+
+  return source.map((row) => {
+    const centena = normalizeCentena3(row?.centena);
+
+    const candidatesRaw = Array.isArray(
+      row?.recommendation?.candidates
+    )
+      ? row.recommendation.candidates
+      : [];
+
+    const candidates = candidatesRaw
+      .filter((item) => {
+        const milhar = normalizeMilhar4(item?.milhar);
+
+        return (
+          milhar &&
+          milhar.slice(-3) === centena
+        );
+      })
+      .map((item) => ({
+        ...item,
+        milhar: normalizeMilhar4(item.milhar),
+        prefixo: String(
+          item?.prefixo ??
+          normalizeMilhar4(item.milhar).slice(0, 1)
+        ),
+        score: Number(item?.score || 0),
+      }));
+
+    if (!candidates.length) {
+      return row;
+    }
+
+    const ranked = candidates
+      .map((candidate) => {
+        const used = Number(
+          usage.get(candidate.prefixo) || 0
+        );
+
+        return {
+          ...candidate,
+          used,
+          adjustedScore:
+            candidate.score -
+            used * Number(repeatPenalty || 0),
+        };
+      })
+      .sort((a, b) => {
+        const aBelowLimit =
+          a.used < Number(maxPerPrefix || 4);
+        const bBelowLimit =
+          b.used < Number(maxPerPrefix || 4);
+
+        if (aBelowLimit !== bBelowLimit) {
+          return aBelowLimit ? -1 : 1;
+        }
+
+        if (b.adjustedScore !== a.adjustedScore) {
+          return b.adjustedScore - a.adjustedScore;
+        }
+
+        if (b.score !== a.score) {
+          return b.score - a.score;
+        }
+
+        return Number(a.prefixo) - Number(b.prefixo);
+      });
+
+    const selected = ranked[0];
+
+    usage.set(
+      selected.prefixo,
+      Number(usage.get(selected.prefixo) || 0) + 1
+    );
+
+    return {
+      ...row,
+      milhar: selected.milhar,
+      recommendation: {
+        ...(row?.recommendation || {}),
+        milhar: selected.milhar,
+        prefixo: selected.prefixo,
+        diversified: true,
+        originalMilhar:
+          row?.recommendation?.milhar || null,
+        diversity: {
+          prefixUsageBefore: selected.used,
+          adjustedScore: Number(
+            selected.adjustedScore.toFixed(4)
+          ),
+          maxPerPrefix: Number(maxPerPrefix || 4),
+          repeatPenalty: Number(repeatPenalty || 0),
+        },
+      },
+    };
+  });
+}
+
 /*
 ==========================================================
 Auditoria interna do Motor de Milhares

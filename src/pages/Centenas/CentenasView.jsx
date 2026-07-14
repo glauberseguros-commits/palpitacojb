@@ -1,7 +1,10 @@
 // src/pages/Centenas/CentenasView.jsx
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getKingBoundsByUf, getKingResultsByRange } from "../../services/kingResultsService";
-import { buildMilharRecommendation } from "./modules/milharProbabilityEngine";
+import {
+  buildMilharRecommendation,
+  diversifyMilharRecommendations,
+} from "./modules/milharProbabilityEngine";
 import {
   getAnimalLabel as getAnimalLabelFn,
   getImgFromGrupo as getImgFromGrupoFn,
@@ -897,7 +900,7 @@ export default function CentenasView() {
           counts.set(c3, (counts.get(c3) || 0) + 1);
         }
 
-        const list40 = c40
+        const rawList40 = c40
           .map((c) => {
             const recommendation = buildMilharRecommendation({
               centena: c,
@@ -918,6 +921,14 @@ export default function CentenasView() {
             if (b.count !== a.count) return b.count - a.count;
             return String(a.centena).localeCompare(String(b.centena));
           });
+
+        const list40 = diversifyMilharRecommendations(
+          rawList40,
+          {
+            maxPerPrefix: 4,
+            repeatPenalty: 12,
+          }
+        );
 
         const totalHits = list40.reduce((acc, it) => acc + (Number(it.count) || 0), 0);
         out.push({ grupo: g, grupo2, animal, img, totalHits, list40 });
