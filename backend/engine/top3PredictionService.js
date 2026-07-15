@@ -5,6 +5,11 @@ const {
 } = require("./drawRepository");
 
 const {
+  readFullHistory,
+  readMetadata,
+} = require("./top3HistoryRepository");
+
+const {
   computeStatisticalTop3V3,
   loadTop3PublicApi,
 } = require("./scoreEngineUnified");
@@ -137,6 +142,148 @@ function subtractDaysYmd(ymd, days) {
   return date.toISOString().slice(0, 10);
 }
 
+function normalizeHistorySource(value) {
+  const source = String(value || "auto")
+    .trim()
+    .toLowerCase();
+
+  if (
+    source !== "auto" &&
+    source !== "snapshot" &&
+    source !== "range"
+  ) {
+    throw new Error(
+      "historySource inválido. Utilize auto, snapshot ou range."
+    );
+  }
+
+  return source;
+}
+
+async function loadPredictionHistory({
+  lotteryKey,
+  date,
+  input = {},
+  dependencies = {},
+} = {}) {
+  const requestedSource = normalizeHistorySource(
+    input.historySource
+  );
+
+  const loadMetadata =
+    dependencies.readHistoryMetadata ||
+    readMetadata;
+
+  const loadFullHistory =
+    dependencies.readFullHistory ||
+    readFullHistory;
+
+  const loadRangeHistory =
+    dependencies.fetchDraws ||
+    fetchDrawsWithPrizesByRange;
+
+  if (
+    requestedSource === "auto" ||
+    requestedSource === "snapshot"
+  ) {
+    const metadataResult = await loadMetadata(
+      lotteryKey,
+      dependencies.historyDependencies || {}
+    );
+
+    const metadata =
+      metadataResult?.data || null;
+
+    const snapshotReady =
+      metadataResult?.exists === true &&
+      metadata?.bootstrapStatus === "complete";
+
+    if (snapshotReady) {
+      const draws = await loadFullHistory(
+        lotteryKey,
+        dependencies.historyDependencies || {}
+      );
+
+      if (Array.isArray(draws) && draws.length) {
+        const expectedTotal = Number(
+          metadata?.totalDraws || 0
+        );
+
+        if (
+          expectedTotal > 0 &&
+          draws.length !== expectedTotal
+        ) {
+          throw new Error(
+            "Histórico TOP3 inconsistente: metadata.totalDraws=" +
+            `${expectedTotal}, carregados=${draws.length}.`
+          );
+        }
+
+        return {
+          source: "snapshot",
+          draws,
+          metadata,
+          lookbackDays: null,
+          maxDraws: null,
+          startYmd:
+            metadata?.firstYmd || null,
+        };
+      }
+
+      throw new Error(
+        "Metadata do histórico TOP3 está completo, mas nenhum draw foi carregado."
+      );
+    }
+
+    if (requestedSource === "snapshot") {
+      throw new Error(
+        "Histórico TOP3 completo ainda não está disponível."
+      );
+    }
+  }
+
+  const lookbackDays = Math.max(
+    30,
+    Math.min(
+      1460,
+      Number(input.lookbackDays || 180)
+    )
+  );
+
+  const maxDraws = Math.max(
+    100,
+    Math.min(
+      5000,
+      Number(input.maxDraws || 1200)
+    )
+  );
+
+  const startYmd = subtractDaysYmd(
+    date,
+    lookbackDays
+  );
+
+  const rawDraws = await loadRangeHistory({
+    lottery: lotteryKey,
+    startYmd,
+    endYmd: date,
+    pageSize: Number(input.pageSize || 250),
+    maxDraws,
+    prizeConcurrency: Number(
+      input.prizeConcurrency || 24
+    ),
+  });
+
+  return {
+    source: "range_fallback",
+    draws: extractDraws(rawDraws),
+    metadata: null,
+    lookbackDays,
+    maxDraws,
+    startYmd,
+  };
+}
+
 function extractDraws(result) {
   if (Array.isArray(result)) {
     return result;
@@ -220,10 +367,6 @@ async function createTop3PredictionRun(
   const date = normalizeYmd(input.date);
   const closeHour = normalizeHour(input.closeHour);
 
-  const fetchDraws =
-    dependencies.fetchDraws ||
-    fetchDrawsWithPrizesByRange;
-
   const computeTop3 =
     dependencies.computeTop3 ||
     computeStatisticalTop3V3;
@@ -236,39 +379,24 @@ async function createTop3PredictionRun(
     dependencies.publicApi ||
     loadTop3PublicApi();
 
-  const lookbackDays = Math.max(
-    30,
-    Math.min(
-      1460,
-      Number(input.lookbackDays || 180)
-    )
-  );
-
-  const maxDraws = Math.max(
-    100,
-    Math.min(
-      5000,
-      Number(input.maxDraws || 1200)
-    )
-  );
-
-  const startYmd = subtractDaysYmd(
+  const historyLoad = await loadPredictionHistory({
+    lotteryKey,
     date,
-    lookbackDays
-  );
-
-  const rawDraws = await fetchDraws({
-    lottery: lotteryKey,
-    startYmd,
-    endYmd: date,
-    pageSize: Number(input.pageSize || 250),
-    maxDraws,
-    prizeConcurrency: Number(
-      input.prizeConcurrency || 24
-    ),
+    input,
+    dependencies,
   });
 
-  const allDraws = extractDraws(rawDraws);
+  const allDraws = extractDraws(
+    historyLoad.draws
+  );
+
+  const {
+    source: historySource,
+    metadata: historyMetadata,
+    lookbackDays,
+    maxDraws,
+    startYmd,
+  } = historyLoad;
 
   if (!allDraws.length) {
     throw new Error(
@@ -342,6 +470,11 @@ async function createTop3PredictionRun(
     engine: "top3_statistical_v3",
     historyDraws: history.length,
     drawsToday: drawsToday.length,
+    historySource,
+    historyBootstrapStatus:
+      historyMetadata?.bootstrapStatus || null,
+    historyTotalStored:
+      Number(historyMetadata?.totalDraws || 0) || null,
     lookbackDays,
     maxDraws,
     startYmd,
@@ -358,6 +491,11 @@ async function createTop3PredictionRun(
     name: "top3_statistical_v3",
     historyDraws: history.length,
     drawsToday: drawsToday.length,
+    historySource,
+    historyBootstrapStatus:
+      historyMetadata?.bootstrapStatus || null,
+    historyTotalStored:
+      Number(historyMetadata?.totalDraws || 0) || null,
     lookbackDays,
     maxDraws,
     startYmd,
@@ -396,4 +534,6 @@ module.exports = {
   createTop3PredictionRun,
   mapTop3ToPredictions,
   normalizeHour,
+  normalizeHistorySource,
+  loadPredictionHistory,
 };
