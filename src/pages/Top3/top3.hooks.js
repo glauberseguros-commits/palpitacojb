@@ -43,6 +43,12 @@ import {
 } from "./top3.storage";
 
 import {
+  saveTop3PredictionSnapshot,
+  loadTop3PredictionDay,
+  reconcileTop3PredictionDay,
+} from "./top3.firestore";
+
+import {
   getKingResultsByDate,
   getKingResultsByRange,
   getKingBoundsByUf,
@@ -300,6 +306,7 @@ export function useTop3Controller() {
   });
 
   const [baseDrawState, setBaseDrawState] = useState(null);
+  const [persistedTop3History, setPersistedTop3History] = useState([]);
 
   const lotteryKeySafe = useMemo(
     () => safeStr(lotteryKey).toUpperCase() || DEFAULT_LOTTERY,
@@ -928,40 +935,137 @@ export function useTop3Controller() {
 
     if (!targetKey || !picks.length) return;
 
+    const snapshot = top3.map((item, index) => ({
+      rank: index + 1,
+      grupo: Number(item?.grupo),
+      animal: safeStr(item?.animal || ""),
+      prob: Number(item?.prob || 0),
+      probPct: Number(item?.probPct || 0),
+      milhares20: Array.isArray(item?.milhares20)
+        ? item.milhares20.slice(0, 20)
+        : [],
+      milharesCols: Array.isArray(item?.milharesCols)
+        ? item.milharesCols
+        : [],
+      meta: item?.meta || null,
+    }));
+
+    const engineVersion =
+      safeStr(top3?.[0]?.meta?.explain?.engine) ||
+      safeStr(top3?.[0]?.meta?.scenario) ||
+      "V3_STATISTICAL";
+
     registerPrediction({
       targetKey,
       targetYmd: analysisYmd,
       targetHour: analysisHourBucket,
       picks,
-      snapshot: top3.map((item, index) => ({
-        rank: index + 1,
-        grupo: Number(item?.grupo),
-        animal: safeStr(item?.animal || ""),
-        prob: Number(item?.prob || 0),
-        probPct: Number(item?.probPct || 0),
-        milhares20: Array.isArray(item?.milhares20)
-          ? item.milhares20.slice(0, 20)
-          : [],
-        milharesCols: Array.isArray(item?.milharesCols)
-          ? item.milharesCols
-          : [],
-        meta: item?.meta || null,
-      })),
-      engineVersion:
-        safeStr(top3?.[0]?.meta?.explain?.engine) ||
-        safeStr(top3?.[0]?.meta?.scenario) ||
-        "V3_STATISTICAL",
+      snapshot,
+      engineVersion,
     });
-  }, [analysisYmd, analysisHourBucket, top3]);
+
+    saveTop3PredictionSnapshot({
+      lotteryKey: lotteryKeySafe,
+      targetYmd: analysisYmd,
+      targetHour: analysisHourBucket,
+      picks,
+      snapshot,
+      engineVersion,
+    }).catch((error) => {
+      if (debugTop3) {
+        console.warn("[TOP3 FIRESTORE SAVE]", error);
+      }
+    });
+  }, [
+    analysisYmd,
+    analysisHourBucket,
+    top3,
+    lotteryKeySafe,
+    debugTop3,
+  ]);
+
+  useEffect(() => {
+    let alive = true;
+
+    async function loadPersistedHistory() {
+      if (!isYMD(timelineYmd)) {
+        if (alive) setPersistedTop3History([]);
+        return;
+      }
+
+      try {
+        const history = await loadTop3PredictionDay({
+          lotteryKey: lotteryKeySafe,
+          targetYmd: timelineYmd,
+          schedule,
+        });
+
+        if (alive) {
+          setPersistedTop3History(
+            Array.isArray(history) ? history : []
+          );
+        }
+      } catch {
+        if (alive) setPersistedTop3History([]);
+      }
+    }
+
+    loadPersistedHistory();
+
+    return () => {
+      alive = false;
+    };
+  }, [
+    lotteryKeySafe,
+    timelineYmd,
+    schedule,
+    todayDraws,
+    rangeDraws,
+  ]);
 
   useEffect(() => {
     if (!(todayDraws?.length || rangeDraws?.length)) return;
+
+    const allDraws = [
+      ...(Array.isArray(rangeDraws) ? rangeDraws : []),
+      ...(Array.isArray(todayDraws) ? todayDraws : []),
+    ];
 
     reconcilePendingTop3Log({
       todayDraws: Array.isArray(todayDraws) ? todayDraws : [],
       rangeDraws: Array.isArray(rangeDraws) ? rangeDraws : [],
     });
-  }, [todayDraws, rangeDraws]);
+
+    reconcileTop3PredictionDay({
+      lotteryKey: lotteryKeySafe,
+      targetYmd: timelineYmd,
+      schedule,
+      draws: allDraws,
+    })
+      .then(async () => {
+        const history = await loadTop3PredictionDay({
+          lotteryKey: lotteryKeySafe,
+          targetYmd: timelineYmd,
+          schedule,
+        });
+
+        setPersistedTop3History(
+          Array.isArray(history) ? history : []
+        );
+      })
+      .catch((error) => {
+        if (debugTop3) {
+          console.warn("[TOP3 FIRESTORE RECONCILE]", error);
+        }
+      });
+  }, [
+    todayDraws,
+    rangeDraws,
+    lotteryKeySafe,
+    timelineYmd,
+    schedule,
+    debugTop3,
+  ]);
 
   return {
     LOOKBACK_ALL,
@@ -992,6 +1096,7 @@ export function useTop3Controller() {
 
     top3,
     timelineTop3,
+    persistedTop3History,
 
     setLotteryKey,
     setYmd,

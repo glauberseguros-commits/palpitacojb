@@ -1222,6 +1222,7 @@ export default function Top3View(props) {
     loading,
     error,
     timelineTop3,
+    persistedTop3History,
     top3,
     layerMetaText,
     lastLabel,
@@ -1389,7 +1390,71 @@ const list = Array.isArray(top3)
 }, [loadedYmd, ymdSafe, timeline]);
 
   const historyRows = useMemo(() => {
-  if (!Array.isArray(timeline) || !timeline.length || !historyAnchorYmd) return [];
+  const persisted = Array.isArray(persistedTop3History)
+    ? persistedTop3History
+    : [];
+
+  if (persisted.length) {
+    return persisted
+      .filter(
+        (entry) =>
+          String(entry?.targetYmd || "").trim() === historyAnchorYmd
+      )
+      .sort((a, b) => {
+        const ah = hourBucketToSortValue(a?.targetHour);
+        const bh = hourBucketToSortValue(b?.targetHour);
+        return ah - bh;
+      })
+      .map((entry) => {
+        const snapshot = Array.isArray(entry?.snapshot)
+          ? entry.snapshot.slice(0, 3)
+          : [];
+
+        const resultGrupo = Number(entry?.resultGrupo);
+        const hasResult =
+          Number.isFinite(resultGrupo) &&
+          resultGrupo >= 1 &&
+          resultGrupo <= 25;
+
+        return {
+          targetKey: String(entry?.id || entry?.targetKey || ""),
+          target: {
+            ymd: String(entry?.targetYmd || ""),
+            hour: String(entry?.targetHour || ""),
+          },
+          picks: Array.isArray(entry?.picks)
+            ? entry.picks
+            : snapshot
+                .map((item) => Number(item?.grupo))
+                .filter(Number.isFinite),
+          top3: snapshot,
+          result: hasResult ? resultGrupo : null,
+          grupo: hasResult ? resultGrupo : null,
+          animal: hasResult
+            ? String(
+                entry?.resultAnimal ||
+                  getAnimalLabel(resultGrupo) ||
+                  ""
+              )
+            : "",
+          resultMilhar: String(entry?.resultMilhar || ""),
+          hit: Number(entry?.hitScore || 0) > 0,
+          hitType: String(entry?.hitType || ""),
+          hitScore: Number(entry?.hitScore || 0),
+          hitPosition: Number(entry?.hitPosition ?? -1),
+          analysis: {
+            type: String(entry?.hitType || ""),
+            score: Number(entry?.hitScore || 0),
+            position: Number(entry?.hitPosition ?? -1),
+            matchedValue: String(entry?.matchedValue || ""),
+          },
+        };
+      });
+  }
+
+  if (!Array.isArray(timeline) || !timeline.length || !historyAnchorYmd) {
+    return [];
+  }
 
   return timeline
     .filter((slot) => String(slot?.targetYmd || "").trim() === historyAnchorYmd)
@@ -1433,7 +1498,7 @@ const list = Array.isArray(top3)
         hitPosition: Number(analysis.position ?? -1),
       };
     });
-}, [timeline, historyAnchorYmd]);
+}, [timeline, historyAnchorYmd, persistedTop3History]);
 
   const historySummary = useMemo(() => {
     const validated = historyRows.filter(

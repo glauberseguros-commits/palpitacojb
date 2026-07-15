@@ -152,6 +152,47 @@ service cloud.firestore {
     }
 
     /* =========================================================
+       HISTÓRICO GLOBAL DO TOP3
+       - leitura pública;
+       - criação somente por usuário autenticado;
+       - snapshot original imutável;
+       - atualização limitada à validação do resultado.
+    ========================================================= */
+
+    match /top3_predictions/{predictionId} {
+      allow read: if true;
+
+      allow create: if signedIn()
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.status == "predicted"
+        && request.resource.data.targetYmd is string
+        && request.resource.data.targetHour is string
+        && request.resource.data.lotteryKey is string
+        && request.resource.data.snapshot is list
+        && request.resource.data.snapshot.size() > 0
+        && request.resource.data.snapshot.size() <= 3;
+
+      allow update: if signedIn()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "resultGrupo",
+          "resultMilhar",
+          "resultAnimal",
+          "hitType",
+          "hitScore",
+          "hitPosition",
+          "matchedValue",
+          "validatedAt",
+          "validatedBy",
+          "updatedAt",
+          "status"
+        ])
+        && request.resource.data.status == "validated"
+        && request.resource.data.validatedBy == request.auth.uid;
+
+      allow delete: if false;
+    }
+
+    /* =========================================================
        DEFAULT: FECHA TUDO
     ========================================================= */
 
