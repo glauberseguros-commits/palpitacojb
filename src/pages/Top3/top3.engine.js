@@ -2611,52 +2611,6 @@ export function computeConditionalNextTop3V2({
     })
     .slice(0, Math.max(1, Number(topN || 3)));
 
-  if (typeof window !== "undefined") {
-    console.table(
-      ranked.map((x) => ({
-        slot: `${targetY} ${targetH}`,
-        grupo: x.grupo,
-        score: Number(x.score || 0).toFixed(2),
-        final: (Number(x.scoreProb || 0) * 100).toFixed(2),
-        transicao: (Number(x.probTransition || 0) * 100).toFixed(2),
-        estrutural1: (Number(x.probStructuralFirst || 0) * 100).toFixed(2),
-        estruturalPrizePresence: (Number(x.probStructuralPrizePresence || 0) * 100).toFixed(2),
-        memoria: (Number(x.probMemory || 0) * 100).toFixed(2),
-        par: (Number(x.probPair || 0) * 100).toFixed(2),
-        duplicacao: (Number(x.probDuplication || 0) * 100).toFixed(2),
-        recencia: (Number(x.recentComposite || 0) * 100).toFixed(2),
-        atraso: (Number(x.lateNorm || 0) * 100).toFixed(2),
-        dayFreq: x.dayFreq,
-        dayFirst: x.dayFirstFreq,
-        dominante: x.isDominantToday,
-        pairSamples: x.pairSamples,
-        condFirstCount: x.condFirstCount,
-        structuralFirstCount: x.structuralFirstCount,
-        structuralPrizePresenceCount: x.structuralPrizePresenceCount,
-      }))
-    );
-
-    console.log("[TOP3 V2 CONTEXTO]", {
-      targetY,
-      targetH,
-      lastY,
-      lastH,
-      prevGrupo,
-      targetDow,
-      targetDayOfMonth,
-      mode,
-      regime,
-      dayContext,
-      currentState,
-      pairOut,
-      condSamples,
-      chosen,
-      structuralFirstSamples: structuralFirst?.totalSamples,
-      structuralPrizePresenceSamples: structuralPrizePresence?.totalSamples,
-      duplicationSamples: duplication?.totalSamples,
-      memoryMatchedSamples: memoryOut?.matchedSamples,
-    });
-  }
 
 
   const reasonsBase = [
@@ -3465,28 +3419,6 @@ function buildSceneHypothesisDistribution(sceneRanking, groupsK = TOP3_GROUPS_K)
     samples: ranking.length,
     totalWeight,
   };
-}
-
-
-function logTop3SceneDebug(label, scene, extra = {}) {
-  if (typeof window === "undefined") return;
-  if (!scene) return;
-
-  console.log(`[TOP3 SCENE] ${label}`, {
-    ...extra,
-    ymd: scene.ymd,
-    hour: scene.hour,
-    firstGrupo: scene.firstGrupo,
-    signature: scene.signature,
-    grupos: scene.grupos,
-    dezenas: scene.dezenas,
-    centenas: scene.centenas,
-    milhares: scene.milhares,
-    repeatedGroups: scene.repeatedGroups,
-    repeatedDezenas: scene.repeatedDezenas,
-    repeatedCentenas: scene.repeatedCentenas,
-    rows: scene.rows,
-  });
 }
 
 
