@@ -148,6 +148,10 @@ const { admin, db } = require("../service/firebaseAdmin");
 
 const { getPtRioSlotsByDate } = require("./ptRioCalendar");
 
+const {
+  syncImportedResultToTop3History,
+} = require("../engine/top3HistorySync");
+
 /**
  * =========================
  * Config / toggles
@@ -1592,7 +1596,7 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
     ? Number(proof.targetSavedCount)
     : 0;
 
-  return {
+  const response = {
     ok: true,
     lotteryKey: lk,
     date,
@@ -1619,6 +1623,16 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
 
     tookMs: ms,
     ...result,
+  };
+
+  const top3HistorySync =
+    await syncImportedResultToTop3History(
+      response
+    );
+
+  return {
+    ...response,
+    top3HistorySync,
   };
 }
 
