@@ -1,7 +1,7 @@
 "use strict";
 
 const {
-  fetchAllDrawsWithPrizes,
+  fetchDrawsWithPrizesByRange,
 } = require("./drawRepository");
 
 const {
@@ -116,6 +116,27 @@ function dateHourKey(ymd, hour) {
   return `${ymd}T${normalizeHour(hour)}`;
 }
 
+function subtractDaysYmd(ymd, days) {
+  const safeDays = Math.max(
+    1,
+    Math.min(1460, Number(days || 180))
+  );
+
+  const date = new Date(`${ymd}T12:00:00Z`);
+
+  if (Number.isNaN(date.getTime())) {
+    throw new Error(
+      "Não foi possível calcular a janela histórica."
+    );
+  }
+
+  date.setUTCDate(
+    date.getUTCDate() - safeDays
+  );
+
+  return date.toISOString().slice(0, 10);
+}
+
 function extractDraws(result) {
   if (Array.isArray(result)) {
     return result;
@@ -201,7 +222,7 @@ async function createTop3PredictionRun(
 
   const fetchDraws =
     dependencies.fetchDraws ||
-    fetchAllDrawsWithPrizes;
+    fetchDrawsWithPrizesByRange;
 
   const computeTop3 =
     dependencies.computeTop3 ||
@@ -215,11 +236,35 @@ async function createTop3PredictionRun(
     dependencies.publicApi ||
     loadTop3PublicApi();
 
+  const lookbackDays = Math.max(
+    30,
+    Math.min(
+      1460,
+      Number(input.lookbackDays || 180)
+    )
+  );
+
+  const maxDraws = Math.max(
+    100,
+    Math.min(
+      5000,
+      Number(input.maxDraws || 1200)
+    )
+  );
+
+  const startYmd = subtractDaysYmd(
+    date,
+    lookbackDays
+  );
+
   const rawDraws = await fetchDraws({
     lottery: lotteryKey,
+    startYmd,
+    endYmd: date,
     pageSize: Number(input.pageSize || 250),
+    maxDraws,
     prizeConcurrency: Number(
-      input.prizeConcurrency || 12
+      input.prizeConcurrency || 24
     ),
   });
 
@@ -292,38 +337,58 @@ async function createTop3PredictionRun(
     );
   }
 
+  const metadata = {
+    ...(input.metadata || {}),
+    engine: "top3_statistical_v3",
+    historyDraws: history.length,
+    drawsToday: drawsToday.length,
+    lookbackDays,
+    maxDraws,
+    startYmd,
+    lastDrawYmd:
+      publicApi.pickDrawYMD(drawLast) || null,
+    lastDrawHour:
+      publicApi.pickDrawHour(drawLast) || null,
+    targetYmd: date,
+    targetHour: closeHour,
+    engineMeta: computed?.meta || null,
+  };
+
+  const engine = {
+    name: "top3_statistical_v3",
+    historyDraws: history.length,
+    drawsToday: drawsToday.length,
+    lookbackDays,
+    maxDraws,
+    startYmd,
+    targetYmd: date,
+    targetHour: closeHour,
+    meta: computed?.meta || null,
+  };
+
+  if (input.dryRun === true) {
+    return {
+      run: null,
+      predictions,
+      engine,
+      dryRun: true,
+    };
+  }
+
   const result = await persistRun({
     lotteryKey,
     date,
     closeHour,
     source: input.source || "backend-top3",
     algorithm: "top3_statistical_v3",
-    metadata: {
-      ...(input.metadata || {}),
-      engine: "top3_statistical_v3",
-      historyDraws: history.length,
-      drawsToday: drawsToday.length,
-      lastDrawYmd:
-        publicApi.pickDrawYMD(drawLast) || null,
-      lastDrawHour:
-        publicApi.pickDrawHour(drawLast) || null,
-      targetYmd: date,
-      targetHour: closeHour,
-      engineMeta: computed?.meta || null,
-    },
+    metadata,
     predictions,
   });
 
   return {
     ...result,
-    engine: {
-      name: "top3_statistical_v3",
-      historyDraws: history.length,
-      drawsToday: drawsToday.length,
-      targetYmd: date,
-      targetHour: closeHour,
-      meta: computed?.meta || null,
-    },
+    engine,
+    dryRun: false,
   };
 }
 

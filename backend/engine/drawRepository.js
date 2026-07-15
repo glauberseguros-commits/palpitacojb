@@ -51,6 +51,122 @@ async function mapWithConcurrency(items, concurrency, mapper) {
   return out;
 }
 
+
+async function fetchDrawsWithPrizesByRange({
+  lottery = "PT_RIO",
+  startYmd,
+  endYmd,
+  pageSize = 250,
+  maxDraws = 1200,
+  prizeConcurrency = 24,
+} = {}) {
+  const db = getAdminDb();
+  const lk = normalizeLottery(lottery);
+
+  const start = String(startYmd || "").trim();
+  const end = String(endYmd || "").trim();
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(start)) {
+    throw new Error(
+      "fetchDrawsWithPrizesByRange exige startYmd em YYYY-MM-DD."
+    );
+  }
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(end)) {
+    throw new Error(
+      "fetchDrawsWithPrizesByRange exige endYmd em YYYY-MM-DD."
+    );
+  }
+
+  const safePageSize = Math.max(
+    25,
+    Math.min(500, Number(pageSize || 250))
+  );
+
+  const safeMaxDraws = Math.max(
+    100,
+    Math.min(5000, Number(maxDraws || 1200))
+  );
+
+  const safeConcurrency = Math.max(
+    1,
+    Math.min(50, Number(prizeConcurrency || 24))
+  );
+
+  const admin = require("firebase-admin");
+  const DOC_ID = admin.firestore.FieldPath.documentId();
+
+  const draws = [];
+  let lastDoc = null;
+  let page = 0;
+
+  while (draws.length < safeMaxDraws) {
+    page += 1;
+
+    const remaining = safeMaxDraws - draws.length;
+    const currentLimit = Math.min(
+      safePageSize,
+      remaining
+    );
+
+    let q = db
+      .collection("draws")
+      .where("lottery_key", "==", lk)
+      .where("ymd", ">=", start)
+      .where("ymd", "<=", end)
+      .orderBy("ymd", "asc")
+      .orderBy(DOC_ID, "asc")
+      .limit(currentLimit);
+
+    if (lastDoc) {
+      q = q.startAfter(lastDoc);
+    }
+
+    console.log(
+      `[TOP3] Página ${page} | ${start} até ${end} | limite=${currentLimit}`
+    );
+
+    const snap = await q.get();
+
+    if (snap.empty) {
+      break;
+    }
+
+    const pageDraws = await mapWithConcurrency(
+      snap.docs,
+      safeConcurrency,
+      async (doc) => {
+        const data = doc.data() || {};
+        const prizes = await fetchPrizesForDrawRef(
+          doc.ref
+        );
+
+        return {
+          id: doc.id,
+          drawId: doc.id,
+          ...data,
+          prizes,
+        };
+      }
+    );
+
+    draws.push(...pageDraws);
+
+    console.log(
+      `[TOP3] Página ${page}: ${snap.docs.length} draws | total=${draws.length}`
+    );
+
+    lastDoc = snap.docs[snap.docs.length - 1];
+
+    if (snap.docs.length < currentLimit) {
+      break;
+    }
+  }
+
+  return draws;
+}
+
+
 async function fetchAllDrawsWithPrizes({
   lottery = "PT_RIO",
   pageSize = 250,
@@ -116,4 +232,5 @@ async function fetchAllDrawsWithPrizes({
 
 module.exports = {
   fetchAllDrawsWithPrizes,
+  fetchDrawsWithPrizesByRange,
 };
