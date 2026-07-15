@@ -971,11 +971,62 @@ export function useTop3Controller() {
       picks,
       snapshot,
       engineVersion,
-    }).catch((error) => {
-      if (debugTop3) {
-        console.warn("[TOP3 FIRESTORE SAVE]", error);
-      }
-    });
+    })
+      .then((result) => {
+        const diagnostic = {
+          at: new Date().toISOString(),
+          lotteryKey: lotteryKeySafe,
+          targetYmd: analysisYmd,
+          targetHour: analysisHourBucket,
+          picks,
+          result: result || null,
+        };
+
+        try {
+          window.localStorage.setItem(
+            "top3_firestore_last_save",
+            JSON.stringify(diagnostic)
+          );
+
+          window.__TOP3_FIRESTORE_LAST_SAVE__ = diagnostic;
+        } catch {}
+
+        if (!result?.ok) {
+          console.error(
+            "[TOP3 FIRESTORE SAVE FAILED]",
+            diagnostic
+          );
+        } else {
+          console.info(
+            "[TOP3 FIRESTORE SAVE OK]",
+            diagnostic
+          );
+        }
+      })
+      .catch((error) => {
+        const diagnostic = {
+          at: new Date().toISOString(),
+          lotteryKey: lotteryKeySafe,
+          targetYmd: analysisYmd,
+          targetHour: analysisHourBucket,
+          picks,
+          error: String(error?.message || error || ""),
+        };
+
+        try {
+          window.localStorage.setItem(
+            "top3_firestore_last_save",
+            JSON.stringify(diagnostic)
+          );
+
+          window.__TOP3_FIRESTORE_LAST_SAVE__ = diagnostic;
+        } catch {}
+
+        console.error(
+          "[TOP3 FIRESTORE SAVE EXCEPTION]",
+          diagnostic
+        );
+      });
   }, [
     analysisYmd,
     analysisHourBucket,
