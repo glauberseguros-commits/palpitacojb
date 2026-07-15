@@ -324,10 +324,9 @@ export function useTop3Controller() {
   );
 
   const timelineYmd = useMemo(() => {
-    if (isYMD(analysisYmd)) return analysisYmd;
     if (isYMD(loadedYmd)) return loadedYmd;
     return ymdSafe;
-  }, [analysisYmd, loadedYmd, ymdSafe]);
+  }, [loadedYmd, ymdSafe]);
 
   const schedule = useMemo(() => {
     const y = isYMD(analysisYmd)
@@ -934,6 +933,24 @@ export function useTop3Controller() {
       targetYmd: analysisYmd,
       targetHour: analysisHourBucket,
       picks,
+      snapshot: top3.map((item, index) => ({
+        rank: index + 1,
+        grupo: Number(item?.grupo),
+        animal: safeStr(item?.animal || ""),
+        prob: Number(item?.prob || 0),
+        probPct: Number(item?.probPct || 0),
+        milhares20: Array.isArray(item?.milhares20)
+          ? item.milhares20.slice(0, 20)
+          : [],
+        milharesCols: Array.isArray(item?.milharesCols)
+          ? item.milharesCols
+          : [],
+        meta: item?.meta || null,
+      })),
+      engineVersion:
+        safeStr(top3?.[0]?.meta?.explain?.engine) ||
+        safeStr(top3?.[0]?.meta?.scenario) ||
+        "V3_STATISTICAL",
     });
   }, [analysisYmd, analysisHourBucket, top3]);
 

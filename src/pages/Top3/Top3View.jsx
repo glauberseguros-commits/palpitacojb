@@ -61,6 +61,32 @@ function ymdToBR(ymd) {
   return `${d}/${m}/${y}`;
 }
 
+function addDaysYMDLocal(ymd, amount) {
+  const s = String(ymd || "").trim();
+  if (!isYMD(s)) return "";
+
+  const [y, m, d] = s.split("-").map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d));
+
+  date.setUTCDate(date.getUTCDate() + Number(amount || 0));
+
+  return [
+    date.getUTCFullYear(),
+    String(date.getUTCMonth() + 1).padStart(2, "0"),
+    String(date.getUTCDate()).padStart(2, "0"),
+  ].join("-");
+}
+
+function todayYMDLocalView() {
+  const now = new Date();
+
+  return [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0"),
+  ].join("-");
+}
+
 function formatYmdHour(ymd, hour) {
   const y = String(ymd || "").trim();
   const h = String(hour || "").trim();
@@ -1196,6 +1222,7 @@ export default function Top3View(props) {
     loading,
     error,
     timelineTop3,
+    top3,
     layerMetaText,
     lastLabel,
     prevLabel,
@@ -1203,6 +1230,7 @@ export default function Top3View(props) {
     LOTTERY_OPTIONS,
     lotteryKeySafe,
     setLotteryKey,
+    setYmd,
     build16,
     buildMilhares,
     build20,
@@ -1220,17 +1248,8 @@ export default function Top3View(props) {
 // Fase atual:
 // apenas corrigindo nomenclatura para refletir o cálculo existente.
 
-const forecastSlot = useMemo(() => {
-  if (!Array.isArray(timelineTop3) || !timelineTop3.length) return null;
-
-  return timelineTop3.find((slot) =>
-    String(slot?.targetYmd || "").trim() === String(analysisYmd || "").trim() &&
-    String(slot?.targetHour || "").trim() === String(analysisHourBucket || "").trim()
-  ) || null;
-}, [timelineTop3, analysisYmd, analysisHourBucket]);
-
-const list = Array.isArray(forecastSlot?.top3)
-  ? forecastSlot.top3.slice(0, 3)
+const list = Array.isArray(top3)
+  ? top3.slice(0, 3)
   : [];
   const timeline = (Array.isArray(timelineTop3) ? timelineTop3 : [])
   .slice()
@@ -1415,6 +1434,69 @@ const list = Array.isArray(forecastSlot?.top3)
       };
     });
 }, [timeline, historyAnchorYmd]);
+
+  const historySummary = useMemo(() => {
+    const validated = historyRows.filter(
+      (item) => item?.result != null
+    );
+
+    const exact = validated.filter(
+      (item) => item?.hitType === "hit_exact"
+    ).length;
+
+    const centena = validated.filter(
+      (item) => item?.hitType === "hit_centena"
+    ).length;
+
+    const grupo = validated.filter(
+      (item) => item?.hitType === "hit_grupo"
+    ).length;
+
+    const misses = validated.filter(
+      (item) =>
+        item?.hitType === "miss" ||
+        item?.hitType === "none"
+    ).length;
+
+    const totalScore = validated.reduce(
+      (sum, item) => sum + Number(item?.hitScore || 0),
+      0
+    );
+
+    const average =
+      validated.length > 0
+        ? totalScore / validated.length
+        : 0;
+
+    return {
+      total: historyRows.length,
+      validated: validated.length,
+      pending: Math.max(0, historyRows.length - validated.length),
+      exact,
+      centena,
+      grupo,
+      misses,
+      average,
+    };
+  }, [historyRows]);
+
+  const todayForCalendar = todayYMDLocalView();
+  const selectedHistoryYmd = isYMD(ymdSafe)
+    ? ymdSafe
+    : todayForCalendar;
+
+  const canGoNext =
+    isYMD(selectedHistoryYmd) &&
+    selectedHistoryYmd < todayForCalendar;
+
+  const goToHistoryDate = useCallback(
+    (nextYmd) => {
+      if (!isYMD(nextYmd)) return;
+      if (typeof setYmd !== "function") return;
+      setYmd(nextYmd);
+    },
+    [setYmd]
+  );
 
   return (
     <div
@@ -2153,6 +2235,57 @@ const list = Array.isArray(forecastSlot?.top3)
           padding: 6px 0;
         }
 
+        .top3-historyToolbar{
+          display: grid;
+          grid-template-columns: auto minmax(190px, 260px) auto auto;
+          gap: 10px;
+          align-items: center;
+          margin-top: 14px;
+        }
+
+        .top3-historyDate{
+          width: 100%;
+          min-height: 42px;
+          border-radius: 12px;
+          border: 1px solid rgba(201,168,62,0.35);
+          background: rgba(0,0,0,0.38);
+          color: var(--top3-text);
+          padding: 9px 12px;
+          font-size: 14px;
+          font-weight: 900;
+          color-scheme: dark;
+        }
+
+        .top3-historySummary{
+          display: grid;
+          grid-template-columns: repeat(6, minmax(0, 1fr));
+          gap: 10px;
+          margin-top: 14px;
+        }
+
+        .top3-historyMetric{
+          border-radius: 14px;
+          border: 1px solid rgba(255,255,255,0.08);
+          background: rgba(255,255,255,0.025);
+          padding: 11px 12px;
+          display: grid;
+          gap: 4px;
+        }
+
+        .top3-historyMetric__label{
+          color: var(--top3-muted);
+          font-size: 10px;
+          font-weight: 900;
+          letter-spacing: 0.8px;
+          text-transform: uppercase;
+        }
+
+        .top3-historyMetric__value{
+          color: var(--top3-text);
+          font-size: 18px;
+          font-weight: 1000;
+        }
+
         .top3-historyRow{
           display:grid;
           grid-template-columns: 160px 1fr 220px 56px;
@@ -2266,6 +2399,18 @@ const list = Array.isArray(forecastSlot?.top3)
             width: 100%;
           }
 
+          .top3-historyToolbar{
+            grid-template-columns: 1fr 1fr;
+          }
+
+          .top3-historyDate{
+            grid-column: 1 / -1;
+          }
+
+          .top3-historySummary{
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+          }
+
           .top3-historyRow{
             grid-template-columns: 1fr;
             align-items:start;
@@ -2370,6 +2515,14 @@ const list = Array.isArray(forecastSlot?.top3)
           .timeline-slot__metaGrid{
             grid-template-columns: 1fr;
           }
+
+          .top3-historyToolbar{
+            grid-template-columns: 1fr 1fr;
+          }
+
+          .top3-historySummary{
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
         }
 
         @media (max-width: 420px){
@@ -2464,6 +2617,66 @@ const list = Array.isArray(forecastSlot?.top3)
           </div>
         </section>
 
+        <section className="top3-shell">
+          <div className="top3-header__title">Calendário do TOP3</div>
+
+          <div className="top3-helper">
+            Escolha uma data para consultar as previsões, os resultados e a taxa de acerto de cada horário.
+          </div>
+
+          <div className="top3-historyToolbar">
+            <button
+              type="button"
+              className="pp-btn"
+              onClick={() =>
+                goToHistoryDate(
+                  addDaysYMDLocal(selectedHistoryYmd, -1)
+                )
+              }
+            >
+              ◀ Dia anterior
+            </button>
+
+            <input
+              type="date"
+              className="top3-historyDate"
+              value={selectedHistoryYmd}
+              max={todayForCalendar}
+              onChange={(event) =>
+                goToHistoryDate(event.target.value)
+              }
+              aria-label="Selecionar data do histórico TOP3"
+            />
+
+            <button
+              type="button"
+              className="pp-btn"
+              onClick={() => goToHistoryDate(todayForCalendar)}
+            >
+              Hoje
+            </button>
+
+            <button
+              type="button"
+              className="pp-btn"
+              disabled={!canGoNext}
+              onClick={() => {
+                if (!canGoNext) return;
+
+                goToHistoryDate(
+                  addDaysYMDLocal(selectedHistoryYmd, 1)
+                );
+              }}
+              style={{
+                opacity: canGoNext ? 1 : 0.45,
+                cursor: canGoNext ? "pointer" : "not-allowed",
+              }}
+            >
+              Próximo dia ▶
+            </button>
+          </div>
+        </section>
+
         {loading ? (
           <div className="top3-empty">Carregando…</div>
         ) : error ? (
@@ -2543,6 +2756,50 @@ const list = Array.isArray(forecastSlot?.top3)
         <section className="top3-shell">
           <div className="top3-header__title">
             Histórico recente {historyAnchorYmd ? `— ${ymdToBR(historyAnchorYmd)}` : ""}
+          </div>
+
+          <div className="top3-historySummary">
+            <div className="top3-historyMetric">
+              <div className="top3-historyMetric__label">Horários</div>
+              <div className="top3-historyMetric__value">
+                {historySummary.total}
+              </div>
+            </div>
+
+            <div className="top3-historyMetric">
+              <div className="top3-historyMetric__label">Validados</div>
+              <div className="top3-historyMetric__value">
+                {historySummary.validated}
+              </div>
+            </div>
+
+            <div className="top3-historyMetric">
+              <div className="top3-historyMetric__label">Grupo/dezena</div>
+              <div className="top3-historyMetric__value">
+                {historySummary.grupo}
+              </div>
+            </div>
+
+            <div className="top3-historyMetric">
+              <div className="top3-historyMetric__label">Centena</div>
+              <div className="top3-historyMetric__value">
+                {historySummary.centena}
+              </div>
+            </div>
+
+            <div className="top3-historyMetric">
+              <div className="top3-historyMetric__label">Milhar</div>
+              <div className="top3-historyMetric__value">
+                {historySummary.exact}
+              </div>
+            </div>
+
+            <div className="top3-historyMetric">
+              <div className="top3-historyMetric__label">Índice médio</div>
+              <div className="top3-historyMetric__value">
+                {historySummary.average.toFixed(2)}%
+              </div>
+            </div>
           </div>
 
           <div style={{ display: "grid", gap: 10, marginTop: 12 }}>

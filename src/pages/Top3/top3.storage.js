@@ -157,7 +157,14 @@ function saveTop3Log(log) {
   } catch {}
 }
 
-function registerPrediction({ targetKey, targetYmd, targetHour, picks }) {
+function registerPrediction({
+  targetKey,
+  targetYmd,
+  targetHour,
+  picks,
+  snapshot = [],
+  engineVersion = "",
+}) {
   const ymd = safeStr(targetYmd);
   const hour = normHour(targetHour);
   const normalizedKey = targetKey || makeKey(ymd, hour);
@@ -187,6 +194,14 @@ function registerPrediction({ targetKey, targetYmd, targetHour, picks }) {
       picks: normalizedPicks,
       result: null,
       hit: null,
+      snapshot:
+        Array.isArray(prev?.snapshot) && prev.snapshot.length
+          ? prev.snapshot
+          : Array.isArray(snapshot)
+            ? snapshot
+            : [],
+      engineVersion:
+        safeStr(prev?.engineVersion || engineVersion || "V3_STATISTICAL"),
       createdAt: prev.createdAt || Date.now(),
       status,
     };
@@ -197,6 +212,8 @@ function registerPrediction({ targetKey, targetYmd, targetHour, picks }) {
       picks: normalizedPicks,
       result: null,
       hit: null,
+      snapshot: Array.isArray(snapshot) ? snapshot : [],
+      engineVersion: safeStr(engineVersion || "V3_STATISTICAL"),
       createdAt: Date.now(),
       status,
     });
