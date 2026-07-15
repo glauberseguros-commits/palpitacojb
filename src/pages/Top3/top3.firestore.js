@@ -5,7 +5,8 @@ import {
   setDoc,
 } from "firebase/firestore";
 
-import { auth, db } from "../../services/firebase";
+import { db } from "../../services/firebase";
+import { loginAnonymous } from "../../services/auth";
 
 import {
   safeStr,
@@ -213,7 +214,18 @@ export async function saveTop3PredictionSnapshot({
   snapshot,
   engineVersion,
 }) {
-  const user = auth.currentUser;
+  let user = null;
+
+  try {
+    user = await loginAnonymous();
+  } catch (error) {
+    return {
+      ok: false,
+      skipped: true,
+      reason: "AUTH_FAILED",
+      error: String(error?.message || error || ""),
+    };
+  }
 
   if (!user?.uid) {
     return {
@@ -362,7 +374,18 @@ export async function reconcileTop3PredictionDay({
   schedule,
   draws,
 }) {
-  const user = auth.currentUser;
+  let user = null;
+
+  try {
+    user = await loginAnonymous();
+  } catch (error) {
+    return {
+      ok: false,
+      skipped: true,
+      reason: "AUTH_FAILED",
+      error: String(error?.message || error || ""),
+    };
+  }
 
   if (!user?.uid) {
     return {
