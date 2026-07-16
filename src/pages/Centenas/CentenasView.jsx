@@ -718,8 +718,31 @@ export default function CentenasView() {
     let alive = true;
 
     (async () => {
+      /*
+       * A troca de loteria invalida completamente
+       * o estado visual e o processamento anterior.
+       *
+       * Não podemos manter na tela grupos do PT Rio
+       * enquanto a Federal está sendo carregada,
+       * nem o contrário.
+       */
+      abortedRef.current = true;
+      buildSeqRef.current += 1;
+
       setLoadingBounds(true);
+      setLoading(false);
       setError("");
+      setGroups([]);
+      setProgress({
+        done: 0,
+        total: 0,
+        label: "",
+      });
+      setBounds({
+        minYmd: null,
+        maxYmd: null,
+        source: "",
+      });
 
       try {
         const responses =
@@ -808,7 +831,7 @@ export default function CentenasView() {
     return () => {
       alive = false;
     };
-  }, [selectedLotteryKeysKey]);
+  }, [selectedLotteryKeys]);
 
   // ========= filtros (draw-level) =========
 
@@ -1193,7 +1216,6 @@ export default function CentenasView() {
     bounds?.minYmd,
     bounds?.maxYmd,
     selectedLotteryKeys,
-    selectedLotteryKeysKey,
     prizePositions,
     buildBaseKey,
     applyDrawFiltersToEntry,
