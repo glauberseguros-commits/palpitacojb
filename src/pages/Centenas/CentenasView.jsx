@@ -502,7 +502,11 @@ export default function CentenasView() {
     []
   );
 
-  const prizePositions = useMemo(() => [1, 2, 3, 4, 5, 6, 7], []);
+  const allPrizePositions = useMemo(
+    () => [1, 2, 3, 4, 5, 6, 7],
+    []
+  );
+
 // filtros
   const [lotteryOptId, setLotteryOptId] = useState("ALL");
   const [fMes, setFMes] = useState("Todos");
@@ -512,6 +516,36 @@ export default function CentenasView() {
   const [fAnimal, setFAnimal] = useState("Todos");
   const [fPosicao, setFPosicao] = useState("Todos");
   const [showOnlyHits, setShowOnlyHits] = useState(false);
+
+  /*
+   * A consulta deve buscar apenas a posição escolhida.
+   * Quando estiver em Todos, mantém 1º ao 7º.
+   */
+  const requestedPrizePositions = useMemo(() => {
+    if (isTodos(fPosicao)) {
+      return allPrizePositions;
+    }
+
+    const position = Number(fPosicao);
+
+    return Number.isFinite(position) &&
+      position >= 1 &&
+      position <= 7
+      ? [position]
+      : allPrizePositions;
+  }, [fPosicao, allPrizePositions]);
+
+  /*
+   * O horário também entra na consulta.
+   * Isso reduz hidratação e processamento desnecessários.
+   */
+  const requestedCloseHour = useMemo(
+    () =>
+      isTodos(fHorario)
+        ? null
+        : normalizeHourLike(fHorario),
+    [fHorario]
+  );
 
   // bounds
   const [bounds, setBounds] = useState({ minYmd: null, maxYmd: null, source: "" });
@@ -895,11 +929,12 @@ export default function CentenasView() {
   const buildBaseKey = useMemo(
     () =>
       `${selectedLotteryKeysKey}` +
-      `::close=all` +
-      `::pos=${prizePositions.join(",")}`,
+      `::close=${requestedCloseHour || "all"}` +
+      `::pos=${requestedPrizePositions.join(",")}`,
     [
       selectedLotteryKeysKey,
-      prizePositions,
+      requestedCloseHour,
+      requestedPrizePositions,
     ]
   );
 
@@ -937,9 +972,10 @@ export default function CentenasView() {
                       uf: lotteryKey,
                       dateFrom: ch.from,
                       dateTo: ch.to,
-                      closeHour: null,
+                      closeHour:
+                        requestedCloseHour,
                       positions:
-                        prizePositions,
+                        requestedPrizePositions,
                       mode: "detailed",
                     });
 
@@ -1216,7 +1252,8 @@ export default function CentenasView() {
     bounds?.minYmd,
     bounds?.maxYmd,
     selectedLotteryKeys,
-    prizePositions,
+    requestedPrizePositions,
+    requestedCloseHour,
     buildBaseKey,
     applyDrawFiltersToEntry,
     applyPrizeFilters,
@@ -1225,12 +1262,11 @@ export default function CentenasView() {
     fAnimal,
   ]);
 
-  useEffect(() => {
-    if (!boundsReady) return;
-    build();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [boundsReady]);
-
+  /*
+   * Um único efeito controla o carregamento.
+   * O efeito anterior disparava um build adicional
+   * assim que os bounds eram carregados.
+   */
   useEffect(() => {
     if (!boundsReady) return;
     if (autoTimerRef.current) clearTimeout(autoTimerRef.current);
