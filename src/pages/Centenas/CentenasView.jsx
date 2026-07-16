@@ -41,8 +41,12 @@ import {
  * - builds concorrentes não podem "finalizar UI" do build mais novo no finally.
  */
 
-const LOTTERY_KEY = "PT_RIO";
-const FILTERS_LS_KEY = "pp_centenas_filters_v1";
+const LOTTERY_KEYS = {
+  PT_RIO: "PT_RIO",
+  NACIONAL: "NACIONAL",
+};
+
+const FILTERS_LS_KEY = "pp_centenas_filters_v2";
 
 // tuning
 const CHUNK_DAYS = 45; // manter < 60 para não cair no aggregated
@@ -472,13 +476,28 @@ function buildKingGuessUrlFromPalpites(palpites4) {
 export default function CentenasView() {
   const LOTTERY_OPTIONS = useMemo(
     () => [
-      { id: "ALL", label: "Todas as loterias", closeHour: null },
-      { id: "09", label: "LT PT RIO 09HS", closeHour: "09:00" },
-      { id: "11", label: "LT PT RIO 11HS", closeHour: "11:00" },
-      { id: "14", label: "LT PT RIO 14HS", closeHour: "14:00" },
-      { id: "16", label: "LT PT RIO 16HS", closeHour: "16:00" },
-      { id: "18", label: "LT PT RIO 18HS", closeHour: "18:00" },
-      { id: "21", label: "LT PT RIO 21HS", closeHour: "21:00" },
+      {
+        id: "ALL",
+        label: "Todas as loterias",
+        lotteryKeys: [
+          LOTTERY_KEYS.PT_RIO,
+          LOTTERY_KEYS.NACIONAL,
+        ],
+      },
+      {
+        id: LOTTERY_KEYS.PT_RIO,
+        label: "PT Rio",
+        lotteryKeys: [
+          LOTTERY_KEYS.PT_RIO,
+        ],
+      },
+      {
+        id: LOTTERY_KEYS.NACIONAL,
+        label: "Federal",
+        lotteryKeys: [
+          LOTTERY_KEYS.NACIONAL,
+        ],
+      },
     ],
     []
   );
@@ -533,11 +552,23 @@ export default function CentenasView() {
     [lotteryOptId, LOTTERY_OPTIONS]
   );
 
-  const selectedCloseHour = useMemo(() => {
-    return selectedLottery?.closeHour ? normalizeHourLike(selectedLottery.closeHour) : null;
-  }, [selectedLottery]);
+  const selectedLotteryKeys = useMemo(
+    () =>
+      Array.isArray(
+        selectedLottery?.lotteryKeys
+      )
+        ? selectedLottery.lotteryKeys
+        : [LOTTERY_KEYS.PT_RIO],
+    [selectedLottery]
+  );
 
-  const boundsReady = !!(bounds?.minYmd && bounds?.maxYmd);
+  const selectedLotteryKeysKey =
+    selectedLotteryKeys.join(",");
+
+  const boundsReady = !!(
+    bounds?.minYmd &&
+    bounds?.maxYmd
+  );
 
   // ========= persistência de filtros =========
 
@@ -606,9 +637,64 @@ export default function CentenasView() {
   }, []);
 
   const horarioOptions = useMemo(() => {
-    const base = ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
-    return [{ v: "Todos", label: "Todos" }, ...base.map((h) => ({ v: h, label: h.replace(":00", "h") }))];
-  }, []);
+    const ptRioHours = [
+      "09:00",
+      "11:00",
+      "14:00",
+      "16:00",
+      "18:00",
+      "21:00",
+    ];
+
+    const federalHours = [
+      "20:00",
+    ];
+
+    let base = [];
+
+    if (
+      selectedLotteryKeys.includes(
+        LOTTERY_KEYS.PT_RIO
+      )
+    ) {
+      base.push(...ptRioHours);
+    }
+
+    if (
+      selectedLotteryKeys.includes(
+        LOTTERY_KEYS.NACIONAL
+      )
+    ) {
+      base.push(...federalHours);
+    }
+
+    base = [...new Set(base)].sort();
+
+    return [
+      {
+        v: "Todos",
+        label: "Todos",
+      },
+      ...base.map((hour) => ({
+        v: hour,
+        label: hour.replace(":00", "h"),
+      })),
+    ];
+  }, [selectedLotteryKeys]);
+
+  useEffect(() => {
+    if (isTodos(fHorario)) return;
+
+    const validHours = new Set(
+      horarioOptions.map(
+        (option) => option.v
+      )
+    );
+
+    if (!validHours.has(fHorario)) {
+      setFHorario("Todos");
+    }
+  }, [horarioOptions, fHorario]);
 
   const animalOptions = useMemo(() => {
     const out = [{ v: "Todos", label: "Todos" }];
@@ -630,29 +716,99 @@ export default function CentenasView() {
 
   useEffect(() => {
     let alive = true;
+
     (async () => {
       setLoadingBounds(true);
       setError("");
+
       try {
-        const b = await getKingBoundsByUf({ uf: LOTTERY_KEY });
+        const responses =
+          await Promise.all(
+            selectedLotteryKeys.map(
+              async (lotteryKey) => {
+                const result =
+                  await getKingBoundsByUf({
+                    uf: lotteryKey,
+                  });
+
+                return {
+                  lotteryKey,
+                  result,
+                };
+              }
+            )
+          );
+
         if (!alive) return;
+
+        const validBounds =
+          responses
+            .map(
+              ({
+                lotteryKey,
+                result,
+              }) => ({
+                lotteryKey,
+                minYmd:
+                  result?.minYmd || null,
+                maxYmd:
+                  result?.maxYmd || null,
+                source:
+                  result?.source || "",
+              })
+            )
+            .filter(
+              (item) =>
+                isYMD(item.minYmd) &&
+                isYMD(item.maxYmd)
+            );
+
+        if (!validBounds.length) {
+          setBounds({
+            minYmd: null,
+            maxYmd: null,
+            source: "",
+          });
+
+          throw new Error(
+            "Nenhum período histórico foi encontrado para a loteria selecionada."
+          );
+        }
+
         setBounds({
-          minYmd: b?.minYmd || null,
-          maxYmd: b?.maxYmd || null,
-          source: b?.source || "",
+          minYmd: validBounds
+            .map((item) => item.minYmd)
+            .sort()[0],
+          maxYmd: validBounds
+            .map((item) => item.maxYmd)
+            .sort()
+            .slice(-1)[0],
+          source: validBounds
+            .map(
+              (item) =>
+                `${item.lotteryKey}:${item.source || "dados"}`
+            )
+            .join(", "),
         });
       } catch (e) {
         if (!alive) return;
-        setError(String(e?.message || e));
+
+        setError(
+          String(
+            e?.message || e
+          )
+        );
       } finally {
-        if (alive) setLoadingBounds(false);
+        if (alive) {
+          setLoadingBounds(false);
+        }
       }
     })();
 
     return () => {
       alive = false;
     };
-  }, []);
+  }, [selectedLotteryKeysKey]);
 
   // ========= filtros (draw-level) =========
 
@@ -713,10 +869,16 @@ export default function CentenasView() {
 
   // ========= build base dataset (cacheado por closeHour) =========
 
-  const buildBaseKey = useMemo(() => {
-    const h = selectedCloseHour ? normalizeHourLike(selectedCloseHour) : "all";
-    return `${LOTTERY_KEY}::close=${h}::pos=${prizePositions.join(",")}`;
-  }, [selectedCloseHour, prizePositions]);
+  const buildBaseKey = useMemo(
+    () =>
+      `${selectedLotteryKeysKey}` +
+      `::close=all` +
+      `::pos=${prizePositions.join(",")}`,
+    [
+      selectedLotteryKeysKey,
+      prizePositions,
+    ]
+  );
 
   const build = useCallback(async () => {
     const mySeq = ++buildSeqRef.current;
@@ -743,17 +905,56 @@ export default function CentenasView() {
           if (abortedRef.current) return { ok: false, entries: [] };
           if (buildSeqRef.current !== mySeq) return { ok: false, entries: [] };
 
-          const res = await getKingResultsByRange({
-            uf: LOTTERY_KEY,
-            dateFrom: ch.from,
-            dateTo: ch.to,
-            closeHour: selectedCloseHour || null,
-            positions: prizePositions,
-            mode: "detailed",
-          });
+          const responses =
+            await Promise.all(
+              selectedLotteryKeys.map(
+                async (lotteryKey) => {
+                  const res =
+                    await getKingResultsByRange({
+                      uf: lotteryKey,
+                      dateFrom: ch.from,
+                      dateTo: ch.to,
+                      closeHour: null,
+                      positions:
+                        prizePositions,
+                      mode: "detailed",
+                    });
 
-          const drawsChunk = normalizeDrawsResult(res);
-          const prizesFlat = normalizePrizesArray(res);
+                  return {
+                    lotteryKey,
+                    res,
+                  };
+                }
+              )
+            );
+
+          const drawsChunk =
+            responses.flatMap(
+              ({
+                lotteryKey,
+                res,
+              }) =>
+                normalizeDrawsResult(res)
+                  .map((draw) => ({
+                    ...draw,
+                    __centenasLotteryKey:
+                      lotteryKey,
+                  }))
+            );
+
+          const prizesFlat =
+            responses.flatMap(
+              ({
+                lotteryKey,
+                res,
+              }) =>
+                normalizePrizesArray(res)
+                  .map((prize) => ({
+                    ...prize,
+                    __centenasLotteryKey:
+                      lotteryKey,
+                  }))
+            );
 
           const entries = [];
 
@@ -769,9 +970,24 @@ export default function CentenasView() {
 
             const prizes = Array.isArray(d?.prizes) ? d.prizes : null;
             if (prizes && prizes.length) {
-              const key = `${ymd}#${hourBucket || "??"}`;
+              const lotteryKey =
+                d?.__centenasLotteryKey ||
+                "UNKNOWN";
+
+              const key =
+                `${lotteryKey}` +
+                `#${ymd}` +
+                `#${hourBucket || "??"}`;
+
               coveredKeys.add(key);
-              entries.push({ ymd, hourNorm, hourBucket, prizes });
+
+              entries.push({
+                lotteryKey,
+                ymd,
+                hourNorm,
+                hourBucket,
+                prizes,
+              });
             }
           }
 
@@ -788,13 +1004,25 @@ export default function CentenasView() {
               const hourNorm = normalizeHourLike(hrRaw);
               const hourBucket = toHourBucketHH00(hourNorm);
 
-              if (selectedCloseHour) {
-                const want = toHourBucketHH00(selectedCloseHour);
-                if (want && hourBucket && hourBucket !== want) continue;
+              const lotteryKey =
+                p?.__centenasLotteryKey ||
+                "UNKNOWN";
+
+              const key =
+                `${lotteryKey}` +
+                `#${ymd}` +
+                `#${hourBucket || "??"}`;
+
+              if (!map.has(key)) {
+                map.set(key, {
+                  lotteryKey,
+                  ymd,
+                  hourNorm,
+                  hourBucket,
+                  prizes: [],
+                });
               }
 
-              const key = `${ymd}#${hourBucket || "??"}`;
-              if (!map.has(key)) map.set(key, { ymd, hourNorm, hourBucket, prizes: [] });
               map.get(key).prizes.push(p);
             }
 
@@ -964,7 +1192,8 @@ export default function CentenasView() {
     boundsReady,
     bounds?.minYmd,
     bounds?.maxYmd,
-    selectedCloseHour,
+    selectedLotteryKeys,
+    selectedLotteryKeysKey,
     prizePositions,
     buildBaseKey,
     applyDrawFiltersToEntry,
@@ -1001,8 +1230,10 @@ export default function CentenasView() {
     const lotTxt = selectedLottery?.label || "Todas as loterias";
     const rangeTxt =
       boundsReady && bounds?.minYmd && bounds?.maxYmd ? `${ymdToBR(bounds.minYmd)} até ${ymdToBR(bounds.maxYmd)}` : "";
-    return `Frequência das 40 centenas · Prêmio 1º ao 7º · ${lotTxt} · Loteria ${LOTTERY_KEY}${
-      rangeTxt ? ` · Período ${rangeTxt}` : ""
+    return `Frequência das 40 centenas · Prêmio 1º ao 7º · ${lotTxt}${
+      rangeTxt
+        ? ` · Período ${rangeTxt}`
+        : ""
     }`;
   }, [selectedLottery, boundsReady, bounds?.minYmd, bounds?.maxYmd]);
 
@@ -1693,7 +1924,7 @@ const rows = showOnlyHits
 
       <div className="cx0_controls">
         <div className="cx0_chip">
-          <label>Loterias</label>
+          <label>Loteria</label>
           <select value={lotteryOptId} onChange={(e) => setLotteryOptId(String(e.target.value || "ALL"))}>
             {LOTTERY_OPTIONS.map((x) => (
               <option key={x.id} value={x.id}>
