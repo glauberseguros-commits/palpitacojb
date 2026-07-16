@@ -258,6 +258,30 @@ function resolveLayerMetaText(analytics) {
   return candidates[0] || "";
 }
 
+function debugTop3Effect(name, details = {}) {
+  if (typeof window === "undefined") return;
+
+  const enabled =
+    new URLSearchParams(window.location.search).get(
+      "debugTop3Effects"
+    ) === "1";
+
+  if (!enabled) return;
+
+  const counters =
+    window.__TOP3_EFFECT_COUNTS__ ||
+    (window.__TOP3_EFFECT_COUNTS__ = {});
+
+  counters[name] = Number(counters[name] || 0) + 1;
+
+  console.info(
+    "[TOP3 EFFECT]",
+    name,
+    `#${counters[name]}`,
+    details
+  );
+}
+
 export function useTop3Controller() {
   const DEFAULT_LOTTERY = "PT_RIO";
 
@@ -825,10 +849,21 @@ export function useTop3Controller() {
   }, [lotteryKeySafe, ymdSafe, lookback, resetStateForNoData]);
 
   useEffect(() => {
+    debugTop3Effect("01_load", {
+      lotteryKey: lotteryKeySafe,
+      ymd: ymdSafe,
+      lookback,
+    });
+
     load();
   }, [load]);
 
   useEffect(() => {
+    debugTop3Effect("02_ensure_timeline", {
+      lotteryKey: lotteryKeySafe,
+      timelineYmd,
+    });
+
     ensureDayTimeline({
       ymd: timelineYmd,
       lotteryKey: lotteryKeySafe,
@@ -923,6 +958,15 @@ export function useTop3Controller() {
   ]);
 
   useEffect(() => {
+    debugTop3Effect("03_save_prediction", {
+      lotteryKey: lotteryKeySafe,
+      analysisYmd,
+      analysisHourBucket,
+      top3Length: Array.isArray(top3)
+        ? top3.length
+        : -1,
+    });
+
     if (!analysisYmd || !analysisHourBucket) return;
     if (!Array.isArray(top3) || !top3.length) return;
     if (!isFutureTarget(analysisYmd, analysisHourBucket)) return;
@@ -1036,6 +1080,20 @@ export function useTop3Controller() {
   ]);
 
   useEffect(() => {
+    debugTop3Effect("04_load_persisted_history", {
+      lotteryKey: lotteryKeySafe,
+      timelineYmd,
+      scheduleLength: Array.isArray(schedule)
+        ? schedule.length
+        : -1,
+      todayDrawsLength: Array.isArray(todayDraws)
+        ? todayDraws.length
+        : -1,
+      rangeDrawsLength: Array.isArray(rangeDraws)
+        ? rangeDraws.length
+        : -1,
+    });
+
     let alive = true;
 
     async function loadPersistedHistory() {
@@ -1075,6 +1133,20 @@ export function useTop3Controller() {
   ]);
 
   useEffect(() => {
+    debugTop3Effect("05_reconcile_history", {
+      lotteryKey: lotteryKeySafe,
+      timelineYmd,
+      scheduleLength: Array.isArray(schedule)
+        ? schedule.length
+        : -1,
+      todayDrawsLength: Array.isArray(todayDraws)
+        ? todayDraws.length
+        : -1,
+      rangeDrawsLength: Array.isArray(rangeDraws)
+        ? rangeDraws.length
+        : -1,
+    });
+
     if (!(todayDraws?.length || rangeDraws?.length)) return;
 
     const allDraws = [
