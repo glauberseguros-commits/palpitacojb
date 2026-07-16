@@ -43,7 +43,7 @@ import {
 
 const LOTTERY_KEYS = {
   PT_RIO: "PT_RIO",
-  NACIONAL: "NACIONAL",
+  FEDERAL: "FEDERAL",
 };
 
 const FILTERS_LS_KEY = "pp_centenas_filters_v2";
@@ -481,7 +481,7 @@ export default function CentenasView() {
         label: "Todas as loterias",
         lotteryKeys: [
           LOTTERY_KEYS.PT_RIO,
-          LOTTERY_KEYS.NACIONAL,
+          LOTTERY_KEYS.FEDERAL,
         ],
       },
       {
@@ -492,10 +492,10 @@ export default function CentenasView() {
         ],
       },
       {
-        id: LOTTERY_KEYS.NACIONAL,
+        id: LOTTERY_KEYS.FEDERAL,
         label: "Federal",
         lotteryKeys: [
-          LOTTERY_KEYS.NACIONAL,
+          LOTTERY_KEYS.FEDERAL,
         ],
       },
     ],
@@ -696,7 +696,7 @@ export default function CentenasView() {
 
     if (
       selectedLotteryKeys.includes(
-        LOTTERY_KEYS.NACIONAL
+        LOTTERY_KEYS.FEDERAL
       )
     ) {
       base.push(...federalHours);
