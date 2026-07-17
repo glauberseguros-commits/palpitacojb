@@ -152,6 +152,15 @@ const {
   syncImportedResultToTop3History,
 } = require("../engine/top3HistorySync");
 
+const {
+  createTop3PredictionRun,
+  resolveNextTop3Slot,
+} = require("../engine/top3PredictionService");
+
+const {
+  loadTop3PublicApi,
+} = require("../engine/scoreEngineUnified");
+
 /**
  * =========================
  * Config / toggles
@@ -1630,9 +1639,116 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
       response
     );
 
+  let top3AutoPrediction = {
+    ok: true,
+    skipped: true,
+    reason: "not_attempted",
+  };
+
+  if (
+    response.ok === true &&
+    response.blocked !== true &&
+    response.captured === true &&
+    normalizedClose
+  ) {
+    try {
+      const publicApi = loadTop3PublicApi();
+
+      const nextSlot =
+        resolveNextTop3Slot({
+          lotteryKey: lk,
+          ymd: date,
+          hour: normalizedClose,
+          publicApi,
+        });
+
+      const nextYmd =
+        String(nextSlot?.ymd || "").trim();
+
+      const nextHour =
+        String(nextSlot?.hour || "").trim();
+
+      if (
+        /^\d{4}-\d{2}-\d{2}$/.test(nextYmd) &&
+        nextHour
+      ) {
+        const generated =
+          await createTop3PredictionRun({
+            lotteryKey: lk,
+            date: nextYmd,
+            closeHour: nextHour,
+            historySource: "auto",
+            source: "auto-import",
+            metadata: {
+              triggeredByImport: true,
+              importedYmd: date,
+              importedHour: normalizedClose,
+            },
+          });
+
+        top3AutoPrediction = {
+          ok: true,
+          skipped: false,
+          targetYmd: nextYmd,
+          targetHour: nextHour,
+          runId:
+            generated?.run?.id || null,
+          publicProjection:
+            generated?.publicProjection || null,
+        };
+
+        console.log(
+          `[TOP3 AUTO] OK | ${lk} | ` +
+          `importado=${date} ${normalizedClose} | ` +
+          `próximo=${nextYmd} ${nextHour}`
+        );
+      } else {
+        top3AutoPrediction = {
+          ok: true,
+          skipped: true,
+          reason: "next_slot_not_found",
+        };
+
+        console.warn(
+          `[TOP3 AUTO] próximo slot não localizado | ` +
+          `${lk} ${date} ${normalizedClose}`
+        );
+      }
+    } catch (error) {
+      top3AutoPrediction = {
+        ok: false,
+        skipped: false,
+        error: String(
+          error?.message ||
+          error ||
+          "top3_auto_failed"
+        ),
+      };
+
+      console.error(
+        "[TOP3 AUTO] falhou:",
+        error?.stack ||
+        error?.message ||
+        error
+      );
+    }
+  } else {
+    top3AutoPrediction = {
+      ok: true,
+      skipped: true,
+      reason:
+        response.blocked === true
+          ? "import_blocked"
+          : response.captured !== true
+          ? "result_not_captured"
+          : "close_hour_missing",
+    };
+  }
+
   return {
     ...response,
     top3HistorySync,
+    top3AutoPrediction,
   };
 }
 

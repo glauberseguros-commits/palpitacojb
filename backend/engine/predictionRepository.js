@@ -50,27 +50,63 @@ async function savePrediction(runId, prediction) {
 }
 
 async function savePredictions(runId, predictions = []) {
-  const batch = db().batch();
+  if (!runId) {
+    throw new Error("runId obrigatório");
+  }
 
-  const parent = db()
+  const rows = Array.isArray(predictions)
+    ? predictions.slice(0, 3)
+    : [];
+
+  const database = db();
+
+  const parent = database
     .collection(RUNS)
     .doc(runId)
     .collection(SUB);
 
-  for (const prediction of predictions) {
-    const ref = parent.doc();
+  const existing = await parent.get();
+  const batch = database.batch();
+  const expectedIds = new Set();
 
-    batch.set(ref, {
-      ...prediction,
-      id: ref.id,
-      updatedAt: new Date(),
-      createdAt: prediction.createdAt || new Date(),
-    });
+  rows.forEach((prediction, index) => {
+    const rankFromSignals = Number(
+      prediction?.signals?.rankPosition
+    );
+
+    const rank = Number.isFinite(rankFromSignals)
+      ? Math.max(1, Math.min(3, Math.trunc(rankFromSignals)))
+      : index + 1;
+
+    const predictionId =
+      `rank_${String(rank).padStart(2, "0")}`;
+
+    expectedIds.add(predictionId);
+
+    const ref = parent.doc(predictionId);
+
+    batch.set(
+      ref,
+      {
+        ...prediction,
+        id: predictionId,
+        updatedAt: new Date(),
+        createdAt:
+          prediction.createdAt || new Date(),
+      },
+      { merge: true }
+    );
+  });
+
+  for (const doc of existing.docs) {
+    if (!expectedIds.has(doc.id)) {
+      batch.delete(doc.ref);
+    }
   }
 
   await batch.commit();
 
-  return predictions.length;
+  return rows.length;
 }
 
 async function loadPredictionRun(runId) {

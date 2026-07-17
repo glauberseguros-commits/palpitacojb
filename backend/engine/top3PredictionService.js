@@ -18,6 +18,10 @@ const {
   createPredictionRun,
 } = require("./predictionService");
 
+const {
+  getDb,
+} = require("../service/firebaseAdmin");
+
 const PT_RIO_SCHEDULE_NORMAL = [
   "09:00",
   "11:00",
@@ -305,6 +309,387 @@ function extractDraws(result) {
   return [];
 }
 
+function normalizePublicMilhar(value) {
+  const digits = String(value || "")
+    .replace(/\D+/g, "");
+
+  if (!digits) {
+    return "";
+  }
+
+  return digits
+    .slice(-4)
+    .padStart(4, "0");
+}
+
+function publicHourCode(value) {
+  return normalizeHour(value)
+    .replace(/\D+/g, "")
+    .slice(0, 2)
+    .padStart(2, "0");
+}
+
+function resolveNextTop3Slot({
+  lotteryKey,
+  ymd,
+  hour,
+  publicApi,
+}) {
+  if (
+    !publicApi ||
+    typeof publicApi.getNextSlotForLottery !== "function"
+  ) {
+    throw new Error(
+      "API pública TOP3 sem getNextSlotForLottery."
+    );
+  }
+
+  const resolved =
+    publicApi.getNextSlotForLottery({
+      lotteryKey: normalizeLotteryKey(lotteryKey),
+      ymd: normalizeYmd(ymd),
+      hourBucket: normalizeHour(hour),
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+    });
+
+  const rawHour = String(
+    resolved?.hour ||
+    resolved?.hourBucket ||
+    ""
+  ).trim();
+
+  const hourMatch =
+    rawHour.match(/^(\d{1,2})(?::00|h)?$/i);
+
+  const canonicalHour = hourMatch
+    ? `${String(Number(hourMatch[1])).padStart(2, "0")}:00`
+    : "";
+
+  return {
+    ...resolved,
+    ymd: normalizeYmd(resolved?.ymd),
+    hour: canonicalHour,
+    hourBucket: canonicalHour,
+  };
+}
+
+function scheduleForPublicProjection(
+  lotteryKey,
+  date
+) {
+  if (normalizeLotteryKey(lotteryKey) === "FEDERAL") {
+    return [...FEDERAL_SCHEDULE];
+  }
+
+  const parsed = new Date(`${date}T12:00:00Z`);
+  const dow = parsed.getUTCDay();
+
+  if (dow === 3 || dow === 6) {
+    return [...PT_RIO_SCHEDULE_WED_SAT];
+  }
+
+  return [...PT_RIO_SCHEDULE_NORMAL];
+}
+
+function buildPublicMilharesCols(
+  engineOutput,
+  expectedCols = 4,
+  perCol = 5
+) {
+  const dezenas = Array.isArray(engineOutput?.dezenas)
+    ? engineOutput.dezenas
+    : [];
+
+  const slots = Array.isArray(engineOutput?.slots)
+    ? engineOutput.slots
+    : [];
+
+  const cols = [];
+
+  for (const dezena of dezenas.slice(0, expectedCols)) {
+    const items = slots
+      .filter(
+        (slot) =>
+          String(slot?.dezena || "") ===
+          String(dezena || "")
+      )
+      .map(
+        (slot) =>
+          normalizePublicMilhar(slot?.milhar)
+      )
+      .filter(
+        (milhar) => /^\d{4}$/.test(milhar)
+      )
+      .slice(0, perCol);
+
+    while (items.length < perCol) {
+      items.push("");
+    }
+
+    cols.push({
+      dezena: String(dezena || ""),
+      items,
+    });
+  }
+
+  while (cols.length < expectedCols) {
+    cols.push({
+      dezena: "",
+      items: Array(perCol).fill(""),
+    });
+  }
+
+  return cols.slice(0, expectedCols);
+}
+
+function buildTop3PublicSnapshot({
+  computedTop,
+  history,
+  lotteryKey,
+  date,
+  closeHour,
+  publicApi,
+}) {
+  const schedule = scheduleForPublicProjection(
+    lotteryKey,
+    date
+  );
+
+  return (Array.isArray(computedTop)
+    ? computedTop
+    : []
+  )
+    .slice(0, 3)
+    .map((item, index) => {
+      const grupo = Number(item?.grupo);
+
+      if (
+        !Number.isFinite(grupo) ||
+        grupo < 1 ||
+        grupo > 25
+      ) {
+        return null;
+      }
+
+      const probability = Number(
+        item?.scoreProb ??
+        item?.probability ??
+        item?.confidence ??
+        0
+      );
+
+      const prob =
+        probability > 1
+          ? probability / 100
+          : probability;
+
+      const engineOutput =
+        publicApi.build20MilharesForGrupo({
+          rangeDraws: history,
+          analysisHourBucket: closeHour,
+          schedule,
+          grupo2: grupo,
+          targetYmd: date,
+        });
+
+      const milharesCols =
+        buildPublicMilharesCols(
+          engineOutput,
+          4,
+          5
+        );
+
+      const milhares20 = milharesCols
+        .flatMap((column) => column.items)
+        .filter(
+          (milhar) => /^\d{4}$/.test(milhar)
+        )
+        .slice(0, 20);
+
+      return {
+        rank: index + 1,
+        grupo,
+        animal:
+          item?.animal ||
+          ANIMALS[
+            String(grupo).padStart(2, "0")
+          ] ||
+          "",
+        prob:
+          Number.isFinite(prob)
+            ? prob
+            : 0,
+        probPct:
+          Number.isFinite(prob)
+            ? Number((prob * 100).toFixed(4))
+            : 0,
+        milhares20,
+        milharesCols,
+        meta: item?.meta || null,
+      };
+    })
+    .filter(Boolean);
+}
+
+async function saveTop3PublicProjection({
+  lotteryKey,
+  date,
+  closeHour,
+  snapshot,
+  engineVersion = "V3_STATISTICAL",
+  source = "backend-top3",
+}) {
+  const lottery = normalizeLotteryKey(lotteryKey);
+  const hour = normalizeHour(closeHour);
+  const hourCode = publicHourCode(hour);
+
+  const id =
+    `${lottery}__${date}__${hourCode}`;
+
+  const normalizedSnapshot =
+    Array.isArray(snapshot)
+      ? snapshot.slice(0, 3)
+      : [];
+
+  if (!normalizedSnapshot.length) {
+    throw new Error(
+      "Snapshot público TOP3 vazio."
+    );
+  }
+
+  const picks = normalizedSnapshot
+    .map((item) => Number(item?.grupo))
+    .filter(
+      (grupo) =>
+        Number.isFinite(grupo) &&
+        grupo >= 1 &&
+        grupo <= 25
+    )
+    .slice(0, 3);
+
+  if (!picks.length) {
+    throw new Error(
+      "Picks públicos TOP3 inválidos."
+    );
+  }
+
+  const database = getDb();
+  const ref = database
+    .collection("top3_predictions")
+    .doc(id);
+
+  const now = Date.now();
+
+  const payload = {
+    id,
+    lotteryKey: lottery,
+    targetYmd: date,
+    targetHour:
+      `${hourCode}h`,
+    targetKey:
+      `${date}_${hourCode}h`,
+    picks,
+    snapshot: normalizedSnapshot,
+    engineVersion,
+    status: "predicted",
+    resultGrupo: null,
+    resultMilhar: "",
+    resultAnimal: "",
+    hitType: "",
+    hitScore: 0,
+    hitPosition: -1,
+    matchedValue: "",
+    createdAt: now,
+    updatedAt: now,
+    createdBy: source,
+    source,
+  };
+
+  return database.runTransaction(
+    async (transaction) => {
+      const current =
+        await transaction.get(ref);
+
+      if (!current.exists) {
+        transaction.set(ref, payload);
+
+        return {
+          ok: true,
+          created: true,
+          updated: false,
+          existing: false,
+          protected: false,
+          id,
+        };
+      }
+
+      const currentData =
+        current.data() || {};
+
+      const currentStatus = String(
+        currentData.status || ""
+      )
+        .trim()
+        .toLowerCase();
+
+      if (currentStatus === "validated") {
+        return {
+          ok: true,
+          created: false,
+          updated: false,
+          existing: true,
+          protected: true,
+          reason: "ALREADY_VALIDATED",
+          id,
+        };
+      }
+
+      const updatedPayload = {
+        ...payload,
+        createdAt:
+          currentData.createdAt ||
+          payload.createdAt,
+        updatedAt: Date.now(),
+        resultGrupo:
+          currentData.resultGrupo ?? null,
+        resultMilhar:
+          currentData.resultMilhar || "",
+        resultAnimal:
+          currentData.resultAnimal || "",
+        hitType:
+          currentData.hitType || "",
+        hitScore:
+          Number(currentData.hitScore || 0),
+        hitPosition:
+          Number.isFinite(
+            Number(currentData.hitPosition)
+          )
+            ? Number(currentData.hitPosition)
+            : -1,
+        matchedValue:
+          currentData.matchedValue || "",
+      };
+
+      transaction.set(
+        ref,
+        updatedPayload,
+        { merge: true }
+      );
+
+      return {
+        ok: true,
+        created: false,
+        updated: true,
+        existing: true,
+        protected: false,
+        id,
+      };
+    }
+  );
+}
+
 function mapTop3ToPredictions(top = []) {
   return (Array.isArray(top) ? top : [])
     .slice(0, 3)
@@ -459,9 +844,32 @@ async function createTop3PredictionRun(
     computed?.top
   );
 
+  const publicSnapshot =
+    buildTop3PublicSnapshot({
+      computedTop: computed?.top,
+      history,
+      lotteryKey,
+      date,
+      closeHour,
+      publicApi,
+    });
+
   if (!predictions.length) {
     throw new Error(
       "O motor TOP3 não produziu previsões válidas."
+    );
+  }
+
+  if (
+    publicSnapshot.length !== 3 ||
+    publicSnapshot.some(
+      (item) =>
+        !Array.isArray(item?.milhares20) ||
+        item.milhares20.length !== 20
+    )
+  ) {
+    throw new Error(
+      "O motor TOP3 não produziu 20 milhares válidas para cada grupo."
     );
   }
 
@@ -508,23 +916,39 @@ async function createTop3PredictionRun(
     return {
       run: null,
       predictions,
+      publicSnapshot,
       engine,
       dryRun: true,
     };
   }
 
+  const source =
+    input.source || "backend-top3";
+
   const result = await persistRun({
     lotteryKey,
     date,
     closeHour,
-    source: input.source || "backend-top3",
+    source,
     algorithm: "top3_statistical_v3",
     metadata,
     predictions,
   });
 
+  const publicProjection =
+    await saveTop3PublicProjection({
+      lotteryKey,
+      date,
+      closeHour,
+      snapshot: publicSnapshot,
+      engineVersion: "V3_STATISTICAL",
+      source,
+    });
+
   return {
     ...result,
+    publicSnapshot,
+    publicProjection,
     engine,
     dryRun: false,
   };
@@ -536,4 +960,8 @@ module.exports = {
   normalizeHour,
   normalizeHistorySource,
   loadPredictionHistory,
+  buildPublicMilharesCols,
+  buildTop3PublicSnapshot,
+  saveTop3PublicProjection,
+  resolveNextTop3Slot,
 };
