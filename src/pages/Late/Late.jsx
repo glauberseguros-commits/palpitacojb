@@ -282,21 +282,57 @@ function normalizeBoundsResponse(b) {
 const LATE_LOTTERY_OPTIONS = [
   {
     id: "PT_RIO",
-    label: "PT Rio",
+    label: "Rio de Janeiro",
     lotteries: ["PT_RIO"],
     uf: "RJ",
   },
   {
     id: "FEDERAL",
-    label: "Nacional / Federal",
-    lotteries: ["FEDERAL", "NACIONAL"],
+    label: "Federal",
+    lotteries: ["FEDERAL"],
     uf: "FEDERAL",
+  },
+  {
+    id: "LOOK",
+    label: "LOOK",
+    lotteries: ["LOOK"],
+    uf: "GO",
+  },
+  {
+    id: "NACIONAL",
+    label: "Nacional",
+    lotteries: ["NACIONAL"],
+    uf: "NACIONAL",
   },
 ];
 
+const LATE_HOUR_OPTIONS = {
+  PT_RIO: [
+    { id: "ALL", label: "Todos os horários", closeHour: null },
+    { id: "09", label: "09h", closeHour: "09:00" },
+    { id: "11", label: "11h", closeHour: "11:00" },
+    { id: "14", label: "14h", closeHour: "14:00" },
+    { id: "16", label: "16h", closeHour: "16:00" },
+    { id: "18", label: "18h", closeHour: "18:00" },
+    { id: "21", label: "21h", closeHour: "21:00" },
+  ],
+
+  FEDERAL: [
+    { id: "ALL", label: "Todos os horários", closeHour: null },
+    { id: "20", label: "20h", closeHour: "20:00" },
+  ],
+
+  LOOK: [
+    { id: "ALL", label: "Todos os horários", closeHour: null },
+  ],
+
+  NACIONAL: [
+    { id: "ALL", label: "Todos os horários", closeHour: null },
+  ],
+};
+
 export default function Late() {
   const UF_CODE = "RJ";
-  const LOTTERY_DISPLAY = "PT_RIO";
 
   const LOTTERY_OPTIONS = useMemo(
     () => [
@@ -346,46 +382,47 @@ export default function Late() {
 
   const abortedRef = useRef(false);
   const pollRef = useRef(null);
+  const selectedHourOptions = useMemo(
+    () =>
+      LATE_HOUR_OPTIONS[selectedLotteryId] ||
+      LATE_HOUR_OPTIONS.PT_RIO,
+    [selectedLotteryId]
+  );
 
-  const selectedLottery = useMemo(() => {
-    return LOTTERY_OPTIONS.find((x) => x.id === lotteryOptId) || LOTTERY_OPTIONS[0];
-  }, [lotteryOptId, LOTTERY_OPTIONS]);
+  const selectedHourOption = useMemo(
+    () =>
+      selectedHourOptions.find(
+        (option) => option.id === lotteryOptId
+      ) || selectedHourOptions[0],
+    [lotteryOptId, selectedHourOptions]
+  );
+
 
   // ✅ bucket "09h" etc (preferível pra bater na base)
   const selectedLateLottery = useMemo(
-
     () =>
-
       LATE_LOTTERY_OPTIONS.find(
-
         (option) => option.id === selectedLotteryId
-
       ) || LATE_LOTTERY_OPTIONS[0],
-
     [selectedLotteryId]
-
   );
-
 
   const selectedLateLotteries = useMemo(
-
-    () => selectedLateLottery?.lotteries || ["PT_RIO"],
-
+    () => selectedLateLottery.lotteries,
     [selectedLateLottery]
-
   );
 
+  const selectedLateUf = selectedLateLottery.uf;
 
-  const selectedLateUf =
+  const LOTTERY_DISPLAY = selectedLateLottery.label;
 
-    selectedLateLottery?.uf || "RJ";
 
 
   const selectedCloseHourBucket = useMemo(() => {
-    const raw = selectedLottery?.closeHour;
+    const raw = selectedHourOption?.closeHour;
     if (!raw) return null;
     return String(raw).includes("h") ? String(raw).trim() : toHourBucket(raw);
-  }, [selectedLottery]);
+  }, [selectedHourOption]);
 
   const prizePositions = useMemo(() => {
     if (prizeMode === "1-5") return [1, 2, 3, 4, 5];
@@ -605,6 +642,12 @@ export default function Late() {
       selectedLateLotteries,
     ] // eslint-disable-line react-hooks/exhaustive-deps
   );
+
+  useEffect(() => {
+    setLotteryOptId("ALL");
+  }, [selectedLotteryId]);
+
+
 
   // primeiro load
   useEffect(() => {
@@ -887,70 +930,45 @@ export default function Late() {
 
 
           <div className="ppCtl">
-
-
             <label htmlFor="lateLottery">Loteria</label>
 
-
-
             <select
-
-
               id="lateLottery"
-
-
               value={selectedLotteryId}
-
-
               onChange={(event) =>
-
-
                 setSelectedLotteryId(event.target.value)
-
-
               }
-
-
               disabled={loading}
-
-
             >
-
-
               {LATE_LOTTERY_OPTIONS.map((option) => (
-
-
                 <option
-
-
                   key={option.id}
-
-
                   value={option.id}
-
-
                 >
-
-
                   {option.label}
-
-
                 </option>
-
-
               ))}
-
-
             </select>
-
-
           </div>
           <div className="ppCtl">
-            <label>Loterias</label>
-            <select value={lotteryOptId} onChange={(e) => setLotteryOptId(String(e.target.value || "ALL"))}>
-              {LOTTERY_OPTIONS.map((x) => (
-                <option key={x.id} value={x.id}>
-                  {x.label}
+            <label htmlFor="lateHour">Horário</label>
+
+            <select
+              id="lateHour"
+              value={lotteryOptId}
+              onChange={(event) =>
+                setLotteryOptId(
+                  String(event.target.value || "ALL")
+                )
+              }
+              disabled={loading}
+            >
+              {selectedHourOptions.map((option) => (
+                <option
+                  key={option.id}
+                  value={option.id}
+                >
+                  {option.label}
                 </option>
               ))}
             </select>
