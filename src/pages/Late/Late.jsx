@@ -332,20 +332,7 @@ const LATE_HOUR_OPTIONS = {
 };
 
 export default function Late() {
-  const UF_CODE = "RJ";
 
-  const LOTTERY_OPTIONS = useMemo(
-    () => [
-      { id: "ALL", label: "Todas as loterias", closeHour: null },
-      { id: "09", label: "LT PT RIO 09HS", closeHour: "09h" },
-      { id: "11", label: "LT PT RIO 11HS", closeHour: "11h" },
-      { id: "14", label: "LT PT RIO 14HS", closeHour: "14h" },
-      { id: "16", label: "LT PT RIO 16HS", closeHour: "16h" },
-      { id: "18", label: "LT PT RIO 18HS", closeHour: "18h" },
-      { id: "21", label: "LT PT RIO 21HS", closeHour: "21h" },
-    ],
-    []
-  );
 
   // UI
   const [lotteryOptId, setLotteryOptId] = useState("ALL");
@@ -480,7 +467,7 @@ export default function Late() {
     if (!maxYmd) return { ymd: "", closeHour: "" };
 
     const dayResult = await getKingResultsByDate({
-      uf: UF_CODE,
+      uf: selectedLateUf,
       date: maxYmd,
       closeHour: null,
       closeHourBucket: null,
@@ -495,7 +482,7 @@ export default function Late() {
   }
 
   async function refreshBoundsAndLastDraw() {
-    const b = await getKingBoundsByUf({ uf: UF_CODE });
+    const b = await getKingBoundsByUf({ uf: selectedLateUf });
 
     // ✅ PATCH: aceita minDate/maxDate também
     const nb = normalizeBoundsResponse(b);
@@ -702,7 +689,7 @@ export default function Late() {
       try {
         const prev = lastImportedRef.current;
 
-        const b = await getKingBoundsByUf({ uf: UF_CODE });
+        const b = await getKingBoundsByUf({ uf: selectedLateUf });
         const nb = normalizeBoundsResponse(b);
         const maxYmd = nb.maxYmd || "";
         if (!maxYmd) return;
