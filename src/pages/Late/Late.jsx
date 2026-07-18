@@ -279,6 +279,21 @@ function normalizeBoundsResponse(b) {
   return { minYmd, maxYmd, source: safeStr(b?.source || "") };
 }
 
+const LATE_LOTTERY_OPTIONS = [
+  {
+    id: "PT_RIO",
+    label: "PT Rio",
+    lotteries: ["PT_RIO"],
+    uf: "RJ",
+  },
+  {
+    id: "FEDERAL",
+    label: "Nacional / Federal",
+    lotteries: ["FEDERAL", "NACIONAL"],
+    uf: "FEDERAL",
+  },
+];
+
 export default function Late() {
   const UF_CODE = "RJ";
   const LOTTERY_DISPLAY = "PT_RIO";
@@ -298,6 +313,8 @@ export default function Late() {
 
   // UI
   const [lotteryOptId, setLotteryOptId] = useState("ALL");
+
+  const [selectedLotteryId, setSelectedLotteryId] = useState("PT_RIO");
   const [kind, setKind] = useState("grupo");
   const [prizeMode, setPrizeMode] = useState("1");
   const [dateYmd, setDateYmd] = useState(todayYMDLocal());
@@ -335,6 +352,35 @@ export default function Late() {
   }, [lotteryOptId, LOTTERY_OPTIONS]);
 
   // ✅ bucket "09h" etc (preferível pra bater na base)
+  const selectedLateLottery = useMemo(
+
+    () =>
+
+      LATE_LOTTERY_OPTIONS.find(
+
+        (option) => option.id === selectedLotteryId
+
+      ) || LATE_LOTTERY_OPTIONS[0],
+
+    [selectedLotteryId]
+
+  );
+
+
+  const selectedLateLotteries = useMemo(
+
+    () => selectedLateLottery?.lotteries || ["PT_RIO"],
+
+    [selectedLateLottery]
+
+  );
+
+
+  const selectedLateUf =
+
+    selectedLateLottery?.uf || "RJ";
+
+
   const selectedCloseHourBucket = useMemo(() => {
     const raw = selectedLottery?.closeHour;
     if (!raw) return null;
@@ -458,7 +504,8 @@ export default function Late() {
     const lists = [];
     for (const pos of prizePositions) {
       const list = await getKingLateByRange({
-        uf: UF_CODE,
+        uf: selectedLateUf,
+        lotteries: selectedLateLotteries,
         dateFrom: minYmd,
         dateTo: safeTarget,
         baseDate: safeTarget,
@@ -549,7 +596,14 @@ export default function Late() {
         if (!abortedRef.current && !silent) setLoading(false);
       }
     },
-    [dateYmd, kind, prizePositions, selectedCloseHourBucket] // eslint-disable-line react-hooks/exhaustive-deps
+    [
+      dateYmd,
+      kind,
+      prizePositions,
+      selectedCloseHourBucket,
+      selectedLateUf,
+      selectedLateLotteries,
+    ] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   // primeiro load
@@ -587,7 +641,13 @@ export default function Late() {
     if (!boundsReady) return;
     refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [boundsReady, dateYmd, prizeMode, lotteryOptId]);
+  }, [
+    boundsReady,
+    dateYmd,
+    prizeMode,
+    lotteryOptId,
+    selectedLotteryId,
+  ]);
 
   // polling: atualiza quando entrar sorteio novo
   useEffect(() => {
@@ -824,6 +884,67 @@ export default function Late() {
         </div>
 
         <div className="ppLateControls">
+
+
+          <div className="ppCtl">
+
+
+            <label htmlFor="lateLottery">Loteria</label>
+
+
+
+            <select
+
+
+              id="lateLottery"
+
+
+              value={selectedLotteryId}
+
+
+              onChange={(event) =>
+
+
+                setSelectedLotteryId(event.target.value)
+
+
+              }
+
+
+              disabled={loading}
+
+
+            >
+
+
+              {LATE_LOTTERY_OPTIONS.map((option) => (
+
+
+                <option
+
+
+                  key={option.id}
+
+
+                  value={option.id}
+
+
+                >
+
+
+                  {option.label}
+
+
+                </option>
+
+
+              ))}
+
+
+            </select>
+
+
+          </div>
           <div className="ppCtl">
             <label>Loterias</label>
             <select value={lotteryOptId} onChange={(e) => setLotteryOptId(String(e.target.value || "ALL"))}>
