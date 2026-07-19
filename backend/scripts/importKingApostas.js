@@ -224,11 +224,20 @@ const RJ_LOTTERY_KEY = "PT_RIO";
 const FEDERAL_STATE_CODE = "BR";
 const FEDERAL_LOTTERY_KEY = "FEDERAL";
 
+const LOOK_STATE_CODE = "GO";
+const LOOK_LOTTERY_KEY = "LOOK";
+
+const NACIONAL_STATE_CODE = "BR";
+const NACIONAL_LOTTERY_KEY = "NACIONAL";
+
 function resolveUfFromLotteryKey(lotteryKey) {
   const lk = String(lotteryKey || "").trim().toUpperCase();
   if (!lk) return null;
   if (lk === RJ_LOTTERY_KEY) return RJ_STATE_CODE;
   if (lk === FEDERAL_LOTTERY_KEY) return FEDERAL_STATE_CODE;
+  if (lk === LOOK_LOTTERY_KEY) return LOOK_STATE_CODE;
+  if (lk === NACIONAL_LOTTERY_KEY) return NACIONAL_STATE_CODE;
+
   // se for uma UF padrão de 2 letras (SP, MG, DF etc.), preserva
   if (/^[A-Z]{2}$/.test(lk)) return lk;
 
@@ -457,6 +466,8 @@ function pickLotteryId(draw) {
  * ✅ Agora aceita override via ENV:
  * - KING_LOTTERIES_PT_RIO="uuid1,uuid2,..."
  * - KING_LOTTERIES_FEDERAL="uuid1,uuid2,..."
+ * - KING_LOTTERIES_LOOK="uuid1,uuid2,..."
+ * - KING_LOTTERIES_NACIONAL="uuid1,uuid2,..."
  */
 const LOTTERIES_BY_KEY = {
   PT_RIO: [
@@ -468,6 +479,26 @@ const LOTTERIES_BY_KEY = {
     "d5123f7e-629d-43e9-a8fb-1385ff1cba45",
   ],
   FEDERAL: [],
+    LOOK: [
+    "64d49fc1-9230-4d6a-92e5-5f2f70e5d352",
+    "aaede2c3-8305-460a-a580-bb7c26ecd0b6",
+    "fe478ce4-0387-4985-b35a-4656ecc40382",
+    "961f5fb2-0540-41a6-9542-69e4fef7e68d",
+    "502d50e3-4092-4730-bb81-a80462044256",
+    "60c70d87-e86f-4501-8bc2-c0e71aa20e1a",
+    "09593bd0-4a14-4372-a550-e34bfd463bdd",
+    "42881b70-6505-427d-8433-b8568c1220ac",
+  ],
+    NACIONAL: [
+    "6c2b52ec-d613-4383-9c07-ff5ac7e04611",
+    "76a3feee-faa6-4b6c-aae5-656fd6af7b6b",
+    "4dda728b-bbd9-43eb-a17b-acf968b1eca0",
+    "8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4",
+    "3bafbe99-632b-4445-9b73-12e78ee45283",
+    "87db8fb6-8718-49c3-b739-96eec085e09d",
+    "1eebc22a-890e-4598-86b5-6fda7e04ca4b",
+    "2a424135-9b6a-4415-8a57-15e0d3abd736",
+  ],
 };
 
 (function applyLotteryOverridesFromEnv() {
@@ -490,15 +521,41 @@ const LOTTERIES_BY_KEY = {
       if (arrF.length) LOTTERIES_BY_KEY.FEDERAL = arrF;
     }
 
+    const rawLook = String(process.env.KING_LOTTERIES_LOOK || "").trim();
+    if (rawLook) {
+      const arrLook = rawLook
+        .split(",")
+        .map((x) => String(x || "").trim())
+        .filter(Boolean);
+      if (arrLook.length) LOTTERIES_BY_KEY.LOOK = arrLook;
+    }
+
+    const rawNacional = String(
+      process.env.KING_LOTTERIES_NACIONAL || ""
+    ).trim();
+    if (rawNacional) {
+      const arrNacional = rawNacional
+        .split(",")
+        .map((x) => String(x || "").trim())
+        .filter(Boolean);
+      if (arrNacional.length) LOTTERIES_BY_KEY.NACIONAL = arrNacional;
+    }
+
     // debug leve (único, no lugar certo)
     if (KING_OVERRIDE_DEBUG) {
-      const nFed = Array.isArray(LOTTERIES_BY_KEY.FEDERAL)
-        ? LOTTERIES_BY_KEY.FEDERAL.length
-        : 0;
-      const nRio = Array.isArray(LOTTERIES_BY_KEY.PT_RIO)
-        ? LOTTERIES_BY_KEY.PT_RIO.length
-        : 0;
-      console.log(`[OVERRIDE] PT_RIO lotteries=${nRio} | FEDERAL lotteries=${nFed}`);
+      const counts = Object.fromEntries(
+        Object.entries(LOTTERIES_BY_KEY).map(([key, value]) => [
+          key,
+          Array.isArray(value) ? value.length : 0,
+        ])
+      );
+
+      console.log(
+        `[OVERRIDE] PT_RIO lotteries=${counts.PT_RIO} | ` +
+          `FEDERAL lotteries=${counts.FEDERAL} | ` +
+          `LOOK lotteries=${counts.LOOK} | ` +
+          `NACIONAL lotteries=${counts.NACIONAL}`
+      );
     }
   } catch {
     // silencioso
@@ -511,11 +568,12 @@ function buildResultsUrl({ date, lotteryKey, lotteryId = null }) {
   const lotteries = LOTTERIES_BY_KEY[lk];
 
   if (!lotteries?.length) {
-    if (lk === "FEDERAL") {
+    if (Object.prototype.hasOwnProperty.call(LOTTERIES_BY_KEY, lk)) {
       throw new Error(
-        `FEDERAL sem lotteryIds. Defina KING_LOTTERIES_FEDERAL="uuid1,uuid2,..." (ex.: o UUID do draw FEDERAL 20HS).`
+        `${lk} sem lotteryIds. Defina KING_LOTTERIES_${lk}="uuid1,uuid2,...".`
       );
     }
+
     throw new Error(`lotteryKey inválida: ${lk}`);
   }
 
@@ -785,11 +843,12 @@ async function fetchKingResults({ date, lotteryKey }) {
   const lk = String(lotteryKey || "").trim().toUpperCase();
   const lotteries = LOTTERIES_BY_KEY[lk];
   if (!lotteries?.length) {
-    if (lk === "FEDERAL") {
+    if (Object.prototype.hasOwnProperty.call(LOTTERIES_BY_KEY, lk)) {
       throw new Error(
-        `FEDERAL sem lotteryIds. Defina KING_LOTTERIES_FEDERAL="uuid1,uuid2,..." para habilitar fetch.`
+        `${lk} sem lotteryIds. Defina KING_LOTTERIES_${lk}="uuid1,uuid2,..." para habilitar o fetch.`
       );
     }
+
     throw new Error(`lotteryKey inválida: ${lk}`);
   }
 
@@ -1762,14 +1821,14 @@ async function main() {
 
   if (!date || !isISODate(date)) {
     throw new Error(
-      "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL] [HH:MM]"
+      "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL|LOOK|NACIONAL] [HH:MM]"
     );
   }
 
   const lk = String(lotteryKey || "").trim().toUpperCase();
   if (!lk || !LOTTERIES_BY_KEY[lk]) {
     throw new Error(
-      "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL] [HH:MM]"
+      "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL|LOOK|NACIONAL] [HH:MM]"
     );
   }
 
@@ -1785,7 +1844,7 @@ async function main() {
   const norm = normalizeRequestedCloseHour(closeHour, lk);
   if (norm.note === "invalid") {
     throw new Error(
-      "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL] [HH:MM]"
+      "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL|LOOK|NACIONAL] [HH:MM]"
     );
   }
   const normalizedClose = norm.slot || null;
