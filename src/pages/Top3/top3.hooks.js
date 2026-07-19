@@ -510,32 +510,25 @@ export function useTop3Controller() {
         FEDERAL_SCHEDULE,
       });
 
-      let shouldSkipPtRio18 = false;
+      const shouldSkipPtRio18 =
+        (lKey === "PT_RIO" || lKey === "RJ") &&
+        isFederalDrawDay(effectiveYmd) &&
+        String(effectiveYmd || "").trim() >= "2025-11-03";
 
-      if ((lKey === "PT_RIO" || lKey === "RJ") && isFederalDrawDay(effectiveYmd)) {
-        let federalToday = [];
+      if (shouldSkipPtRio18) {
+        todaySchedule = Array.from(
+          new Set([
+            ...(Array.isArray(todaySchedule) ? todaySchedule : [])
+              .map(toHourBucket)
+              .filter((h) => h && h !== "18:00"),
+            "19:00",
+          ])
+        ).sort((a, b) => {
+          const [ah, am] = String(a).split(":").map(Number);
+          const [bh, bm] = String(b).split(":").map(Number);
 
-        try {
-          federalToday =
-            (await getKingResultsByDate({
-              uf: "FEDERAL",
-              date: effectiveYmd,
-              readPolicy: "server",
-            })) || [];
-        } catch {
-          federalToday = [];
-        }
-
-        const federal20Exists = hasDrawAtHour(federalToday, "20:00");
-        const ptRio18Exists = hasDrawAtHour(today, "18:00");
-
-        shouldSkipPtRio18 = federal20Exists && !ptRio18Exists;
-
-        if (shouldSkipPtRio18) {
-          todaySchedule = (Array.isArray(todaySchedule) ? todaySchedule : [])
-            .map(toHourBucket)
-            .filter((h) => h && h !== "18:00");
-        }
+          return ah * 60 + am - (bh * 60 + bm);
+        });
       }
 
       setSkipPtRio18ByFederal(Boolean(shouldSkipPtRio18));
