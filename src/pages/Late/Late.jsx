@@ -896,7 +896,11 @@ export default function Late() {
           <div className="ppLateSubtitle">
             Leitura de atraso por <b>Grupo</b> · Prêmio{" "}
             <b>{prizeMode === "1-5" ? "1º ao 5º" : `${prizeMode}º`}</b> · Data{" "}
-            <b>{titleDateBR}</b> · <b>{selectedLottery?.label}</b> · Loteria{" "}
+            <b>{titleDateBR}</b> · <b>{
+LATE_LOTTERY_OPTIONS.find(
+  option => option.id === selectedLotteryId
+)?.label || selectedLotteryId
+}</b> · Loteria{" "}
             <b>{LOTTERY_DISPLAY}</b>
             {meta?.effectiveTargetYmd && meta.effectiveTargetYmd !== dateYmd ? (
               <>
