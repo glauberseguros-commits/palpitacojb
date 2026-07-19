@@ -224,8 +224,31 @@ export function getPtRioScheduleForYmd(
   PT_RIO_SCHEDULE_WED_SAT
 ) {
   const dow = getDowKey(ymd);
+
   if (dow === 0) return PT_RIO_SCHEDULE_SUNDAY;
-  if (dow === 3 || dow === 6) return PT_RIO_SCHEDULE_WED_SAT;
+
+  if (dow === 3 || dow === 6) {
+    const baseSchedule = Array.isArray(PT_RIO_SCHEDULE_WED_SAT)
+      ? PT_RIO_SCHEDULE_WED_SAT
+      : [];
+
+    // A Federal mudou de 19h para 20h em 03/11/2025.
+    // Desde então, nas quartas e sábados, o PT Rio das 18h
+    // é substituído pelo sorteio das 19h.
+    if (String(ymd || "").trim() >= "2025-11-03") {
+      return Array.from(
+        new Set([
+          ...baseSchedule
+            .map(toHourBucket)
+            .filter((hour) => hour && hour !== "18:00"),
+          "19:00",
+        ])
+      ).sort((a, b) => hourToInt(a) - hourToInt(b));
+    }
+
+    return baseSchedule;
+  }
+
   return PT_RIO_SCHEDULE_NORMAL;
 }
 
