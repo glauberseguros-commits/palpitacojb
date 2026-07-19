@@ -5,11 +5,14 @@ import React, { useMemo, useCallback } from "react";
  * FiltersBar (Premium)
  *
  * ✅ Loteria:
- * - filters.loteria: "PT_RIO" | "FEDERAL" (default: "PT_RIO")
+ * - filters.loteria: "PT_RIO" | "FEDERAL" | "LOOK" | "NACIONAL"
+ *   (default: "PT_RIO")
  *
- * ✅ Horário (domínio fixo por loteria):
+ * ✅ Horário (domínio próprio por loteria):
  * - PT_RIO: Todos + 09h/11h/14h/16h/18h/21h
  * - FEDERAL: Todos + 19h/20h
+ * - LOOK: Todos + 07h/09h/11h/14h/16h/18h/21h/23h
+ * - NACIONAL: Todos + 02h/08h/10h/12h/15h/17h/21h/23h
  *
  * ✅ Segurança:
  * - Ao trocar loteria, reseta filtros sensíveis:
@@ -209,12 +212,12 @@ export default function FiltersBar({
     () => normalizeLoteriaInput(filters?.loteria),
     [filters?.loteria]
   );
-  const isFederal = loteria === "FEDERAL";
-
   const defaultOptions = useMemo(() => {
     const loteriasDefault = [
       { label: "RJ", value: "PT_RIO" },
       { label: "FEDERAL", value: "FEDERAL" },
+      { label: "LOOK", value: "LOOK" },
+      { label: "NACIONAL", value: "NACIONAL" },
     ];
 
     const mesesDefault = [
@@ -255,11 +258,37 @@ export default function FiltersBar({
       { label: "21h", value: "21h" },
     ];
 
-    // ✅ FEDERAL (Todos/19h/20h)
+    // ✅ FEDERAL
     const horariosFED = [
       { label: "Todos", value: "Todos" },
       { label: "19h", value: "19h" },
       { label: "20h", value: "20h" },
+    ];
+
+    // ✅ LOOK
+    const horariosLOOK = [
+      { label: "Todos", value: "Todos" },
+      { label: "07h", value: "07h" },
+      { label: "09h", value: "09h" },
+      { label: "11h", value: "11h" },
+      { label: "14h", value: "14h" },
+      { label: "16h", value: "16h" },
+      { label: "18h", value: "18h" },
+      { label: "21h", value: "21h" },
+      { label: "23h", value: "23h" },
+    ];
+
+    // ✅ NACIONAL
+    const horariosNACIONAL = [
+      { label: "Todos", value: "Todos" },
+      { label: "02h", value: "02h" },
+      { label: "08h", value: "08h" },
+      { label: "10h", value: "10h" },
+      { label: "12h", value: "12h" },
+      { label: "15h", value: "15h" },
+      { label: "17h", value: "17h" },
+      { label: "21h", value: "21h" },
+      { label: "23h", value: "23h" },
     ];
 
     const posicoesDefaultFull = [
@@ -342,8 +371,15 @@ export default function FiltersBar({
         ? normalizeLabelValueList(options.diasSemana, diasSemanaDefault)
         : diasSemanaDefault;
 
-    // ✅ horário depende da loteria (PT_RIO x FEDERAL)
-    const horarios = isFederal ? horariosFED : horariosRJ;
+    // ✅ Cada loteria mantém seu próprio domínio de horários.
+    const horariosPorLoteria = {
+      PT_RIO: horariosRJ,
+      FEDERAL: horariosFED,
+      LOOK: horariosLOOK,
+      NACIONAL: horariosNACIONAL,
+    };
+
+    const horarios = horariosPorLoteria[loteria] || horariosRJ;
 
     const posicoesFromParent =
       posicoesFromOptionsMode === "respect" &&
@@ -381,7 +417,7 @@ export default function FiltersBar({
       animais,
       posicoes,
     };
-  }, [options, posicaoMode, posicoesFromOptionsMode, isFederal]);
+  }, [options, posicaoMode, posicoesFromOptionsMode, loteria]);
 
   const ui = {
     bar: {
