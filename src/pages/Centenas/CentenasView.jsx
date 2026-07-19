@@ -44,6 +44,8 @@ import {
 const LOTTERY_KEYS = {
   PT_RIO: "PT_RIO",
   FEDERAL: "FEDERAL",
+  LOOK: "LOOK",
+  NACIONAL: "NACIONAL",
 };
 
 const FILTERS_LS_KEY = "pp_centenas_filters_v2";
@@ -482,6 +484,8 @@ export default function CentenasView() {
         lotteryKeys: [
           LOTTERY_KEYS.PT_RIO,
           LOTTERY_KEYS.FEDERAL,
+          LOTTERY_KEYS.LOOK,
+          LOTTERY_KEYS.NACIONAL,
         ],
       },
       {
@@ -496,6 +500,20 @@ export default function CentenasView() {
         label: "Federal",
         lotteryKeys: [
           LOTTERY_KEYS.FEDERAL,
+        ],
+      },
+      {
+        id: LOTTERY_KEYS.LOOK,
+        label: "LOOK",
+        lotteryKeys: [
+          LOTTERY_KEYS.LOOK,
+        ],
+      },
+      {
+        id: LOTTERY_KEYS.NACIONAL,
+        label: "Nacional",
+        lotteryKeys: [
+          LOTTERY_KEYS.NACIONAL,
         ],
       },
     ],
@@ -700,6 +718,41 @@ export default function CentenasView() {
       )
     ) {
       base.push(...federalHours);
+    }
+
+
+    if (
+      selectedLotteryKeys.includes(
+        LOTTERY_KEYS.LOOK
+      )
+    ) {
+      base.push(
+        "07:00",
+        "09:00",
+        "11:00",
+        "14:00",
+        "16:00",
+        "18:00",
+        "21:00",
+        "23:00"
+      );
+    }
+
+    if (
+      selectedLotteryKeys.includes(
+        LOTTERY_KEYS.NACIONAL
+      )
+    ) {
+      base.push(
+        "02:00",
+        "08:00",
+        "10:00",
+        "12:00",
+        "15:00",
+        "17:00",
+        "21:00",
+        "23:00"
+      );
     }
 
     base = [...new Set(base)].sort();

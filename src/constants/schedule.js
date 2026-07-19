@@ -16,6 +16,13 @@ function normalizeLotteryKey(v) {
   if (s === "BR") return "FEDERAL"; // compat defensiva
   if (s === "FEDERAL") return "FEDERAL";
 
+  if (s === "LOOK") return "LOOK";
+  if (s === "GO") return "LOOK";
+
+  if (s === "NACIONAL") return "NACIONAL";
+  if (s === "LT_NACIONAL") return "NACIONAL";
+  if (s === "LT-NACIONAL") return "NACIONAL";
+
   return "PT_RIO"; // fallback seguro
 }
 
@@ -42,6 +49,26 @@ export const SCHEDULES = Object.freeze({
   ]),
   FEDERAL: Object.freeze([
     "20:00",
+  ]),
+  LOOK: Object.freeze([
+    "07:00",
+    "09:00",
+    "11:00",
+    "14:00",
+    "16:00",
+    "18:00",
+    "21:00",
+    "23:00",
+  ]),
+  NACIONAL: Object.freeze([
+    "02:00",
+    "08:00",
+    "10:00",
+    "12:00",
+    "15:00",
+    "17:00",
+    "21:00",
+    "23:00",
   ]),
 });
 

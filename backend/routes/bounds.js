@@ -14,7 +14,13 @@ function normalizeLotteryKey(v) {
 
   if (["RJ", "RIO", "PT-RIO", "PT_RIO"].includes(s)) return "PT_RIO";
 
-  if (["FED", "FEDERAL", "BR", "NACIONAL"].includes(s)) return "FEDERAL";
+  if (["FED", "FEDERAL", "BR"].includes(s)) return "FEDERAL";
+
+  if (["LOOK", "GO"].includes(s)) return "LOOK";
+
+  if (["NACIONAL", "LT_NACIONAL", "LT-NACIONAL"].includes(s)) {
+    return "NACIONAL";
+  }
 
   return null;
 }

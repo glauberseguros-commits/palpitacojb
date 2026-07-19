@@ -192,6 +192,30 @@ function normalizeSingleDateWithBounds(dateIn, minYmd, maxYmd) {
 
 const SCOPE_RJ = "RJ";
 const SCOPE_FEDERAL = "FEDERAL";
+const SCOPE_LOOK = "LOOK";
+const SCOPE_NACIONAL = "NACIONAL";
+
+const LOOK_EXPECTED_HOURS_DESC = [
+  "23:00",
+  "21:00",
+  "18:00",
+  "16:00",
+  "14:00",
+  "11:00",
+  "09:00",
+  "07:00",
+];
+
+const NACIONAL_EXPECTED_HOURS_DESC = [
+  "23:00",
+  "21:00",
+  "17:00",
+  "15:00",
+  "12:00",
+  "10:00",
+  "08:00",
+  "02:00",
+];
 
 const FEDERAL_INPUT_ALIASES = new Set([
   "FEDERAL",
@@ -221,15 +245,40 @@ function isFederalInput(scope) {
 function normalizeScopeInput(input) {
   const s = safeStr(input).toUpperCase();
   if (!s) return SCOPE_RJ;
-  if (s === SCOPE_RJ) return SCOPE_RJ;
-  if (isFederalInput(s)) return SCOPE_FEDERAL;
+
+  const compact = s.replace(/[\s_-]+/g, "");
+
+  if (s === SCOPE_RJ || compact === "PTRIO" || compact === "RIO") {
+    return SCOPE_RJ;
+  }
+
+  if (isFederalInput(s)) {
+    return SCOPE_FEDERAL;
+  }
+
+  if (s === SCOPE_LOOK || compact === "LOOK" || compact === "GO") {
+    return SCOPE_LOOK;
+  }
+
+  if (
+    s === SCOPE_NACIONAL ||
+    compact === "NACIONAL" ||
+    compact === "LTNACIONAL"
+  ) {
+    return SCOPE_NACIONAL;
+  }
+
   return s;
 }
 
 function scopeDisplayName(scope) {
-  const up = safeStr(scope).toUpperCase();
-  if (up === SCOPE_RJ) return "RIO";
-  if (isFederalInput(up)) return "FEDERAL";
+  const up = normalizeScopeInput(scope);
+
+  if (up === SCOPE_RJ) return "RIO DE JANEIRO";
+  if (up === SCOPE_FEDERAL) return "FEDERAL";
+  if (up === SCOPE_LOOK) return "LOOK";
+  if (up === SCOPE_NACIONAL) return "NACIONAL";
+
   return up;
 }
 
@@ -570,8 +619,15 @@ function buildExpectedDrawsForScope(scopeKey, orderedDraws, ymd) {
     });
   }
 
-  const expectedHours =
-    scopeKey === SCOPE_RJ ? getExpectedRjHoursDesc(ymd) : [];
+  let expectedHours = [];
+
+  if (scopeKey === SCOPE_RJ) {
+    expectedHours = getExpectedRjHoursDesc(ymd);
+  } else if (scopeKey === SCOPE_LOOK) {
+    expectedHours = LOOK_EXPECTED_HOURS_DESC;
+  } else if (scopeKey === SCOPE_NACIONAL) {
+    expectedHours = NACIONAL_EXPECTED_HOURS_DESC;
+  }
 
   const visibleExpectedHours = expectedHours.filter((hour) =>
     shouldShowExpectedHour(ymd, hour)
@@ -1499,14 +1555,14 @@ export default function Results() {
                   stopEvt(e);
                   setScopeUi(SCOPE_RJ);
                 }}
-                title="Resultados do Rio"
+                title="Resultados do Rio de Janeiro"
               >
                 RJ
               </button>
 
               <button
                 type="button"
-                className={scopePillClass(isFederal)}
+                className={scopePillClass(scopeKey === SCOPE_FEDERAL)}
                 onClick={(e) => {
                   stopEvt(e);
                   setScopeUi(SCOPE_FEDERAL);
@@ -1514,6 +1570,30 @@ export default function Results() {
                 title="Resultados da Federal"
               >
                 FEDERAL
+              </button>
+
+              <button
+                type="button"
+                className={scopePillClass(scopeKey === SCOPE_LOOK)}
+                onClick={(e) => {
+                  stopEvt(e);
+                  setScopeUi(SCOPE_LOOK);
+                }}
+                title="Resultados da LOOK"
+              >
+                LOOK
+              </button>
+
+              <button
+                type="button"
+                className={scopePillClass(scopeKey === SCOPE_NACIONAL)}
+                onClick={(e) => {
+                  stopEvt(e);
+                  setScopeUi(SCOPE_NACIONAL);
+                }}
+                title="Resultados da Nacional"
+              >
+                NACIONAL
               </button>
             </div>
 
