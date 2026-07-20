@@ -120,7 +120,9 @@ function normalizeHourLike(value) {
   if (mhx) return `${pad2(mhx[1])}:00`;
 
   const mISO = s.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
-  if (mISO) return `${pad2(mISO[1])}:${pad2(mISO[2])}`;
+  if (mISO) {
+    return `${pad2(mISO[1])}:00`;
+  }
 
   const m2 = s.match(/^(\d{1,2})$/);
   if (m2) return `${pad2(m2[1])}:00`;
