@@ -597,14 +597,56 @@ function shouldShowExpectedHour(ymd, hour) {
   return hNum <= currentHourNumLocal();
 }
 
+
+function normalizeNacionalDisplayHour(draw) {
+  const hour = normalizeHourLike(
+    draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+  );
+
+  const lotteryName = safeStr(draw?.lottery_name).toUpperCase();
+
+  const m = lotteryName.match(/(\d{2})\s*HS?/);
+
+  if (m) {
+    return `${m[1]}:00`;
+  }
+
+  switch (hour) {
+    case "22:49": return "23:00";
+    case "20:49": return "21:00";
+    case "16:49": return "17:00";
+    case "14:49": return "15:00";
+    case "11:49": return "12:00";
+    case "09:49": return "10:00";
+    case "07:49": return "08:00";
+    case "01:49": return "02:00";
+
+    case "22:50": return "23:00";
+    case "19:50": return "21:00";
+    case "16:50": return "17:00";
+    case "14:50": return "15:00";
+    case "11:50": return "12:00";
+    case "09:50": return "10:00";
+    case "07:50": return "08:00";
+    case "01:50": return "02:00";
+
+    default:
+      return hour;
+  }
+}
+
+
 function buildExpectedDrawsForScope(scopeKey, orderedDraws, ymd) {
   const list = Array.isArray(orderedDraws) ? orderedDraws : [];
   const byHour = new Map();
 
   for (const d of list) {
-    const h = normalizeHourLike(
-      d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
-    );
+    const h =
+      scopeKey === SCOPE_NACIONAL
+        ? normalizeNacionalDisplayHour(d)
+        : normalizeHourLike(
+            d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+          );
     if (!h) continue;
     if (!byHour.has(h)) byHour.set(h, d);
   }
