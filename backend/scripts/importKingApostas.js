@@ -402,6 +402,42 @@ function normalizeCloseHourForLottery(value, lotteryKey) {
   return { raw: raw0, slot: raw0 };
 }
 
+
+/**
+ * NACIONAL:
+ * usa lottery_name para obter o horário oficial do sorteio.
+ */
+function normalizeDrawCloseHour(draw, lotteryKey) {
+  const base = normalizeCloseHourForLottery(
+    draw?.close_hour || "",
+    lotteryKey
+  );
+
+  const lk = String(lotteryKey || "").trim().toUpperCase();
+
+  if (lk !== "NACIONAL") {
+    return base;
+  }
+
+  const lotteryName = String(
+    draw?.lottery_name ||
+    draw?.name ||
+    ""
+  );
+
+  const m = lotteryName.match(/(\d{1,2})\s*HS/i);
+
+  if (!m) {
+    return base;
+  }
+
+  return {
+    raw: base.raw,
+    slot: `${String(m[1]).padStart(2,"0")}:00`
+  };
+}
+
+
 /**
  * ✅ Normaliza o parâmetro closeHour (do CLI/scheduler) e evita log enganoso.
  * - Para FEDERAL: qualquer coisa vira slot=20:00, mas mantemos "requested" para log.
@@ -792,7 +828,7 @@ function mergeAndDedupDraws(arrays, lotteryKey) {
     const list = Array.isArray(a) ? a : [];
     for (const d of list) {
       const date = String(d?.date || "").trim();
-      const { slot } = normalizeCloseHourForLottery(d?.close_hour || "", lotteryKey);
+      const { slot } = normalizeDrawCloseHour(d, lotteryKey);
 
       const lid =
         pickLotteryId(d) ||
@@ -950,8 +986,8 @@ function extractPrizes(draw) {
 function buildDrawRef({ draw, lotteryKey }) {
   const date = String(draw?.date || "").trim();
 
-  const { raw: closeRaw, slot: closeSlot } = normalizeCloseHourForLottery(
-    draw?.close_hour || "",
+  const { raw: closeRaw, slot: closeSlot } = normalizeDrawCloseHour(
+    draw,
     lotteryKey
   );
 
@@ -1116,8 +1152,8 @@ async function importFromPayload({
     totalDrawsFromApi++;
 
     const date = String(draw?.date || "").trim();
-    const { raw: closeRaw, slot: closeSlot } = normalizeCloseHourForLottery(
-      draw?.close_hour || "",
+    const { raw: closeRaw, slot: closeSlot } = normalizeDrawCloseHour(
+      draw,
       lk
     );
 
