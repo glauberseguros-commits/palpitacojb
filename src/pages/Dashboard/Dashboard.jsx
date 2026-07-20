@@ -518,7 +518,7 @@ function getDefaultFloorByUf(ufKey) {
   }
 
   if (u === "FEDERAL" || u === "FED" || u === "BR" || u === "BRASIL") {
-    return "2022-02-08";
+    return "2022-06-08";
   }
 
   return "2022-01-01";
@@ -1529,7 +1529,7 @@ const rankingDataForCharts = useMemo(() => {
       ];
     }
 
-    const base = Array.isArray(drawsForUi) ? drawsForUi : [];
+    const base = Array.isArray(drawsForView) ? drawsForView : [];
     if (!base.length) {
       return [
         { key: "dias", title: "Qtde Dias de sorteios", value: 0, icon: "calendar" },
@@ -1546,7 +1546,7 @@ const rankingDataForCharts = useMemo(() => {
       { key: "dias", title: "Qtde Dias de sorteios", value: dias, icon: "calendar" },
       { key: "sorteios", title: "Qtde de sorteios", value: sorteios, icon: "ticket" },
     ];
-  }, [dataReady, drawsForUi, uf]);
+  }, [dataReady, drawsForView, uf]);
 
   const onSelectGrupo = useCallback(
     (grupoNum) => {
