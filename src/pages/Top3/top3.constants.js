@@ -18,6 +18,8 @@ export const LOOKBACK_OPTIONS = [
 export const LOTTERY_OPTIONS = [
   { key: "PT_RIO", value: "PT_RIO", label: "RJ (PT_RIO)" },
   { key: "FEDERAL", value: "FEDERAL", label: "Federal" },
+  { key: "LOOK", value: "LOOK", label: "LOOK" },
+  { key: "NACIONAL", value: "NACIONAL", label: "Nacional" },
 ];
 
 // Grades
