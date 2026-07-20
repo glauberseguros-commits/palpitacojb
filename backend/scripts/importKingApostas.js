@@ -1,4 +1,4 @@
-﻿"use strict";
+"use strict";
 
 /**
  * importKingApostas.js
@@ -863,10 +863,18 @@ function countPrizesInDraw(draw) {
 
 function summarizeCloseHours(draws, lotteryKey) {
   const set = new Set();
+
   for (const d of draws) {
-    const { slot } = normalizeCloseHourForLottery(d?.close_hour || "", lotteryKey);
-    if (slot) set.add(slot);
+    const { slot } = normalizeDrawCloseHour(
+      d,
+      lotteryKey
+    );
+
+    if (slot) {
+      set.add(slot);
+    }
   }
+
   return Array.from(set).sort();
 }
 
