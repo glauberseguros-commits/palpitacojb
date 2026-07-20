@@ -390,6 +390,15 @@ function normalizeCloseHourForLottery(value, lotteryKey) {
     return { raw: raw0, slot: "20:00" };
   }
 
+  // LOOK:
+  // a fonte pode publicar minutos variáveis, por exemplo 07:09, 09:09 e 11:12.
+  // Para o sistema, todos pertencem ao slot operacional da hora cheia.
+  // Preservamos o horário bruto em close_hour_raw e gravamos HH:00 em close_hour.
+  if (lk === "LOOK") {
+    const hh = raw0.slice(0, 2);
+    return { raw: raw0, slot: `${hh}:00` };
+  }
+
   if (lk === "PT_RIO") {
     const hh = raw0.slice(0, 2);
     const mm = raw0.slice(3, 5);
