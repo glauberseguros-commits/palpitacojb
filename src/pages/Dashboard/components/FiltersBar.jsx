@@ -279,16 +279,19 @@ export default function FiltersBar({
     ];
 
     // ✅ NACIONAL
+    // O label mantém o horário oficial exibido ao usuário.
+    // O value usa o bucket da hora real persistida no Firestore
+    // (ex.: 14:50 pertence ao bucket 14h, mas é exibido como 15h).
     const horariosNACIONAL = [
       { label: "Todos", value: "Todos" },
-      { label: "02h", value: "02h" },
-      { label: "08h", value: "08h" },
-      { label: "10h", value: "10h" },
-      { label: "12h", value: "12h" },
-      { label: "15h", value: "15h" },
-      { label: "17h", value: "17h" },
-      { label: "21h", value: "21h" },
-      { label: "23h", value: "23h" },
+      { label: "02h", value: "01h" },
+      { label: "08h", value: "07h" },
+      { label: "10h", value: "09h" },
+      { label: "12h", value: "11h" },
+      { label: "15h", value: "14h" },
+      { label: "17h", value: "16h" },
+      { label: "21h", value: "20h" },
+      { label: "23h", value: "22h" },
     ];
 
     const posicoesDefaultFull = [
