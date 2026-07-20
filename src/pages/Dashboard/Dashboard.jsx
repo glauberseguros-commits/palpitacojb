@@ -521,6 +521,14 @@ function getDefaultFloorByUf(ufKey) {
     return "2022-06-08";
   }
 
+  if (u === "LOOK") {
+    return "2022-06-07";
+  }
+
+  if (u === "NACIONAL") {
+    return "2022-06-07";
+  }
+
   return "2022-01-01";
 }
 
