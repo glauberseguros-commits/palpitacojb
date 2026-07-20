@@ -145,6 +145,28 @@ const SCHEDULES = {
     { hour: "19:00", windowStart: "18:50", releaseAt: "19:00", windowEnd: "19:20" }, // PROBE (SOFT)
     { hour: "20:00", windowStart: "19:50", releaseAt: "20:00", windowEnd: "20:20" }, // HARD
   ],
+
+  LOOK: [
+    { hour: "07:00", windowStart: "07:05", releaseAt: "07:29", windowEnd: "07:35" },
+    { hour: "09:00", windowStart: "09:05", releaseAt: "09:29", windowEnd: "09:35" },
+    { hour: "11:00", windowStart: "11:05", releaseAt: "11:29", windowEnd: "11:35" },
+    { hour: "14:00", windowStart: "14:05", releaseAt: "14:29", windowEnd: "14:35" },
+    { hour: "16:00", windowStart: "16:05", releaseAt: "16:29", windowEnd: "16:35" },
+    { hour: "18:00", windowStart: "18:05", releaseAt: "18:29", windowEnd: "18:35" },
+    { hour: "21:00", windowStart: "21:05", releaseAt: "21:05", windowEnd: "21:45" },
+    { hour: "23:00", windowStart: "23:05", releaseAt: "23:29", windowEnd: "23:35" },
+  ],
+
+  NACIONAL: [
+    { hour: "02:00", windowStart: "02:05", releaseAt: "02:29", windowEnd: "02:35" },
+    { hour: "08:00", windowStart: "08:05", releaseAt: "08:29", windowEnd: "08:35" },
+    { hour: "10:00", windowStart: "10:05", releaseAt: "10:29", windowEnd: "10:35" },
+    { hour: "12:00", windowStart: "12:05", releaseAt: "12:29", windowEnd: "12:35" },
+    { hour: "15:00", windowStart: "15:05", releaseAt: "15:29", windowEnd: "15:35" },
+    { hour: "17:00", windowStart: "17:05", releaseAt: "17:29", windowEnd: "17:35" },
+    { hour: "21:00", windowStart: "21:05", releaseAt: "21:05", windowEnd: "21:45" },
+    { hour: "23:00", windowStart: "23:05", releaseAt: "23:29", windowEnd: "23:35" },
+  ],
 };
 
 const SCHEDULE = Array.isArray(SCHEDULES[LOTTERY]) ? SCHEDULES[LOTTERY] : SCHEDULES.PT_RIO;

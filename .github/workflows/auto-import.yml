@@ -30,6 +30,44 @@ on:
     # BRT 20:00–20:10 => UTC 23:00–23:10
     - cron: "0-10 23 * * 3,6"
 
+    # =========================
+    # LOOK — tentativas a cada 5 minutos dentro das janelas
+    # BRT 07h => UTC 10h
+    - cron: "6-36/5 10 * * 0-6"
+    # BRT 09h => UTC 12h
+    - cron: "6-36/5 12 * * 0-6"
+    # BRT 11h => UTC 14h
+    - cron: "6-36/5 14 * * 0-6"
+    # BRT 14h => UTC 17h
+    - cron: "6-36/5 17 * * 0-6"
+    # BRT 16h => UTC 19h
+    - cron: "6-36/5 19 * * 0-6"
+    # BRT 18h => UTC 21h
+    - cron: "6-36/5 21 * * 0-6"
+    # BRT 21h => UTC 00h
+    - cron: "6-46/5 0 * * 0-6"
+    # BRT 23h => UTC 02h
+    - cron: "6-36/5 2 * * 0-6"
+
+    # =========================
+    # NACIONAL — tentativas a cada 5 minutos dentro das janelas
+    # BRT 02h => UTC 05h
+    - cron: "7-37/5 5 * * 0-6"
+    # BRT 08h => UTC 11h
+    - cron: "7-37/5 11 * * 0-6"
+    # BRT 10h => UTC 13h
+    - cron: "7-37/5 13 * * 0-6"
+    # BRT 12h => UTC 15h
+    - cron: "7-37/5 15 * * 0-6"
+    # BRT 15h => UTC 18h
+    - cron: "7-37/5 18 * * 0-6"
+    # BRT 17h => UTC 20h
+    - cron: "7-37/5 20 * * 0-6"
+    # BRT 21h => UTC 00h
+    - cron: "7-47/5 0 * * 0-6"
+    # BRT 23h => UTC 02h
+    - cron: "7-37/5 2 * * 0-6"
+
   workflow_dispatch:
     inputs:
       lottery:
@@ -39,6 +77,8 @@ on:
         options:
           - PT_RIO
           - FEDERAL
+          - LOOK
+          - NACIONAL
 
 # ✅ Evita sobreposição de runs (você dispara várias vezes por minuto)
 # - Mantém 1 execução por vez
@@ -68,12 +108,19 @@ jobs:
         working-directory: backend
 
     # Roda:
-    # - em schedule, exceto quando for o schedule específico do FEDERAL
+    # - em schedule, somente nas regras exclusivas do PT_RIO
     # - ou manual quando input=PT_RIO
     if: |
       (github.event_name == 'schedule' &&
-        github.event.schedule != '49-59 22 * * 3,6' &&
-        github.event.schedule != '0-10 23 * * 3,6'
+        (
+          github.event.schedule == '5-31 12 * * 0-6' ||
+          github.event.schedule == '5-31 14 * * 0-6' ||
+          github.event.schedule == '5-31 17 * * 0-6' ||
+          github.event.schedule == '5-31 19 * * 0-6' ||
+          github.event.schedule == '5-31 21 * * 1,2,4,5' ||
+          github.event.schedule == '35 21 * * 3,6' ||
+          github.event.schedule == '5-45 0 * * 0,2-6'
+        )
       )
       || (github.event_name == 'workflow_dispatch' && inputs.lottery == 'PT_RIO')
 
@@ -143,6 +190,100 @@ jobs:
           LOTTERY: FEDERAL
 
           # ✅ ALERTA REAL (auditoria)
+          FAIL_ON_CRITICAL: "1"
+          AUDIT_WARN_MIN: "20"
+          AUDIT_CRIT_MIN: "60"
+        run: node scripts/autoImportToday.js
+
+  # ==========================================================
+  # LOOK
+  # ==========================================================
+  run-import-look:
+    name: run-import (LOOK)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: backend
+
+    if: |
+      (github.event_name == 'schedule' &&
+        (
+          github.event.schedule == '6-36/5 10 * * 0-6' ||
+          github.event.schedule == '6-36/5 12 * * 0-6' ||
+          github.event.schedule == '6-36/5 14 * * 0-6' ||
+          github.event.schedule == '6-36/5 17 * * 0-6' ||
+          github.event.schedule == '6-36/5 19 * * 0-6' ||
+          github.event.schedule == '6-36/5 21 * * 0-6' ||
+          github.event.schedule == '6-46/5 0 * * 0-6' ||
+          github.event.schedule == '6-36/5 2 * * 0-6'
+        )
+      )
+      || (github.event_name == 'workflow_dispatch' && inputs.lottery == 'LOOK')
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar dependências (backend)
+        run: npm ci
+
+      - name: Rodar importação automática (LOOK)
+        env:
+          FIREBASE_ADMIN_SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          LOTTERY: LOOK
+          FAIL_ON_CRITICAL: "1"
+          AUDIT_WARN_MIN: "20"
+          AUDIT_CRIT_MIN: "60"
+        run: node scripts/autoImportToday.js
+
+  # ==========================================================
+  # NACIONAL
+  # ==========================================================
+  run-import-nacional:
+    name: run-import (NACIONAL)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: backend
+
+    if: |
+      (github.event_name == 'schedule' &&
+        (
+          github.event.schedule == '7-37/5 5 * * 0-6' ||
+          github.event.schedule == '7-37/5 11 * * 0-6' ||
+          github.event.schedule == '7-37/5 13 * * 0-6' ||
+          github.event.schedule == '7-37/5 15 * * 0-6' ||
+          github.event.schedule == '7-37/5 18 * * 0-6' ||
+          github.event.schedule == '7-37/5 20 * * 0-6' ||
+          github.event.schedule == '7-47/5 0 * * 0-6' ||
+          github.event.schedule == '7-37/5 2 * * 0-6'
+        )
+      )
+      || (github.event_name == 'workflow_dispatch' && inputs.lottery == 'NACIONAL')
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar dependências (backend)
+        run: npm ci
+
+      - name: Rodar importação automática (NACIONAL)
+        env:
+          FIREBASE_ADMIN_SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          LOTTERY: NACIONAL
           FAIL_ON_CRITICAL: "1"
           AUDIT_WARN_MIN: "20"
           AUDIT_CRIT_MIN: "60"
