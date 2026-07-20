@@ -75,6 +75,15 @@ function normalizeLotteryKey(v) {
 
   if (s === "RJ" || s === "RIO" || s === "PT-RIO" || s === "PT_RIO") return "PT_RIO";
   if (s === "FED" || s === "FEDERAL" || s === "BR") return "FEDERAL";
+  if (s === "LOOK" || s === "GO") return "LOOK";
+  if (
+    s === "NACIONAL" ||
+    s === "LT_NACIONAL" ||
+    s === "LT-NACIONAL" ||
+    s === "LT NACIONAL"
+  ) {
+    return "NACIONAL";
+  }
 
   return "";
 }
@@ -603,7 +612,7 @@ router.get("/results", async (req, res) => {
       ok: false,
       error:
         "Parâmetros conflitantes: quando 'lottery' (ou 'lotteryKey') é informado, 'uf' é ignorado. Remova 'uf' ou use apenas 'uf=RJ|BR' (legado).",
-      hint: "Use: ?date=YYYY-MM-DD&lottery=PT_RIO|FEDERAL  (ou)  ?date=YYYY-MM-DD&uf=RJ|BR",
+      hint: "Use: ?date=YYYY-MM-DD&lottery=PT_RIO|FEDERAL|LOOK|NACIONAL  (ou)  ?date=YYYY-MM-DD&uf=RJ|BR",
     });
   }
 
@@ -636,7 +645,7 @@ router.get("/results", async (req, res) => {
     if (!lottery) {
       return res.status(400).json({
         ok: false,
-        error: "lottery inválida: " + lotteryRaw + " (use lottery=PT_RIO|FEDERAL ou aliases RJ|BR)",
+        error: "lottery inválida: " + lotteryRaw + " (use lottery=PT_RIO|FEDERAL|LOOK|NACIONAL ou aliases RJ|BR)",
       });
     }
 
