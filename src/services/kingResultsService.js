@@ -582,6 +582,9 @@ function mapDrawDoc(doc) {
 
     lottery_code: lotteryCodeRaw ? String(lotteryCodeRaw).toUpperCase() : null,
 
+    lottery_name: d.lottery_name ?? d.lotteryName ?? null,
+    lottery_label: d.lottery_label ?? d.lotteryLabel ?? null,
+
     prizesCount: d.prizesCount,
     prizes: embeddedPrizes,
   };

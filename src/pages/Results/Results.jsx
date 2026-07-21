@@ -1827,7 +1827,14 @@ export default function Results() {
                     );
                     const id = safeStr(d?.drawId || d?.id || `idx_${idx}`);
                     const prizesRaw = Array.isArray(d?.prizes) ? d.prizes : [];
-                    const hs = hour ? `${hour.slice(0, 2)}HS` : "—";
+                    const displayHour =
+  scopeKey === SCOPE_NACIONAL
+    ? normalizeNacionalDisplayHour(d)
+    : hour;
+
+const hs = displayHour
+  ? `${displayHour.slice(0,2)}HS`
+  : "—";
 
                     const byPos = new Map();
                     for (const p of prizesRaw) {
@@ -1939,3 +1946,5 @@ export default function Results() {
     </div>
   );
 }
+
+
