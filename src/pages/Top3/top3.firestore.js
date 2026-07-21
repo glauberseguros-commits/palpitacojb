@@ -96,24 +96,17 @@ function extractPrize1Milhar(draw) {
 
 function findDrawForTarget({
   draws,
-  lotteryKey,
   targetYmd,
   targetHour,
 }) {
-  const lottery = normalizeLotteryKey(lotteryKey);
   const ymd = safeStr(targetYmd);
   const hour = normalizeHour(targetHour);
 
-  if (!lottery || !isYMD(ymd) || !hour) return null;
+  if (!isYMD(ymd) || !hour) return null;
 
   return (
     (Array.isArray(draws) ? draws : []).find((draw) => {
-      const drawLottery = normalizeLotteryKey(
-        draw?.lottery_key
-      );
-
       return (
-        drawLottery === lottery &&
         pickDrawYMD(draw) === ymd &&
         normalizeHour(pickDrawHour(draw)) === hour
       );
@@ -413,20 +406,8 @@ export async function reconcileTop3PredictionDay({
   for (const entry of history) {
     if (!entry) continue;
 
-    const resultLotteryKey = normalizeLotteryKey(
-      entry?.resultLotteryKey
-    );
-
-    if (
-      entry?.status === "validated" &&
-      resultLotteryKey === lottery
-    ) {
-      continue;
-    }
-
     const realDraw = findDrawForTarget({
       draws,
-      lotteryKey: lottery,
       targetYmd: entry?.targetYmd,
       targetHour: entry?.targetHour,
     });
@@ -446,6 +427,21 @@ export async function reconcileTop3PredictionDay({
     }
 
     const resultMilhar = extractPrize1Milhar(realDraw);
+    const savedLottery = safeStr(
+      entry?.resultLotteryKey
+    ).toUpperCase();
+    const savedGrupo = Number(entry?.resultGrupo);
+    const savedMilhar = normalizeMilhar(entry?.resultMilhar);
+
+    const alreadyMatchesRealResult =
+      entry?.status === "validated" &&
+      savedLottery === lottery &&
+      savedGrupo === resultGrupo &&
+      savedMilhar === resultMilhar;
+
+    if (alreadyMatchesRealResult) {
+      continue;
+    }
 
     const analysis = analyzeSnapshotHit(
       entry?.snapshot,
