@@ -1551,7 +1551,43 @@ const list = Array.isArray(top3)
         `${String(row?.target?.ymd || "")}` +
         `__${String(row?.target?.hour || "")}`;
 
-      rowsByTarget.set(key, row);
+      const timelineRow = rowsByTarget.get(key);
+
+      if (!timelineRow || timelineRow?.result == null) {
+        rowsByTarget.set(key, row);
+        continue;
+      }
+
+      const resultGrupo = Number(timelineRow.result);
+      const resultMilhar = String(
+        timelineRow?.resultMilhar || ""
+      );
+
+      const analysis = analyzeTop3Hit(
+        row?.top3,
+        resultGrupo,
+        resultMilhar
+      );
+
+      rowsByTarget.set(key, {
+        ...row,
+        result: resultGrupo,
+        grupo: resultGrupo,
+        animal:
+          timelineRow?.animal ||
+          getAnimalLabel(resultGrupo) ||
+          "",
+        resultMilhar,
+        analysis,
+        hit:
+          analysis.type !== "miss" &&
+          analysis.type !== "none",
+        hitType: analysis.type,
+        hitScore: Number(analysis.score || 0),
+        hitPosition: Number(
+          analysis.position ?? -1
+        ),
+      });
     }
 
     return Array.from(rowsByTarget.values())
