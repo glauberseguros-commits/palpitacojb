@@ -9,7 +9,12 @@ on:
     #
     # Um único gatilho evita colisões entre loterias.
     # Minutos fora do início da hora reduzem atrasos do GitHub Actions.
-    - cron: "3-53/10 0-2,5,10-23 * * *"
+    - cron: "3 0-2,5,10-23 * * *"
+    - cron: "13 0-2,5,10-23 * * *"
+    - cron: "23 0-2,5,10-23 * * *"
+    - cron: "33 0-2,5,10-23 * * *"
+    - cron: "43 0-2,5,10-23 * * *"
+    - cron: "53 0-2,5,10-23 * * *"
 
   workflow_dispatch:
     inputs:
