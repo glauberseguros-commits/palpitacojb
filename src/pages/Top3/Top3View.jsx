@@ -1380,8 +1380,7 @@ const list = Array.isArray(top3)
   ].filter(Boolean);
 
   const curLot = String(lotteryKeySafe || "PT_RIO").toUpperCase();
-  const heroItem = list[0] || null;
-  const secondaryItems = list.slice(1, 3);
+  const visibleTop3 = list.slice(0, 3);
 
   const historyAnchorYmd = useMemo(() => {
   const loaded = String(loadedYmd || "").trim();
@@ -2729,6 +2728,159 @@ const list = Array.isArray(top3)
             gap: 8px;
           }
         }
+
+        /* TOP3 PREMIUM CRLF */
+        .top3-stage--predictions,
+        .top3-stage--loading{
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          align-items: stretch;
+        }
+
+        .top3-stage--predictions > .top3-card,
+        .top3-stage--loading > .top3-card{
+          width: 100%;
+          min-width: 0;
+          height: 100%;
+        }
+
+        .top3-loadingCard{
+          display: grid;
+          align-content: start;
+          gap: 16px;
+          min-height: 330px;
+        }
+
+        .top3-loadingCard__header,
+        .top3-loadingCard__identity{
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .top3-loadingCard__lines{
+          display: grid;
+          flex: 1;
+          min-width: 0;
+          gap: 10px;
+        }
+
+        .top3-skeleton{
+          position: relative;
+          display: block;
+          overflow: hidden;
+          max-width: 100%;
+          border-radius: 999px;
+          background: rgba(255,255,255,0.08);
+        }
+
+        .top3-skeleton::after{
+          content: "";
+          position: absolute;
+          inset: 0;
+          transform: translateX(-100%);
+          background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(201,168,62,0.22),
+            transparent
+          );
+          animation: top3PremiumSkeleton 1.2s infinite;
+        }
+
+        .top3-skeleton--badge{
+          width: 30px;
+          height: 30px;
+          flex: 0 0 auto;
+          border-radius: 9px;
+        }
+
+        .top3-skeleton--title{
+          width: 120px;
+          height: 14px;
+        }
+
+        .top3-skeleton--image{
+          width: 62px;
+          height: 62px;
+          flex: 0 0 auto;
+          border-radius: 16px;
+        }
+
+        .top3-skeleton--short{
+          width: min(125px, 55%);
+          height: 13px;
+        }
+
+        .top3-skeleton--animal{
+          width: min(185px, 82%);
+          height: 24px;
+        }
+
+        .top3-skeleton--block{
+          width: 100%;
+          height: 76px;
+          border-radius: 14px;
+        }
+
+        @keyframes top3PremiumSkeleton{
+          100%{
+            transform: translateX(100%);
+          }
+        }
+
+        @media (max-width: 980px){
+          .top3-stage--predictions,
+          .top3-stage--loading{
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+
+          .top3-stage--predictions > .top3-card:first-child{
+            grid-column: 1 / -1;
+          }
+        }
+
+        @media (max-width: 640px){
+          .top3-stage--predictions,
+          .top3-stage--loading{
+            grid-template-columns: 1fr;
+          }
+
+          .top3-stage--predictions > .top3-card:first-child{
+            grid-column: auto;
+          }
+
+          .top3-card__actions{
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+
+          .top3-card__actions .pp-btn{
+            width: 100%;
+            min-width: 0;
+          }
+
+          .top3-metaGrid{
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+
+          .timeline-slot__metaGrid{
+            grid-template-columns: 1fr;
+          }
+        }
+
+        @media (max-width: 420px){
+          .top3-card__actions,
+          .top3-metaGrid{
+            grid-template-columns: 1fr;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce){
+          .top3-skeleton::after{
+            animation: none;
+          }
+        }
+
       `}</style>
 
       <div className="top3-page">
@@ -2850,51 +3002,56 @@ const list = Array.isArray(top3)
         </section>
 
         {loading ? (
-          <div className="top3-empty">Carregando…</div>
+          <section
+            className="top3-stage top3-stage--loading"
+            aria-label="Carregando previsões do TOP3"
+            aria-busy="true"
+          >
+            {[0, 1, 2].map((item) => (
+              <div className="top3-card top3-loadingCard" key={item}>
+                <div className="top3-loadingCard__header">
+                  <span className="top3-skeleton top3-skeleton--badge" />
+                  <span className="top3-skeleton top3-skeleton--title" />
+                </div>
+
+                <div className="top3-loadingCard__identity">
+                  <span className="top3-skeleton top3-skeleton--image" />
+
+                  <div className="top3-loadingCard__lines">
+                    <span className="top3-skeleton top3-skeleton--short" />
+                    <span className="top3-skeleton top3-skeleton--animal" />
+                  </div>
+                </div>
+
+                <span className="top3-skeleton top3-skeleton--block" />
+                <span className="top3-skeleton top3-skeleton--block" />
+              </div>
+            ))}
+          </section>
         ) : error ? (
           <div className="top3-error">{String(error)}</div>
         ) : !list.length ? (
           <div className="top3-empty">Sem dados para calcular TOP3.</div>
         ) : (
-          <section className="top3-stage">
-            {heroItem ? (
-              <div className="top3-heroWrap">
-                <Top3Card
-                  item={heroItem}
-                  idx={0}
-                  theme={t}
-                  copiedAllKey={copiedAllKey}
-                  copiedCellKey={copiedCellKey}
-                  setCopiedAllKey={setCopiedAllKey}
-                  setCopiedCellKey={setCopiedCellKey}
-                  copyText={copyText}
-                  build16={build16}
-                  buildMilhares={buildMilhares}
-                  build20={build20}
-                />
-              </div>
-            ) : null}
-
-            {secondaryItems.length ? (
-              <div className="top3-secondaryRow">
-                {secondaryItems.map((item, localIdx) => (
-                  <Top3Card
-                    key={`${String(item?.grupo ?? "g")}__${String(item?.animal || "")}__${localIdx + 1}`}
-                    item={item}
-                    idx={localIdx + 1}
-                    theme={t}
-                    copiedAllKey={copiedAllKey}
-                    copiedCellKey={copiedCellKey}
-                    setCopiedAllKey={setCopiedAllKey}
-                    setCopiedCellKey={setCopiedCellKey}
-                    copyText={copyText}
-                    build16={build16}
-                    buildMilhares={buildMilhares}
-                    build20={build20}
-                  />
-                ))}
-              </div>
-            ) : null}
+          <section className="top3-stage top3-stage--predictions">
+            {visibleTop3.map((item, idx) => (
+              <Top3Card
+                key={`${String(item?.grupo ?? "g")}__${String(
+                  item?.animal || ""
+                )}__${idx}`}
+                item={item}
+                idx={idx}
+                theme={t}
+                copiedAllKey={copiedAllKey}
+                copiedCellKey={copiedCellKey}
+                setCopiedAllKey={setCopiedAllKey}
+                setCopiedCellKey={setCopiedCellKey}
+                copyText={copyText}
+                build16={build16}
+                buildMilhares={buildMilhares}
+                build20={build20}
+              />
+            ))}
           </section>
         )}
 

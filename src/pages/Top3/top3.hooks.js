@@ -457,7 +457,8 @@ export function useTop3Controller() {
     setLoadingStage({ today: true, range: false });
     setError("");
 
-    analyticsCacheRef.current = { key: "", value: emptyAnalytics() };
+    // Impede exibir resultados pertencentes à consulta anterior.
+    resetStateForNoData();
 
     const currentRequestId = ++requestIdRef.current;
 
