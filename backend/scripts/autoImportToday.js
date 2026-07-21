@@ -21,7 +21,10 @@ const { runImport } = require("./importKingApostas");
 const {
   getFederalScheduleForDate,
 } = require("./federalCalendar");
-const { isPtRio18Expected } = require("./ptRioCalendar");
+const {
+  isPtRio18Expected,
+  isPtRioSaturday19Expected,
+} = require("./ptRioCalendar");
 
 // ✅ LOTTERY parametrizável por env (default PT_RIO)
 const LOTTERY = String(process.env.LOTTERY || "PT_RIO").trim().toUpperCase() || "PT_RIO";
@@ -137,6 +140,8 @@ const SCHEDULES = {
     { hour: "14:00", windowStart: "14:05", releaseAt: "14:29", windowEnd: "14:35" },
     { hour: "16:00", windowStart: "16:05", releaseAt: "16:29", windowEnd: "16:35" },
     { hour: "18:00", windowStart: "18:05", releaseAt: "18:29", windowEnd: "18:35" },
+    // Desde 18/07/2026, sábado: sorteio 19h, com publicação prevista a partir de 19h20.
+    { hour: "19:00", windowStart: "19:20", releaseAt: "19:20", windowEnd: "19:50" },
     // 21h: janela longa
     { hour: "21:00", windowStart: "21:05", releaseAt: "21:05", windowEnd: "21:45" },
   ],
@@ -519,12 +524,18 @@ function buildTodaySlotStatusMapPT_RIO(
   const isWed = dow === 3;
   const isSat = dow === 6;
 
+  const saturday19Expected =
+    isPtRioSaturday19Expected(
+      dateYMD
+    );
+
   for (const sched of SCHEDULE) {
     const hh = sched.hour;
 
     if (isSunday) {
       if (
         hh === "18:00" ||
+        hh === "19:00" ||
         hh === "21:00"
       ) {
         map.set(hh, "OFF");
@@ -535,9 +546,14 @@ function buildTodaySlotStatusMapPT_RIO(
       continue;
     }
 
-    if (isWed || isSat) {
+    if (
+      isSat &&
+      saturday19Expected
+    ) {
       if (hh === "18:00") {
-        map.set(hh, "SOFT");
+        map.set(hh, "OFF");
+      } else if (hh === "19:00") {
+        map.set(hh, "HARD");
       } else {
         map.set(hh, "HARD");
       }
@@ -545,7 +561,23 @@ function buildTodaySlotStatusMapPT_RIO(
       continue;
     }
 
-    map.set(hh, "HARD");
+    if (isWed || isSat) {
+      if (hh === "18:00") {
+        map.set(hh, "SOFT");
+      } else if (hh === "19:00") {
+        map.set(hh, "OFF");
+      } else {
+        map.set(hh, "HARD");
+      }
+
+      continue;
+    }
+
+    if (hh === "19:00") {
+      map.set(hh, "OFF");
+    } else {
+      map.set(hh, "HARD");
+    }
   }
 
   const ptRio18Expected =
@@ -557,10 +589,15 @@ function buildTodaySlotStatusMapPT_RIO(
   if (!ptRio18Expected) {
     map.set("18:00", "OFF");
 
+    const reason =
+      saturday19Expected
+        ? "SATURDAY_19_REPLACES_18"
+        : "FEDERAL_20_SCHEDULED";
+
     logLine(
       `[CAL] PT_RIO 18:00 OFF: ` +
         `date=${dateYMD} ` +
-        `reason=FEDERAL_20_SCHEDULED`,
+        `reason=${reason}`,
       "INFO"
     );
   }
@@ -586,6 +623,7 @@ function buildTodaySlotStatusMapPT_RIO(
     `[CAL] PT_RIO resolved: ` +
       `date=${dateYMD} ` +
       `dow=${dow} ` +
+      `saturday19=${saturday19Expected ? "1" : "0"} ` +
       `federal20=${federal20Exists ? "1" : "0"} ` +
       `HARD=[${hard.join(",")}] ` +
       `SOFT=[${soft.join(",")}] ` +

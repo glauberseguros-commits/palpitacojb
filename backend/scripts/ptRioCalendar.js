@@ -6,6 +6,9 @@ const path = require("path");
 let _cache = null;
 
 const PT_RIO_18 = "18:00";
+const PT_RIO_19 = "19:00";
+const PT_RIO_SATURDAY_19_START =
+  "2026-07-18";
 
 function safeStr(v) {
   return String(v ?? "").trim();
@@ -126,6 +129,16 @@ function normalizeHHMM(v) {
   }
 
   return null;
+}
+
+function isPtRioSaturday19Expected(ymd) {
+  const date = safeStr(ymd);
+
+  return (
+    isISODate(date) &&
+    date >= PT_RIO_SATURDAY_19_START &&
+    ymdDow(date) === 6
+  );
 }
 
 function uniqSorted(arr) {
@@ -259,15 +272,46 @@ function applyOperationalRules(calendar, options) {
   const federal20Exists =
     normalizedOptions.federal20Exists === true;
 
+  const saturday19Expected =
+    isPtRioSaturday19Expected(
+      calendar?.date
+    );
+
   const result = {
     ...calendar,
     core: normalizeSlots(calendar?.core),
     opcional: normalizeSlots(calendar?.opcional),
     rara: normalizeSlots(calendar?.rara),
     federal20Exists,
-    ptRio18Expected: true,
+    ptRio18Expected: !saturday19Expected,
+    ptRioSaturday19Expected:
+      saturday19Expected,
     operationalRulesApplied: [],
   };
+
+  if (saturday19Expected) {
+    result.core = uniqSorted([
+      ...removeSlot(
+        result.core,
+        PT_RIO_18
+      ),
+      PT_RIO_19,
+    ]);
+
+    result.opcional = removeSlot(
+      result.opcional,
+      PT_RIO_18
+    );
+
+    result.rara = removeSlot(
+      result.rara,
+      PT_RIO_18
+    );
+
+    result.operationalRulesApplied.push(
+      "SATURDAY_19_REPLACES_18_FROM_2026_07_18"
+    );
+  }
 
   if (!federal20Exists) {
     return result;
@@ -401,6 +445,7 @@ function clearCache() {
 module.exports = {
   getPtRioSlotsByDate,
   isPtRio18Expected,
+  isPtRioSaturday19Expected,
   normalizeHHMM,
   clearCache,
 };
