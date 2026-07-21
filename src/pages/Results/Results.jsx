@@ -694,9 +694,13 @@ function buildExpectedDrawsForScope(scopeKey, orderedDraws, ymd) {
   });
 
   const extraActual = list.filter((d) => {
-    const h = normalizeHourLike(
-      d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
-    );
+    const h =
+      scopeKey === SCOPE_NACIONAL
+        ? normalizeNacionalDisplayHour(d)
+        : normalizeHourLike(
+            d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+          );
+
     return h && !visibleExpectedHours.includes(h);
   });
 
