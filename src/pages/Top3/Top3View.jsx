@@ -1339,7 +1339,7 @@ const list = Array.isArray(top3)
 
   const baseLots = Array.isArray(LOTTERY_OPTIONS) ? LOTTERY_OPTIONS : [];
   const mustHave = [
-    { value: "PT_RIO", label: "PT_RIO (RJ)" },
+    { value: "PT_RIO", label: "RJ" },
     { value: "FEDERAL", label: "Federal" },
     { value: "LOOK", label: "LOOK" },
     { value: "NACIONAL", label: "Nacional" },
@@ -1354,7 +1354,10 @@ const list = Array.isArray(top3)
     if (!map.has(rawVal)) {
       map.set(rawVal, {
         value: rawVal,
-        label: op?.label || rawVal,
+        label:
+          rawVal === "PT_RIO"
+            ? "RJ"
+            : op?.label || rawVal,
       });
     }
   });
@@ -1734,11 +1737,26 @@ const list = Array.isArray(top3)
           line-height: 1.4;
         }
 
+        /* TOP3 LOTTERY TABS SINGLE ROW */
         .pp-tabs{
           display:flex;
           gap:8px;
-          flex-wrap:wrap;
-          margin-top: 2px;
+          flex-wrap:nowrap;
+          align-items:center;
+          max-width:100%;
+          margin-top:2px;
+          overflow-x:auto;
+          overflow-y:hidden;
+          scrollbar-width:none;
+          -webkit-overflow-scrolling:touch;
+        }
+
+        .pp-tabs::-webkit-scrollbar{
+          display:none;
+        }
+
+        .pp-tabs > *{
+          flex:0 0 auto;
         }
 
         .pp-tab{
@@ -2878,6 +2896,18 @@ const list = Array.isArray(top3)
         @media (prefers-reduced-motion: reduce){
           .top3-skeleton::after{
             animation: none;
+          }
+        }
+
+
+        @media (max-width: 640px){
+          .pp-tabs{
+            gap:6px;
+          }
+
+          .pp-tab{
+            padding:8px 10px;
+            font-size:13px;
           }
         }
 
