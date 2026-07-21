@@ -518,7 +518,9 @@ function Top3Card({
 
   const key = `${String(item?.grupo ?? "g")}__${animal || "x"}__${idx}`;
   const rank = idx + 1;
-  const isHero = idx === 0;
+  // TOP3 EQUAL CARD LAYOUT
+  // A hierarquia permanece no ranking, mas os três cards usam a mesma estrutura.
+  const isHero = false;
 
   const title =
     idx === 0 ? "1º MAIS FORTE" : idx === 1 ? "2º MAIS FORTE" : "3º MAIS FORTE";
