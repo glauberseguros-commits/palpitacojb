@@ -1,21 +1,8 @@
 name: Auto Import — PalPitaco JB
 
 on:
-  schedule:
-    # Heartbeat resiliente a cada 10 minutos:
-    # UTC 00h–02h = BRT 21h–23h
-    # UTC 05h = BRT 02h
-    # UTC 10h–23h = BRT 07h–20h
-    #
-    # Um único gatilho evita colisões entre loterias.
-    # Minutos fora do início da hora reduzem atrasos do GitHub Actions.
-    - cron: "3 0-2,5,10-23 * * *"
-    - cron: "13 0-2,5,10-23 * * *"
-    - cron: "23 0-2,5,10-23 * * *"
-    - cron: "33 0-2,5,10-23 * * *"
-    - cron: "43 0-2,5,10-23 * * *"
-    - cron: "53 0-2,5,10-23 * * *"
-
+  # Automatic scheduling migrated to Google Cloud Scheduler.
+  # This workflow remains available only for manual execution.
   workflow_dispatch:
     inputs:
       lottery:
