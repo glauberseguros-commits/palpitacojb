@@ -1,0 +1,30 @@
+services:
+  - type: cron
+    name: palpitacojb-auto-import
+    runtime: node
+    plan: starter
+    branch: main
+    rootDir: backend
+    schedule: "3,13,23,33,43,53 0-3,5,10-23 * * *"
+    buildCommand: npm ci
+    startCommand: node scripts/runAutoImportHeartbeat.js
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: TZ
+        value: America/Sao_Paulo
+      - key: PITACO_API_BASE
+        value: https://api.palpitacojb.com.br
+      - key: FIREBASE_ADMIN_SA_JSON
+        sync: false
+      - key: FAIL_ON_CRITICAL
+        value: "1"
+      - key: VERIFY_PERSISTED
+        value: "1"
+      - key: AUDIT_WARN_MIN
+        value: "20"
+      - key: AUDIT_CRIT_MIN
+        value: "60"
+      - key: CATCHUP_MAX_AFTER_END_MIN
+        value: "1440"
