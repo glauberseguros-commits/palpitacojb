@@ -40,8 +40,8 @@ const CRIT_AFTER_MIN = Number(process.env.AUDIT_CRIT_MIN || 60);
 const FAIL_ON_CRITICAL = String(process.env.FAIL_ON_CRITICAL || "0").trim() === "1";
 
 // ✅ Limite de catch-up pós-janela (minutos após windowEnd)
-// Default 90 (reduz spam em cron fora da janela)
-const CATCHUP_MAX_AFTER_END_MIN = Number(process.env.CATCHUP_MAX_AFTER_END_MIN || 90);
+// Default 1440: qualquer slot anterior do mesmo dia continua recuperável
+const CATCHUP_MAX_AFTER_END_MIN = Number(process.env.CATCHUP_MAX_AFTER_END_MIN || 1440);
 
 // ✅ PROBE/SOFT da FEDERAL: limite de tentativas por slot/dia (anti-spam)
 // default 2 (tenta 2 ticks e para, mesmo que o cron rode mais vezes)
