@@ -1572,9 +1572,23 @@ function normalizeLotteriesList(lotteries) {
 
 function drawPassesLotteriesFilter(draw, lotteriesArr) {
   if (!lotteriesArr || !lotteriesArr.length) return true;
-  const code = String(draw?.lottery_code ?? "").trim().toUpperCase();
-  if (!code) return false;
-  return lotteriesArr.includes(code);
+
+  const identities = [
+    draw?.lottery_key,
+    draw?.lotteryKey,
+    draw?.lottery_code,
+    draw?.lotteryCode,
+    draw?.lot_code,
+    draw?.lotCode,
+    draw?.lot,
+    draw?.code,
+  ]
+    .map((value) => String(value ?? "").trim().toUpperCase())
+    .filter(Boolean);
+
+  return identities.some((identity) =>
+    lotteriesArr.includes(identity)
+  );
 }
 
 function lateCacheKey({
@@ -1698,7 +1712,7 @@ export async function getKingLateByRange({
           )
         : null;
 
-      const g = p?.grupo;
+      const g = Number(p?.grupo);
       if (!isValidGrupo(g)) continue;
 
       if (!lastSeen.has(g)) {
