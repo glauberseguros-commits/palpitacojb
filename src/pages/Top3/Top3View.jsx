@@ -1341,6 +1341,8 @@ const list = Array.isArray(top3)
   const mustHave = [
     { value: "PT_RIO", label: "PT_RIO (RJ)" },
     { value: "FEDERAL", label: "Federal" },
+    { value: "LOOK", label: "LOOK" },
+    { value: "NACIONAL", label: "Nacional" },
   ];
 
   const map = new Map();
@@ -1360,8 +1362,20 @@ const list = Array.isArray(top3)
   const lotOptions = [
     map.get("PT_RIO"),
     map.get("FEDERAL"),
+    map.get("LOOK"),
+    map.get("NACIONAL"),
     ...[...map.values()].filter(
-      (x) => !["PT_RIO", "FEDERAL"].includes(String(x?.value || "").toUpperCase())
+      (x) =>
+        ![
+          "PT_RIO",
+          "FEDERAL",
+          "LOOK",
+          "NACIONAL",
+        ].includes(
+          String(
+            x?.value || ""
+          ).toUpperCase()
+        )
     ),
   ].filter(Boolean);
 
@@ -1390,21 +1404,16 @@ const list = Array.isArray(top3)
 }, [loadedYmd, ymdSafe, timeline]);
 
   const historyRows = useMemo(() => {
-  const persisted = Array.isArray(persistedTop3History)
-    ? persistedTop3History
-    : [];
-
-  if (persisted.length) {
-    return persisted
+    const persistedRows = (
+      Array.isArray(persistedTop3History)
+        ? persistedTop3History
+        : []
+    )
       .filter(
         (entry) =>
-          String(entry?.targetYmd || "").trim() === historyAnchorYmd
+          String(entry?.targetYmd || "").trim() ===
+          historyAnchorYmd
       )
-      .sort((a, b) => {
-        const ah = hourBucketToSortValue(a?.targetHour);
-        const bh = hourBucketToSortValue(b?.targetHour);
-        return ah - bh;
-      })
       .map((entry) => {
         const snapshot = Array.isArray(entry?.snapshot)
           ? entry.snapshot.slice(0, 3)
@@ -1417,7 +1426,9 @@ const list = Array.isArray(top3)
           resultGrupo <= 25;
 
         return {
-          targetKey: String(entry?.id || entry?.targetKey || ""),
+          targetKey: String(
+            entry?.id || entry?.targetKey || ""
+          ),
           target: {
             ymd: String(entry?.targetYmd || ""),
             hour: String(entry?.targetHour || ""),
@@ -1437,68 +1448,128 @@ const list = Array.isArray(top3)
                   ""
               )
             : "",
-          resultMilhar: String(entry?.resultMilhar || ""),
-          hit: Number(entry?.hitScore || 0) > 0,
+          resultMilhar: String(
+            entry?.resultMilhar || ""
+          ),
+          hit:
+            Number(entry?.hitScore || 0) > 0,
           hitType: String(entry?.hitType || ""),
           hitScore: Number(entry?.hitScore || 0),
-          hitPosition: Number(entry?.hitPosition ?? -1),
+          hitPosition: Number(
+            entry?.hitPosition ?? -1
+          ),
           analysis: {
             type: String(entry?.hitType || ""),
             score: Number(entry?.hitScore || 0),
-            position: Number(entry?.hitPosition ?? -1),
-            matchedValue: String(entry?.matchedValue || ""),
+            position: Number(
+              entry?.hitPosition ?? -1
+            ),
+            matchedValue: String(
+              entry?.matchedValue || ""
+            ),
           },
         };
       });
-  }
 
-  if (!Array.isArray(timeline) || !timeline.length || !historyAnchorYmd) {
-    return [];
-  }
+    const timelineRows = (
+      Array.isArray(timeline) ? timeline : []
+    )
+      .filter(
+        (slot) =>
+          String(slot?.targetYmd || "").trim() ===
+          historyAnchorYmd
+      )
+      .map((slot) => {
+        const slotTop3 = Array.isArray(slot?.top3)
+          ? slot.top3.slice(0, 3)
+          : [];
 
-  return timeline
-    .filter((slot) => String(slot?.targetYmd || "").trim() === historyAnchorYmd)
-    .sort((a, b) => {
-      const ah = hourBucketToSortValue(a?.targetHour);
-      const bh = hourBucketToSortValue(b?.targetHour);
-      return ah - bh;
-    })
-    .map((slot) => {
-      const slotTop3 = Array.isArray(slot?.top3) ? slot.top3.slice(0, 3) : [];
-      const resultGrupo = getSlotResultGrupo(slot);
-      const hasResult =
-        Number.isFinite(resultGrupo) && resultGrupo >= 1 && resultGrupo <= 25;
+        const resultGrupo = getSlotResultGrupo(slot);
 
-      const analysis = analyzeTop3Hit(
-        slotTop3,
-        resultGrupo,
-        extractResultMilhar(slot)
-      );
+        const hasResult =
+          Number.isFinite(resultGrupo) &&
+          resultGrupo >= 1 &&
+          resultGrupo <= 25;
 
-      return {
-        targetKey: `${String(slot?.targetYmd || "")}__${String(slot?.targetHour || "")}`,
-        target: {
-          ymd: String(slot?.targetYmd || ""),
-          hour: String(slot?.targetHour || ""),
-        },
-        picks: slotTop3.map((t) => Number(t?.grupo)).filter((g) => Number.isFinite(g)),
-        top3: slotTop3,
+        const resultMilhar =
+          extractResultMilhar(slot);
 
-        result: hasResult ? Number(resultGrupo) : null,
-        grupo: hasResult ? Number(resultGrupo) : null,
-        animal: hasResult ? getAnimalLabel(resultGrupo) : "",
+        const analysis = analyzeTop3Hit(
+          slotTop3,
+          resultGrupo,
+          resultMilhar
+        );
 
-        resultMilhar: extractResultMilhar(slot),
+        return {
+          targetKey:
+            `${String(slot?.targetYmd || "")}` +
+            `__${String(slot?.targetHour || "")}`,
+          target: {
+            ymd: String(slot?.targetYmd || ""),
+            hour: String(slot?.targetHour || ""),
+          },
+          picks: slotTop3
+            .map((item) => Number(item?.grupo))
+            .filter(Number.isFinite),
+          top3: slotTop3,
+          result: hasResult
+            ? Number(resultGrupo)
+            : null,
+          grupo: hasResult
+            ? Number(resultGrupo)
+            : null,
+          animal: hasResult
+            ? getAnimalLabel(resultGrupo)
+            : "",
+          resultMilhar,
+          analysis,
+          hit:
+            analysis.type !== "miss" &&
+            analysis.type !== "none",
+          hitType: analysis.type,
+          hitScore: Number(analysis.score || 0),
+          hitPosition: Number(
+            analysis.position ?? -1
+          ),
+        };
+      });
 
-        analysis,
+    // A timeline garante todos os horarios oficiais.
+    // O registro persistido prevalece quando realmente existe.
+    const rowsByTarget = new Map();
 
-        hit: analysis.type !== "miss" && analysis.type !== "none",
-        hitType: analysis.type,
-        hitScore: Number(analysis.score || 0),
-        hitPosition: Number(analysis.position ?? -1),
-      };
-    });
-}, [timeline, historyAnchorYmd, persistedTop3History]);
+    for (const row of timelineRows) {
+      const key =
+        `${String(row?.target?.ymd || "")}` +
+        `__${String(row?.target?.hour || "")}`;
+
+      rowsByTarget.set(key, row);
+    }
+
+    for (const row of persistedRows) {
+      const key =
+        `${String(row?.target?.ymd || "")}` +
+        `__${String(row?.target?.hour || "")}`;
+
+      rowsByTarget.set(key, row);
+    }
+
+    return Array.from(rowsByTarget.values())
+      .sort((a, b) => {
+        const ah = hourBucketToSortValue(
+          a?.target?.hour
+        );
+        const bh = hourBucketToSortValue(
+          b?.target?.hour
+        );
+
+        return ah - bh;
+      });
+  }, [
+    timeline,
+    historyAnchorYmd,
+    persistedTop3History,
+  ]);
 
   const historySummary = useMemo(() => {
     const validated = historyRows.filter(

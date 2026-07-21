@@ -132,7 +132,9 @@ export function buildTop3TimelineViewModel({
 
   const safeAnalysisYmd = safeStr(analysisYmd || "");
   const safeYmd = safeStr(ymdSafe || "");
-  const timelineYmd = isYMD(safeAnalysisYmd) ? safeAnalysisYmd : safeYmd;
+  // O calendario deve permanecer ancorado na data escolhida.
+  // Isso preserva o dia anterior quando o proximo alvo cruza a meia-noite.
+  const timelineYmd = isYMD(safeYmd) ? safeYmd : safeAnalysisYmd;
 
   if (!isYMD(timelineYmd) || !range.length) return [];
 

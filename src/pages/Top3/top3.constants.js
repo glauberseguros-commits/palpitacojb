@@ -57,6 +57,28 @@ export const PT_RIO_SCHEDULE_WED_SAT = [
 // Federal: travado em 20h
 export const FEDERAL_SCHEDULE = ["20:00"];
 
+export const LOOK_SCHEDULE = [
+  "07:00",
+  "09:00",
+  "11:00",
+  "14:00",
+  "16:00",
+  "18:00",
+  "21:00",
+  "23:00",
+];
+
+export const NACIONAL_SCHEDULE = [
+  "02:00",
+  "08:00",
+  "10:00",
+  "12:00",
+  "15:00",
+  "17:00",
+  "21:00",
+  "23:00",
+];
+
 /* =========================
    Parâmetros do motor TOP3
 ========================= */

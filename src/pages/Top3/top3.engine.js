@@ -27,6 +27,8 @@ import {
   TOP3_SCENE_BLEND_SCENE,
   TOP3_SCENE_BLEND_UNIFORM,
   PT_RIO_SCHEDULE_SUNDAY,
+  LOOK_SCHEDULE,
+  NACIONAL_SCHEDULE,
 } from "./top3.constants";
 
 function findPreviousValidDraw(draws, currentYmd, currentHour) {
@@ -213,43 +215,133 @@ function ymdHourToTs(ymd, hourBucket) {
    Schedules
 ========================= */
 
+const FEDERAL_SUNDAY_START_YMD = "2026-07-19";
+const PT_RIO_SUNDAY_REDUCED_START_YMD = "2026-07-18";
+const FEDERAL_20_REMOVES_PT_RIO_18_START_YMD = "2025-11-03";
+
+/**
+ * Calendário Federal com preservação histórica.
+ *
+ * Até 18/07/2026:
+ * - quarta-feira às 20h;
+ * - sábado às 20h.
+ *
+ * A partir de 19/07/2026:
+ * - quarta-feira às 20h;
+ * - domingo às 11h;
+ * - sábado deixa de ter sorteio Federal.
+ */
 export function isFederalDrawDay(ymd) {
-  const dow = getDowKey(ymd);
+  const y = safeStr(ymd);
+  if (!y) return false;
+
+  const dow = Number(getDowKey(y));
+
+  if (y >= FEDERAL_SUNDAY_START_YMD) {
+    return dow === 0 || dow === 3;
+  }
+
   return dow === 3 || dow === 6;
 }
 
+function getFederalScheduleForYmd(ymd, FEDERAL_SCHEDULE) {
+  const y = safeStr(ymd);
+
+  if (!y || !isFederalDrawDay(y)) {
+    return [];
+  }
+
+  const dow = Number(getDowKey(y));
+
+  if (y >= FEDERAL_SUNDAY_START_YMD && dow === 0) {
+    return ["11:00"];
+  }
+
+  const historical = Array.isArray(FEDERAL_SCHEDULE)
+    ? FEDERAL_SCHEDULE
+    : [];
+
+  const normalized = historical
+    .map(toHourBucket)
+    .filter(Boolean);
+
+  if (normalized.includes("20:00")) {
+    return ["20:00"];
+  }
+
+  return normalized.length
+    ? normalized
+    : ["20:00"];
+}
+
+/**
+ * Determina apenas os slots esperados.
+ * Nenhum resultado histórico é removido.
+ */
 export function getPtRioScheduleForYmd(
   ymd,
   PT_RIO_SCHEDULE_NORMAL,
   PT_RIO_SCHEDULE_WED_SAT
 ) {
-  const dow = getDowKey(ymd);
+  const y = safeStr(ymd);
+  const dow = Number(getDowKey(y));
 
-  if (dow === 0) return PT_RIO_SCHEDULE_SUNDAY;
-
-  if (dow === 3 || dow === 6) {
-    const baseSchedule = Array.isArray(PT_RIO_SCHEDULE_WED_SAT)
-      ? PT_RIO_SCHEDULE_WED_SAT
+  if (dow === 0) {
+    const sundaySchedule = Array.isArray(PT_RIO_SCHEDULE_SUNDAY)
+      ? [...PT_RIO_SCHEDULE_SUNDAY]
       : [];
 
-    // A Federal mudou de 19h para 20h em 03/11/2025.
-    // Desde então, nas quartas e sábados, o PT Rio das 18h
-    // é substituído pelo sorteio das 19h.
-    if (String(ymd || "").trim() >= "2025-11-03") {
-      return Array.from(
-        new Set([
-          ...baseSchedule
-            .map(toHourBucket)
-            .filter((hour) => hour && hour !== "18:00"),
-          "19:00",
-        ])
-      ).sort((a, b) => hourToInt(a) - hourToInt(b));
+    if (y >= PT_RIO_SUNDAY_REDUCED_START_YMD) {
+      return sundaySchedule.filter((hour) => {
+        const h = normalizeHourLike(hour);
+
+        return h === "14:00" || h === "16:00";
+      });
     }
 
-    return baseSchedule;
+    return sundaySchedule;
   }
 
-  return PT_RIO_SCHEDULE_NORMAL;
+  if (dow === 6) {
+    const saturdaySchedule = Array.isArray(
+      PT_RIO_SCHEDULE_WED_SAT
+    )
+      ? [...PT_RIO_SCHEDULE_WED_SAT]
+      : [];
+
+    if (y >= "2026-07-18") {
+      const transitionedSchedule = saturdaySchedule
+        .map(normalizeHourLike)
+        .filter(Boolean)
+        .filter((hour) => hour !== "18:00");
+
+      if (!transitionedSchedule.includes("19:00")) {
+        transitionedSchedule.push("19:00");
+      }
+
+      return transitionedSchedule
+        .filter(
+          (hour, index, schedule) =>
+            schedule.indexOf(hour) === index
+        )
+        .sort(
+          (hourA, hourB) =>
+            hourToInt(hourA) - hourToInt(hourB)
+        );
+    }
+
+    return saturdaySchedule;
+  }
+
+  if (dow === 3) {
+    return Array.isArray(PT_RIO_SCHEDULE_WED_SAT)
+      ? [...PT_RIO_SCHEDULE_WED_SAT]
+      : [];
+  }
+
+  return Array.isArray(PT_RIO_SCHEDULE_NORMAL)
+    ? [...PT_RIO_SCHEDULE_NORMAL]
+    : [];
 }
 
 export function getScheduleForLottery({
@@ -262,7 +354,18 @@ export function getScheduleForLottery({
   const key = safeStr(lotteryKey).toUpperCase();
 
   if (key === "FEDERAL") {
-    return isFederalDrawDay(ymd) ? FEDERAL_SCHEDULE : [];
+    return getFederalScheduleForYmd(
+      ymd,
+      FEDERAL_SCHEDULE
+    );
+  }
+
+  if (key === "LOOK") {
+    return [...LOOK_SCHEDULE];
+  }
+
+  if (key === "NACIONAL") {
+    return [...NACIONAL_SCHEDULE];
   }
 
   return getPtRioScheduleForYmd(
