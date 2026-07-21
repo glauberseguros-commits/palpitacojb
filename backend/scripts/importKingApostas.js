@@ -7,6 +7,10 @@
 const fs = require("fs");
 const path = require("path");
 const axios = require("axios");
+const {
+  normalizeFederalRequestedSlot,
+  normalizeFederalSourceSlot,
+} = require("./federalCalendar");
 
 /**
  * =========================
@@ -385,9 +389,13 @@ function normalizeCloseHourForLottery(value, lotteryKey) {
   const raw0 = normalizeHHMM(value);
   if (!raw0 || !isHHMM(raw0)) return { raw: "", slot: "" };
 
-  // ✅ FEDERAL: slot de negócio é sempre 20:00, mas preserva o raw
+  // Federal: 11h e o novo slot oficial de domingo.
+  // A marcacao antecipada de 19h continua pertencendo ao slot 20h.
   if (lk === "FEDERAL") {
-    return { raw: raw0, slot: "20:00" };
+    return {
+      raw: raw0,
+      slot: normalizeFederalRequestedSlot(raw0),
+    };
   }
 
   // LOOK:
@@ -423,6 +431,16 @@ function normalizeDrawCloseHour(draw, lotteryKey) {
   );
 
   const lk = String(lotteryKey || "").trim().toUpperCase();
+
+  if (lk === "FEDERAL") {
+    return {
+      raw: base.raw,
+      slot: normalizeFederalSourceSlot({
+        date: draw?.date || draw?.ymd || "",
+        rawSlot: base.raw || base.slot,
+      }),
+    };
+  }
 
   if (lk !== "NACIONAL") {
     return base;
@@ -463,10 +481,15 @@ function normalizeRequestedCloseHour(closeHour, lotteryKey) {
     return { requested, slot: null, note: "invalid" };
   }
 
-  // FEDERAL: slot único 20:00 (não fingir que o usuário pediu 20:00)
   if (lk === "FEDERAL") {
-    const slot = "20:00";
-    const note = requested !== slot ? `FEDERAL_slot_fixed(${requested}->${slot})` : null;
+    const slot =
+      normalizeFederalRequestedSlot(requested);
+
+    const note =
+      requested !== slot
+        ? `FEDERAL_slot_normalized(${requested}->${slot})`
+        : null;
+
     return { requested, slot, note };
   }
 
@@ -523,7 +546,9 @@ const LOTTERIES_BY_KEY = {
     "8290329b-aac0-4a6a-9649-5feb6182cf4f",
     "d5123f7e-629d-43e9-a8fb-1385ff1cba45",
   ],
-  FEDERAL: [],
+  FEDERAL: [
+    "9519c673-c3b8-4cb9-bcfe-9ddece3b03f3",
+  ],
     LOOK: [
     "64d49fc1-9230-4d6a-92e5-5f2f70e5d352",
     "aaede2c3-8305-460a-a580-bb7c26ecd0b6",
@@ -1013,9 +1038,13 @@ function buildDrawRef({ draw, lotteryKey }) {
   const lotteryIdFromDraw = pickLotteryId(draw);
   const lotteryIdPart = safeIdPart(lotteryIdFromDraw || lotteryName);
 
-  // ✅ ID por SLOT
+  // O ID deve usar sempre o slot oficial.
+  // O horario bruto da fonte pode variar, por exemplo 19:53,
+  // e permanece preservado apenas em close_hour_raw.
+  const drawIdSlot = closeSlot;
+
   const drawId = `${safeIdPart(lotteryKey)}__${date}__${safeIdPart(
-    closeSlot
+    drawIdSlot
   )}__${lotteryIdPart}`;
   const drawRef = db.collection("draws").doc(drawId);
 

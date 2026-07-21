@@ -18,6 +18,9 @@ function dowFromYMD(dateYMD) {
 }
 
 const { runImport } = require("./importKingApostas");
+const {
+  getFederalScheduleForDate,
+} = require("./federalCalendar");
 const { isPtRio18Expected } = require("./ptRioCalendar");
 
 // ✅ LOTTERY parametrizável por env (default PT_RIO)
@@ -138,12 +141,14 @@ const SCHEDULES = {
     { hour: "21:00", windowStart: "21:05", releaseAt: "21:05", windowEnd: "21:45" },
   ],
 
-  // FEDERAL
-  // - 19:00 = PROBE (SOFT)
-  // - 20:00 = HARD (padrão)
+  // FEDERAL:
+  // - domingo, desde 19/07/2026: 11h;
+  // - quarta-feira: 20h;
+  // - ate 18/07/2026, sabado tambem era 20h.
   FEDERAL: [
-    { hour: "19:00", windowStart: "18:50", releaseAt: "19:00", windowEnd: "19:20" }, // PROBE (SOFT)
-    { hour: "20:00", windowStart: "19:50", releaseAt: "20:00", windowEnd: "20:20" }, // HARD
+    { hour: "11:00", windowStart: "11:05", releaseAt: "11:05", windowEnd: "11:35" },
+    { hour: "19:00", windowStart: "18:50", releaseAt: "19:00", windowEnd: "19:20" },
+    { hour: "20:00", windowStart: "19:50", releaseAt: "20:00", windowEnd: "20:20" },
   ],
 
   LOOK: [
@@ -592,40 +597,52 @@ function buildTodaySlotStatusMapPT_RIO(
 }
 
 /**
- * FEDERAL (robusto / independente de expectedHard do backend):
- * - domingo: OFF
- * - demais dias: 19:00 = SOFT (PROBE), 20:00 = HARD (padrão)
- * Obs: ainda logamos expectedHard/expectedSoft como debug, mas não usamos como "fonte da verdade".
+ * Grade Federal oficial com preservacao historica.
+ * A fonte ainda publica domingo como Federal 20H,
+ * mas o slot operacional desde 19/07/2026 e 11h.
  */
-function buildTodaySlotStatusMapFEDERAL({ dateYMD, dow, ds }) {
+function buildTodaySlotStatusMapFEDERAL({
+  dateYMD,
+  dow,
+  ds,
+}) {
   const map = new Map();
-  const isSunday = dow === 0;
 
-  const expectedHard = Array.isArray(ds?.expectedHard) ? ds.expectedHard.map(String) : [];
-  const expectedSoft = Array.isArray(ds?.expectedSoft) ? ds.expectedSoft.map(String) : [];
+  const official = new Set(
+    getFederalScheduleForDate(dateYMD)
+  );
+
+  const expectedHard =
+    Array.isArray(ds?.expectedHard)
+      ? ds.expectedHard.map(String)
+      : [];
+
+  const expectedSoft =
+    Array.isArray(ds?.expectedSoft)
+      ? ds.expectedSoft.map(String)
+      : [];
 
   for (const sched of SCHEDULE) {
-    if (isSunday) {
-      map.set(sched.hour, "OFF");
-      continue;
-    }
-
-    if (sched.hour === "19:00") {
-      map.set(sched.hour, "SOFT");
-      continue;
-    }
-
-    if (sched.hour === "20:00") {
+    if (official.has(sched.hour)) {
       map.set(sched.hour, "HARD");
       continue;
     }
 
-    // fallback (caso adicionem mais slots no futuro)
-    map.set(sched.hour, "SOFT");
+    if (
+      sched.hour === "19:00" &&
+      official.has("20:00")
+    ) {
+      map.set(sched.hour, "SOFT");
+      continue;
+    }
+
+    map.set(sched.hour, "OFF");
   }
 
   logLine(
-    `[CAL] FEDERAL fixed: date=${dateYMD} dow=${dow} => 19:SOFT(PROBE) 20:HARD | backend expectedHard=[${expectedHard.join(
+    `[CAL] FEDERAL official: date=${dateYMD} dow=${dow} hard=[${Array.from(
+      official
+    ).join(",")}] | backend expectedHard=[${expectedHard.join(
       ","
     )}] expectedSoft=[${expectedSoft.join(",")}]`,
     "INFO"
@@ -1254,7 +1271,10 @@ async function main() {
       if (!applies && !slot.done) {
         slot.done = true;
         slot.na = true;
-        slot.naReason = LOTTERY === "FEDERAL" && dow === 0 ? "FEDERAL_DOMINGO_OFF" : "NAO_APLICA";
+        slot.naReason =
+          LOTTERY === "FEDERAL"
+            ? "FEDERAL_FORA_DA_GRADE"
+            : "NAO_APLICA";
         slot.lastTryISO = isoNow;
         slot.lastResult = { ok: true, skipped: true, reason: slot.naReason };
         stateTouched = true;
