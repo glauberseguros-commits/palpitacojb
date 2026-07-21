@@ -96,24 +96,30 @@ function extractPrize1Milhar(draw) {
 
 function findDrawForTarget({
   draws,
+  lotteryKey,
   targetYmd,
   targetHour,
 }) {
+  const lottery = normalizeLotteryKey(lotteryKey);
   const ymd = safeStr(targetYmd);
   const hour = normalizeHour(targetHour);
 
-  if (!isYMD(ymd) || !hour) return null;
+  if (!lottery || !isYMD(ymd) || !hour) return null;
 
   return (
     (Array.isArray(draws) ? draws : []).find((draw) => {
+      const drawLottery = normalizeLotteryKey(
+        draw?.lottery_key
+      );
+
       return (
+        drawLottery === lottery &&
         pickDrawYMD(draw) === ymd &&
         normalizeHour(pickDrawHour(draw)) === hour
       );
     }) || null
   );
 }
-
 function normalizeSnapshot(snapshot) {
   return (Array.isArray(snapshot) ? snapshot : [])
     .slice(0, 3)
@@ -401,13 +407,26 @@ export async function reconcileTop3PredictionDay({
     schedule,
   });
 
+  const lottery = normalizeLotteryKey(lotteryKey);
   let updated = 0;
 
   for (const entry of history) {
-    if (!entry || entry?.status === "validated") continue;
+    if (!entry) continue;
+
+    const resultLotteryKey = normalizeLotteryKey(
+      entry?.resultLotteryKey
+    );
+
+    if (
+      entry?.status === "validated" &&
+      resultLotteryKey === lottery
+    ) {
+      continue;
+    }
 
     const realDraw = findDrawForTarget({
       draws,
+      lotteryKey: lottery,
       targetYmd: entry?.targetYmd,
       targetHour: entry?.targetHour,
     });
@@ -442,6 +461,7 @@ export async function reconcileTop3PredictionDay({
       {
         resultGrupo,
         resultMilhar,
+        resultLotteryKey: lottery,
         resultAnimal: safeStr(
           extractPrize1(realDraw)?.animal || ""
         ),
