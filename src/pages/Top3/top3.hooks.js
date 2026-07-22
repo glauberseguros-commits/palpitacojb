@@ -495,7 +495,6 @@ export function useTop3Controller() {
         (await getKingResultsByDate({
           uf: ufResolved,
           date: effectiveYmd,
-          readPolicy: "server",
         })) || [];
 
       if (requestIdRef.current !== currentRequestId) return;
@@ -661,7 +660,6 @@ export function useTop3Controller() {
           : (await getKingResultsByDate({
               uf: ufResolved,
               date: baseY,
-              readPolicy: "server",
             })) || [];
 
       const baseDaySchedule = getScheduleForLottery({
@@ -774,7 +772,7 @@ export function useTop3Controller() {
         uf: ufResolved,
         dateFrom: rangeFrom,
         dateTo: rangeTo,
-        readPolicy: "server",
+        readPolicy: "cache",
       });
 
       if (requestIdRef.current !== currentRequestId) return;

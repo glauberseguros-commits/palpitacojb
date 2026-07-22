@@ -29,7 +29,7 @@ export async function fallbackBaseSearch({
       dateFrom: searchFrom,
       dateTo: safeTargetYmd,
       mode: "detailed",
-      readPolicy: "server",
+      readPolicy: "cache",
     })) || [];
 
   return findLatestHistoricalBaseDraw({
@@ -45,7 +45,7 @@ export async function loadHistoryRange({
   uf,
   dateFrom,
   dateTo,
-  readPolicy = "server",
+  readPolicy = "cache",
 }) {
   const safeUf = String(uf || "").trim().toUpperCase();
   const safeDateFrom = String(dateFrom || "").trim();

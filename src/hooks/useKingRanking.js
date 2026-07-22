@@ -574,7 +574,7 @@ export function useKingRanking({
             closeHour: null,
             positions: positionsArrStable,
             mode: serviceMode,
-            readPolicy: "server",
+            readPolicy: "cache",
           });
         } else if (mode === "day") {
           serviceMode = "detailed";
@@ -584,7 +584,6 @@ export function useKingRanking({
             date: effectiveDayYmd,
             closeHour: null,
             positions: positionsArrStable,
-            readPolicy: "server",
           });
         } else {
           draws = [];
