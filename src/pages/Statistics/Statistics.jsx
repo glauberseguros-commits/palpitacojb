@@ -623,6 +623,7 @@ export default function Statistics() {
   const [lotteryKey, setLotteryKey] = useState("PT_RIO");
   const [mode, setMode] = useState("dezena");
   const [rankingView, setRankingView] = useState("frequentes");
+  const [copyFeedback, setCopyFeedback] = useState(false);
 
   const [bounds, setBounds] = useState({
     minYmd: "",
@@ -1357,11 +1358,11 @@ export default function Statistics() {
         lines.join("\n")
       );
 
-      alert(
-        isUnseenView
-          ? "Milhares inéditas copiadas."
-          : "Ranking copiado."
-      );
+      setCopyFeedback(true);
+
+      window.setTimeout(() => {
+        setCopyFeedback(false);
+      }, 2200);
     } catch {
       alert(
         "Não foi possível copiar automaticamente."
@@ -2212,8 +2213,11 @@ export default function Statistics() {
                 type="button"
                 className="ppStatsAnalyze"
                 onClick={copyRanking}
+                aria-live="polite"
               >
-                Copiar
+                {copyFeedback
+                  ? "✓ Copiado"
+                  : "Copiar"}
               </button>
 
               <label>Exibir</label>
