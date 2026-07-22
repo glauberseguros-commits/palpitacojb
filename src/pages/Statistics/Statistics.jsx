@@ -1290,28 +1290,6 @@ export default function Statistics() {
     ? milharUniverse.length
     : mostFrequentLabel;
 
-  const fourthKpiDisplayValue = useMemo(() => {
-    if (isUnseenView) {
-      return formatInteger(fourthKpiValue);
-    }
-
-    const rawValue = String(fourthKpiValue);
-
-    if (
-      mode === "milhar" &&
-      /^\d{4}$/.test(rawValue) &&
-      !rawValue.startsWith("0")
-    ) {
-      return formatInteger(rawValue);
-    }
-
-    return fourthKpiValue;
-  }, [
-    fourthKpiValue,
-    isUnseenView,
-    mode,
-  ]);
-
   const copyRanking = useCallback(async () => {
     const lines = [];
 
@@ -2193,7 +2171,13 @@ export default function Statistics() {
               className="ppStatsKpiValue"
               title={String(fourthKpiValue)}
             >
-              {fourthKpiDisplayValue}
+              {isUnseenView
+                ? formatInteger(fourthKpiValue)
+                : mode === "milhar" &&
+                  /^\d{4}$/.test(String(fourthKpiValue)) &&
+                  !String(fourthKpiValue).startsWith("0")
+                ? formatInteger(fourthKpiValue)
+                : fourthKpiValue}
             </div>
           </div>
         </div>
