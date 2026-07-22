@@ -1,23 +1,14 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import DashboardMod from "./pages/Dashboard/Dashboard";
 import AccountMod from "./pages/Account/Account";
-import ResultsMod from "./pages/Results/Results";
-import Top3Mod from "./pages/Top3/Top3";
-import LateMod from "./pages/Late/Late";
-import SearchMod from "./pages/Search/Search";
 
 // ✅ Admin
-import AdminMod from "./pages/Admin/Admin";
-import AdminLoginMod from "./pages/Admin/AdminLogin";
 
 // ✅ Páginas placeholder
-import PaymentsMod from "./pages/Payments/Payments";
-import DownloadsMod from "./pages/Downloads/Downloads";
 
 // ✅ página de Centenas
-import CentenasMod from "./pages/Centenas/Centenas";
 
 // ✅ AppShell
 import AppShellMod from "./pages/Dashboard/components/Sidebar/AppShell";
@@ -26,6 +17,17 @@ import AppShellMod from "./pages/Dashboard/components/Sidebar/AppShell";
 import { auth, db } from "./services/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
+
+const Results = lazy(() => import("./pages/Results/Results"));
+const Top3 = lazy(() => import("./pages/Top3/Top3"));
+const Late = lazy(() => import("./pages/Late/Late"));
+const Search = lazy(() => import("./pages/Search/Search"));
+const Admin = lazy(() => import("./pages/Admin/Admin"));
+const AdminLogin = lazy(() => import("./pages/Admin/AdminLogin"));
+const Payments = lazy(() => import("./pages/Payments/Payments"));
+const Downloads = lazy(() => import("./pages/Downloads/Downloads"));
+const Centenas = lazy(() => import("./pages/Centenas/Centenas"));
+
 
 const STORAGE_KEY = "palpitaco_screen_v2";
 const ACCOUNT_SESSION_KEY = "pp_session_v1";
@@ -437,24 +439,37 @@ function BuildStamp() {
   );
 }
 
+
+function AppLoading() {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      style={{
+        minHeight: "100vh",
+        background: "#050505",
+        color: "rgba(255,255,255,0.85)",
+        display: "grid",
+        placeItems: "center",
+        padding: 18,
+        fontFamily:
+          "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
+      }}
+    >
+      Carregando...
+    </div>
+  );
+}
+
 export default function App() {
   const location = useLocation();
   const navigate = useNavigate();
 
   const Dashboard = useMemo(() => resolveComponent(DashboardMod, "Dashboard"), []);
   const Account = useMemo(() => resolveComponent(AccountMod, "Account"), []);
-  const Results = useMemo(() => resolveComponent(ResultsMod, "Results"), []);
-  const Top3 = useMemo(() => resolveComponent(Top3Mod, "Top3"), []);
-  const Late = useMemo(() => resolveComponent(LateMod, "Late"), []);
-  const Search = useMemo(() => resolveComponent(SearchMod, "Search"), []);
-  const Payments = useMemo(() => resolveComponent(PaymentsMod, "Payments"), []);
-  const Downloads = useMemo(() => resolveComponent(DownloadsMod, "Downloads"), []);
-  const Centenas = useMemo(() => resolveComponent(CentenasMod, "Centenas"), []);
 
   const AppShell = useMemo(() => resolveComponent(AppShellMod, "AppShell"), []);
 
-  const Admin = useMemo(() => resolveComponent(AdminMod, "Admin"), []);
-  const AdminLogin = useMemo(() => resolveComponent(AdminLoginMod, "AdminLogin"), []);
 
   useEffect(() => {
     console.log("[PALPITACO BUILD]", {
@@ -685,6 +700,7 @@ export default function App() {
   if (adminMode) {
     return (
       <ErrorBoundary>
+        <Suspense fallback={<AppLoading />}>
         {adminBooting ? (
           <div
             style={{
@@ -731,6 +747,7 @@ export default function App() {
           />
         )}
         <BuildStamp />
+              </Suspense>
       </ErrorBoundary>
     );
   }
@@ -738,17 +755,20 @@ export default function App() {
   if (sessionKind === "anon") {
     return (
       <ErrorBoundary>
+        <Suspense fallback={<AppLoading />}>
         <Account
           onClose={() => {}}
           onAuthenticated={handleAuthenticated}
         />
         <BuildStamp />
+              </Suspense>
       </ErrorBoundary>
     );
   }
 
   return (
     <ErrorBoundary>
+        <Suspense fallback={<AppLoading />}>
       <AppShell active={currentScreen} onNavigate={goToScreen} onLogout={logout}>
         {currentScreen === ROUTES.DASHBOARD ? (
           <Dashboard
@@ -763,6 +783,7 @@ export default function App() {
         )}
       </AppShell>
       <BuildStamp />
-    </ErrorBoundary>
+            </Suspense>
+      </ErrorBoundary>
   );
 }
