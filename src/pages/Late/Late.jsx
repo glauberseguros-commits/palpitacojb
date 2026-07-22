@@ -499,29 +499,51 @@ export default function Late() {
     return { minYmd, maxYmd };
   }
 
-  function getEffectiveTargetYmd(targetYmd, effBounds) {
+  function getLateDateContext(targetYmd, effBounds) {
     const minYmd = effBounds?.minYmd || null;
-    const maxYmd = effBounds?.maxYmd || null;
+    const maxImportedYmd = effBounds?.maxYmd || null;
+    const todayYmd = todayYMDLocal();
 
-    if (!minYmd || !maxYmd || !isYMD(targetYmd)) {
-      return { effective: targetYmd, note: "" };
-    }
+    const referenceYmd = normalizeSingleDateWithBounds(
+      targetYmd,
+      minYmd,
+      todayYmd
+    );
 
-    if (targetYmd < minYmd)
-      return { effective: minYmd, note: `Data fora do bounds. Usando ${ymdToBR(minYmd)}.` };
-    if (targetYmd > maxYmd)
-      return { effective: maxYmd, note: `Data fora do bounds. Usando ${ymdToBR(maxYmd)}.` };
+    const queryToYmd =
+      isYMD(maxImportedYmd) &&
+      isYMD(referenceYmd) &&
+      referenceYmd > maxImportedYmd
+        ? maxImportedYmd
+        : referenceYmd;
 
-    return { effective: targetYmd, note: "" };
+    const note =
+      isYMD(targetYmd) && referenceYmd !== targetYmd
+        ? `Data futura ou fora do histórico. Usando ${ymdToBR(referenceYmd)}.`
+        : "";
+
+    return {
+      referenceYmd,
+      queryToYmd,
+      note,
+    };
   }
 
   async function buildLateList({ targetYmd, effBounds }) {
-    const { effective: safeTarget, note } = getEffectiveTargetYmd(targetYmd, effBounds);
+    const {
+      referenceYmd,
+      queryToYmd,
+      note,
+    } = getLateDateContext(targetYmd, effBounds);
+
     if (note) setError(note);
 
     const minYmd = effBounds?.minYmd || null;
-    if (!minYmd) {
-      return { rows: [], meta: { effectiveTargetYmd: safeTarget } };
+    if (!minYmd || !queryToYmd) {
+      return {
+        rows: [],
+        meta: { effectiveTargetYmd: referenceYmd },
+      };
     }
 
     // 1) Consulta atrasados por posição (1 ou várias) via SUA base
@@ -531,8 +553,8 @@ export default function Late() {
         uf: selectedLateUf,
         lotteries: selectedLateLotteries,
         dateFrom: minYmd,
-        dateTo: safeTarget,
-        baseDate: safeTarget,
+        dateTo: queryToYmd,
+        baseDate: referenceYmd,
         prizePosition: pos,
 
         closeHour: null,
@@ -551,7 +573,7 @@ export default function Late() {
     }
 
     // 2) Merge (1-5) e cálculo de daysLate
-    const merged = mergeLateLists(lists, safeTarget);
+    const merged = mergeLateLists(lists, referenceYmd);
 
     // 3) Injeta label/imagem
     const out = merged.map((r) => {
@@ -588,7 +610,7 @@ export default function Late() {
 
     const finalRows = out.map((r, idx) => ({ ...r, pos: idx + 1 }));
 
-    return { rows: finalRows, meta: { effectiveTargetYmd: safeTarget } };
+    return { rows: finalRows, meta: { effectiveTargetYmd: referenceYmd } };
   }
 
   const refresh = useCallback(
@@ -662,7 +684,11 @@ export default function Late() {
     const maxYmd = bounds?.maxYmd;
     if (!isYMD(minYmd) || !isYMD(maxYmd)) return;
 
-    const normalized = normalizeSingleDateWithBounds(dateYmd, minYmd, maxYmd);
+    const normalized = normalizeSingleDateWithBounds(
+      dateYmd,
+      minYmd,
+      todayYMDLocal()
+    );
     if (normalized && normalized !== dateYmd) setDateYmd(normalized);
   }, [bounds?.minYmd, bounds?.maxYmd, dateYmd]);
 
@@ -743,7 +769,11 @@ export default function Late() {
     (raw) => {
       const minYmd = bounds?.minYmd;
       const maxYmd = bounds?.maxYmd;
-      const next = normalizeSingleDateWithBounds(String(raw || ""), minYmd, maxYmd);
+      const next = normalizeSingleDateWithBounds(
+        String(raw || ""),
+        minYmd,
+        todayYMDLocal()
+      );
       setDateYmd(next);
     },
     [bounds?.minYmd, bounds?.maxYmd]
@@ -994,7 +1024,7 @@ LATE_LOTTERY_OPTIONS.find(
               type="date"
               value={dateYmd}
               min={bounds?.minYmd || undefined}
-              max={bounds?.maxYmd || undefined}
+              max={todayYMDLocal()}
               onChange={(e) => onChangeDate(e.target.value || todayYMDLocal())}
             />
           </div>
