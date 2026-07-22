@@ -897,12 +897,23 @@ export default function Results() {
 
       return deduped;
     },
-    staleTime: ymdClamped === todayYMDLocal() ? 60 * 1000 : 10 * 60 * 1000,
+    staleTime: ymdClamped === todayYMDLocal() ? 30 * 1000 : 10 * 60 * 1000,
     gcTime: 2 * 60 * 60 * 1000,
     placeholderData: (prev) => prev ?? [],
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
+
+    // Resultados do dia atual podem entrar depois que a tela já foi aberta.
+    // Faz nova leitura periódica somente para hoje, sem gerar consultas
+    // desnecessárias ao navegar por datas históricas.
+    refetchInterval:
+      ymdClamped === todayYMDLocal()
+        ? 60 * 1000
+        : false,
+    refetchIntervalInBackground: false,
+
+    // Ao retornar para a tela ou recuperar a conexão, busca o estado real.
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
 
   const loading = dayResultsQuery.isLoading && !Array.isArray(dayResultsQuery.data);
