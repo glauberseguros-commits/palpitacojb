@@ -503,8 +503,70 @@ async function runPool(items, worker, concurrency = 3) {
   await Promise.all(runners);
 }
 
+const SEARCH_LOTTERIES = Object.freeze([
+  Object.freeze({
+    value: "PT_RIO",
+    label: "Rio de Janeiro",
+    hours: Object.freeze([
+      "09:00",
+      "11:00",
+      "14:00",
+      "16:00",
+      "18:00",
+      "19:20",
+      "21:00",
+    ]),
+  }),
+  Object.freeze({
+    value: "FEDERAL",
+    label: "Federal",
+    hours: Object.freeze([
+      "11:00",
+      "20:00",
+    ]),
+  }),
+  Object.freeze({
+    value: "LOOK",
+    label: "LOOK",
+    hours: Object.freeze([
+      "07:00",
+      "09:00",
+      "11:00",
+      "14:00",
+      "16:00",
+      "18:00",
+      "21:00",
+      "23:00",
+    ]),
+  }),
+  Object.freeze({
+    value: "NACIONAL",
+    label: "Nacional",
+    hours: Object.freeze([
+      "02:00",
+      "08:00",
+      "10:00",
+      "12:00",
+      "15:00",
+      "17:00",
+      "21:00",
+      "23:00",
+    ]),
+  }),
+]);
+
 export default function Search() {
-  const LOTTERY_KEY = "PT_RIO";
+  const [lotteryKey, setLotteryKey] = useState("PT_RIO");
+  const LOTTERY_KEY = lotteryKey;
+
+  const selectedLottery = useMemo(
+    () =>
+      SEARCH_LOTTERIES.find((lottery) => lottery.value === lotteryKey) ||
+      SEARCH_LOTTERIES[0],
+    [lotteryKey]
+  );
+
+  const lotteryHours = selectedLottery.hours;
 
   const getAnimalLabel = useMemo(() => getAnimalLabelFn, []);
   const getImgFromGrupo = useMemo(() => getImgFromGrupoFn, []);
@@ -576,7 +638,25 @@ export default function Search() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [LOTTERY_KEY]);
+
+  const onLotteryChange = useCallback((nextLottery) => {
+    const validLottery = SEARCH_LOTTERIES.some(
+      (lottery) => lottery.value === nextLottery
+    );
+
+    if (!validLottery || nextLottery === lotteryKey) return;
+
+    abortedRef.current = true;
+    runIdRef.current += 1;
+
+    setLoading(false);
+    setError("");
+    setMatches([]);
+    setHorario("Todos");
+    setRange({ from: "", to: "" });
+    setLotteryKey(nextLottery);
+  }, [lotteryKey]);
 
   const animalOptions = useMemo(() => {
     const out = ["Todos"];
@@ -1074,6 +1154,21 @@ export default function Search() {
       <div className="ppSearchPanel">
         <div className="ppSearchControls">
           <div className="ppCtl">
+            <label>Loteria</label>
+            <select
+              value={lotteryKey}
+              onChange={(e) => onLotteryChange(String(e.target.value || "PT_RIO"))}
+              disabled={loading}
+            >
+              {SEARCH_LOTTERIES.map((lottery) => (
+                <option key={lottery.value} value={lottery.value}>
+                  {lottery.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="ppCtl">
             <label>De</label>
             <input
               type="date"
@@ -1131,7 +1226,7 @@ export default function Search() {
           <div className="ppCtl">
             <label>Horário</label>
             <select value={horario} onChange={(e) => setHorario(String(e.target.value || "Todos"))}>
-              {["Todos", "09:00", "11:00", "14:00", "16:00", "18:00", "21:00"].map((x) => (
+              {["Todos", ...lotteryHours].map((x) => (
                 <option key={x} value={x}>
                   {x}
                 </option>
