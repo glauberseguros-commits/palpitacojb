@@ -465,18 +465,30 @@ function normalizePrize(prize, fallbackPosition) {
 
   const wantedLength = position === 7 ? 3 : 4;
 
-  const number = lastDigits(
-    prize?.centena3 ??
-      prize?.milhar4 ??
-      prize?.milhar ??
-      prize?.numero ??
-      prize?.number ??
-      prize?.num ??
-      prize?.valor ??
-      prize?.n ??
-      "",
-    wantedLength
-  );
+  const rawNumber =
+    position === 7
+      ? (
+          prize?.centena3 ??
+          prize?.centena ??
+          prize?.numero ??
+          prize?.number ??
+          prize?.num ??
+          prize?.valor ??
+          prize?.n ??
+          ""
+        )
+      : (
+          prize?.milhar4 ??
+          prize?.milhar ??
+          prize?.numero ??
+          prize?.number ??
+          prize?.num ??
+          prize?.valor ??
+          prize?.n ??
+          ""
+        );
+
+  const number = lastDigits(rawNumber, wantedLength);
 
   const groupValue = Number(
     prize?.grupo ??
@@ -1047,7 +1059,7 @@ export default function Statistics() {
 
       setError(
         safeStr(caught?.message || caught) ||
-          "Falha ao calcular as estatísticas."
+          "Falha ao calcular as frequências."
       );
     } finally {
       if (!isCurrent()) return;
@@ -1143,6 +1155,53 @@ export default function Statistics() {
 
     return itemLabel(mode, mostFrequent.key).main;
   }, [mode, mostFrequent]);
+
+  const distinctItemsLabel = useMemo(() => {
+    if (mode === "dezena") return "Dezenas distintas";
+    if (mode === "centena") return "Centenas distintas";
+    if (mode === "milhar") return "Milhares distintas";
+
+    return "Animais distintos";
+  }, [mode]);
+
+  const copyRanking = useCallback(async () => {
+    const title =
+      mode === "dezena"
+        ? "RANKING DE DEZENAS"
+        : mode === "centena"
+        ? "RANKING DE CENTENAS"
+        : mode === "milhar"
+        ? "RANKING DE MILHARES"
+        : "RANKING DE ANIMAIS";
+
+    const lines = [
+      title,
+      "",
+      "Loteria: " + selectedLottery.label,
+      "Período: " + ymdToBr(safeRange.from) + " até " + ymdToBr(safeRange.to),
+      "",
+    ];
+
+    sortedRows.forEach((row,index)=>{
+      const label=itemLabel(mode,row.key);
+
+      lines.push(
+        (index+1) + "º - " +
+        label.main +
+        " - " +
+        formatInteger(row.count) +
+        " ocorrência(s)"
+      );
+    });
+
+    await navigator.clipboard.writeText(lines.join("\n"));
+    alert("Ranking copiado.");
+  },[
+    mode,
+    selectedLottery,
+    safeRange,
+    sortedRows
+  ]);
 
   return (
     <div className="ppStatistics">
@@ -1536,7 +1595,7 @@ export default function Statistics() {
       <section className="ppStatsPanel">
         <header className="ppStatsHeader">
           <div>
-            <div className="ppStatsTitle">Estatísticas</div>
+            <div className="ppStatsTitle">Frequências</div>
             <div className="ppStatsSubtitle">
               Ranking histórico conforme a loteria, período, horário,
               animal e posição selecionados.
@@ -1801,7 +1860,7 @@ export default function Statistics() {
 
           <div className="ppStatsKpi">
             <div className="ppStatsKpiLabel">
-              Números distintos
+              {distinctItemsLabel}
             </div>
             <div className="ppStatsKpiValue">
               {formatInteger(rows.length)}
@@ -1843,6 +1902,15 @@ export default function Statistics() {
             </div>
 
             <div className="ppStatsToolbarGroup">
+
+              <button
+                type="button"
+                className="ppStatsAnalyze"
+                onClick={copyRanking}
+              >
+                Copiar
+              </button>
+
               <label>Exibir</label>
               <select
                 value={limit}
