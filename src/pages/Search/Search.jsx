@@ -522,6 +522,7 @@ const SEARCH_LOTTERIES = Object.freeze([
     label: "Federal",
     hours: Object.freeze([
       "11:00",
+      "19:00",
       "20:00",
     ]),
   }),
