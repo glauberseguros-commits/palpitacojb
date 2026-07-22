@@ -2173,10 +2173,6 @@ export default function Statistics() {
             >
               {isUnseenView
                 ? formatInteger(fourthKpiValue)
-                : mode === "milhar" &&
-                  /^\d{4}$/.test(String(fourthKpiValue)) &&
-                  !String(fourthKpiValue).startsWith("0")
-                ? formatInteger(fourthKpiValue)
                 : fourthKpiValue}
             </div>
           </div>
