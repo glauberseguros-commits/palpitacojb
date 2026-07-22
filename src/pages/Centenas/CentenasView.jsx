@@ -1032,6 +1032,37 @@ export default function CentenasView() {
                       mode: "detailed",
                     });
 
+                  const diagnosticDraws =
+                    normalizeDrawsResult(res);
+
+                  const diagnosticPrizes =
+                    normalizePrizesArray(res);
+
+                  console.info("[CNT-HOR-04][SERVICE]", {
+                    lotteryKey,
+                    dateFrom: ch.from,
+                    dateTo: ch.to,
+                    requestedCloseHour,
+                    requestedPrizePositions,
+                    responseType:
+                      Array.isArray(res)
+                        ? "array"
+                        : typeof res,
+                    responseKeys:
+                      res &&
+                      typeof res === "object" &&
+                      !Array.isArray(res)
+                        ? Object.keys(res)
+                        : [],
+                    normalizedDraws:
+                      diagnosticDraws.length,
+                    normalizedPrizes:
+                      diagnosticPrizes.length,
+                    firstDraw: diagnosticDraws[0] || null,
+                    firstPrize:
+                      diagnosticPrizes[0] || null,
+                  });
+
                   return {
                     lotteryKey,
                     res,
@@ -1067,6 +1098,30 @@ export default function CentenasView() {
                       lotteryKey,
                   }))
             );
+
+          console.info("[CNT-HOR-04][NORMALIZED-CHUNK]", {
+            dateFrom: ch.from,
+            dateTo: ch.to,
+            requestedCloseHour,
+            selectedLotteryKeys,
+            responses: responses.map(
+              ({ lotteryKey, res }) => ({
+                lotteryKey,
+                draws:
+                  normalizeDrawsResult(res).length,
+                prizes:
+                  normalizePrizesArray(res).length,
+              })
+            ),
+            drawsChunk:
+              drawsChunk.length,
+            prizesFlat:
+              prizesFlat.length,
+            firstDraw:
+              drawsChunk[0] || null,
+            firstPrize:
+              prizesFlat[0] || null,
+          });
 
           const entries = [];
 
@@ -1151,6 +1206,44 @@ export default function CentenasView() {
             label: `Carregando histórico... (${idx + 1}/${chunks.length})`,
           }));
 
+          console.info("[CNT-HOR-04][ENTRIES-CHUNK]", {
+            dateFrom: ch.from,
+            dateTo: ch.to,
+            requestedCloseHour,
+            entries:
+              entries.length,
+            entriesByLottery:
+              entries.reduce(
+                (acc, entry) => {
+                  const key =
+                    entry?.lotteryKey ||
+                    "UNKNOWN";
+
+                  acc[key] =
+                    (acc[key] || 0) + 1;
+
+                  return acc;
+                },
+                {}
+              ),
+            entryBuckets:
+              entries.reduce(
+                (acc, entry) => {
+                  const key =
+                    entry?.hourBucket ||
+                    "EMPTY";
+
+                  acc[key] =
+                    (acc[key] || 0) + 1;
+
+                  return acc;
+                },
+                {}
+              ),
+            firstEntry:
+              entries[0] || null,
+          });
+
           return { ok: true, entries };
         });
 
@@ -1186,9 +1279,85 @@ export default function CentenasView() {
 
       // Recorte atual da página.
       const prizesAll = [];
+      const drawFilterDiagnostic = {
+        totalEntries:
+          Array.isArray(entriesBase)
+            ? entriesBase.length
+            : 0,
+        approvedEntries: 0,
+        rejectedEntries: 0,
+        approvedByLottery: {},
+        rejectedByLottery: {},
+        bucketsBeforeFilter: {},
+        rejectedSamples: [],
+      };
 
       for (const e of entriesBase || []) {
-        if (!applyDrawFiltersToEntry(e)) continue;
+        const diagnosticLottery =
+          e?.lotteryKey ||
+          "UNKNOWN";
+
+        const diagnosticBucket =
+          e?.hourBucket ||
+          "EMPTY";
+
+        drawFilterDiagnostic.bucketsBeforeFilter[
+          diagnosticBucket
+        ] =
+          (
+            drawFilterDiagnostic.bucketsBeforeFilter[
+              diagnosticBucket
+            ] || 0
+          ) + 1;
+
+        const drawApproved =
+          applyDrawFiltersToEntry(e);
+
+        if (!drawApproved) {
+          drawFilterDiagnostic.rejectedEntries += 1;
+
+          drawFilterDiagnostic.rejectedByLottery[
+            diagnosticLottery
+          ] =
+            (
+              drawFilterDiagnostic.rejectedByLottery[
+                diagnosticLottery
+              ] || 0
+            ) + 1;
+
+          if (
+            drawFilterDiagnostic.rejectedSamples.length <
+            10
+          ) {
+            drawFilterDiagnostic.rejectedSamples.push({
+              lotteryKey:
+                diagnosticLottery,
+              ymd:
+                e?.ymd || null,
+              hourNorm:
+                e?.hourNorm || null,
+              hourBucket:
+                e?.hourBucket || null,
+              prizeCount:
+                Array.isArray(e?.prizes)
+                  ? e.prizes.length
+                  : 0,
+            });
+          }
+
+          continue;
+        }
+
+        drawFilterDiagnostic.approvedEntries += 1;
+
+        drawFilterDiagnostic.approvedByLottery[
+          diagnosticLottery
+        ] =
+          (
+            drawFilterDiagnostic.approvedByLottery[
+              diagnosticLottery
+            ] || 0
+          ) + 1;
 
         const prizes = Array.isArray(e?.prizes)
           ? e.prizes
@@ -1200,6 +1369,26 @@ export default function CentenasView() {
       }
 
       const allPrizes = applyPrizeFilters(prizesAll);
+
+      console.info("[CNT-HOR-04][FINAL-FILTER]", {
+        selectedLotteryKeys,
+        filters: {
+          fMes,
+          fDiaMes,
+          fDiaSemana,
+          fHorario,
+          fAnimal,
+          fPosicao,
+        },
+        requestedCloseHour,
+        ...drawFilterDiagnostic,
+        prizesBeforePrizeFilter:
+          prizesAll.length,
+        prizesAfterPrizeFilter:
+          allPrizes.length,
+        firstApprovedPrize:
+          allPrizes[0] || null,
+      });
 
       const out = [];
       for (let g = 1; g <= 25; g += 1) {
