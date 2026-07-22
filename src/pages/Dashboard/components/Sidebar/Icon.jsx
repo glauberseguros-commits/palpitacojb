@@ -192,6 +192,31 @@ export default function Icon({ name = "home", size = 18 }) {
     );
   }
 
+  if (name === "chart") {
+    return (
+      <svg {...common}>
+        <path
+          d="M4 20V13h4v7H4Z"
+          stroke={stroke}
+          strokeWidth="2"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M10 20V8h4v12h-4Z"
+          stroke={gold}
+          strokeWidth="2"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M16 20V4h4v16h-4Z"
+          stroke={stroke}
+          strokeWidth="2"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+
   if (name === "back") {
     return (
       <svg {...common}>

@@ -15,6 +15,7 @@ const ROUTES = {
   PAYMENTS: "payments",
   DOWNLOADS: "downloads",
   CENTENAS: "centenas",
+  STATISTICS: "statistics",
 };
 
 const ACCOUNT_SESSION_KEY = "pp_session_v1";
@@ -469,6 +470,7 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
 
   const menuTools = [
     { key: ROUTES.SEARCH, icon: "search", title: "Busca" },
+    { key: ROUTES.STATISTICS, icon: "chart", title: "Estatísticas" },
     { key: ROUTES.CENTENAS, icon: "hash", title: "Centenas" },
     { key: ROUTES.DOWNLOADS, icon: "download", title: "Downloads" },
   ];
