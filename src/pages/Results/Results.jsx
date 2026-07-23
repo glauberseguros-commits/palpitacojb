@@ -121,7 +121,7 @@ function normalizeHourLike(value) {
 
   const mISO = s.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
   if (mISO) {
-    return `${pad2(mISO[1])}:00`;
+    return `${pad2(mISO[1])}:${pad2(mISO[2])}`;
   }
 
   const m2 = s.match(/^(\d{1,2})$/);
@@ -1906,7 +1906,9 @@ export default function Results() {
     : hour;
 
 const hs = displayHour
-  ? `${displayHour.slice(0,2)}HS`
+  ? displayHour.endsWith(":00")
+    ? `${displayHour.slice(0, 2)}HS`
+    : `${displayHour.slice(0, 2)}H${displayHour.slice(3, 5)}`
   : "—";
 
                     const byPos = new Map();
