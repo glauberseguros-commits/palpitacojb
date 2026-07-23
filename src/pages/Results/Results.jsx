@@ -655,6 +655,50 @@ function shouldShowExpectedHour(ymd, hour) {
   return hNum <= currentHourNumLocal();
 }
 
+/*
+ * A fonte grava o novo sorteio de sábado da PT_RIO no bucket 19:00,
+ * embora o horário oficial exibido seja 19:20.
+ *
+ * A conversão fica restrita à camada visual da página Resultados para não
+ * alterar filtros, estatísticas, Top3 ou o histórico armazenado no Firestore.
+ */
+function normalizeRjDisplayHour(draw, ymd) {
+  const hour = normalizeHourLike(
+    draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+  );
+
+  const d = ymdToDateLocal(ymd);
+  const dow =
+    d instanceof Date && !Number.isNaN(d.getTime())
+      ? d.getDay()
+      : -1;
+
+  if (
+    hour === "19:00" &&
+    dow === 6 &&
+    isYMD(ymd) &&
+    ymd >= RJ_SATURDAY_1920_START_YMD
+  ) {
+    return "19:20";
+  }
+
+  return hour;
+}
+
+function normalizeDisplayHourForScope(scopeKey, draw, ymd) {
+  if (scopeKey === SCOPE_NACIONAL) {
+    return normalizeNacionalDisplayHour(draw);
+  }
+
+  if (scopeKey === SCOPE_RJ) {
+    return normalizeRjDisplayHour(draw, ymd);
+  }
+
+  return normalizeHourLike(
+    draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+  );
+}
+
 
 function normalizeNacionalDisplayHour(draw) {
   const hour = normalizeHourLike(
@@ -699,12 +743,7 @@ function buildExpectedDrawsForScope(scopeKey, orderedDraws, ymd) {
   const byHour = new Map();
 
   for (const d of list) {
-    const h =
-      scopeKey === SCOPE_NACIONAL
-        ? normalizeNacionalDisplayHour(d)
-        : normalizeHourLike(
-            d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
-          );
+    const h = normalizeDisplayHourForScope(scopeKey, d, ymd);
     if (!h) continue;
     if (!byHour.has(h)) byHour.set(h, d);
   }
@@ -752,12 +791,7 @@ function buildExpectedDrawsForScope(scopeKey, orderedDraws, ymd) {
   });
 
   const extraActual = list.filter((d) => {
-    const h =
-      scopeKey === SCOPE_NACIONAL
-        ? normalizeNacionalDisplayHour(d)
-        : normalizeHourLike(
-            d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
-          );
+    const h = normalizeDisplayHourForScope(scopeKey, d, ymd);
 
     return h && !visibleExpectedHours.includes(h);
   });
@@ -1900,10 +1934,11 @@ export default function Results() {
                     );
                     const id = safeStr(d?.drawId || d?.id || `idx_${idx}`);
                     const prizesRaw = Array.isArray(d?.prizes) ? d.prizes : [];
-                    const displayHour =
-  scopeKey === SCOPE_NACIONAL
-    ? normalizeNacionalDisplayHour(d)
-    : hour;
+                    const displayHour = normalizeDisplayHourForScope(
+                      scopeKey,
+                      d,
+                      ymdClamped
+                    );
 
 const hs = displayHour
   ? displayHour.endsWith(":00")
