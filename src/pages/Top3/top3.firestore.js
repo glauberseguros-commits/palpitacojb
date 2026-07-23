@@ -197,7 +197,7 @@ function analyzeSnapshotHit(snapshot, resultGrupo, resultMilhar) {
         hitType: "hit_grupo",
         hitScore: 33.33,
         hitPosition: index + 1,
-        matchedValue: milhar ? milhar.slice(-2) : String(grupo),
+        matchedValue: milhar ? milhar.slice(-2) : "",
       };
     }
   });
@@ -402,6 +402,7 @@ export async function reconcileTop3PredictionDay({
 
   const lottery = normalizeLotteryKey(lotteryKey);
   let updated = 0;
+  const reconciledHistory = [];
 
   for (const entry of history) {
     if (!entry) continue;
@@ -412,7 +413,10 @@ export async function reconcileTop3PredictionDay({
       targetHour: entry?.targetHour,
     });
 
-    if (!realDraw) continue;
+    if (!realDraw) {
+      reconciledHistory.push(entry);
+      continue;
+    }
 
     const resultGrupo = Number(
       pickPrize1GrupoFromDraw(realDraw)
@@ -423,6 +427,7 @@ export async function reconcileTop3PredictionDay({
       resultGrupo < 1 ||
       resultGrupo > 25
     ) {
+      reconciledHistory.push(entry);
       continue;
     }
 
@@ -433,45 +438,57 @@ export async function reconcileTop3PredictionDay({
     const savedGrupo = Number(entry?.resultGrupo);
     const savedMilhar = normalizeMilhar(entry?.resultMilhar);
 
-    const alreadyMatchesRealResult =
-      entry?.status === "validated" &&
-      savedLottery === lottery &&
-      savedGrupo === resultGrupo &&
-      savedMilhar === resultMilhar;
-
-    if (alreadyMatchesRealResult) {
-      continue;
-    }
-
     const analysis = analyzeSnapshotHit(
       entry?.snapshot,
       resultGrupo,
       resultMilhar
     );
 
+    const alreadyMatchesRealResult =
+      entry?.status === "validated" &&
+      savedLottery === lottery &&
+      savedGrupo === resultGrupo &&
+      savedMilhar === resultMilhar &&
+      safeStr(entry?.hitType) === analysis.hitType &&
+      Number(entry?.hitScore) === analysis.hitScore &&
+      Number(entry?.hitPosition) === analysis.hitPosition &&
+      safeStr(entry?.matchedValue) === analysis.matchedValue;
+
+    if (alreadyMatchesRealResult) {
+      reconciledHistory.push(entry);
+      continue;
+    }
+
     const ref = doc(db, COLLECTION, entry.id);
     const now = Date.now();
 
+    const validationPayload = {
+      resultGrupo,
+      resultMilhar,
+      resultLotteryKey: lottery,
+      resultAnimal: safeStr(
+        extractPrize1(realDraw)?.animal || ""
+      ),
+      hitType: analysis.hitType,
+      hitScore: analysis.hitScore,
+      hitPosition: analysis.hitPosition,
+      matchedValue: analysis.matchedValue,
+      validatedAt: now,
+      validatedBy: user.uid,
+      updatedAt: now,
+      status: "validated",
+    };
+
     await setDoc(
       ref,
-      {
-        resultGrupo,
-        resultMilhar,
-        resultLotteryKey: lottery,
-        resultAnimal: safeStr(
-          extractPrize1(realDraw)?.animal || ""
-        ),
-        hitType: analysis.hitType,
-        hitScore: analysis.hitScore,
-        hitPosition: analysis.hitPosition,
-        matchedValue: analysis.matchedValue,
-        validatedAt: now,
-        validatedBy: user.uid,
-        updatedAt: now,
-        status: "validated",
-      },
+      validationPayload,
       { merge: true }
     );
+
+    reconciledHistory.push({
+      ...entry,
+      ...validationPayload,
+    });
 
     updated += 1;
   }
@@ -479,5 +496,6 @@ export async function reconcileTop3PredictionDay({
   return {
     ok: true,
     updated,
+    history: reconciledHistory,
   };
 }

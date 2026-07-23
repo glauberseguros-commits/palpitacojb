@@ -78,6 +78,9 @@ import {
   buildResultStyleImgVariants,
 } from "./top3.images";
 
+const top3SaveRunKeys = new Set();
+const top3ReconcileRunKeys = new Set();
+
 function emptyAnalytics() {
   return { top: [], meta: null };
 }
@@ -378,6 +381,13 @@ export function useTop3Controller() {
   const isFederalNonDrawDay = useMemo(() => {
     return lotteryKeySafe === "FEDERAL" && !isFederalDrawDay(ymdSafe);
   }, [lotteryKeySafe, ymdSafe]);
+
+  const scheduleKey = useMemo(() => {
+    return (Array.isArray(schedule) ? schedule : [])
+      .map(toHourBucket)
+      .filter(Boolean)
+      .join("|");
+  }, [schedule]);
 
   const rangeLabel = useMemo(() => {
     const f = safeStr(rangeInfo?.from);
@@ -971,6 +981,16 @@ export function useTop3Controller() {
 
     if (!targetKey || !picks.length) return;
 
+    const saveRunKey = [
+      lotteryKeySafe,
+      targetKey,
+      picks.join(","),
+    ].join("|");
+
+    if (top3SaveRunKeys.has(saveRunKey)) return;
+
+    top3SaveRunKeys.add(saveRunKey);
+
     const snapshot = top3.map((item, index) => ({
       rank: index + 1,
       grupo: Number(item?.grupo),
@@ -1028,6 +1048,8 @@ export function useTop3Controller() {
         } catch {}
 
         if (!result?.ok) {
+          top3SaveRunKeys.delete(saveRunKey);
+
           console.error(
             "[TOP3 FIRESTORE SAVE FAILED]",
             diagnostic
@@ -1040,6 +1062,8 @@ export function useTop3Controller() {
         }
       })
       .catch((error) => {
+        top3SaveRunKeys.delete(saveRunKey);
+
         const diagnostic = {
           at: new Date().toISOString(),
           lotteryKey: lotteryKeySafe,
@@ -1072,18 +1096,14 @@ export function useTop3Controller() {
   ]);
 
   useEffect(() => {
+    const persistedSchedule = scheduleKey
+      ? scheduleKey.split("|").filter(Boolean)
+      : [];
+
     debugTop3Effect("04_load_persisted_history", {
       lotteryKey: lotteryKeySafe,
       timelineYmd,
-      scheduleLength: Array.isArray(schedule)
-        ? schedule.length
-        : -1,
-      todayDrawsLength: Array.isArray(todayDraws)
-        ? todayDraws.length
-        : -1,
-      rangeDrawsLength: Array.isArray(rangeDraws)
-        ? rangeDraws.length
-        : -1,
+      scheduleLength: persistedSchedule.length,
     });
 
     let alive = true;
@@ -1098,7 +1118,7 @@ export function useTop3Controller() {
         const history = await loadTop3PredictionDay({
           lotteryKey: lotteryKeySafe,
           targetYmd: timelineYmd,
-          schedule,
+          schedule: persistedSchedule,
         });
 
         if (alive) {
@@ -1119,32 +1139,89 @@ export function useTop3Controller() {
   }, [
     lotteryKeySafe,
     timelineYmd,
-    schedule,
-    todayDraws,
-    rangeDraws,
+    scheduleKey,
   ]);
 
   useEffect(() => {
+    const persistedSchedule = scheduleKey
+      ? scheduleKey.split("|").filter(Boolean)
+      : [];
+
     debugTop3Effect("05_reconcile_history", {
       lotteryKey: lotteryKeySafe,
       timelineYmd,
-      scheduleLength: Array.isArray(schedule)
-        ? schedule.length
-        : -1,
+      scheduleLength: persistedSchedule.length,
       todayDrawsLength: Array.isArray(todayDraws)
         ? todayDraws.length
         : -1,
       rangeDrawsLength: Array.isArray(rangeDraws)
         ? rangeDraws.length
         : -1,
+      loading,
     });
 
+    if (loading) return;
+    if (!isYMD(timelineYmd)) return;
     if (!(todayDraws?.length || rangeDraws?.length)) return;
 
-    const allDraws = [
+    const drawMap = new Map();
+
+    for (const draw of [
       ...(Array.isArray(rangeDraws) ? rangeDraws : []),
       ...(Array.isArray(todayDraws) ? todayDraws : []),
-    ];
+    ]) {
+      if (pickDrawYMD(draw) !== timelineYmd) continue;
+
+      const key = drawKey(draw);
+      if (!key) continue;
+
+      drawMap.set(key, draw);
+    }
+
+    const targetDraws = Array.from(drawMap.values()).sort(
+      (a, b) => drawTs(a) - drawTs(b)
+    );
+
+    if (!targetDraws.length) return;
+
+    const drawSignature = targetDraws
+      .map((draw) => {
+        const key = drawKey(draw);
+        const grupo = Number(
+          pickPrize1GrupoFromDraw(draw) || 0
+        );
+
+        const prize1 = Array.isArray(draw?.prizes)
+          ? draw.prizes.find(
+              (item) => Number(item?.position) === 1
+            ) || draw.prizes[0]
+          : null;
+
+        const milhar = safeStr(
+          prize1?.milhar ??
+            prize1?.numero ??
+            prize1?.number ??
+            prize1?.valor ??
+            draw?.prize_1 ??
+            ""
+        );
+
+        return `${key}:${grupo}:${milhar}`;
+      })
+      .join(",");
+
+    const reconcileRunKey = [
+      lotteryKeySafe,
+      timelineYmd,
+      scheduleKey,
+      drawSignature,
+    ].join("|");
+
+    if (top3ReconcileRunKeys.has(reconcileRunKey)) return;
+
+    top3ReconcileRunKeys.add(reconcileRunKey);
+
+    let alive = true;
 
     reconcilePendingTop3Log({
       todayDraws: Array.isArray(todayDraws) ? todayDraws : [],
@@ -1154,32 +1231,42 @@ export function useTop3Controller() {
     reconcileTop3PredictionDay({
       lotteryKey: lotteryKeySafe,
       targetYmd: timelineYmd,
-      schedule,
-      draws: allDraws,
+      schedule: persistedSchedule,
+      draws: targetDraws,
     })
-      .then(async () => {
-        const history = await loadTop3PredictionDay({
-          lotteryKey: lotteryKeySafe,
-          targetYmd: timelineYmd,
-          schedule,
-        });
+      .then((result) => {
+        if (!alive) return;
+
+        if (!result?.ok) {
+          top3ReconcileRunKeys.delete(reconcileRunKey);
+          return;
+        }
 
         setPersistedTop3History(
-          Array.isArray(history) ? history : []
+          Array.isArray(result?.history)
+            ? result.history
+            : []
         );
       })
       .catch((error) => {
+        top3ReconcileRunKeys.delete(reconcileRunKey);
+
         if (debugTop3) {
           console.warn("[TOP3 FIRESTORE RECONCILE]", error);
         }
       });
+
+    return () => {
+      alive = false;
+    };
   }, [
     todayDraws,
     rangeDraws,
     lotteryKeySafe,
     timelineYmd,
-    schedule,
+    scheduleKey,
     debugTop3,
+    loading,
   ]);
 
   return {
