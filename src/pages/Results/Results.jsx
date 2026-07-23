@@ -230,7 +230,27 @@ const FEDERAL_INPUT_ALIASES = new Set([
 ]);
 
 const RJ_09H_START_YMD = "2024-01-05";
-const RJ_EXPECTED_HOURS_BASE_DESC = ["21:00", "18:00", "16:00", "14:00", "11:00"];
+const RJ_SATURDAY_1920_START_YMD = "2026-07-18";
+
+const RJ_EXPECTED_HOURS_REGULAR_DESC = [
+  "21:00",
+  "18:00",
+  "16:00",
+  "14:00",
+  "11:00",
+];
+
+const RJ_EXPECTED_HOURS_WEDNESDAY_DESC = [
+  "21:00",
+  "16:00",
+  "14:00",
+  "11:00",
+];
+
+const RJ_EXPECTED_HOURS_SUNDAY_DESC = [
+  "16:00",
+  "14:00",
+];
 
 function isFederalInput(scope) {
   const up = safeStr(scope).toUpperCase();
@@ -574,14 +594,52 @@ function stopOnly(e) {
 
 function getExpectedRjHoursDesc(ymd) {
   const d = ymdToDateLocal(ymd);
-  const dow = d instanceof Date && !Number.isNaN(d.getTime()) ? d.getDay() : -1;
+  const dow =
+    d instanceof Date && !Number.isNaN(d.getTime())
+      ? d.getDay()
+      : -1;
 
-  const out =
-    dow === 0
-      ? ["16:00", "14:00", "11:00"]
-      : [...RJ_EXPECTED_HOURS_BASE_DESC];
+  let out;
 
-  if (isYMD(ymd) && ymd >= RJ_09H_START_YMD) {
+  /*
+   * Domingo:
+   * a PT_RIO possui somente 14h e 16h.
+   */
+  if (dow === 0) {
+    return [...RJ_EXPECTED_HOURS_SUNDAY_DESC];
+  }
+
+  /*
+   * Quarta-feira:
+   * não existe sorteio das 18h.
+   */
+  if (dow === 3) {
+    out = [...RJ_EXPECTED_HOURS_WEDNESDAY_DESC];
+  }
+  /*
+   * Sábado a partir de 18/07/2026:
+   * 19:20 substitui o antigo horário das 18h.
+   */
+  else if (
+    dow === 6 &&
+    isYMD(ymd) &&
+    ymd >= RJ_SATURDAY_1920_START_YMD
+  ) {
+    out = [
+      "21:00",
+      "19:20",
+      "16:00",
+      "14:00",
+      "11:00",
+    ];
+  } else {
+    out = [...RJ_EXPECTED_HOURS_REGULAR_DESC];
+  }
+
+  if (
+    isYMD(ymd) &&
+    ymd >= RJ_09H_START_YMD
+  ) {
     out.push("09:00");
   }
 
