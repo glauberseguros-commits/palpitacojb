@@ -774,20 +774,48 @@ function buildExpectedDrawsForScope(scopeKey, orderedDraws, ymd) {
     shouldShowExpectedHour(ymd, hour)
   );
 
-  const result = visibleExpectedHours.map((hour) => {
+  const result = visibleExpectedHours.flatMap((hour) => {
     const found = byHour.get(hour);
-    if (found) return found;
 
-    return {
-      __placeholder: true,
-      __slotHour: hour,
-      __placeholderKind: "compact",
-      drawId: `placeholder_${scopeKey}_${hour}`,
-      id: `placeholder_${scopeKey}_${hour}`,
-      close_hour: hour,
-      closeHour: hour,
-      prizes: [],
-    };
+    /*
+     * O horário das 18h continua pertencendo ao calendário histórico da PT_RIO.
+     *
+     * Entretanto, a auditoria oficial dos sábados confirmou que, quando não
+     * existe resultado real às 18h, o card vazio representa uma ausência
+     * legítima de sorteio e não uma falha de importação.
+     *
+     * Resultados reais continuam sendo exibidos porque a busca por `found`
+     * acontece antes desta condição.
+     */
+    if (found) return [found];
+
+    const selectedDate = ymdToDateLocal(ymd);
+    const selectedDow =
+      selectedDate instanceof Date && !Number.isNaN(selectedDate.getTime())
+        ? selectedDate.getDay()
+        : -1;
+
+    const isConfirmedSaturday18Absence =
+      scopeKey === SCOPE_RJ &&
+      selectedDow === 6 &&
+      hour === "18:00";
+
+    if (isConfirmedSaturday18Absence) {
+      return [];
+    }
+
+    return [
+      {
+        __placeholder: true,
+        __slotHour: hour,
+        __placeholderKind: "compact",
+        drawId: `placeholder_${scopeKey}_${hour}`,
+        id: `placeholder_${scopeKey}_${hour}`,
+        close_hour: hour,
+        closeHour: hour,
+        prizes: [],
+      },
+    ];
   });
 
   const extraActual = list.filter((d) => {
