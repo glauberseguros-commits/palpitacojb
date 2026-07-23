@@ -671,6 +671,63 @@ async function fetchDrawDocsPreferUf({
     return { docs: [], usedField: "lottery_key", error: null };
   }
 
+  /*
+   * RJ possui documentos históricos gravados em dois formatos:
+   * - uf == "RJ"
+   * - lottery_key == "PT_RIO"
+   *
+   * Não podemos retornar somente a primeira consulta que encontrar dados,
+   * pois isso elimina horários existentes apenas no outro formato.
+   */
+  if (ufUp === RJ_STATE_CODE || ufUp === RJ_LOTTERY_KEY) {
+    const [byUf, byLotteryKey] = await Promise.all([
+      queryDrawsByField({
+        fieldName: "uf",
+        uf: RJ_STATE_CODE,
+        extraWheres,
+        extraOrderBy,
+        extraLimit,
+        policy,
+      }),
+      queryDrawsByField({
+        fieldName: "lottery_key",
+        uf: RJ_LOTTERY_KEY,
+        extraWheres,
+        extraOrderBy,
+        extraLimit,
+        policy,
+      }),
+    ]);
+
+    if (byUf.error) {
+      return { docs: [], usedField: "uf+lottery_key", error: byUf.error };
+    }
+
+    if (byLotteryKey.error) {
+      return {
+        docs: [],
+        usedField: "uf+lottery_key",
+        error: byLotteryKey.error,
+      };
+    }
+
+    const mergedById = new Map();
+
+    for (const doc of byUf.snap?.docs || []) {
+      mergedById.set(doc.id, doc);
+    }
+
+    for (const doc of byLotteryKey.snap?.docs || []) {
+      mergedById.set(doc.id, doc);
+    }
+
+    return {
+      docs: Array.from(mergedById.values()),
+      usedField: "uf+lottery_key",
+      error: null,
+    };
+  }
+
   {
     const { snap, error } = await queryDrawsByField({
       fieldName: "uf",
@@ -688,8 +745,7 @@ async function fetchDrawDocsPreferUf({
   }
 
   {
-    const lotteryKey =
-      ufUp === RJ_STATE_CODE ? RJ_LOTTERY_KEY : resolveLotteryKeyForQuery(ufTrim);
+    const lotteryKey = resolveLotteryKeyForQuery(ufTrim);
 
     const { snap, error } = await queryDrawsByField({
       fieldName: "lottery_key",
