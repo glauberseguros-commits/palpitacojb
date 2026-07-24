@@ -816,10 +816,10 @@ export default function Downloads() {
       setExportError("");
 
       try {
-        const filteredRows = Array.isArray(previewRows) ? previewRows : [];
+        const filteredRows = await fetchFilteredRows();
 
         if (!filteredRows.length) {
-          setExportError("Consulte os resultados antes de exportar.");
+          setExportError("Sem dados para exportar com os filtros atuais.");
           return;
         }
 
@@ -892,7 +892,7 @@ export default function Downloads() {
         setExportLoading(false);
       }
     },
-    [ufQueryKey, ufUi, normalizeRange, previewRows, buildMetaLines]
+    [ufQueryKey, ufUi, normalizeRange, fetchFilteredRows, buildMetaLines]
   );
 
   const { from: fromSafe, to: toSafe } = useMemo(() => normalizeRange(), [normalizeRange]);
