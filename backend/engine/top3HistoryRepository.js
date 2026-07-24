@@ -443,27 +443,17 @@ async function readFullHistory(
   lotteryKey,
   dependencies = {}
 ) {
-  const database = resolveDb(dependencies);
-
-  const key = normalizeLotteryKey(lotteryKey);
-
-  const snap = await historyRootRef(
-    database,
-    key
-  )
-    .collection(MONTHS_COLLECTION)
-    .orderBy("yearMonth")
-    .select("draws")
-    .get();
+  const months = await listHistoryMonths(
+    lotteryKey,
+    dependencies
+  );
 
   const draws = [];
 
-  for (const doc of snap.docs) {
-    const data = doc.data() || {};
-
-    if (Array.isArray(data.draws) && data.draws.length) {
-      draws.push(...data.draws);
-    }
+  for (const month of months) {
+    draws.push(
+      ...safeArray(month.draws)
+    );
   }
 
   return deduplicateDraws(draws);
