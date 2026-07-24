@@ -2,9 +2,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getKingBoundsByUf, getKingResultsByRange } from "../../services/kingResultsService";
 import {
-  buildMilharRecommendation,
-  diversifyMilharRecommendations,
-} from "./modules/milharProbabilityEngine";
+  buildMilharRecommendationV3,
+  diversifyMilharRecommendationsV3,
+} from "./modules/milharProbabilityEngineV3";
 import {
   getAnimalLabel as getAnimalLabelFn,
   getImgFromGrupo as getImgFromGrupoFn,
@@ -1688,7 +1688,7 @@ export default function CentenasView() {
 
         const rawList40 = c40
           .map((c) => {
-            const recommendation = buildMilharRecommendation({
+            const recommendation = buildMilharRecommendationV3({
               centena: c,
               prizes: groupPrizes,
               fallbackPrizes: groupHistoricalPrizes,
@@ -1708,7 +1708,7 @@ export default function CentenasView() {
             return String(a.centena).localeCompare(String(b.centena));
           });
 
-        const list40 = diversifyMilharRecommendations(
+        const list40 = diversifyMilharRecommendationsV3(
           rawList40,
           {
             maxPerPrefix: 4,
