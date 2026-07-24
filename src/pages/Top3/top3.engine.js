@@ -3163,6 +3163,16 @@ export function computeStatisticalTop3V3({
     activeWeights[keyLayer] = activeWeights[keyLayer] / totalWeight;
   }
 
+  const layerProbabilities = Object.fromEntries(
+    Object.entries(layers).map(([keyLayer, layer]) => [
+      keyLayer,
+      {
+        first: layerProbability(layer.first, layer.samples),
+        prizePresence: layerProbability(layer.prizePresence, layer.samples),
+      },
+    ])
+  );
+
   const ranked = Array.from({ length: safeInt(TOP3_GROUPS_K, 25) }, (_, idx) => {
     const grupo = idx + 1;
 
@@ -3170,8 +3180,10 @@ export function computeStatisticalTop3V3({
     const details = {};
 
     for (const [keyLayer, layer] of Object.entries(layers)) {
-      const pFirst = Number(layerProbability(layer.first, layer.samples).get(grupo) || 0);
-      const pPrizePresence = Number(layerProbability(layer.prizePresence, layer.samples).get(grupo) || 0);
+      const probabilities = layerProbabilities[keyLayer];
+
+      const pFirst = Number(probabilities.first.get(grupo) || 0);
+      const pPrizePresence = Number(probabilities.prizePresence.get(grupo) || 0);
 
       const pLayer = (pFirst * 0.92) + (pPrizePresence * 0.08);
       const w = Number(activeWeights[keyLayer] || 0);
