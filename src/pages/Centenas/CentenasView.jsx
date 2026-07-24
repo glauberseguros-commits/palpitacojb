@@ -125,6 +125,124 @@ function toHourBucketHH00(value) {
   return `${hh}:00`;
 }
 
+/*
+ * LOOK e NACIONAL chegam da fonte com horários de fechamento
+ * próximos do horário oficial exibido ao usuário.
+ *
+ * Exemplos:
+ * - NACIONAL 01:49 -> 02:00
+ * - NACIONAL 07:49 -> 08:00
+ * - NACIONAL 22:49 -> 23:00
+ *
+ * A normalização precisa ocorrer antes do filtro da página.
+ */
+const OFFICIAL_HOURS_BY_LOTTERY = Object.freeze({
+  LOOK: Object.freeze([
+    "07:00",
+    "09:00",
+    "11:00",
+    "14:00",
+    "16:00",
+    "18:00",
+    "21:00",
+    "23:00",
+  ]),
+  NACIONAL: Object.freeze([
+    "02:00",
+    "08:00",
+    "10:00",
+    "12:00",
+    "15:00",
+    "17:00",
+    "21:00",
+    "23:00",
+  ]),
+});
+
+function hourToMinutes(value) {
+  const norm = normalizeHourLike(value);
+  const match = String(norm).match(/^(\d{2}):(\d{2})$/);
+
+  if (!match) return null;
+
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+
+  if (
+    !Number.isFinite(hour) ||
+    !Number.isFinite(minute) ||
+    hour < 0 ||
+    hour > 23 ||
+    minute < 0 ||
+    minute > 59
+  ) {
+    return null;
+  }
+
+  return hour * 60 + minute;
+}
+
+function normalizeOfficialHourForLottery(lotteryKey, value) {
+  const rawBucket = toHourBucketHH00(value);
+  const normalizedLotteryKey = String(lotteryKey || "")
+    .trim()
+    .toUpperCase();
+
+  const officialHours =
+    OFFICIAL_HOURS_BY_LOTTERY[normalizedLotteryKey];
+
+  if (!Array.isArray(officialHours) || !officialHours.length) {
+    return rawBucket;
+  }
+
+  const rawMinutes = hourToMinutes(value);
+
+  if (!Number.isFinite(rawMinutes)) {
+    return rawBucket;
+  }
+
+  let bestHour = "";
+  let bestDistance = Number.POSITIVE_INFINITY;
+
+  for (const officialHour of officialHours) {
+    const officialMinutes = hourToMinutes(officialHour);
+
+    if (!Number.isFinite(officialMinutes)) continue;
+
+    const directDistance = Math.abs(
+      rawMinutes - officialMinutes
+    );
+
+    const circularDistance = Math.min(
+      directDistance,
+      1440 - directDistance
+    );
+
+    if (circularDistance < bestDistance) {
+      bestDistance = circularDistance;
+      bestHour = officialHour;
+    }
+  }
+
+  /*
+   * Limite defensivo:
+   * só converte horários que estejam no máximo 90 minutos
+   * distantes de um horário oficial.
+   */
+  return bestHour && bestDistance <= 90
+    ? bestHour
+    : rawBucket;
+}
+
+function shouldFilterHourInsideService(lotteryKey) {
+  const key = String(lotteryKey || "")
+    .trim()
+    .toUpperCase();
+
+  return key !== LOTTERY_KEYS.LOOK &&
+    key !== LOTTERY_KEYS.NACIONAL;
+}
+
 function extractHourFromText(text) {
   const s = String(text ?? "").trim();
   if (!s) return "";
@@ -909,7 +1027,22 @@ export default function CentenasView() {
   const applyDrawFiltersToEntry = useCallback(
     (entry) => {
       const ymd = entry?.ymd || "";
-      const hr = entry?.hourBucket || entry?.hourNorm || "";
+      const lotteryKey =
+        entry?.lotteryKey ||
+        entry?.__centenasLotteryKey ||
+        "";
+
+      const hrRaw =
+        entry?.hourNorm ||
+        entry?.hourBucket ||
+        "";
+
+      const hr =
+        normalizeOfficialHourForLottery(
+          lotteryKey,
+          hrRaw
+        );
+
       if (!ymd) return false;
 
       if (!isTodos(fMes)) {
@@ -1009,8 +1142,21 @@ export default function CentenasView() {
                       uf: lotteryKey,
                       dateFrom: ch.from,
                       dateTo: ch.to,
+                      /*
+                       * PT Rio e Federal podem ser filtradas
+                       * diretamente no serviço.
+                       *
+                       * LOOK e NACIONAL precisam chegar completas,
+                       * pois o horário bruto da fonte não é
+                       * necessariamente igual ao horário oficial.
+                       */
                       closeHour:
-                        requestedCloseHour,
+                        requestedCloseHour &&
+                        shouldFilterHourInsideService(
+                          lotteryKey
+                        )
+                          ? requestedCloseHour
+                          : null,
                       positions:
                         requestedPrizePositions,
                       mode: "detailed",
@@ -1136,7 +1282,11 @@ export default function CentenasView() {
                 lotteryKey,
                 ymd,
                 hourNorm,
-                hourBucket,
+                hourBucket:
+                  normalizeOfficialHourForLottery(
+                    lotteryKey,
+                    hourNorm || hourBucket
+                  ),
                 prizes,
               });
             }
@@ -1169,7 +1319,11 @@ export default function CentenasView() {
                   lotteryKey,
                   ymd,
                   hourNorm,
-                  hourBucket,
+                  hourBucket:
+                    normalizeOfficialHourForLottery(
+                      lotteryKey,
+                      hourNorm || hourBucket
+                    ),
                   prizes: [],
                 });
               }
