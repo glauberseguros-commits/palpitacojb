@@ -184,7 +184,13 @@ function pickDrawYMD(draw) {
   return y;
 }
 
-const UF_TO_LOTTERY_KEY = { RJ: "PT_RIO", FEDERAL: "FEDERAL", BR: "FEDERAL" };
+const UF_TO_LOTTERY_KEY = {
+  RJ: "PT_RIO",
+  FEDERAL: "FEDERAL",
+  BR: "FEDERAL",
+  LOOK: "LOOK",
+  NACIONAL: "NACIONAL",
+};
 
 function normalizeUfToQueryKey(input) {
   const s = safeStr(input).toUpperCase();
@@ -197,6 +203,8 @@ function lotteryLabelFromKey(key) {
   const s = safeStr(key).toUpperCase();
   if (s === "PT_RIO") return "RIO";
   if (s === "FEDERAL") return "FEDERAL";
+  if (s === "LOOK") return "LOOK";
+  if (s === "NACIONAL") return "NACIONAL";
   if (s.length === 2) return s;
   const parts = s.split("_");
   return parts[parts.length - 1] || s;
@@ -561,6 +569,13 @@ export default function Downloads() {
   const [fAnimalGrupo, setFAnimalGrupo] = useState("ALL");
   const [fPos, setFPos] = useState("ALL");
 
+  useEffect(() => {
+    setFHour("ALL");
+    setPreviewRows([]);
+    setPreviewError("");
+    setPreviewPage(1);
+  }, [ufQueryKey]);
+
   const [exportLoading, setExportLoading] = useState(false);
   const [exportError, setExportError] = useState("");
 
@@ -657,10 +672,24 @@ export default function Downloads() {
   }, []);
 
   const hourOptions = useMemo(() => {
-    const base = ["ALL", "09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
+    const lotteryKey = safeStr(ufQueryKey).toUpperCase();
+
+    const hoursByLottery = {
+      PT_RIO: ["09:00", "11:00", "14:00", "16:00", "18:00", "19:00", "21:00"],
+      FEDERAL: ["19:00", "20:00"],
+      LOOK: ["07:00", "09:00", "11:00", "14:00", "16:00", "18:00", "21:00", "23:00"],
+      NACIONAL: ["02:00", "08:00", "10:00", "12:00", "15:00", "17:00", "21:00", "23:00"],
+    };
+
+    const base = ["ALL", ...(hoursByLottery[lotteryKey] || [])];
     const uniq = Array.from(new Set(base));
-    return uniq.map((h) => (h === "ALL" ? { v: "ALL", label: "Todos" } : { v: h, label: h }));
-  }, []);
+
+    return uniq.map((h) =>
+      h === "ALL"
+        ? { v: "ALL", label: "Todos" }
+        : { v: h, label: h }
+    );
+  }, [ufQueryKey]);
 
   const applyFiltersToRows = useCallback(
     (rows) => {
@@ -730,9 +759,19 @@ export default function Downloads() {
     const { from, to } = normalizeRange();
     const lines = [];
 
-    // ✅ mais “humano”: RJ • RIO
-    const ufLabel = safeStr(ufUi).toUpperCase() === "PT_RIO" ? "RJ" : safeStr(ufUi).toUpperCase() === "FEDERAL" ? "BR" : safeStr(ufUi).toUpperCase();
-    lines.push(`UF: ${ufLabel} • ${label}`);
+    const lotteryKey = safeStr(ufUi).toUpperCase();
+    const lotteryUiLabel =
+      lotteryKey === "PT_RIO"
+        ? "RJ"
+        : lotteryKey === "FEDERAL"
+        ? "Federal"
+        : lotteryKey === "LOOK"
+        ? "LOOK"
+        : lotteryKey === "NACIONAL"
+        ? "Nacional"
+        : lotteryKey;
+
+    lines.push(`Loteria: ${lotteryUiLabel} • ${label}`);
 
     lines.push(`Período: ${ymdToBR(from)} → ${ymdToBR(to)}`);
 
@@ -1234,6 +1273,8 @@ export default function Downloads() {
               <select className="pp-select" value={ufUi} onChange={(e) => setUfUi(e.target.value)}>
                 <option value="PT_RIO">RJ</option>
                 <option value="FEDERAL">Federal</option>
+                <option value="LOOK">LOOK</option>
+                <option value="NACIONAL">Nacional</option>
               </select>
             </div>
 
