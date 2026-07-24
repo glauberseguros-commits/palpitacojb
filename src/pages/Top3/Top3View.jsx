@@ -315,7 +315,7 @@ function analyzeTop3Hit(top3, resultGrupo, resultMilhar) {
     } else if (hasGrupo && g === grupoNum) {
       score = 33.33;
       type = "hit_grupo";
-      matchedValue = hasMilhar ? milhar.slice(-2) : formatGrupo(grupoNum);
+      matchedValue = hasMilhar ? milhar.slice(-2) : "";
     }
 
     if (score > best.score) {
@@ -947,35 +947,18 @@ function Top3Card({
         <div
           className="top3-card__actions"
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
-            gap: 8,
+            display: "flex",
+            justifyContent: "flex-end",
             alignItems: "center",
           }}
         >
-          <div aria-hidden="true"></div>
-          <div aria-hidden="true"></div>
-
           <button
             type="button"
             onClick={doCopyAll}
             className="pp-btn"
             title="Copiar as 20 milhares"
-            style={{ width: "100%" }}
           >
             {copiedAllKey === key ? "✅ Copiado" : "📋 Copiar"}
-          </button>
-
-          <button
-            type="button"
-            className="pp-btn"
-            title="Integração automática com banca (em desenvolvimento)"
-            onClick={() => {
-              alert("Em breve você poderá enviar automaticamente estas milhares para a banca.");
-            }}
-            style={{ width: "100%" }}
-          >
-            🎯 Apostar
           </button>
         </div>
 
@@ -3200,7 +3183,7 @@ const list = Array.isArray(top3)
                     : hitType === "hit_centena"
                       ? `✅✅ 66,67% · Centena ${matchedValue || "—"}`
                       : hitType === "hit_grupo"
-                        ? `✅ 33,33% · Dezena ${matchedValue || "—"}`
+                        ? `✅ 33,33% · Dezena ${matchedValue || "indisponível"}`
                         : "❌ 0%";
 
                 return (

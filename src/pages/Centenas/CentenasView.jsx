@@ -464,17 +464,6 @@ function tryGetImg(getImgFromGrupo, grupo, size) {
 }
 
 /* ========= King URL helper ========= */
-function buildKingGuessUrlFromPalpites(palpites4) {
-  const list = (Array.isArray(palpites4) ? palpites4 : [])
-    .map((x) => String(x || "").trim())
-    .filter(Boolean);
-
-  const payload = encodeURIComponent(list.join(","));
-
-  // usando querystring (envia pro servidor)
-  return `https://app.kingapostas.com/bet/guess?pp=${payload}`;
-}
-
 export default function CentenasView() {
   const LOTTERY_OPTIONS = useMemo(
     () => [
@@ -574,11 +563,6 @@ export default function CentenasView() {
   const [error, setError] = useState("");
   const [groups, setGroups] = useState([]);
   const [openGrupo, setOpenGrupo] = useState(19);
-
-  const [kingModalOpen, setKingModalOpen] = useState(false);
-  const [kingText, setKingText] = useState("");
-  const [kingCopyOk, setKingCopyOk] = useState(false);
-  const [kingUrl, setKingUrl] = useState("");
 
   // ✅ ref para NÃO disparar rebuild quando abre/fecha card
   const openGrupoRef = useRef(openGrupo);
@@ -1959,7 +1943,6 @@ export default function CentenasView() {
     `;
   }, []);
 
-  const [sendingKing, setSendingKing] = useState(false);
   const [copiedMilhares, setCopiedMilhares] = useState(false);
 
 
@@ -1995,66 +1978,6 @@ const rows = showOnlyHits
   };
 
 
-  const handleEnviarKing = async () => {
-    if (sendingKing) return;
-    if (!groups || !groups.length) return;
-
-    // escolhe o grupo ativo: openGrupo > bannerGrupo > primeiro
-    const targetGrupo =
-      (Number.isFinite(Number(openGrupo)) && Number(openGrupo)) ||
-      (Number.isFinite(Number(bannerGrupo)) && Number(bannerGrupo)) ||
-      Number(groups?.[0]?.grupo || 0);
-
-    const grupoAtual = groups.find((g) => Number(g.grupo) === Number(targetGrupo)) || null;
-    if (!grupoAtual) return;
-
-    setSendingKing(true);
-
-    try {
-      // respeita o toggle "Mostrar só ocorridas"
-      const rows = showOnlyHits
-        ? (grupoAtual.list40 || []).filter((x) => (Number(x.count) || 0) > 0)
-        : grupoAtual.list40 || [];
-
-      // 1 palpite por linha (compatível com a King)
-      const milhares = rows
-        .map((it) => String(it?.milhar || "").trim())
-        .filter((milhar) => /^\d{4}$/.test(milhar));
-
-      const texto = milhares.join("\n");
-      const url = buildKingGuessUrlFromPalpites(milhares);
-
-      setKingText(texto);
-      setKingUrl(url);
-
-      // tenta abrir direto (fluxo automático)
-      const w = window.open(url, "_blank", "noopener,noreferrer");
-      if (w && !w.closed) {
-        // sucesso: não precisa modal
-        setKingModalOpen(false);
-        setKingCopyOk(true);
-        return;
-      }
-
-      // fallback: popup bloqueado -> abre modal com copiar/abrir
-      let ok = false;
-      try {
-        await navigator.clipboard.writeText(texto);
-        ok = true;
-      } catch {
-        ok = false;
-      }
-      setKingCopyOk(ok);
-      setKingModalOpen(true);
-    } catch (e) {
-      console.error(e);
-      setKingCopyOk(false);
-      setKingModalOpen(true);
-    } finally {
-      setSendingKing(false);
-    }
-  };
-
   const progressPct = useMemo(() => {
     const total = Number(progress?.total || 0);
     const done = Number(progress?.done || 0);
@@ -2065,56 +1988,6 @@ const rows = showOnlyHits
   return (
     <div className="cx0_wrap">
       <style>{css}</style>
-
-      {kingModalOpen ? (
-        <div className="cx0_modalBackdrop" role="dialog" aria-modal="true">
-          <div className="cx0_modal">
-            <h3>Enviar para a KING</h3>
-
-            <div className="cx0_modalOk">
-              {kingCopyOk ? "✅ Palpites copiados / URL pronta" : "⚠️ Popup bloqueado — use COPIAR ou ABRIR KING"}
-            </div>
-
-            <p>
-              O King vai abrir em <b>/bet/guess</b> já com os palpites no <b>link</b>.
-              <br />
-              Se o Tampermonkey estiver instalado, ele <b>digita tudo sozinho</b>.
-            </p>
-
-            {!kingCopyOk ? <textarea className="cx0_textarea" value={kingText} readOnly /> : null}
-
-            <div className="cx0_modalBtns">
-              <button
-                className="cx0_modalBtn"
-                type="button"
-                onClick={async () => {
-                  try {
-                    await navigator.clipboard.writeText(kingText || "");
-                    setKingCopyOk(true);
-                  } catch {}
-                }}
-              >
-                COPIAR PALPITES
-              </button>
-
-              <button
-                className="cx0_modalBtn"
-                type="button"
-                onClick={() => {
-                  const u = kingUrl || "https://app.kingapostas.com/bet/guess";
-                  window.location.assign(u);
-                }}
-              >
-                ABRIR KING
-              </button>
-
-              <button className="cx0_modalBtn2" type="button" onClick={() => setKingModalOpen(false)}>
-                Fechar
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
 
       <div>
         <h1 className="cx0_title">CENTENAS +</h1>
@@ -2319,15 +2192,6 @@ const rows = showOnlyHits
                             onClick={handleCopyMilhares}
                           >
                             {copiedMilhares ? "✅ Copiado" : "📋 Copiar"}
-                          </button>
-
-                          <button
-                            className="cx0_toggle"
-                            type="button"
-                            onClick={handleEnviarKing}
-                            disabled={sendingKing}
-                          >
-                            {sendingKing ? "Enviando..." : "🎯 Apostar"}
                           </button>
 
                           <button
