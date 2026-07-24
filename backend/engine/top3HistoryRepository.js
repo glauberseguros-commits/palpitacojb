@@ -331,12 +331,29 @@ async function upsertHistoryMonth(
     ...safeArray(newDraws),
   ]);
 
-  return writeHistoryMonth(
+  const payload = await writeHistoryMonth(
     lotteryKey,
     yearMonth,
     merged,
     dependencies
   );
+
+  return {
+    ...payload,
+    previousDrawCount: current.draws.length,
+    previousFirstYmd:
+      current.draws[0]?.ymd || null,
+    previousLastYmd:
+      current.draws[
+        current.draws.length - 1
+      ]?.ymd || null,
+    previousFirstDrawId:
+      current.draws[0]?.drawId || null,
+    previousLastDrawId:
+      current.draws[
+        current.draws.length - 1
+      ]?.drawId || null,
+  };
 }
 
 async function readMetadata(

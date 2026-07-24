@@ -8,7 +8,6 @@ const {
   readMetadata,
   writeMetadata,
   upsertHistoryMonth,
-  listHistoryMonths,
   deduplicateDraws,
 } = require("./top3HistoryRepository");
 
@@ -88,16 +87,21 @@ async function loadImportedDraws(
   const docs = [];
 
   if (targetDrawIds.length) {
-    for (const drawId of targetDrawIds) {
-      const snap = await database
-        .collection("draws")
-        .doc(drawId)
-        .get();
+    const snapshots = await Promise.all(
+      targetDrawIds.map(
+        (drawId) =>
+          database
+            .collection("draws")
+            .doc(drawId)
+            .get()
+      )
+    );
 
-      if (snap.exists) {
-        docs.push(snap);
-      }
-    }
+    docs.push(
+      ...snapshots.filter(
+        (snap) => snap.exists
+      )
+    );
   } else if (date) {
     const snap = await database
       .collection("draws")
@@ -108,16 +112,19 @@ async function loadImportedDraws(
     docs.push(...snap.docs);
   }
 
-  const draws = [];
+  const loadedDraws = await Promise.all(
+    docs.map(
+      (doc) =>
+        readDrawWithPrizes(
+          database,
+          doc
+        )
+    )
+  );
 
-  for (const doc of docs) {
-    const draw = await readDrawWithPrizes(
-      database,
-      doc
-    );
-
+  const draws = loadedDraws.filter((draw) => {
     if (!draw) {
-      continue;
+      return false;
     }
 
     const drawLotteryKey = normalizeLotteryKey(
@@ -126,18 +133,18 @@ async function loadImportedDraws(
     );
 
     if (drawLotteryKey !== lotteryKey) {
-      continue;
+      return false;
     }
 
     if (
       date &&
       String(draw.ymd || draw.date || "") !== date
     ) {
-      continue;
+      return false;
     }
 
-    draws.push(draw);
-  }
+    return true;
+  });
 
   return deduplicateDraws(draws);
 }
@@ -232,10 +239,6 @@ async function syncImportedResultToTop3History(
     dependencies.upsertHistoryMonth ||
     upsertHistoryMonth;
 
-  const loadMonths =
-    dependencies.listHistoryMonths ||
-    listHistoryMonths;
-
   const saveMetadata =
     dependencies.writeMetadata ||
     writeMetadata;
@@ -319,15 +322,128 @@ async function syncImportedResultToTop3History(
         yearMonth,
         drawCount:
           Number(payload?.drawCount || 0),
+        previousDrawCount:
+          Number(
+            payload?.previousDrawCount || 0
+          ),
+        firstYmd:
+          payload?.firstYmd || null,
+        lastYmd:
+          payload?.lastYmd || null,
+        firstDrawId:
+          payload?.firstDrawId || null,
+        lastDrawId:
+          payload?.lastDrawId || null,
       });
     }
 
-    const months = await loadMonths(
-      lotteryKey,
-      dependencies.repositoryDependencies || {}
+    const metadataMonths = safeArray(
+      metadata?.months
+    )
+      .map((value) =>
+        String(value || "").trim()
+      )
+      .filter(Boolean);
+
+    const monthSet = new Set(
+      metadataMonths
     );
 
-    const summary = summarizeMonths(months);
+    for (const item of updatedMonths) {
+      monthSet.add(item.yearMonth);
+    }
+
+    const orderedMonths =
+      Array.from(monthSet).sort();
+
+    const totalDelta =
+      updatedMonths.reduce(
+        (total, item) =>
+          total +
+          Number(item.drawCount || 0) -
+          Number(
+            item.previousDrawCount || 0
+          ),
+        0
+      );
+
+    const totalDraws = Math.max(
+      0,
+      Number(metadata?.totalDraws || 0) +
+      totalDelta
+    );
+
+    const firstCandidates = [
+      metadata?.firstYmd
+        ? {
+            ymd: metadata.firstYmd,
+            drawId:
+              metadata.firstDrawId || null,
+          }
+        : null,
+      ...updatedMonths.map((item) =>
+        item.firstYmd
+          ? {
+              ymd: item.firstYmd,
+              drawId:
+                item.firstDrawId || null,
+            }
+          : null
+      ),
+    ]
+      .filter(Boolean)
+      .sort((a, b) =>
+        String(a.ymd)
+          .localeCompare(String(b.ymd))
+      );
+
+    const lastCandidates = [
+      metadata?.lastYmd
+        ? {
+            ymd: metadata.lastYmd,
+            drawId:
+              metadata.lastDrawId || null,
+          }
+        : null,
+      ...updatedMonths.map((item) =>
+        item.lastYmd
+          ? {
+              ymd: item.lastYmd,
+              drawId:
+                item.lastDrawId || null,
+            }
+          : null
+      ),
+    ]
+      .filter(Boolean)
+      .sort((a, b) =>
+        String(a.ymd)
+          .localeCompare(String(b.ymd))
+      );
+
+    const first =
+      firstCandidates[0] || null;
+
+    const last =
+      lastCandidates[
+        lastCandidates.length - 1
+      ] || null;
+
+    const summary = {
+      totalDraws,
+      monthCount:
+        orderedMonths.length,
+      months:
+        orderedMonths,
+      firstYmd:
+        first?.ymd || null,
+      lastYmd:
+        last?.ymd || null,
+      firstDrawId:
+        first?.drawId || null,
+      lastDrawId:
+        last?.drawId || null,
+    };
 
     await saveMetadata(
       lotteryKey,

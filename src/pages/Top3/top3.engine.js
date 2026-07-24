@@ -2992,8 +2992,16 @@ export function computeStatisticalTop3V3({
   topN = 3,
   targetYmdOverride = "",
   targetHourOverride = "",
+  drawsAlreadySorted = false,
 }) {
-  const list = sortDrawsAsc(Array.isArray(drawsRange) ? drawsRange : []);
+  const sourceList =
+    Array.isArray(drawsRange)
+      ? drawsRange
+      : [];
+
+  const list = drawsAlreadySorted
+    ? sourceList
+    : sortDrawsAsc(sourceList);
   if (!list.length || !drawLast) return { top: [], meta: null };
 
   const key = safeStr(lotteryKey).toUpperCase();

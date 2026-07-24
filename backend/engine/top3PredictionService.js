@@ -792,29 +792,36 @@ async function createTop3PredictionRun(
   const targetKey = dateHourKey(date, closeHour);
 
   const history = allDraws
-    .filter((draw) => {
-      const ymd = publicApi.pickDrawYMD(draw);
-      const hour = publicApi.pickDrawHour(draw);
+    .map((draw) => {
+      const ymd =
+        publicApi.pickDrawYMD(draw);
 
-      if (!ymd || !hour) {
-        return false;
+      const rawHour =
+        publicApi.pickDrawHour(draw);
+
+      if (!ymd || !rawHour) {
+        return null;
       }
 
-      return dateHourKey(ymd, hour) < targetKey;
+      const hour =
+        normalizeHour(rawHour);
+
+      return {
+        draw,
+        ymd,
+        hour,
+        key: `${ymd}T${hour}`,
+      };
     })
-    .sort((a, b) => {
-      const aKey = dateHourKey(
-        publicApi.pickDrawYMD(a),
-        publicApi.pickDrawHour(a)
-      );
-
-      const bKey = dateHourKey(
-        publicApi.pickDrawYMD(b),
-        publicApi.pickDrawHour(b)
-      );
-
-      return aKey.localeCompare(bKey);
-    });
+    .filter(
+      (item) =>
+        item &&
+        item.key < targetKey
+    )
+    .sort((a, b) =>
+      a.key.localeCompare(b.key)
+    )
+    .map((item) => item.draw);
 
   if (!history.length) {
     throw new Error(
@@ -838,6 +845,7 @@ async function createTop3PredictionRun(
     topN: 3,
     targetYmdOverride: date,
     targetHourOverride: closeHour,
+    drawsAlreadySorted: true,
   });
 
   const predictions = mapTop3ToPredictions(
