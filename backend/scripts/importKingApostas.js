@@ -1538,6 +1538,14 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
 
   const startedAt = Date.now();
 
+  const performance = {
+    fetchMs: 0,
+    importMs: 0,
+    historySyncMs: 0,
+    top3Ms: 0,
+    totalMs: 0,
+  };
+
   // ✅ SOFT OVERRIDE: PT_RIO 18:00 fora do calendário (controlado por env)
   const allowSoftOverride18 =
     lk === "PT_RIO" &&
@@ -1615,7 +1623,15 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
   }
 
   // ✅ Fetch API (JSON)
-  let payload = await fetchKingResults({ date, lotteryKey: lk });
+  const fetchStartedAt = Date.now();
+
+  let payload = await fetchKingResults({
+    date,
+    lotteryKey: lk,
+  });
+
+  performance.fetchMs =
+    Date.now() - fetchStartedAt;
 
   // ✅ Se pediram closeHour e ele NÃO existe no dia (close_hours do FETCH), retorna blocked/api_missing_slot
   if (normalizedClose) {
@@ -1714,12 +1730,17 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
     }
   }
 
+  const importStartedAt = Date.now();
+
   const result = await importFromPayload({
     payload,
     lotteryKey: lk,
     closeHour: normalizedClose,
     skipIfAlreadyComplete: Boolean(normalizedClose), // scheduler: evita regravar
   });
+
+  performance.importMs =
+    Date.now() - importStartedAt;
 
   const ms = Date.now() - startedAt;
 
@@ -1775,10 +1796,17 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
     ...result,
   };
 
+  const historySyncStartedAt = Date.now();
+
   const top3HistorySync =
     await syncImportedResultToTop3History(
       response
     );
+
+  performance.historySyncMs =
+    Date.now() - historySyncStartedAt;
+
+  const top3StartedAt = Date.now();
 
   let top3AutoPrediction = {
     ok: true,
@@ -1886,10 +1914,27 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
     };
   }
 
+  performance.top3Ms =
+    Date.now() - top3StartedAt;
+
+  performance.totalMs =
+    Date.now() - startedAt;
+
+  console.log(
+    `[PERF:IMPORT] ${lk} ${date}` +
+      `${normalizedClose ? ` ${normalizedClose}` : ""}` +
+      ` | fetch=${performance.fetchMs}ms` +
+      ` | firestore=${performance.importMs}ms` +
+      ` | history=${performance.historySyncMs}ms` +
+      ` | top3=${performance.top3Ms}ms` +
+      ` | total=${performance.totalMs}ms`
+  );
+
   return {
     ...response,
     top3HistorySync,
     top3AutoPrediction,
+    performance,
   };
 }
 
