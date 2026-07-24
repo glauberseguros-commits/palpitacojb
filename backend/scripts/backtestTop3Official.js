@@ -102,6 +102,62 @@ function parseIntegerFlag(
   return number;
 }
 
+function parseBooleanFlag(
+  args,
+  name,
+  fallback = false
+) {
+  const exact = `--${name}`;
+  const prefix = `--${name}=`;
+
+  const match = args.find(
+    (value) => {
+      const text = String(value);
+
+      return (
+        text === exact ||
+        text.startsWith(prefix)
+      );
+    }
+  );
+
+  if (!match) {
+    return fallback;
+  }
+
+  if (String(match) === exact) {
+    return true;
+  }
+
+  const raw = String(match)
+    .slice(prefix.length)
+    .trim()
+    .toLowerCase();
+
+  if (
+    raw === "1" ||
+    raw === "true" ||
+    raw === "yes" ||
+    raw === "on"
+  ) {
+    return true;
+  }
+
+  if (
+    raw === "0" ||
+    raw === "false" ||
+    raw === "no" ||
+    raw === "off"
+  ) {
+    return false;
+  }
+
+  throw new Error(
+    `Parâmetro --${name} inválido.`
+  );
+}
+
+
 function parseStringFlag(
   args,
   name,
@@ -158,6 +214,11 @@ function parseCliArgs(argv = []) {
       flags,
       "output-dir",
       "tmp"
+    ),
+    telemetry: parseBooleanFlag(
+      flags,
+      "telemetry",
+      false
     ),
   };
 }
@@ -220,6 +281,174 @@ function getFirstPrizeGroup(
   return group;
 }
 
+function fallbackPrizePosition(prize) {
+  const candidates = [
+    prize?.position,
+    prize?.posicao,
+    prize?.pos,
+    prize?.colocacao,
+  ];
+
+  for (const value of candidates) {
+    const position = Number(value);
+
+    if (Number.isFinite(position)) {
+      return position;
+    }
+  }
+
+  return null;
+}
+
+function fallbackPrizeGroup(prize) {
+  const directCandidates = [
+    prize?.grupo2,
+    prize?.group2,
+    prize?.grupo,
+    prize?.group,
+    prize?.animal_grupo,
+    prize?.grupo_animal,
+    prize?.grupoAnimal,
+    prize?.g,
+  ];
+
+  for (const value of directCandidates) {
+    const group = Number(value);
+
+    if (
+      Number.isFinite(group) &&
+      group >= 1 &&
+      group <= 25
+    ) {
+      return group;
+    }
+  }
+
+  const milharCandidates = [
+    prize?.milhar,
+    prize?.milhar4,
+    prize?.numero,
+    prize?.number,
+    prize?.value,
+    prize?.result,
+    prize?.resultado,
+    prize?.premio,
+  ];
+
+  for (const value of milharCandidates) {
+    const digits = String(value ?? "")
+      .replace(/\D+/g, "");
+
+    if (!digits) {
+      continue;
+    }
+
+    const dezenaRaw = Number(
+      digits.padStart(2, "0").slice(-2)
+    );
+
+    if (
+      !Number.isFinite(dezenaRaw) ||
+      dezenaRaw < 0 ||
+      dezenaRaw > 99
+    ) {
+      continue;
+    }
+
+    if (dezenaRaw === 0) {
+      return 25;
+    }
+
+    const group = Math.ceil(
+      dezenaRaw / 4
+    );
+
+    if (
+      group >= 1 &&
+      group <= 25
+    ) {
+      return group;
+    }
+  }
+
+  return null;
+}
+
+function getPrizeGroupsByPosition(
+  draw,
+  publicApi,
+  maxPosition = 3
+) {
+  const limit = Math.max(
+    1,
+    Number(maxPosition || 3)
+  );
+
+  const prizes = safeArray(
+    draw?.prizes
+  );
+
+  const guessPosition =
+    typeof publicApi?.guessPrizePos ===
+    "function"
+      ? publicApi.guessPrizePos
+      : fallbackPrizePosition;
+
+  const guessGroup =
+    typeof publicApi?.guessPrizeGrupo ===
+    "function"
+      ? publicApi.guessPrizeGrupo
+      : fallbackPrizeGroup;
+
+  const result = Array.from(
+    {
+      length: limit,
+    },
+    () => null
+  );
+
+  for (const prize of prizes) {
+    const position = Number(
+      guessPosition(prize)
+    );
+
+    if (
+      !Number.isFinite(position) ||
+      position < 1 ||
+      position > limit
+    ) {
+      continue;
+    }
+
+    const group = Number(
+      guessGroup(prize)
+    );
+
+    if (
+      !Number.isFinite(group) ||
+      group < 1 ||
+      group > 25
+    ) {
+      continue;
+    }
+
+    result[position - 1] = group;
+  }
+
+  if (
+    !Number.isFinite(
+      Number(result[0])
+    )
+  ) {
+    result[0] = getFirstPrizeGroup(
+      draw,
+      publicApi
+    );
+  }
+
+  return result;
+}
+
 function getPredictionGroups(
   computed
 ) {
@@ -251,8 +480,19 @@ function ensureBucket(
   if (!map[key]) {
     map[key] = {
       evaluated: 0,
+
       top1Hits: 0,
       top3Hits: 0,
+
+      prize1Hits: 0,
+      prize2Hits: 0,
+      prize3Hits: 0,
+
+      top3PrizeHits: 0,
+
+      matchedPrizePositions: 0,
+      matchedPredictions: 0,
+
       errors: 0,
     };
   }
@@ -273,30 +513,94 @@ function finalizeBucket(bucket = {}) {
     bucket.top3Hits || 0
   );
 
+  const prize1Hits = Number(
+    bucket.prize1Hits || 0
+  );
+
+  const prize2Hits = Number(
+    bucket.prize2Hits || 0
+  );
+
+  const prize3Hits = Number(
+    bucket.prize3Hits || 0
+  );
+
+  const top3PrizeHits = Number(
+    bucket.top3PrizeHits || 0
+  );
+
+  const matchedPrizePositions = Number(
+    bucket.matchedPrizePositions || 0
+  );
+
+  const matchedPredictions = Number(
+    bucket.matchedPredictions || 0
+  );
+
+  const rate = (hits) =>
+    evaluated > 0
+      ? Number(
+          (
+            Number(hits || 0) /
+            evaluated *
+            100
+          ).toFixed(4)
+        )
+      : 0;
+
   return {
     evaluated,
+
     top1Hits,
     top3Hits,
+
+    prize1Hits,
+    prize2Hits,
+    prize3Hits,
+
+    top3PrizeHits,
+
+    matchedPrizePositions,
+    matchedPredictions,
+
     errors: Number(
       bucket.errors || 0
     ),
+
     top1Rate:
+      rate(top1Hits),
+
+    top3Rate:
+      rate(top3Hits),
+
+    prize1Rate:
+      rate(prize1Hits),
+
+    prize2Rate:
+      rate(prize2Hits),
+
+    prize3Rate:
+      rate(prize3Hits),
+
+    top3PrizeRate:
+      rate(top3PrizeHits),
+
+    averageMatchedPrizePositions:
       evaluated > 0
         ? Number(
             (
-              top1Hits /
-              evaluated *
-              100
+              matchedPrizePositions /
+              evaluated
             ).toFixed(4)
           )
         : 0,
-    top3Rate:
+
+    averageMatchedPredictions:
       evaluated > 0
         ? Number(
             (
-              top3Hits /
-              evaluated *
-              100
+              matchedPredictions /
+              evaluated
             ).toFixed(4)
           )
         : 0,
@@ -380,7 +684,39 @@ function buildTextReport(result) {
   );
 
   lines.push(
-    `TOP3................: ${result.global.top3Hits} (${formatPercent(result.global.top3Rate)})`
+    `TOP3 no 1º prêmio...: ${result.global.top3Hits} (${formatPercent(result.global.top3Rate)})`
+  );
+
+  lines.push(
+    `Acerto no 1º prêmio.: ${result.global.prize1Hits} (${formatPercent(result.global.prize1Rate)})`
+  );
+
+  lines.push(
+    `Acerto no 2º prêmio.: ${result.global.prize2Hits} (${formatPercent(result.global.prize2Rate)})`
+  );
+
+  lines.push(
+    `Acerto no 3º prêmio.: ${result.global.prize3Hits} (${formatPercent(result.global.prize3Rate)})`
+  );
+
+  lines.push(
+    `Algum acerto 1º-3º..: ${result.global.top3PrizeHits} (${formatPercent(result.global.top3PrizeRate)})`
+  );
+
+  lines.push(
+    `Posições atingidas..: ${result.global.matchedPrizePositions}`
+  );
+
+  lines.push(
+    `Média posições/caso.: ${Number(result.global.averageMatchedPrizePositions || 0).toFixed(4)}`
+  );
+
+  lines.push(
+    `Palpites atingidos..: ${result.global.matchedPredictions}`
+  );
+
+  lines.push(
+    `Média palpites/caso.: ${Number(result.global.averageMatchedPredictions || 0).toFixed(4)}`
   );
 
   lines.push(
@@ -395,7 +731,7 @@ function buildTextReport(result) {
     of Object.entries(result.byHour)
   ) {
     lines.push(
-      `${hour.padEnd(8)} avaliados=${String(bucket.evaluated).padStart(5)} | TOP1=${formatPercent(bucket.top1Rate).padStart(8)} | TOP3=${formatPercent(bucket.top3Rate).padStart(8)} | erros=${bucket.errors}`
+      `${hour.padEnd(8)} avaliados=${String(bucket.evaluated).padStart(5)} | TOP1=${formatPercent(bucket.top1Rate).padStart(8)} | 1º=${formatPercent(bucket.prize1Rate).padStart(8)} | 2º=${formatPercent(bucket.prize2Rate).padStart(8)} | 3º=${formatPercent(bucket.prize3Rate).padStart(8)} | QUALQUER=${formatPercent(bucket.top3PrizeRate).padStart(8)} | erros=${bucket.errors}`
     );
   }
 
@@ -407,7 +743,7 @@ function buildTextReport(result) {
     of Object.entries(result.byWeekday)
   ) {
     lines.push(
-      `${weekday.padEnd(3)} avaliados=${String(bucket.evaluated).padStart(5)} | TOP1=${formatPercent(bucket.top1Rate).padStart(8)} | TOP3=${formatPercent(bucket.top3Rate).padStart(8)} | erros=${bucket.errors}`
+      `${weekday.padEnd(3)} avaliados=${String(bucket.evaluated).padStart(5)} | TOP1=${formatPercent(bucket.top1Rate).padStart(8)} | 1º=${formatPercent(bucket.prize1Rate).padStart(8)} | 2º=${formatPercent(bucket.prize2Rate).padStart(8)} | 3º=${formatPercent(bucket.prize3Rate).padStart(8)} | QUALQUER=${formatPercent(bucket.top3PrizeRate).padStart(8)} | erros=${bucket.errors}`
     );
   }
 
@@ -419,7 +755,7 @@ function buildTextReport(result) {
     of Object.entries(result.byMonth)
   ) {
     lines.push(
-      `${month} avaliados=${String(bucket.evaluated).padStart(5)} | TOP1=${formatPercent(bucket.top1Rate).padStart(8)} | TOP3=${formatPercent(bucket.top3Rate).padStart(8)} | erros=${bucket.errors}`
+      `${month} avaliados=${String(bucket.evaluated).padStart(5)} | TOP1=${formatPercent(bucket.top1Rate).padStart(8)} | 1º=${formatPercent(bucket.prize1Rate).padStart(8)} | 2º=${formatPercent(bucket.prize2Rate).padStart(8)} | 3º=${formatPercent(bucket.prize3Rate).padStart(8)} | QUALQUER=${formatPercent(bucket.top3PrizeRate).padStart(8)} | erros=${bucket.errors}`
     );
   }
 
@@ -549,14 +885,27 @@ async function runOfficialBacktest(
 
   const globalBucket = {
     evaluated: 0,
+
     top1Hits: 0,
     top3Hits: 0,
+
+    prize1Hits: 0,
+    prize2Hits: 0,
+    prize3Hits: 0,
+
+    top3PrizeHits: 0,
+
+    matchedPrizePositions: 0,
+    matchedPredictions: 0,
+
     errors: 0,
   };
 
   const byHour = {};
   const byWeekday = {};
   const byMonth = {};
+
+  const telemetryCases = [];
 
   let skipped = 0;
   let evaluationFrom = null;
@@ -583,10 +932,16 @@ async function runOfficialBacktest(
         targetDraw
       );
 
-    const actualGroup =
-      getFirstPrizeGroup(
+    const actualTop3Groups =
+      getPrizeGroupsByPosition(
         targetDraw,
-        publicApi
+        publicApi,
+        3
+      );
+
+    const actualGroup =
+      Number(
+        actualTop3Groups[0]
       );
 
     const historyBefore =
@@ -674,6 +1029,164 @@ async function runOfficialBacktest(
           actualGroup
         );
 
+      const prizePositionHits =
+        actualTop3Groups.map(
+          (group) =>
+            Number.isFinite(
+              Number(group)
+            ) &&
+            predictionGroups.includes(
+              Number(group)
+            )
+        );
+
+      const predictionHits =
+        predictionGroups.map(
+          (group) =>
+            actualTop3Groups.some(
+              (actual) =>
+                Number.isFinite(
+                  Number(actual)
+                ) &&
+                Number(actual) ===
+                Number(group)
+            )
+        );
+
+      const prize1Hit =
+        Boolean(
+          prizePositionHits[0]
+        );
+
+      const prize2Hit =
+        Boolean(
+          prizePositionHits[1]
+        );
+
+      const prize3Hit =
+        Boolean(
+          prizePositionHits[2]
+        );
+
+      const matchedPrizePositions =
+        prizePositionHits.filter(
+          Boolean
+        ).length;
+
+      const matchedPredictions =
+        predictionHits.filter(
+          Boolean
+        ).length;
+
+      const top3PrizeHit =
+        matchedPrizePositions > 0;
+
+      if (options.telemetry === true) {
+        const computedTop = safeArray(
+          computed?.top
+        );
+
+        telemetryCases.push({
+          caseNumber: position + 1,
+          historyIndex: index,
+          target: {
+            ymd: targetYmd,
+            hour:
+              normalizeHour(targetHour) ||
+              targetHour,
+            weekday,
+            month,
+          },
+          history: {
+            availableBefore:
+              historyBefore.length,
+            lastDrawYmd:
+              publicApi.pickDrawYMD(
+                drawLast
+              ) || null,
+            lastDrawHour:
+              publicApi.pickDrawHour(
+                drawLast
+              ) || null,
+          },
+          actual: {
+            group: actualGroup,
+            top3Groups:
+              actualTop3Groups,
+          },
+          prediction: {
+            groups:
+              predictionGroups,
+
+            top1Hit,
+            top3Hit,
+
+            prize1Hit,
+            prize2Hit,
+            prize3Hit,
+
+            top3PrizeHit,
+
+            matchedPrizePositions,
+            matchedPredictions,
+
+            prizePositionHits,
+            predictionHits,
+          },
+          candidates: computedTop
+            .slice(0, 3)
+            .map((item, rankIndex) => ({
+              rank: rankIndex + 1,
+              grupo: Number(
+                item?.grupo ??
+                item?.group
+              ),
+              score: Number.isFinite(
+                Number(item?.score)
+              )
+                ? Number(item.score)
+                : null,
+              scoreProb: Number.isFinite(
+                Number(item?.scoreProb)
+              )
+                ? Number(item.scoreProb)
+                : null,
+              probability: Number.isFinite(
+                Number(item?.probability)
+              )
+                ? Number(item.probability)
+                : null,
+              confidence: Number.isFinite(
+                Number(item?.confidence)
+              )
+                ? Number(item.confidence)
+                : null,
+              frequency: Number.isFinite(
+                Number(
+                  item?.freq ??
+                  item?.frequency
+                )
+              )
+                ? Number(
+                    item?.freq ??
+                    item?.frequency
+                  )
+                : null,
+              reasons: safeArray(
+                item?.reasons
+              ),
+              signals:
+                item?.signals || null,
+              evidence:
+                item?.evidence || null,
+              meta:
+                item?.meta || null,
+            })),
+          engineMeta:
+            computed?.meta || null,
+        });
+      }
+
       for (const bucket of [
         globalBucket,
         hourBucket,
@@ -689,6 +1202,28 @@ async function runOfficialBacktest(
         if (top3Hit) {
           bucket.top3Hits += 1;
         }
+
+        if (prize1Hit) {
+          bucket.prize1Hits += 1;
+        }
+
+        if (prize2Hit) {
+          bucket.prize2Hits += 1;
+        }
+
+        if (prize3Hit) {
+          bucket.prize3Hits += 1;
+        }
+
+        if (top3PrizeHit) {
+          bucket.top3PrizeHits += 1;
+        }
+
+        bucket.matchedPrizePositions +=
+          matchedPrizePositions;
+
+        bucket.matchedPredictions +=
+          matchedPredictions;
       }
 
       evaluationFrom =
@@ -771,6 +1306,18 @@ async function runOfficialBacktest(
       finalizeMap(byWeekday),
     byMonth:
       finalizeMap(byMonth),
+    telemetry:
+      options.telemetry === true
+        ? {
+            enabled: true,
+            schemaVersion: 1,
+            cases: telemetryCases,
+          }
+        : {
+            enabled: false,
+            schemaVersion: 1,
+            cases: [],
+          },
     metadata: {
       bootstrapStatus:
         metadata?.bootstrapStatus ||
@@ -822,6 +1369,12 @@ async function main() {
     "Período............:",
     `${options.from || "início"} até ${options.to || "fim"}`
   );
+  console.log(
+    "Telemetria.........:",
+    options.telemetry
+      ? "ATIVA"
+      : "DESATIVADA"
+  );
   console.log("");
 
   const result =
@@ -840,10 +1393,15 @@ async function main() {
     }
   );
 
+  const lotterySuffix =
+    String(options.lotteryKey || "PT_RIO")
+      .trim()
+      .toLowerCase();
+
   const suffix =
     options.limit
-      ? `limit_${options.limit}`
-      : "full";
+      ? `${lotterySuffix}_limit_${options.limit}`
+      : `${lotterySuffix}_full`;
 
   const jsonPath = path.join(
     outputDir,
@@ -899,9 +1457,11 @@ if (require.main === module) {
 }
 
 module.exports = {
+  parseBooleanFlag,
   parseCliArgs,
   sortDraws,
   getFirstPrizeGroup,
+  getPrizeGroupsByPosition,
   getPredictionGroups,
   finalizeBucket,
   buildTextReport,
