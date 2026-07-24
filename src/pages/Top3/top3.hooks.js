@@ -335,6 +335,11 @@ export function useTop3Controller() {
   const [baseDrawState, setBaseDrawState] = useState(null);
   const [persistedTop3History, setPersistedTop3History] = useState([]);
 
+  // TOP3_REF_02_DEFER_SECONDARY
+  // Libera primeiro os dados e palpites essenciais.
+  // Timeline e persistência são processadas depois, fora do caminho crítico.
+  const [secondaryReady, setSecondaryReady] = useState(false);
+
   const lotteryKeySafe = useMemo(
     () => safeStr(lotteryKey).toUpperCase() || DEFAULT_LOTTERY,
     [lotteryKey]
@@ -466,6 +471,7 @@ export function useTop3Controller() {
     setLoading(true);
     setLoadingStage({ today: true, range: false });
     setError("");
+    setSecondaryReady(false);
 
     // Impede exibir resultados pertencentes à consulta anterior.
     resetStateForNoData();
@@ -861,6 +867,56 @@ export function useTop3Controller() {
   }, [load]);
 
   useEffect(() => {
+    if (
+      loading ||
+      !baseDrawState ||
+      !Array.isArray(rangeDraws) ||
+      !rangeDraws.length
+    ) {
+      setSecondaryReady(false);
+      return undefined;
+    }
+
+    let cancelled = false;
+    let idleId = null;
+    let timeoutId = null;
+
+    const activateSecondaryPipeline = () => {
+      if (!cancelled) {
+        setSecondaryReady(true);
+      }
+    };
+
+    if (
+      typeof window !== "undefined" &&
+      typeof window.requestIdleCallback === "function"
+    ) {
+      idleId = window.requestIdleCallback(
+        activateSecondaryPipeline,
+        { timeout: 300 }
+      );
+    } else {
+      timeoutId = setTimeout(activateSecondaryPipeline, 0);
+    }
+
+    return () => {
+      cancelled = true;
+
+      if (
+        idleId != null &&
+        typeof window !== "undefined" &&
+        typeof window.cancelIdleCallback === "function"
+      ) {
+        window.cancelIdleCallback(idleId);
+      }
+
+      if (timeoutId != null) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [loading, baseDrawState, rangeDraws]);
+
+  useEffect(() => {
     debugTop3Effect("02_ensure_timeline", {
       lotteryKey: lotteryKeySafe,
       timelineYmd,
@@ -928,6 +984,8 @@ export function useTop3Controller() {
   }, [analytics, build20]);
 
   const timelineTop3 = useMemo(() => {
+    if (!secondaryReady) return [];
+
     const built = buildTop3TimelineViewModel({
       todayDraws,
       rangeDraws,
@@ -957,6 +1015,7 @@ export function useTop3Controller() {
     timelineYmd,
     analysisYmd,
     skipPtRio18ByFederal,
+    secondaryReady,
   ]);
 
   useEffect(() => {
@@ -1104,7 +1163,13 @@ export function useTop3Controller() {
       lotteryKey: lotteryKeySafe,
       timelineYmd,
       scheduleLength: persistedSchedule.length,
+      secondaryReady,
     });
+
+    if (!secondaryReady) {
+      setPersistedTop3History([]);
+      return undefined;
+    }
 
     let alive = true;
 
@@ -1140,6 +1205,7 @@ export function useTop3Controller() {
     lotteryKeySafe,
     timelineYmd,
     scheduleKey,
+    secondaryReady,
   ]);
 
   useEffect(() => {
@@ -1158,8 +1224,10 @@ export function useTop3Controller() {
         ? rangeDraws.length
         : -1,
       loading,
+      secondaryReady,
     });
 
+    if (!secondaryReady) return;
     if (loading) return;
     if (!isYMD(timelineYmd)) return;
     if (!(todayDraws?.length || rangeDraws?.length)) return;
@@ -1267,6 +1335,7 @@ export function useTop3Controller() {
     scheduleKey,
     debugTop3,
     loading,
+    secondaryReady,
   ]);
 
   return {
