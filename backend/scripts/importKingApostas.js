@@ -1946,113 +1946,15 @@ async function main() {
   const lotteryKey = process.argv[3] || "PT_RIO";
   const closeHour = process.argv[4] || null;
 
-  if (!date || !isISODate(date)) {
-    throw new Error(
-      "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL|LOOK|NACIONAL] [HH:MM]"
-    );
-  }
-
-  const lk = String(lotteryKey || "").trim().toUpperCase();
-  if (!lk || !LOTTERIES_BY_KEY[lk]) {
-    throw new Error(
-      "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL|LOOK|NACIONAL] [HH:MM]"
-    );
-  }
-
-  // ✅ no CLI também bloqueia data futura (por segurança)
-  const todayBR = todayYMDLocal();
-  if (!ALLOW_FUTURE_DATE && isFutureISODate(date)) {
-    console.error(
-      `[BLOCK] future_date: date=${date} todayBR=${todayBR} (defina ALLOW_FUTURE_DATE=1 para liberar)`
-    );
-    process.exit(2);
-  }
-
-  const norm = normalizeRequestedCloseHour(closeHour, lk);
-  if (norm.note === "invalid") {
-    throw new Error(
-      "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL|LOOK|NACIONAL] [HH:MM]"
-    );
-  }
-  const normalizedClose = norm.slot || null;
-
-  // ✅ LOG HONESTO (mostra o que foi pedido e o slot efetivo)
-  const closeInfo =
-    norm.requested && normalizedClose
-      ? norm.requested === normalizedClose
-        ? ` ${normalizedClose}`
-        : ` req=${norm.requested} -> slot=${normalizedClose}`
-      : normalizedClose
-      ? ` ${normalizedClose}`
-      : norm.requested
-      ? ` req=${norm.requested}`
-      : "";
-
-  console.log(`STEP 1/3 Buscando API: ${lk} ${date}${closeInfo}`);
-
-  let payload = await fetchKingResults({ date, lotteryKey: lk });
-
-  // ✅ NOVO (CLI também): se pediram closeHour e ele não existe no dia, avisa e sai 0
-  if (normalizedClose) {
-    const closes = summarizeCloseHours(
-      Array.isArray(payload?.data) ? payload.data : [],
-      lk
-    );
-    const hasTarget = closes.includes(normalizedClose);
-
-    if (!hasTarget) {
-      console.warn(
-        `[NO_DRAW_FOR_SLOT] ${lk} ${date} slot=${normalizedClose} close_hours=[${closes.join(", ")}]`
-      );
-
-      // tenta fallback apenas pra logar
-      try {
-        const fb = await tryHtmlDetailsFallback({
-          date,
-          lotteryKey: lk,
-          closeHour: normalizedClose,
-        });
-        if (fb.ok) {
-          console.warn(
-            `[FALLBACK:DETAILS] lk=${lk} date=${date} slot=${fb.slot} kind=${fb.kind} hasSlot=${fb.hasSlot} hasAnyPrize=${fb.hasAnyPrize} url=${fb.url}`
-          );
-        }
-      } catch {}
-
-      process.exit(0);
-    }
-  }
-
-  console.log(
-    `STEP 2/3 Processando ${Array.isArray(payload?.data) ? payload.data.length : 0
-    } draws retornados pela API...`
-  );
-
-  await importFromPayload({
-    payload,
-    lotteryKey: lk,
-    closeHour: normalizedClose,
-    skipIfAlreadyComplete: false, // CLI regrava
+  const result = await runImport({
+    date,
+    lotteryKey,
+    closeHour,
   });
 
-  console.log(
-    `STEP 3/3 OK. Import concluído: ${lk} ${date}${normalizedClose ? ` ${normalizedClose}` : ""
-    }`
-  );
-
-  // ✅ cleanup automático de legado (somente quando per-lottery está ON)
-  if (FETCH_PER_LOTTERY) {
-    try {
-      const c = await cleanupLegacyDrawsForDate({ date, lotteryKey: lk });
-      if (c && c.ok && c.deleted) {
-        console.log(`[CLEANUP] ${lk} ${date} slots=${c.slots} deleted=${c.deleted}`);
-      } else {
-        console.log(`[CLEANUP] ${lk} ${date} slots=${c?.slots || 0} deleted=${c?.deleted || 0}`);
-      }
-    } catch (e) {
-      console.warn(`[CLEANUP] ${lk} ${date} ERROR=${String(e?.message || e || "")}`);
-    }
-  }
+  console.log("");
+  console.log("===== RESULTADO =====");
+  console.log(JSON.stringify(result, null, 2));
 }
 
 if (require.main === module) {
