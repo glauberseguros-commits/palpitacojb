@@ -4451,14 +4451,26 @@ function buildTimelineForDate({
         ? resultGrupo
         : null;
 
+    const hitPrizePositions = resultTop3Groups.map(
+      (resultGroup) =>
+        Number.isFinite(Number(resultGroup)) &&
+        top3.some(
+          (item) =>
+            Number(item?.grupo) ===
+            Number(resultGroup)
+        )
+    );
+
+    const matchedPrizePositions =
+      hitPrizePositions.filter(Boolean).length;
+
     const hit =
-      Number.isFinite(Number(normalizedResultGrupo)) &&
-      top3.length
-        ? top3.some(
-            (item) =>
-              Number(item?.grupo) ===
-              Number(normalizedResultGrupo)
-          )
+      top3.length > 0 &&
+      resultTop3Groups.some(
+        (resultGroup) =>
+          Number.isFinite(Number(resultGroup))
+      )
+        ? matchedPrizePositions > 0
         : null;
 
     timeline.push({
@@ -4474,6 +4486,9 @@ function buildTimelineForDate({
       resultTop3Groups,
 
       hit,
+      top3PrizeHit: hit,
+      hitPrizePositions,
+      matchedPrizePositions,
 
       status: Number.isFinite(
         Number(normalizedResultGrupo)
