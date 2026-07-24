@@ -608,7 +608,16 @@ function finalizeBucket(bucket = {}) {
 }
 
 function finalizeMap(map = {}) {
-  const result = {};
+  const OFFICIAL_BASELINE = {
+  baselineVersion: "TOP3_STATISTICAL_V3_V1",
+  baselineDescription: "Primeira versão oficial do motor estatístico.",
+  baselineMetric: "TOP3_PRIZE_ANY_ORDER",
+  baselineRate: 31.7411,
+  baselineCases: 7432,
+  baselineValidatedAt: "2026-07-23"
+};
+
+const result = {};
 
   for (
     const [key, bucket]
@@ -1263,11 +1272,21 @@ async function runOfficialBacktest(
     }
   }
 
-  const result = {
+  const OFFICIAL_BASELINE = {
+  baselineVersion: "TOP3_STATISTICAL_V3_V1",
+  baselineDescription: "Primeira versão oficial do motor estatístico.",
+  baselineMetric: "TOP3_PRIZE_ANY_ORDER",
+  baselineRate: 31.7411,
+  baselineCases: 7432,
+  baselineValidatedAt: "2026-07-23"
+};
+
+const result = {
     ok: true,
     lotteryKey,
     engine:
       "top3_statistical_v3",
+    baseline: OFFICIAL_BASELINE,
     historySource:
       "snapshot",
     historyLoaded:
@@ -1467,3 +1486,4 @@ module.exports = {
   buildTextReport,
   runOfficialBacktest,
 };
+
