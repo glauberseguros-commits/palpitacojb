@@ -10,6 +10,10 @@ const METADATA_COLLECTION = "metadata";
 const CURRENT_METADATA_DOC = "current";
 const SCHEMA_VERSION = 1;
 
+const COMPACT_COLLECTION = "compact_years";
+const COMPACT_MANIFEST_DOC = "__manifest";
+const COMPACT_SCHEMA_VERSION = 1;
+
 function normalizeLotteryKey(value) {
   const key = String(value || "PT_RIO")
     .trim()
@@ -54,6 +58,18 @@ function normalizeYmd(value) {
   return ymd;
 }
 
+function normalizeYear(value) {
+  const year = String(value || "").trim();
+
+  if (!/^\d{4}$/.test(year)) {
+    throw new Error(
+      "year inválido. Utilize YYYY."
+    );
+  }
+
+  return year;
+}
+
 function resolveDb(dependencies = {}) {
   if (dependencies.db) {
     return dependencies.db;
@@ -94,6 +110,37 @@ function metadataRef(
   )
     .collection(METADATA_COLLECTION)
     .doc(CURRENT_METADATA_DOC);
+}
+
+function compactCollectionRef(
+  database,
+  lotteryKey
+) {
+  return historyRootRef(
+    database,
+    lotteryKey
+  ).collection(COMPACT_COLLECTION);
+}
+
+function compactYearRef(
+  database,
+  lotteryKey,
+  year
+) {
+  return compactCollectionRef(
+    database,
+    lotteryKey
+  ).doc(normalizeYear(year));
+}
+
+function compactManifestRef(
+  database,
+  lotteryKey
+) {
+  return compactCollectionRef(
+    database,
+    lotteryKey
+  ).doc(COMPACT_MANIFEST_DOC);
 }
 
 function safeArray(value) {
@@ -439,7 +486,348 @@ async function listHistoryMonths(
     );
 }
 
-async function readFullHistory(
+function encodeCompactPrize(prize = {}) {
+  const normalized = normalizePrize(prize);
+
+  if (!normalized) {
+    return null;
+  }
+
+  return {
+    i: normalized.id,
+    o: normalized.position,
+    g: normalized.grupo,
+    m: normalized.milhar,
+    c: normalized.centena,
+    d: normalized.dezena,
+  };
+}
+
+function decodeCompactPrize(row) {
+  if (
+    !row ||
+    typeof row !== "object" ||
+    Array.isArray(row)
+  ) {
+    return null;
+  }
+
+  return normalizePrize({
+    id: row.i,
+    position: row.o,
+    grupo: row.g,
+    milhar: row.m,
+    centena: row.c,
+    dezena: row.d,
+  });
+}
+
+function encodeCompactDraw(draw = {}) {
+  const normalized = normalizeDraw(draw);
+
+  if (!normalized) {
+    return null;
+  }
+
+  return {
+    d: normalized.drawId,
+    y: normalized.ymd,
+    h: normalized.closeHour,
+    k: normalized.lotteryKey,
+    c: normalized.lotteryCode,
+    p: safeArray(normalized.prizes)
+      .map(encodeCompactPrize)
+      .filter(Boolean),
+  };
+}
+
+function decodeCompactDraw(row) {
+  if (
+    !row ||
+    typeof row !== "object" ||
+    Array.isArray(row)
+  ) {
+    return null;
+  }
+
+  return normalizeDraw({
+    drawId: row.d,
+    id: row.d,
+    ymd: row.y,
+    closeHour: row.h,
+    lotteryKey: row.k,
+    lotteryCode: row.c,
+    prizes: safeArray(row.p)
+      .map(decodeCompactPrize)
+      .filter(Boolean),
+  });
+}
+
+async function readCompactManifest(
+  lotteryKey,
+  dependencies = {}
+) {
+  const database = resolveDb(dependencies);
+  const key = normalizeLotteryKey(lotteryKey);
+
+  const snap = await compactManifestRef(
+    database,
+    key
+  ).get();
+
+  return {
+    exists: snap.exists,
+    lotteryKey: key,
+    data: snap.exists
+      ? snap.data() || {}
+      : null,
+  };
+}
+
+async function writeCompactManifest(
+  lotteryKey,
+  metadata = {},
+  dependencies = {}
+) {
+  const database = resolveDb(dependencies);
+  const key = normalizeLotteryKey(lotteryKey);
+
+  const payload = {
+    ...metadata,
+    schemaVersion: COMPACT_SCHEMA_VERSION,
+    lotteryKey: key,
+    updatedAt: new Date(),
+  };
+
+  await compactManifestRef(
+    database,
+    key
+  ).set(
+    payload,
+    {
+      merge: true,
+    }
+  );
+
+  return payload;
+}
+
+async function readCompactHistoryYear(
+  lotteryKey,
+  year,
+  dependencies = {}
+) {
+  const database = resolveDb(dependencies);
+  const key = normalizeLotteryKey(lotteryKey);
+  const normalizedYear = normalizeYear(year);
+
+  const snap = await compactYearRef(
+    database,
+    key,
+    normalizedYear
+  ).get();
+
+  if (!snap.exists) {
+    return {
+      exists: false,
+      lotteryKey: key,
+      year: normalizedYear,
+      draws: [],
+      data: null,
+    };
+  }
+
+  const data = snap.data() || {};
+
+  return {
+    exists: true,
+    lotteryKey: key,
+    year: normalizedYear,
+    draws: deduplicateDraws(
+      safeArray(data.rows)
+        .map(decodeCompactDraw)
+        .filter(Boolean)
+    ),
+    data,
+  };
+}
+
+async function writeCompactHistoryYear(
+  lotteryKey,
+  year,
+  draws,
+  dependencies = {}
+) {
+  const database = resolveDb(dependencies);
+  const key = normalizeLotteryKey(lotteryKey);
+  const normalizedYear = normalizeYear(year);
+
+  const normalizedDraws = deduplicateDraws(
+    draws
+  ).filter(
+    (draw) =>
+      draw.ymd.slice(0, 4) === normalizedYear
+  );
+
+  const first =
+    normalizedDraws[0] || null;
+
+  const last =
+    normalizedDraws[
+      normalizedDraws.length - 1
+    ] || null;
+
+  const payload = {
+    schemaVersion: COMPACT_SCHEMA_VERSION,
+    lotteryKey: key,
+    year: normalizedYear,
+    drawCount: normalizedDraws.length,
+    firstYmd: first?.ymd || null,
+    lastYmd: last?.ymd || null,
+    firstDrawId:
+      first?.drawId || null,
+    lastDrawId:
+      last?.drawId || null,
+    rows: normalizedDraws
+      .map(encodeCompactDraw)
+      .filter(Boolean),
+    updatedAt: new Date(),
+  };
+
+  await compactYearRef(
+    database,
+    key,
+    normalizedYear
+  ).set(
+    payload,
+    {
+      merge: false,
+    }
+  );
+
+  return payload;
+}
+
+async function upsertCompactHistoryYear(
+  lotteryKey,
+  year,
+  newDraws,
+  dependencies = {}
+) {
+  const current =
+    await readCompactHistoryYear(
+      lotteryKey,
+      year,
+      dependencies
+    );
+
+  const merged = deduplicateDraws([
+    ...current.draws,
+    ...safeArray(newDraws),
+  ]);
+
+  const payload =
+    await writeCompactHistoryYear(
+      lotteryKey,
+      year,
+      merged,
+      dependencies
+    );
+
+  return {
+    ...payload,
+    previousDrawCount:
+      current.draws.length,
+  };
+}
+
+async function readCompactFullHistory(
+  lotteryKey,
+  dependencies = {}
+) {
+  const key = normalizeLotteryKey(lotteryKey);
+
+  const manifestResult =
+    await readCompactManifest(
+      key,
+      dependencies
+    );
+
+  const manifest =
+    manifestResult?.data || null;
+
+  if (
+    manifestResult?.exists !== true ||
+    manifest?.status !== "complete"
+  ) {
+    return [];
+  }
+
+  const years = safeArray(
+    manifest.years
+  )
+    .map((year) =>
+      String(year || "").trim()
+    )
+    .filter(
+      (year) =>
+        /^\d{4}$/.test(year)
+    )
+    .sort();
+
+  if (!years.length) {
+    return [];
+  }
+
+  const yearlyResults =
+    await Promise.all(
+      years.map(
+        (year) =>
+          readCompactHistoryYear(
+            key,
+            year,
+            dependencies
+          )
+      )
+    );
+
+  if (
+    yearlyResults.some(
+      (result) =>
+        result.exists !== true
+    )
+  ) {
+    throw new Error(
+      "Snapshot compacto possui ano ausente."
+    );
+  }
+
+  const draws = deduplicateDraws(
+    yearlyResults.flatMap(
+      (result) =>
+        result.draws
+    )
+  );
+
+  const expectedTotal = Number(
+    manifest.totalDraws || 0
+  );
+
+  if (
+    expectedTotal > 0 &&
+    draws.length !== expectedTotal
+  ) {
+    throw new Error(
+      "Snapshot compacto inconsistente: " +
+      `esperado=${expectedTotal}; ` +
+      `carregado=${draws.length}.`
+    );
+  }
+
+  return draws;
+}
+
+async function readLegacyFullHistory(
   lotteryKey,
   dependencies = {}
 ) {
@@ -459,13 +847,49 @@ async function readFullHistory(
   return deduplicateDraws(draws);
 }
 
+async function readFullHistory(
+  lotteryKey,
+  dependencies = {}
+) {
+  if (
+    dependencies.forceLegacy !== true
+  ) {
+    try {
+      const compact =
+        await readCompactFullHistory(
+          lotteryKey,
+          dependencies
+        );
+
+      if (compact.length) {
+        return compact;
+      }
+    } catch (error) {
+      console.warn(
+        "[TOP3-HISTORY] Snapshot compacto indisponível; " +
+        "usando histórico mensal:",
+        error?.message || error
+      );
+    }
+  }
+
+  return readLegacyFullHistory(
+    lotteryKey,
+    dependencies
+  );
+}
+
 module.exports = {
   ROOT_COLLECTION,
   MONTHS_COLLECTION,
   METADATA_COLLECTION,
   SCHEMA_VERSION,
+  COMPACT_COLLECTION,
+  COMPACT_MANIFEST_DOC,
+  COMPACT_SCHEMA_VERSION,
   normalizeLotteryKey,
   normalizeYearMonth,
+  normalizeYear,
   normalizeDraw,
   deduplicateDraws,
   readHistoryMonth,
@@ -474,5 +898,16 @@ module.exports = {
   readMetadata,
   writeMetadata,
   listHistoryMonths,
+  encodeCompactPrize,
+  decodeCompactPrize,
+  encodeCompactDraw,
+  decodeCompactDraw,
+  readCompactManifest,
+  writeCompactManifest,
+  readCompactHistoryYear,
+  writeCompactHistoryYear,
+  upsertCompactHistoryYear,
+  readCompactFullHistory,
+  readLegacyFullHistory,
   readFullHistory,
 };

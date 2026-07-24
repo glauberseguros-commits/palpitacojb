@@ -9,6 +9,9 @@ const {
   writeMetadata,
   upsertHistoryMonth,
   deduplicateDraws,
+  readCompactManifest,
+  writeCompactManifest,
+  upsertCompactHistoryYear,
 } = require("./top3HistoryRepository");
 
 function safeArray(value) {
@@ -243,6 +246,18 @@ async function syncImportedResultToTop3History(
     dependencies.writeMetadata ||
     writeMetadata;
 
+  const loadCompactManifest =
+    dependencies.readCompactManifest ||
+    readCompactManifest;
+
+  const saveCompactManifest =
+    dependencies.writeCompactManifest ||
+    writeCompactManifest;
+
+  const saveCompactYear =
+    dependencies.upsertCompactHistoryYear ||
+    upsertCompactHistoryYear;
+
   try {
     if (
       importResult.blocked === true ||
@@ -265,6 +280,19 @@ async function syncImportedResultToTop3History(
 
     const metadata =
       metadataResult?.data || null;
+
+    const compactManifestResult =
+      await loadCompactManifest(
+        lotteryKey,
+        dependencies.repositoryDependencies || {}
+      );
+
+    const compactManifest =
+      compactManifestResult?.data || null;
+
+    const compactReady =
+      compactManifestResult?.exists === true &&
+      compactManifest?.status === "complete";
 
     if (
       metadataResult?.exists !== true ||
@@ -445,6 +473,120 @@ async function syncImportedResultToTop3History(
         last?.drawId || null,
     };
 
+    let compactUpdated = false;
+    let compactError = null;
+    const updatedCompactYears = [];
+
+    if (compactReady) {
+      try {
+        const byYear = new Map();
+
+        for (const draw of draws) {
+          const year = draw.ymd.slice(0, 4);
+
+          if (!byYear.has(year)) {
+            byYear.set(year, []);
+          }
+
+          byYear.get(year).push(draw);
+        }
+
+        for (
+          const [year, yearDraws]
+          of byYear.entries()
+        ) {
+          const payload =
+            await saveCompactYear(
+              lotteryKey,
+              year,
+              yearDraws,
+              dependencies.repositoryDependencies || {}
+            );
+
+          updatedCompactYears.push({
+            year,
+            drawCount:
+              Number(payload?.drawCount || 0),
+            previousDrawCount:
+              Number(
+                payload?.previousDrawCount || 0
+              ),
+          });
+        }
+
+        const compactYears = Array.from(
+          new Set(
+            orderedMonths.map(
+              (month) =>
+                String(month).slice(0, 4)
+            )
+          )
+        ).sort();
+
+        await saveCompactManifest(
+          lotteryKey,
+          {
+            status: "complete",
+            totalDraws:
+              summary.totalDraws,
+            yearCount:
+              compactYears.length,
+            years:
+              compactYears,
+            firstYmd:
+              summary.firstYmd,
+            lastYmd:
+              summary.lastYmd,
+            firstDrawId:
+              summary.firstDrawId,
+            lastDrawId:
+              summary.lastDrawId,
+            source:
+              "bootstrap_plus_incremental",
+            incrementalUpdatedAt:
+              new Date().toISOString(),
+            staleReason: null,
+            staleAt: null,
+          },
+          dependencies.repositoryDependencies || {}
+        );
+
+        compactUpdated = true;
+      } catch (error) {
+        compactError = String(
+          error?.message ||
+          error ||
+          "compact_incremental_failed"
+        );
+
+        console.warn(
+          "[TOP3-HISTORY] Compacto incremental falhou; " +
+          "a leitura mensal continuará disponível:",
+          compactError
+        );
+
+        try {
+          await saveCompactManifest(
+            lotteryKey,
+            {
+              status: "stale",
+              staleReason:
+                compactError,
+              staleAt:
+                new Date().toISOString(),
+            },
+            dependencies.repositoryDependencies || {}
+          );
+        } catch (manifestError) {
+          console.warn(
+            "[TOP3-HISTORY] Falha ao marcar compacto como stale:",
+            manifestError?.message ||
+            manifestError
+          );
+        }
+      }
+    }
+
     await saveMetadata(
       lotteryKey,
       {
@@ -488,6 +630,10 @@ async function syncImportedResultToTop3History(
       lotteryKey,
       importedDraws: draws.length,
       updatedMonths,
+      compactReady,
+      compactUpdated,
+      compactError,
+      updatedCompactYears,
       ...summary,
     };
   } catch (error) {
