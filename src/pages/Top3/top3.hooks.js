@@ -296,6 +296,11 @@ export function useTop3Controller() {
   const boundsCacheRef = useRef(new Map());
   const analyticsCacheRef = useRef({ key: "", value: emptyAnalytics() });
 
+  // TOP3_REF_04_MILHARES_CACHE
+  // Cache restrito à carga atual. É limpo sempre que qualquer entrada
+  // funcional da geração de milhares muda.
+  const milharesCacheRef = useRef(new Map());
+
   const [lotteryKey, setLotteryKey] = useState(DEFAULT_LOTTERY);
   const [ymd, setYmd] = useState(() => todayYMDLocal());
   const [lookback, setLookback] = useState(LOOKBACK_ALL);
@@ -952,18 +957,79 @@ export function useTop3Controller() {
     analysisHourBucket,
   ]);
 
-  const build20 = useCallback(
-    (grupo2, item = null) => {
-      return buildMilharesForGrupo({
+  useEffect(() => {
+    milharesCacheRef.current.clear();
+  }, [
+    rangeDraws,
+    analysisHourBucket,
+    scheduleKey,
+    analysisYmd,
+    lotteryKeySafe,
+  ]);
+
+  const buildMilharesCached = useCallback(
+    ({ grupo2, count, targetYmd }) => {
+      const grupo = Number(grupo2);
+      const target = isYMD(targetYmd) ? targetYmd : analysisYmd;
+
+      const cacheKey = [
+        lotteryKeySafe,
+        analysisHourBucket,
+        scheduleKey,
+        target,
+        Number(count),
+        Number.isFinite(grupo) ? grupo : "",
+      ].join("|");
+
+      const cached = milharesCacheRef.current.get(cacheKey);
+
+      if (cached) {
+        return cached;
+      }
+
+      const generated = buildMilharesForGrupo({
         rangeDraws,
         analysisHourBucket,
         schedule,
+        grupo2,
+        count,
+        targetYmd: target,
+      });
+
+      milharesCacheRef.current.set(cacheKey, generated);
+
+      return generated;
+    },
+    [
+      rangeDraws,
+      analysisHourBucket,
+      schedule,
+      scheduleKey,
+      analysisYmd,
+      lotteryKeySafe,
+    ]
+  );
+
+  const build16 = useCallback(
+    (grupo2) => {
+      return buildMilharesCached({
+        grupo2,
+        count: 16,
+        targetYmd: analysisYmd,
+      });
+    },
+    [buildMilharesCached, analysisYmd]
+  );
+
+  const build20 = useCallback(
+    (grupo2, item = null) => {
+      return buildMilharesCached({
         grupo2,
         count: 20,
         targetYmd: item?.meta?.next?.ymd || analysisYmd,
       });
     },
-    [rangeDraws, analysisHourBucket, schedule, analysisYmd]
+    [buildMilharesCached, analysisYmd]
   );
 
   const layerMetaText = useMemo(() => {
@@ -1377,15 +1443,7 @@ export function useTop3Controller() {
     safeStr,
     lotteryLabel,
 
-    build16: (grupo2) =>
-      build16MilharesForGrupo({
-        rangeDraws,
-        analysisHourBucket,
-        schedule,
-        grupo2,
-        targetYmd: analysisYmd,
-      }),
-
+    build16,
     build20,
     getCentena3,
     normalizeImgSrc,
