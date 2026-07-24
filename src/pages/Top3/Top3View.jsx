@@ -315,7 +315,7 @@ function analyzeTop3Hit(top3, resultGrupo, resultMilhar) {
     } else if (hasGrupo && g === grupoNum) {
       score = 33.33;
       type = "hit_grupo";
-      matchedValue = hasMilhar ? milhar.slice(-2) : "";
+      matchedValue = hasMilhar ? milhar.slice(-2) : formatGrupo(grupoNum);
     }
 
     if (score > best.score) {
@@ -3183,7 +3183,7 @@ const list = Array.isArray(top3)
                     : hitType === "hit_centena"
                       ? `✅✅ 66,67% · Centena ${matchedValue || "—"}`
                       : hitType === "hit_grupo"
-                        ? `✅ 33,33% · Dezena ${matchedValue || "indisponível"}`
+                        ? `✅ 33,33% · Dezena ${matchedValue || "—"}`
                         : "❌ 0%";
 
                 return (
