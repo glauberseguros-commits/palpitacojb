@@ -17,6 +17,8 @@ import {
 
 import { scoreRanking } from "./modules/scoreEngine/scoreEngineV2";
 
+import { chooseBestMilhar } from "../Centenas/modules/milharProbabilityEngine";
+
 import {
   TOP3_NEXTDRAW_SCAN_MAX_STEPS,
   TOP3_NEXTDRAW_SCAN_MAX_DAYS,
@@ -3785,108 +3787,214 @@ export function buildMilharesForGrupo({
     );
   }
 
+  /*
+   * Contexto compartilhado do seletor de milhar.
+   *
+   * O Top3 continua escolhendo:
+   * - grupo;
+   * - dezenas;
+   * - centenas.
+   *
+   * O chooseBestMilhar escolhe somente o prefixo vencedor
+   * para cada centena selecionada.
+   */
+  const fallbackMilharPrizes = [];
+  const primaryMilharPrizes = [];
+
+  for (const draw of list) {
+    const drawYmd = pickDrawYMD(draw);
+    const drawHour = toHourBucket(pickDrawHour(draw));
+    const drawDow =
+      isYMD(drawYmd)
+        ? getDowKey(drawYmd)
+        : null;
+
+    const matchesTargetHour =
+      Boolean(target) &&
+      drawHour === target;
+
+    const matchesTargetDow =
+      targetDow === null ||
+      Number(drawDow) === Number(targetDow);
+
+    const prizes = Array.isArray(draw?.prizes)
+      ? draw.prizes
+      : [];
+
+    for (const prize of prizes) {
+      const position = Number(guessPrizePos(prize));
+      const prizeGroup = Number(guessPrizeGrupo(prize));
+
+      if (
+        !Number.isFinite(position) ||
+        position < 1 ||
+        position > 7 ||
+        prizeGroup !== grupoNum
+      ) {
+        continue;
+      }
+
+      fallbackMilharPrizes.push(prize);
+
+      if (matchesTargetHour && matchesTargetDow) {
+        primaryMilharPrizes.push(prize);
+      }
+    }
+  }
+
   const usedMilhares = new Set();
   const slots = [];
 
   function pickDiversifiedMilharesForDezena(dz, limit) {
     const candidates = ranked
-      .filter((x) => x.dezena === dz && !usedMilhares.has(x.milhar))
-      .map((x) => {
-        const milhar = String(x.milhar || "").padStart(4, "0").slice(-4);
-        const prefix = milhar.slice(0, 1);
-        const centena = milhar.slice(1);
-        const centenaScore = Number(centenaScoreMap.get(centena) || 0);
+      .filter((item) => item.dezena === dz)
+      .map((item) => {
+        const centena = String(
+          item?.centena || ""
+        )
+          .replace(/\D+/g, "")
+          .padStart(3, "0")
+          .slice(-3);
 
         return {
-          ...x,
-          milhar,
-          prefix,
+          ...item,
           centena,
-          centenaScore,
-          adjustedScore:
-            centenaScore * 2 +
-            Number(x.score || 0) -
-            (prefix === "0" ? 80 : 0),
+          centenaScore: Number(
+            centenaScoreMap.get(centena) || 0
+          ),
         };
-      });
+      })
+      .filter((item) => /^\d{3}$/.test(item.centena));
 
     const byCentena = new Map();
 
     for (const item of candidates) {
-      if (!byCentena.has(item.centena)) byCentena.set(item.centena, []);
-      byCentena.get(item.centena).push(item);
+      const current = byCentena.get(item.centena);
+
+      if (
+        !current ||
+        Number(item.centenaScore || 0) >
+          Number(current.centenaScore || 0) ||
+        (
+          Number(item.centenaScore || 0) ===
+            Number(current.centenaScore || 0) &&
+          Number(item.score || 0) >
+            Number(current.score || 0)
+        )
+      ) {
+        byCentena.set(item.centena, item);
+      }
     }
 
-    const centenaGroups = Array.from(byCentena.entries())
-      .map(([centena, items]) => {
-        const sortedItems = items.slice().sort((a, b) => {
-          if (Number(b.adjustedScore) !== Number(a.adjustedScore)) {
-            return Number(b.adjustedScore) - Number(a.adjustedScore);
-          }
-          if (Number(b.score) !== Number(a.score)) return Number(b.score) - Number(a.score);
-          if (Number(b.targetHits) !== Number(a.targetHits)) return Number(b.targetHits) - Number(a.targetHits);
-          if (Number(b.freq) !== Number(a.freq)) return Number(b.freq) - Number(a.freq);
-          return milharCompareAsc(a.milhar, b.milhar);
-        });
+    const strongestCentenas = Array.from(
+      byCentena.values()
+    ).sort((a, b) => {
+      if (
+        Number(b.centenaScore || 0) !==
+        Number(a.centenaScore || 0)
+      ) {
+        return (
+          Number(b.centenaScore || 0) -
+          Number(a.centenaScore || 0)
+        );
+      }
 
-        const top = sortedItems[0] || {};
+      if (
+        Number(b.score || 0) !==
+        Number(a.score || 0)
+      ) {
+        return (
+          Number(b.score || 0) -
+          Number(a.score || 0)
+        );
+      }
 
-        return {
-          centena,
-          centenaScore: Number(top.centenaScore || 0),
-          bestScore: Number(top.adjustedScore || 0),
-          items: sortedItems,
-        };
-      })
-      .sort((a, b) => {
-        if (Number(b.centenaScore) !== Number(a.centenaScore)) {
-          return Number(b.centenaScore) - Number(a.centenaScore);
-        }
-        if (Number(b.bestScore) !== Number(a.bestScore)) {
-          return Number(b.bestScore) - Number(a.bestScore);
-        }
-        return String(a.centena).localeCompare(String(b.centena));
-      });
+      if (
+        Number(b.targetHits || 0) !==
+        Number(a.targetHits || 0)
+      ) {
+        return (
+          Number(b.targetHits || 0) -
+          Number(a.targetHits || 0)
+        );
+      }
+
+      if (
+        Number(b.freq || 0) !==
+        Number(a.freq || 0)
+      ) {
+        return (
+          Number(b.freq || 0) -
+          Number(a.freq || 0)
+        );
+      }
+
+      return String(a.centena).localeCompare(
+        String(b.centena)
+      );
+    });
 
     const picked = [];
-    const usedPrefixes = new Set();
-    const usedCentenas = new Set();
 
-    // Fase 1: uma melhor milhar por centena forte, evitando repetir prefixo.
-    for (const group of centenaGroups) {
+    for (const centenaItem of strongestCentenas) {
       if (picked.length >= limit) break;
 
-      const item = group.items.find((x) => !usedPrefixes.has(x.prefix));
-      if (!item) continue;
+      const sharedResult = chooseBestMilhar({
+        centena: centenaItem.centena,
+        prizes: primaryMilharPrizes,
+        fallbackPrizes: fallbackMilharPrizes,
+      });
 
-      picked.push(item);
-      usedPrefixes.add(item.prefix);
-      usedCentenas.add(item.centena);
-    }
+      const sharedWinner =
+        sharedResult?.winner || null;
 
-    // Fase 2: se faltar, pega novas centenas fortes mesmo repetindo prefixo.
-    for (const group of centenaGroups) {
-      if (picked.length >= limit) break;
-      if (usedCentenas.has(group.centena)) continue;
+      const selectedMilhar = String(
+        sharedWinner?.milhar || ""
+      )
+        .replace(/\D+/g, "")
+        .padStart(4, "0")
+        .slice(-4);
 
-      const item = group.items.find((x) => !picked.some((p) => p.milhar === x.milhar));
-      if (!item) continue;
-
-      picked.push(item);
-      usedPrefixes.add(item.prefix);
-      usedCentenas.add(item.centena);
-    }
-
-    // Fase 3: se ainda faltar, permite mais de uma milhar da mesma centena.
-    for (const group of centenaGroups) {
-      if (picked.length >= limit) break;
-
-      for (const item of group.items) {
-        if (picked.length >= limit) break;
-        if (picked.some((p) => p.milhar === item.milhar)) continue;
-
-        picked.push(item);
+      if (!/^\d{4}$/.test(selectedMilhar)) {
+        continue;
       }
+
+      if (
+        selectedMilhar.slice(-3) !==
+        centenaItem.centena
+      ) {
+        continue;
+      }
+
+      if (
+        getDezena2(selectedMilhar) !== dz ||
+        usedMilhares.has(selectedMilhar) ||
+        picked.some(
+          (item) =>
+            item.milhar === selectedMilhar
+        )
+      ) {
+        continue;
+      }
+
+      picked.push({
+        ...centenaItem,
+        milhar: selectedMilhar,
+        prefix:
+          sharedWinner?.prefix ??
+          selectedMilhar.slice(0, 1),
+        adjustedScore: Number(
+          sharedWinner?.score ||
+          centenaItem.score ||
+          0
+        ),
+        sharedMilharModel:
+          sharedResult?.model ||
+          "MILHAR_PROBABILITY_V2",
+        sharedMilharSampleSize: Number(
+          sharedResult?.sampleSize || 0
+        ),
+      });
     }
 
     return picked.slice(0, limit);
