@@ -1187,75 +1187,253 @@ function Top3Card({
   );
 }
 
-function CompactTop3Result({ slot, status, statusLabel, statusDetail }) {
-  const slotTop3 = Array.isArray(slot?.top3) ? slot.top3.slice(0, 3) : [];
+function CompactTop3Result({
+  slot,
+  status,
+  statusLabel,
+  statusDetail,
+  analysis,
+}) {
+  const slotTop3 = Array.isArray(slot?.top3)
+    ? slot.top3.slice(0, 3)
+    : [];
+
   const resultGrupo = getSlotResultGrupo(slot);
-  const hasResult = Number.isFinite(resultGrupo) && resultGrupo >= 1 && resultGrupo <= 25;
-  const resultAnimal = hasResult ? String(getAnimalLabel(resultGrupo) || "") : "";
-  const resultImg = hasResult ? getImgFromGrupo(resultGrupo, 64) : "";
+
+  const hasResult =
+    Number.isFinite(resultGrupo) &&
+    resultGrupo >= 1 &&
+    resultGrupo <= 25;
+
+  const resultAnimal = hasResult
+    ? String(getAnimalLabel(resultGrupo) || "")
+    : "";
+
+  const resultImg = hasResult
+    ? getImgFromGrupo(resultGrupo, 64)
+    : "";
+
+  const resultMilhar = extractResultMilhar(slot);
+
+  const matchedPredictionIndex =
+    Number.isFinite(Number(analysis?.position)) &&
+    Number(analysis.position) >= 1
+      ? Number(analysis.position) - 1
+      : -1;
+
+  const resultPosition = Number(
+    analysis?.resultPosition
+  );
+
+  const medal =
+    status !== "hit"
+      ? ""
+      : resultPosition === 1
+        ? "🥇"
+        : resultPosition === 2
+          ? "🥈"
+          : resultPosition === 3
+            ? "🥉"
+            : "";
+
+  const dateLabel = formatYmdHour(
+    slot?.targetYmd,
+    slot?.targetHour
+  );
 
   return (
-    <div className="timeline-compact">
-      <div className="timeline-compact__grid">
-        <div className="timeline-compact__predictions">
-          {slotTop3.map((item, idx) => {
-            const grupo = Number(item?.grupo);
-            const animal = String(item?.animal || getAnimalLabel(grupo) || "").trim();
-            const img = Number.isFinite(grupo) ? getImgFromGrupo(grupo, 64) : "";
-
-            return (
-              <div
-                key={`${String(slot?.targetYmd || "y")}_${String(slot?.targetHour || "h")}_${idx}_${grupo}`}
-                className="timeline-compact__pick"
-              >
-                <div className="timeline-compact__pickRank">{idx + 1}</div>
-                <ImgWithFallback
-                  srcs={img ? [img] : []}
-                  alt={animal || `G${formatGrupo(grupo)}`}
-                  size={44}
-                  style={{ borderRadius: 10 }}
-                />
-                <div className="timeline-compact__pickText">
-                  <div className="timeline-compact__pickGroup">G{formatGrupo(grupo)}</div>
-                  <div className="timeline-compact__pickAnimal">
-                    {animal ? animal.toUpperCase() : "—"}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+    <div
+      className="timeline-compact"
+      title={statusDetail || statusLabel || ""}
+      style={{
+        width: "100%",
+        overflowX: "auto",
+      }}
+    >
+      <div
+        className="timeline-compact__twoLine"
+        style={{
+          display: "grid",
+          gridTemplateColumns:
+            "minmax(112px, 1.35fr) repeat(3, minmax(54px, 0.72fr)) minmax(82px, 0.95fr)",
+          alignItems: "center",
+          gap: "6px",
+          minWidth: "410px",
+          padding: "8px 6px",
+        }}
+      >
+        <div
+          className="timeline-compact__date"
+          style={{
+            gridRow: "1 / span 2",
+            alignSelf: "center",
+            fontSize: "12px",
+            fontWeight: 800,
+            lineHeight: 1.2,
+            whiteSpace: "nowrap",
+          }}
+        >
+          {dateLabel}
         </div>
 
-        <div className="timeline-compact__result">
-          <div className="timeline-compact__resultLabel">Resultado</div>
+        {slotTop3.map((item, idx) => {
+          const grupo = Number(item?.grupo);
 
+          const animal = String(
+            item?.animal ||
+              getAnimalLabel(grupo) ||
+              ""
+          ).trim();
+
+          const img = Number.isFinite(grupo)
+            ? getImgFromGrupo(grupo, 64)
+            : "";
+
+          const isMatched =
+            status === "hit" &&
+            matchedPredictionIndex === idx;
+
+          return (
+            <div
+              key={`${String(
+                slot?.targetYmd || "y"
+              )}_${String(
+                slot?.targetHour || "h"
+              )}_${idx}_${grupo}`}
+              className={`timeline-compact__pick ${
+                isMatched
+                  ? "timeline-compact__pick--matched"
+                  : ""
+              }`}
+              style={{
+                display: "grid",
+                gridTemplateRows: "34px 18px",
+                justifyItems: "center",
+                alignItems: "center",
+                minWidth: 0,
+                padding: 0,
+                border: "none",
+                background: "transparent",
+              }}
+              title={`${animal || "Animal"} — G${formatGrupo(
+                grupo
+              )}`}
+            >
+              <div
+                style={{
+                  position: "relative",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <ImgWithFallback
+                  srcs={img ? [img] : []}
+                  alt={
+                    animal ||
+                    `G${formatGrupo(grupo)}`
+                  }
+                  size={34}
+                  style={{
+                    borderRadius: 8,
+                    outline: isMatched
+                      ? "2px solid rgba(201,168,62,0.95)"
+                      : "none",
+                    outlineOffset: 1,
+                  }}
+                />
+
+                {isMatched && medal ? (
+                  <span
+                    aria-label="Palpite acertado"
+                    style={{
+                      position: "absolute",
+                      top: -8,
+                      right: -13,
+                      fontSize: "17px",
+                      lineHeight: 1,
+                      filter:
+                        "drop-shadow(0 1px 2px rgba(0,0,0,0.75))",
+                    }}
+                  >
+                    {medal}
+                  </span>
+                ) : null}
+              </div>
+
+              <div
+                style={{
+                  fontSize: "12px",
+                  fontWeight: 900,
+                  lineHeight: 1,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                G{formatGrupo(grupo)}
+              </div>
+            </div>
+          );
+        })}
+
+        <div
+          className="timeline-compact__official"
+          style={{
+            display: "grid",
+            gridTemplateRows: "34px 18px",
+            justifyItems: "center",
+            alignItems: "center",
+            minWidth: 0,
+            paddingLeft: "6px",
+            borderLeft:
+              "1px solid rgba(255,255,255,0.14)",
+          }}
+          title={
+            hasResult
+              ? `${resultAnimal} — G${formatGrupo(
+                  resultGrupo
+                )}${
+                  resultMilhar
+                    ? ` — ${resultMilhar}`
+                    : ""
+                }`
+              : "Resultado pendente"
+          }
+        >
           {hasResult ? (
-            <div className="timeline-compact__resultBox">
+            <>
               <ImgWithFallback
                 srcs={resultImg ? [resultImg] : []}
                 alt={resultAnimal}
-                size={48}
-                style={{ borderRadius: 10 }}
+                size={34}
+                style={{ borderRadius: 8 }}
               />
-              <div className="timeline-compact__resultText">
-                <div className="timeline-compact__resultGroup">G{formatGrupo(resultGrupo)}</div>
-                <div className="timeline-compact__resultAnimal">
-                  {String(resultAnimal || "").toUpperCase()}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="timeline-compact__resultPending">PENDENTE</div>
-          )}
-        </div>
 
-        <div className="timeline-compact__performance">
-          <div
-            className={`timeline-compact__performanceBadge timeline-compact__performanceBadge--${status}`}
-          >
-            {statusLabel}
-          </div>
-          <div className="timeline-compact__performanceText">{statusDetail}</div>
+              <div
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 900,
+                  lineHeight: 1,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                G{formatGrupo(resultGrupo)}
+                {resultMilhar
+                  ? ` • ${resultMilhar}`
+                  : ""}
+              </div>
+            </>
+          ) : (
+            <div
+              style={{
+                gridRow: "1 / span 2",
+                alignSelf: "center",
+                fontSize: "10px",
+                fontWeight: 800,
+              }}
+            >
+              PENDENTE
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -1322,38 +1500,63 @@ function TimelineSlot({
 
   return (
     <section className="top3-shell">
-      <div className="timeline-slot__header">
-        <div className="timeline-slot__title">
-          {formatYmdHour(slot?.targetYmd, slot?.targetHour)}
-        </div>
+      {status === "pending" ? (
+        <>
+          <div className="timeline-slot__header">
+            <div className="timeline-slot__title">
+              {formatYmdHour(
+                slot?.targetYmd,
+                slot?.targetHour
+              )}
+            </div>
 
-        <div className={`timeline-slot__badge timeline-slot__badge--${status}`}>
-          {statusLabel}
-        </div>
-      </div>
-
-      <div className="timeline-slot__metaGrid">
-        <div className="top3-metaItem">
-          <div className="top3-metaItem__label">Base usada</div>
-          <div className="top3-metaItem__value">
-            {formatYmdHour(slot?.baseYmd, slot?.baseHour)}
+            <div
+              className={`timeline-slot__badge timeline-slot__badge--${status}`}
+            >
+              {statusLabel}
+            </div>
           </div>
-        </div>
 
-        <div className="top3-metaItem">
-          <div className="top3-metaItem__label">Resultado real</div>
-          <div className="top3-metaItem__value">
-            {hasResult
-              ? `G${formatGrupo(resultGrupo)} • ${resultAnimal.toUpperCase()}`
-              : "Pendente"}
+          <div className="timeline-slot__metaGrid">
+            <div className="top3-metaItem">
+              <div className="top3-metaItem__label">
+                Base usada
+              </div>
+
+              <div className="top3-metaItem__value">
+                {formatYmdHour(
+                  slot?.baseYmd,
+                  slot?.baseHour
+                )}
+              </div>
+            </div>
+
+            <div className="top3-metaItem">
+              <div className="top3-metaItem__label">
+                Resultado real
+              </div>
+
+              <div className="top3-metaItem__value">
+                {hasResult
+                  ? `G${formatGrupo(
+                      resultGrupo
+                    )} • ${resultAnimal.toUpperCase()}`
+                  : "Pendente"}
+              </div>
+            </div>
+
+            <div className="top3-metaItem">
+              <div className="top3-metaItem__label">
+                Status
+              </div>
+
+              <div className="top3-metaItem__value">
+                {statusDetail}
+              </div>
+            </div>
           </div>
-        </div>
-
-        <div className="top3-metaItem">
-          <div className="top3-metaItem__label">Status</div>
-          <div className="top3-metaItem__value">{statusDetail}</div>
-        </div>
-      </div>
+        </>
+      ) : null}
 
       {!slotTop3.length ? (
         <div className="top3-empty">Sem Top3 calculado para este horário.</div>
@@ -1382,6 +1585,7 @@ function TimelineSlot({
           status={status}
           statusLabel={statusLabel}
           statusDetail={statusDetail}
+          analysis={analysis}
         />
       )}
     </section>
@@ -3488,5 +3692,6 @@ const list = Array.isArray(top3)
     </div>
   );
 }
+
 
 
