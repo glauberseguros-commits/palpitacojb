@@ -139,70 +139,207 @@ function normalizeSnapshot(snapshot) {
     });
 }
 
-function analyzeSnapshotHit(snapshot, resultGrupo, resultMilhar) {
-  const top3 = Array.isArray(snapshot) ? snapshot.slice(0, 3) : [];
-  const grupo = Number(resultGrupo);
-  const milhar = normalizeMilhar(resultMilhar);
-  const centena = milhar ? milhar.slice(-3) : "";
+function extractPrizeGrupo(prize) {
+  const direct = Number(
+    prize?.grupo ??
+      prize?.group ??
+      prize?.animal_grupo ??
+      prize?.grupo2
+  );
 
-  let best = {
+  if (
+    Number.isFinite(direct) &&
+    direct >= 1 &&
+    direct <= 25
+  ) {
+    return direct;
+  }
+
+  const milhar = normalizeMilhar(
+    prize?.milhar ??
+      prize?.numero ??
+      prize?.number ??
+      prize?.valor ??
+      ""
+  );
+
+  if (!milhar) return null;
+
+  const dezena = Number(milhar.slice(-2));
+  const normalizedDezena = dezena === 0 ? 100 : dezena;
+  const grupo = Math.ceil(normalizedDezena / 4);
+
+  return grupo >= 1 && grupo <= 25 ? grupo : null;
+}
+
+function extractOfficialPodium(draw) {
+  const prizes = Array.isArray(draw?.prizes)
+    ? draw.prizes
+    : [];
+
+  return [1, 2, 3].map((position) => {
+    const prize =
+      prizes.find(
+        (item) => Number(item?.position) === position
+      ) ||
+      prizes[position - 1] ||
+      null;
+
+    if (!prize) return null;
+
+    const grupo = extractPrizeGrupo(prize);
+    const milhar = normalizeMilhar(
+      prize?.milhar ??
+        prize?.numero ??
+        prize?.number ??
+        prize?.valor ??
+        ""
+    );
+
+    if (
+      !Number.isFinite(Number(grupo)) ||
+      Number(grupo) < 1 ||
+      Number(grupo) > 25
+    ) {
+      return null;
+    }
+
+    return {
+      position,
+      grupo: Number(grupo),
+      milhar,
+      animal: safeStr(prize?.animal || ""),
+    };
+  });
+}
+
+function podiumMedalFromPosition(position) {
+  if (Number(position) === 1) return "gold";
+  if (Number(position) === 2) return "silver";
+  if (Number(position) === 3) return "bronze";
+  return "";
+}
+
+function analyzeSnapshotHit(snapshot, officialPodium) {
+  const top3 = Array.isArray(snapshot)
+    ? snapshot.slice(0, 3)
+    : [];
+
+  const podium = Array.isArray(officialPodium)
+    ? officialPodium.filter(Boolean).slice(0, 3)
+    : [];
+
+  if (!top3.length || !podium.length) {
+    return {
+      hitType: "miss",
+      hitScore: 0,
+      hitPosition: -1,
+      predictionPosition: -1,
+      resultPosition: -1,
+      podiumMedal: "",
+      matchedValue: "",
+      matchedGrupo: null,
+      matchedMilhar: "",
+      matchedAnimal: "",
+    };
+  }
+
+  for (const officialPrize of podium) {
+    const resultGrupo = Number(officialPrize?.grupo);
+    const resultMilhar = normalizeMilhar(
+      officialPrize?.milhar
+    );
+    const resultCentena = resultMilhar
+      ? resultMilhar.slice(-3)
+      : "";
+
+    for (
+      let predictionIndex = 0;
+      predictionIndex < top3.length;
+      predictionIndex += 1
+    ) {
+      const prediction = top3[predictionIndex];
+      const predictionGrupo = Number(prediction?.grupo);
+
+      const milhares = (
+        Array.isArray(prediction?.milhares20)
+          ? prediction.milhares20
+          : Array.isArray(prediction?.milhares)
+            ? prediction.milhares
+            : []
+      )
+        .map(normalizeMilhar)
+        .filter(Boolean);
+
+      const centenas = milhares.map(
+        (value) => value.slice(-3)
+      );
+
+      let hitType = "miss";
+      let hitScore = 0;
+      let matchedValue = "";
+
+      if (
+        resultMilhar &&
+        milhares.includes(resultMilhar)
+      ) {
+        hitType = "hit_exact";
+        hitScore = 100;
+        matchedValue = resultMilhar;
+      } else if (
+        resultCentena &&
+        centenas.includes(resultCentena)
+      ) {
+        hitType = "hit_centena";
+        hitScore = 66.67;
+        matchedValue = resultCentena;
+      } else if (
+        Number.isFinite(resultGrupo) &&
+        predictionGrupo === resultGrupo
+      ) {
+        hitType = "hit_grupo";
+        hitScore = 33.33;
+        matchedValue = resultMilhar
+          ? resultMilhar.slice(-2)
+          : String(resultGrupo).padStart(2, "0");
+      }
+
+      if (hitType !== "miss") {
+        const resultPosition = Number(
+          officialPrize?.position
+        );
+
+        return {
+          hitType,
+          hitScore,
+          hitPosition: predictionIndex + 1,
+          predictionPosition: predictionIndex + 1,
+          resultPosition,
+          podiumMedal:
+            podiumMedalFromPosition(resultPosition),
+          matchedValue,
+          matchedGrupo: resultGrupo,
+          matchedMilhar: resultMilhar,
+          matchedAnimal: safeStr(
+            officialPrize?.animal || ""
+          ),
+        };
+      }
+    }
+  }
+
+  return {
     hitType: "miss",
     hitScore: 0,
     hitPosition: -1,
+    predictionPosition: -1,
+    resultPosition: -1,
+    podiumMedal: "",
     matchedValue: "",
+    matchedGrupo: null,
+    matchedMilhar: "",
+    matchedAnimal: "",
   };
-
-  top3.forEach((item, index) => {
-    const itemGrupo = Number(item?.grupo);
-
-    const milhares = (Array.isArray(item?.milhares20)
-      ? item.milhares20
-      : []
-    )
-      .map(normalizeMilhar)
-      .filter(Boolean);
-
-    const centenas = milhares.map((value) => value.slice(-3));
-
-    if (milhar && milhares.includes(milhar)) {
-      best = {
-        hitType: "hit_exact",
-        hitScore: 100,
-        hitPosition: index + 1,
-        matchedValue: milhar,
-      };
-      return;
-    }
-
-    if (
-      best.hitScore < 66.67 &&
-      centena &&
-      centenas.includes(centena)
-    ) {
-      best = {
-        hitType: "hit_centena",
-        hitScore: 66.67,
-        hitPosition: index + 1,
-        matchedValue: centena,
-      };
-      return;
-    }
-
-    if (
-      best.hitScore < 33.33 &&
-      Number.isFinite(grupo) &&
-      itemGrupo === grupo
-    ) {
-      best = {
-        hitType: "hit_grupo",
-        hitScore: 33.33,
-        hitPosition: index + 1,
-        matchedValue: milhar ? milhar.slice(-2) : "",
-      };
-    }
-  });
-
-  return best;
 }
 
 export async function saveTop3PredictionSnapshot({
@@ -418,8 +555,16 @@ export async function reconcileTop3PredictionDay({
       continue;
     }
 
+    const officialPodium =
+      extractOfficialPodium(realDraw);
+
+    const firstOfficialPrize =
+      officialPodium.find(
+        (item) => Number(item?.position) === 1
+      ) || null;
+
     const resultGrupo = Number(
-      pickPrize1GrupoFromDraw(realDraw)
+      firstOfficialPrize?.grupo
     );
 
     if (
@@ -431,7 +576,9 @@ export async function reconcileTop3PredictionDay({
       continue;
     }
 
-    const resultMilhar = extractPrize1Milhar(realDraw);
+    const resultMilhar = normalizeMilhar(
+      firstOfficialPrize?.milhar
+    );
     const savedLottery = safeStr(
       entry?.resultLotteryKey
     ).toUpperCase();
@@ -440,8 +587,7 @@ export async function reconcileTop3PredictionDay({
 
     const analysis = analyzeSnapshotHit(
       entry?.snapshot,
-      resultGrupo,
-      resultMilhar
+      officialPodium
     );
 
     const alreadyMatchesRealResult =
@@ -452,6 +598,10 @@ export async function reconcileTop3PredictionDay({
       safeStr(entry?.hitType) === analysis.hitType &&
       Number(entry?.hitScore) === analysis.hitScore &&
       Number(entry?.hitPosition) === analysis.hitPosition &&
+      Number(entry?.resultPosition ?? -1) ===
+        Number(analysis.resultPosition ?? -1) &&
+      safeStr(entry?.podiumMedal) ===
+        safeStr(analysis.podiumMedal) &&
       safeStr(entry?.matchedValue) === analysis.matchedValue;
 
     if (alreadyMatchesRealResult) {
@@ -467,11 +617,25 @@ export async function reconcileTop3PredictionDay({
       resultMilhar,
       resultLotteryKey: lottery,
       resultAnimal: safeStr(
-        extractPrize1(realDraw)?.animal || ""
+        firstOfficialPrize?.animal ||
+          extractPrize1(realDraw)?.animal ||
+          ""
+      ),
+      resultTop3Groups: officialPodium.map(
+        (item) => Number(item?.grupo) || null
+      ),
+      resultTop3Milhares: officialPodium.map(
+        (item) => normalizeMilhar(item?.milhar)
       ),
       hitType: analysis.hitType,
       hitScore: analysis.hitScore,
       hitPosition: analysis.hitPosition,
+      predictionPosition: analysis.predictionPosition,
+      resultPosition: analysis.resultPosition,
+      podiumMedal: analysis.podiumMedal,
+      matchedGrupo: analysis.matchedGrupo,
+      matchedMilhar: analysis.matchedMilhar,
+      matchedAnimal: analysis.matchedAnimal,
       matchedValue: analysis.matchedValue,
       validatedAt: now,
       validatedBy: user.uid,

@@ -2,21 +2,138 @@
 import React, { useMemo, useState, useCallback, useEffect } from "react";
 import { getAnimalLabel, getImgFromGrupo } from "../../constants/bichoMap";
 
-function extractResultMilhar(slot) {
-  if (!slot || !Array.isArray(slot.prizes)) return "";
+function extractPrizeMilharByPosition(slot, position) {
+  const prizes = Array.isArray(slot?.prizes)
+    ? slot.prizes
+    : [];
 
-  const p1 = slot.prizes.find((p) => Number(p.position) === 1);
-  if (!p1) return "";
+  const prize =
+    prizes.find(
+      (item) => Number(item?.position) === Number(position)
+    ) ||
+    prizes[Number(position) - 1] ||
+    null;
 
-  const num = String(
-    p1.numero ||
-      p1.milhar ||
-      p1.number ||
-      p1.valor ||
+  if (!prize) return "";
+
+  const digits = String(
+    prize?.numero ??
+      prize?.milhar ??
+      prize?.number ??
+      prize?.valor ??
       ""
   ).replace(/\D/g, "");
 
-  return num.padStart(4, "0");
+  return digits
+    ? digits.slice(-4).padStart(4, "0")
+    : "";
+}
+
+function extractResultMilhar(slot) {
+  return extractPrizeMilharByPosition(slot, 1);
+}
+
+function getPrizeGrupoByPosition(slot, position) {
+  const persisted = Array.isArray(
+    slot?.resultTop3Groups
+  )
+    ? Number(slot.resultTop3Groups[position - 1])
+    : NaN;
+
+  if (
+    Number.isFinite(persisted) &&
+    persisted >= 1 &&
+    persisted <= 25
+  ) {
+    return persisted;
+  }
+
+  const prizes = Array.isArray(slot?.prizes)
+    ? slot.prizes
+    : [];
+
+  const prize =
+    prizes.find(
+      (item) => Number(item?.position) === Number(position)
+    ) ||
+    prizes[Number(position) - 1] ||
+    null;
+
+  const direct = Number(
+    prize?.grupo ??
+      prize?.group ??
+      prize?.animal_grupo ??
+      prize?.grupo2
+  );
+
+  if (
+    Number.isFinite(direct) &&
+    direct >= 1 &&
+    direct <= 25
+  ) {
+    return direct;
+  }
+
+  const milhar = extractPrizeMilharByPosition(
+    slot,
+    position
+  );
+
+  if (!milhar) return NaN;
+
+  const dezena = Number(milhar.slice(-2));
+  const normalizedDezena = dezena === 0 ? 100 : dezena;
+  const grupo = Math.ceil(normalizedDezena / 4);
+
+  return grupo >= 1 && grupo <= 25
+    ? grupo
+    : NaN;
+}
+
+function getOfficialPodium(slot) {
+  return [1, 2, 3]
+    .map((position) => {
+      const grupo = getPrizeGrupoByPosition(
+        slot,
+        position
+      );
+
+      if (
+        !Number.isFinite(grupo) ||
+        grupo < 1 ||
+        grupo > 25
+      ) {
+        return null;
+      }
+
+      const persistedMilhares = Array.isArray(
+        slot?.resultTop3Milhares
+      )
+        ? slot.resultTop3Milhares
+        : [];
+
+      const milhar =
+        String(
+          persistedMilhares[position - 1] || ""
+        ).replace(/\D/g, "") ||
+        extractPrizeMilharByPosition(slot, position);
+
+      return {
+        position,
+        grupo,
+        milhar: milhar
+          ? milhar.slice(-4).padStart(4, "0")
+          : "",
+      };
+    })
+    .filter(Boolean);
+}
+
+function podiumMedalFromPosition(position) {
+  if (Number(position) === 1) return "gold";
+  if (Number(position) === 2) return "silver";
+  if (Number(position) === 3) return "bronze";
+  return "";
 }
 
 function toPercent(score) {
@@ -265,70 +382,138 @@ function hasOfficialResult(slot) {
   return /^\d{4}$/.test(milhar);
 }
 
-function analyzeTop3Hit(top3, resultGrupo, resultMilhar) {
+function analyzeTop3Hit(top3, resultSource, resultMilhar) {
   if (!Array.isArray(top3) || !top3.length) {
-    return { type: "none", score: 0, position: -1, matchedValue: "" };
+    return {
+      type: "none",
+      score: 0,
+      position: -1,
+      predictionPosition: -1,
+      resultPosition: -1,
+      podiumMedal: "",
+      matchedValue: "",
+      matchedGrupo: null,
+    };
   }
 
-  const grupoNum = Number(resultGrupo);
-  const milhar = normalizeMilharStr(resultMilhar);
-  const centena = milhar ? milhar.slice(-3) : "";
+  const officialPodium = Array.isArray(resultSource)
+    ? resultSource.filter(Boolean).slice(0, 3)
+    : [
+        {
+          position: 1,
+          grupo: Number(resultSource),
+          milhar: normalizeMilharStr(resultMilhar),
+        },
+      ].filter(
+        (item) =>
+          Number.isFinite(item.grupo) &&
+          item.grupo >= 1 &&
+          item.grupo <= 25
+      );
 
-  const hasGrupo = Number.isFinite(grupoNum) && grupoNum >= 1 && grupoNum <= 25;
-  const hasMilhar = /^\d{4}$/.test(milhar);
-
-  if (!hasGrupo && !hasMilhar) {
-    return { type: "none", score: 0, position: -1, matchedValue: "" };
+  if (!officialPodium.length) {
+    return {
+      type: "none",
+      score: 0,
+      position: -1,
+      predictionPosition: -1,
+      resultPosition: -1,
+      podiumMedal: "",
+      matchedValue: "",
+      matchedGrupo: null,
+    };
   }
 
-  let best = { type: "miss", score: 0, position: -1, matchedValue: "" };
+  for (const officialPrize of officialPodium) {
+    const grupoNum = Number(officialPrize?.grupo);
+    const milhar = normalizeMilharStr(
+      officialPrize?.milhar
+    );
+    const centena = milhar
+      ? milhar.slice(-3)
+      : "";
 
-  top3.forEach((item, idx) => {
-    const g = Number(item?.grupo);
+    for (
+      let predictionIndex = 0;
+      predictionIndex < top3.length;
+      predictionIndex += 1
+    ) {
+      const item = top3[predictionIndex];
+      const grupo = Number(item?.grupo);
 
-    const milharesRaw = Array.isArray(item?.milhares20)
-      ? item.milhares20
-      : Array.isArray(item?.milhares)
-        ? item.milhares
-        : [];
+      const milhares = (
+        Array.isArray(item?.milhares20)
+          ? item.milhares20
+          : Array.isArray(item?.milhares)
+            ? item.milhares
+            : []
+      )
+        .map(normalizeMilharStr)
+        .filter((value) => /^\d{4}$/.test(value));
 
-    const milhares = milharesRaw
-      .map((m) => normalizeMilharStr(m))
-      .filter((m) => /^\d{4}$/.test(m));
+      const centenas = milhares
+        .map((value) => centenaFromMilhar(value))
+        .filter((value) => /^\d{3}$/.test(value));
 
-    const centenas = milhares
-      .map((m) => centenaFromMilhar(m))
-      .filter((c) => /^\d{3}$/.test(c));
+      let type = "miss";
+      let score = 0;
+      let matchedValue = "";
 
-    let score = 0;
-    let type = "miss";
-    let matchedValue = "";
+      if (
+        milhar &&
+        milhares.includes(milhar)
+      ) {
+        type = "hit_exact";
+        score = 100;
+        matchedValue = milhar;
+      } else if (
+        centena &&
+        centenas.includes(centena)
+      ) {
+        type = "hit_centena";
+        score = 66.67;
+        matchedValue = centena;
+      } else if (
+        Number.isFinite(grupoNum) &&
+        grupo === grupoNum
+      ) {
+        type = "hit_grupo";
+        score = 33.33;
+        matchedValue = milhar
+          ? milhar.slice(-2)
+          : formatGrupo(grupoNum);
+      }
 
-    if (hasMilhar && milhares.includes(milhar)) {
-      score = 100;
-      type = "hit_exact";
-      matchedValue = milhar;
-    } else if (centena && centenas.includes(centena)) {
-      score = 66.67;
-      type = "hit_centena";
-      matchedValue = centena;
-    } else if (hasGrupo && g === grupoNum) {
-      score = 33.33;
-      type = "hit_grupo";
-      matchedValue = hasMilhar ? milhar.slice(-2) : formatGrupo(grupoNum);
+      if (type !== "miss") {
+        const resultPosition = Number(
+          officialPrize?.position
+        );
+
+        return {
+          type,
+          score,
+          position: predictionIndex + 1,
+          predictionPosition: predictionIndex + 1,
+          resultPosition,
+          podiumMedal:
+            podiumMedalFromPosition(resultPosition),
+          matchedValue,
+          matchedGrupo: grupoNum,
+        };
+      }
     }
+  }
 
-    if (score > best.score) {
-      best = {
-        type,
-        score,
-        position: idx + 1,
-        matchedValue,
-      };
-    }
-  });
-
-  return best;
+  return {
+    type: "miss",
+    score: 0,
+    position: -1,
+    predictionPosition: -1,
+    resultPosition: -1,
+    podiumMedal: "",
+    matchedValue: "",
+    matchedGrupo: null,
+  };
 }
 
 function ImgWithFallback({ srcs, alt, size = 84, style }) {
@@ -1445,11 +1630,43 @@ const list = Array.isArray(top3)
           hitPosition: Number(
             entry?.hitPosition ?? -1
           ),
+          predictionPosition: Number(
+            entry?.predictionPosition ??
+              entry?.hitPosition ??
+              -1
+          ),
+          resultPosition: Number(
+            entry?.resultPosition ?? -1
+          ),
+          podiumMedal: String(
+            entry?.podiumMedal || ""
+          ),
+          resultTop3Groups: Array.isArray(
+            entry?.resultTop3Groups
+          )
+            ? entry.resultTop3Groups
+            : [],
+          resultTop3Milhares: Array.isArray(
+            entry?.resultTop3Milhares
+          )
+            ? entry.resultTop3Milhares
+            : [],
           analysis: {
             type: String(entry?.hitType || ""),
             score: Number(entry?.hitScore || 0),
             position: Number(
               entry?.hitPosition ?? -1
+            ),
+            predictionPosition: Number(
+              entry?.predictionPosition ??
+                entry?.hitPosition ??
+                -1
+            ),
+            resultPosition: Number(
+              entry?.resultPosition ?? -1
+            ),
+            podiumMedal: String(
+              entry?.podiumMedal || ""
             ),
             matchedValue: String(
               entry?.matchedValue || ""
@@ -1481,10 +1698,12 @@ const list = Array.isArray(top3)
         const resultMilhar =
           extractResultMilhar(slot);
 
+        const officialPodium =
+          getOfficialPodium(slot);
+
         const analysis = analyzeTop3Hit(
           slotTop3,
-          resultGrupo,
-          resultMilhar
+          officialPodium
         );
 
         return {
@@ -1552,8 +1771,7 @@ const list = Array.isArray(top3)
 
       const analysis = analyzeTop3Hit(
         row?.top3,
-        resultGrupo,
-        resultMilhar
+        getOfficialPodium(timelineRow)
       );
 
       rowsByTarget.set(key, {
@@ -3176,15 +3394,27 @@ const list = Array.isArray(top3)
                 const hitType = String(item?.hitType || item?.analysis?.type || "").trim();
                 const matchedValue = String(item?.analysis?.matchedValue || "").trim();
 
+                const resultPosition = Number(
+                  item?.resultPosition ??
+                    item?.analysis?.resultPosition ??
+                    -1
+                );
+
+                const podiumMedal = String(
+                  item?.podiumMedal ||
+                    item?.analysis?.podiumMedal ||
+                    podiumMedalFromPosition(resultPosition)
+                );
+
                 const hitMark = !hasResult
-                  ? "⏳"
-                  : hitType === "hit_exact"
-                    ? `🏆 100% · Milhar ${matchedValue || "—"}`
-                    : hitType === "hit_centena"
-                      ? `✅✅ 66,67% · Centena ${matchedValue || "—"}`
-                      : hitType === "hit_grupo"
-                        ? `✅ 33,33% · Dezena ${matchedValue || "—"}`
-                        : "❌ 0%";
+                  ? "⏳ PENDENTE"
+                  : podiumMedal === "gold"
+                    ? "🥇 OURO · 1º PRÊMIO"
+                    : podiumMedal === "silver"
+                      ? "🥈 PRATA · 2º PRÊMIO"
+                      : podiumMedal === "bronze"
+                        ? "🥉 BRONZE · 3º PRÊMIO"
+                        : "❌ ERRO";
 
                 return (
                   <div
