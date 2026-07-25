@@ -1729,6 +1729,15 @@ const list = Array.isArray(top3)
             ? getAnimalLabel(resultGrupo)
             : "",
           resultMilhar,
+          resultTop3Groups: officialPodium.map(
+            (item) => Number(item?.grupo)
+          ),
+          resultTop3Milhares: officialPodium.map(
+            (item) => String(item?.milhar || "")
+          ),
+          prizes: Array.isArray(slot?.prizes)
+            ? slot.prizes
+            : [],
           analysis,
           hit:
             analysis.type !== "miss" &&
@@ -1772,20 +1781,10 @@ const list = Array.isArray(top3)
 
       const officialPodium = getOfficialPodium(timelineRow);
 
-console.log("========================================");
-console.log("TOP3 DEBUG");
-console.log("KEY:", key);
-console.log("timelineRow:", timelineRow);
-console.log("officialPodium:", officialPodium);
-console.log("persistedTop3:", row?.top3);
-
-const analysis = analyzeTop3Hit(
-  row?.top3,
-  officialPodium
-);
-
-console.log("analysis:", analysis);
-console.log("========================================");
+      const analysis = analyzeTop3Hit(
+        row?.top3,
+        officialPodium
+      );
 
       rowsByTarget.set(key, {
         ...row,
@@ -3489,4 +3488,5 @@ console.log("========================================");
     </div>
   );
 }
+
 
