@@ -4,7 +4,7 @@ import { getKingBoundsByUf, getKingResultsByRange } from "../../services/kingRes
 import {
   buildMilharRecommendationV3,
   diversifyMilharRecommendationsV3,
-} from "./modules/milharProbabilityEngineV3";
+} from "../../shared/predictiveMilharEngine";
 import {
   getAnimalLabel as getAnimalLabelFn,
   getImgFromGrupo as getImgFromGrupoFn,
