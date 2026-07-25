@@ -1770,10 +1770,22 @@ const list = Array.isArray(top3)
         timelineRow?.resultMilhar || ""
       );
 
-      const analysis = analyzeTop3Hit(
-        row?.top3,
-        getOfficialPodium(timelineRow)
-      );
+      const officialPodium = getOfficialPodium(timelineRow);
+
+console.log("========================================");
+console.log("TOP3 DEBUG");
+console.log("KEY:", key);
+console.log("timelineRow:", timelineRow);
+console.log("officialPodium:", officialPodium);
+console.log("persistedTop3:", row?.top3);
+
+const analysis = analyzeTop3Hit(
+  row?.top3,
+  officialPodium
+);
+
+console.log("analysis:", analysis);
+console.log("========================================");
 
       rowsByTarget.set(key, {
         ...row,
@@ -3477,3 +3489,4 @@ const list = Array.isArray(top3)
     </div>
   );
 }
+
