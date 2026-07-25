@@ -1284,10 +1284,11 @@ function TimelineSlot({
       ? String(getAnimalLabel(resultGrupo) || "")
       : "";
 
+  const officialPodium = getOfficialPodium(slot);
+
   const analysis = analyzeTop3Hit(
     slotTop3,
-    resultGrupo,
-    extractResultMilhar(slot)
+    officialPodium
   );
 
   const status =
