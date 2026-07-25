@@ -17,7 +17,7 @@ import {
 
 import { scoreRanking } from "./modules/scoreEngine/scoreEngineV2";
 
-import { chooseBestMilhar } from "../Centenas/modules/milharProbabilityEngine";
+import { chooseBestMilhar } from "../../shared/predictiveMilharEngine";
 
 import {
   TOP3_NEXTDRAW_SCAN_MAX_STEPS,
