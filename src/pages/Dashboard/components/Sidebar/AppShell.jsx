@@ -468,7 +468,7 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
     { key: ROUTES.TOP3, icon: "trophy", title: "Top 3" },
     {
       key: ROUTES.TERNO_GRUPO,
-      icon: "layers",
+      icon: "pets",
       title: "Terno de Grupo",
     },
     { key: ROUTES.LATE, icon: "clock", title: "Atrasados" },
@@ -594,3 +594,4 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
     </div>
   );
 }
+
