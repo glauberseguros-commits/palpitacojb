@@ -9,7 +9,7 @@ import React, { useMemo, useCallback } from "react";
  *   (default: "PT_RIO")
  *
  * ✅ Horário (domínio próprio por loteria):
- * - PT_RIO: Todos + 09h/11h/14h/16h/18h/21h
+ * - PT_RIO: Todos + 09h/11h/14h/16h/18h/19:30h/21h
  * - FEDERAL: Todos + 19h/20h
  * - LOOK: Todos + 07h/09h/11h/14h/16h/18h/21h/23h
  * - NACIONAL: Todos + 02h/08h/10h/12h/15h/17h/21h/23h
@@ -255,6 +255,7 @@ export default function FiltersBar({
       { label: "14h", value: "14h" },
       { label: "16h", value: "16h" },
       { label: "18h", value: "18h" },
+      { label: "19:30h", value: "19h" },
       { label: "21h", value: "21h" },
     ];
 

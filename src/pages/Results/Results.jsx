@@ -231,7 +231,7 @@ const FEDERAL_INPUT_ALIASES = new Set([
 ]);
 
 const RJ_09H_START_YMD = "2024-01-05";
-const RJ_SATURDAY_1920_START_YMD = "2026-07-18";
+const RJ_SATURDAY_1930_START_YMD = "2026-07-18";
 
 const RJ_EXPECTED_HOURS_REGULAR_DESC = [
   "21:00",
@@ -619,16 +619,16 @@ function getExpectedRjHoursDesc(ymd) {
   }
   /*
    * Sábado a partir de 18/07/2026:
-   * 19:20 substitui o antigo horário das 18h.
+   * 19:30 substitui o antigo horário das 18h.
    */
   else if (
     dow === 6 &&
     isYMD(ymd) &&
-    ymd >= RJ_SATURDAY_1920_START_YMD
+    ymd >= RJ_SATURDAY_1930_START_YMD
   ) {
     out = [
       "21:00",
-      "19:20",
+      "19:30",
       "16:00",
       "14:00",
       "11:00",
@@ -658,7 +658,7 @@ function shouldShowExpectedHour(ymd, hour) {
 
 /*
  * A fonte grava o novo sorteio de sábado da PT_RIO no bucket 19:00,
- * embora o horário oficial exibido seja 19:20.
+ * embora o horário oficial exibido seja 19:30.
  *
  * A conversão fica restrita à camada visual da página Resultados para não
  * alterar filtros, estatísticas, Top3 ou o histórico armazenado no Firestore.
@@ -678,9 +678,9 @@ function normalizeRjDisplayHour(draw, ymd) {
     hour === "19:00" &&
     dow === 6 &&
     isYMD(ymd) &&
-    ymd >= RJ_SATURDAY_1920_START_YMD
+    ymd >= RJ_SATURDAY_1930_START_YMD
   ) {
-    return "19:20";
+    return "19:30";
   }
 
   return hour;
