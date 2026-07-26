@@ -372,6 +372,11 @@ export function useTop3Controller() {
   const [todayDraws, setTodayDraws] = useState([]);
   const [rangeInfo, setRangeInfo] = useState({ from: "", to: "" });
 
+  const [
+    availableHistoryDatesByLottery,
+    setAvailableHistoryDatesByLottery,
+  ] = useState({});
+
   const [loadedYmd, setLoadedYmd] = useState("");
   const [lastHourBucket, setLastHourBucket] = useState("");
   const [targetHourBucket, setTargetHourBucket] = useState("");
@@ -924,6 +929,32 @@ export function useTop3Controller() {
       );
 
       setRangeDraws(hist);
+
+      const loadedHistoryDates = Array.from(
+        new Set(
+          (Array.isArray(hist) ? hist : [])
+            .map((draw) => pickDrawYMD(draw))
+            .filter((date) => isYMD(date))
+        )
+      );
+
+      setAvailableHistoryDatesByLottery((current) => {
+        const previous = Array.isArray(current?.[lKey])
+          ? current[lKey]
+          : [];
+
+        const merged = Array.from(
+          new Set([
+            ...previous,
+            ...loadedHistoryDates,
+          ])
+        ).sort();
+
+        return {
+          ...current,
+          [lKey]: merged,
+        };
+      });
     } catch (e) {
       if (requestIdRef.current === currentRequestId) {
         setError(String(e?.message || e || "Falha ao carregar dados do TOP3."));
@@ -1758,6 +1789,19 @@ export function useTop3Controller() {
     reconcileRetryNonce,
   ]);
 
+  const availableHistoryDates = useMemo(() => {
+    const key = safeStr(lotteryKeySafe).toUpperCase();
+
+    return Array.isArray(
+      availableHistoryDatesByLottery?.[key]
+    )
+      ? availableHistoryDatesByLottery[key]
+      : [];
+  }, [
+    availableHistoryDatesByLottery,
+    lotteryKeySafe,
+  ]);
+
   return {
     LOOKBACK_ALL,
     LOOKBACK_OPTIONS,
@@ -1789,6 +1833,7 @@ export function useTop3Controller() {
     top3,
     timelineTop3,
     persistedTop3History,
+    availableHistoryDates,
 
     setLotteryKey,
     setYmd,

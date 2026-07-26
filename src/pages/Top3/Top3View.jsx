@@ -1623,6 +1623,7 @@ export default function Top3View(props) {
     error,
     timelineTop3,
     persistedTop3History,
+    availableHistoryDates: controllerHistoryDates,
     top3,
     layerMetaText,
     lastLabel,
@@ -2134,6 +2135,18 @@ const list = Array.isArray(top3)
   const availableHistoryDates = useMemo(() => {
     const dates = new Set();
 
+    (
+      Array.isArray(controllerHistoryDates)
+        ? controllerHistoryDates
+        : []
+    ).forEach((date) => {
+      const ymd = String(date || "").trim();
+
+      if (isYMD(ymd) && ymd <= todayForCalendar) {
+        dates.add(ymd);
+      }
+    });
+
     (Array.isArray(timeline) ? timeline : []).forEach(
       (slot) => {
         const ymd = String(
@@ -2162,6 +2175,7 @@ const list = Array.isArray(top3)
 
     return Array.from(dates).sort();
   }, [
+    controllerHistoryDates,
     timeline,
     persistedTop3History,
     todayForCalendar,
