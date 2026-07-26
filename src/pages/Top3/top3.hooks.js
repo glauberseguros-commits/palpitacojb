@@ -250,6 +250,57 @@ function makeTargetKey(ymd, hour) {
   return isYMD(y) && h ? `${y}_${h}` : "";
 }
 
+function hydratePersistedTop3(entry) {
+  const snapshot = Array.isArray(entry?.snapshot)
+    ? entry.snapshot.slice(0, 3)
+    : [];
+
+  return snapshot
+    .map((item, index) => {
+      const grupo = Number(item?.grupo);
+
+      if (
+        !Number.isFinite(grupo) ||
+        grupo < 1 ||
+        grupo > 25
+      ) {
+        return null;
+      }
+
+      const imgBg =
+        Array.isArray(item?.imgBg) && item.imgBg.length
+          ? item.imgBg.filter(Boolean)
+          : [getGrupoImgSrc(grupo, 512)].filter(Boolean);
+
+      const imgIcon =
+        Array.isArray(item?.imgIcon) && item.imgIcon.length
+          ? item.imgIcon.filter(Boolean)
+          : buildResultStyleImgVariants(grupo, 96);
+
+      return {
+        ...item,
+        rank: Number(item?.rank || index + 1),
+        grupo,
+        animal:
+          safeStr(item?.animal) ||
+          safeStr(getAnimalLabel(grupo)),
+        prob: Number(item?.prob || 0),
+        probPct: Number(item?.probPct || 0),
+        milhares20: Array.isArray(item?.milhares20)
+          ? item.milhares20.slice(0, 20)
+          : [],
+        milharesCols: Array.isArray(item?.milharesCols)
+          ? item.milharesCols
+          : [],
+        imgBg,
+        imgIcon,
+        persistedSnapshot: true,
+      };
+    })
+    .filter(Boolean)
+    .slice(0, 3);
+}
+
 function resolveLayerMetaText(analytics) {
   const meta = analytics?.meta || null;
   const explain = meta?.explain || null;
@@ -344,6 +395,10 @@ export function useTop3Controller() {
 
   const [baseDrawState, setBaseDrawState] = useState(null);
   const [persistedTop3History, setPersistedTop3History] = useState([]);
+  const [currentPersistedPrediction, setCurrentPersistedPrediction] =
+    useState(null);
+  const [currentPersistedResolved, setCurrentPersistedResolved] =
+    useState(false);
   const [reconcileRetryNonce, setReconcileRetryNonce] = useState(0);
 
   // TOP3_REF_02_DEFER_SECONDARY
@@ -467,6 +522,8 @@ export function useTop3Controller() {
     setTargetYmd("");
     setSkipPtRio18ByFederal(false);
     setBaseDrawState(null);
+    setCurrentPersistedPrediction(null);
+    setCurrentPersistedResolved(false);
 
     setLastInfo({
       lastYmd: "",
@@ -959,6 +1016,73 @@ export function useTop3Controller() {
   }, [timelineYmd, lotteryKeySafe]);
 
   useEffect(() => {
+    let alive = true;
+
+    setCurrentPersistedPrediction(null);
+    setCurrentPersistedResolved(false);
+
+    async function loadCurrentPersistedPrediction() {
+      if (!isYMD(analysisYmd) || !analysisHourBucket) {
+        if (alive) {
+          setCurrentPersistedPrediction(null);
+          setCurrentPersistedResolved(true);
+        }
+        return;
+      }
+
+      try {
+        const history = await loadTop3PredictionDay({
+          lotteryKey: lotteryKeySafe,
+          targetYmd: analysisYmd,
+          schedule: [analysisHourBucket],
+        });
+
+        const exactEntry = (
+          Array.isArray(history) ? history : []
+        ).find((entry) => {
+          return (
+            safeStr(entry?.lotteryKey).toUpperCase() ===
+              lotteryKeySafe &&
+            safeStr(entry?.targetYmd) === analysisYmd &&
+            toHourBucket(entry?.targetHour) ===
+              analysisHourBucket
+          );
+        }) || null;
+
+        if (alive) {
+          setCurrentPersistedPrediction(exactEntry);
+        }
+      } catch (error) {
+        if (debugTop3) {
+          console.warn(
+            "[TOP3 CURRENT SNAPSHOT LOAD]",
+            error
+          );
+        }
+
+        if (alive) {
+          setCurrentPersistedPrediction(null);
+        }
+      } finally {
+        if (alive) {
+          setCurrentPersistedResolved(true);
+        }
+      }
+    }
+
+    loadCurrentPersistedPrediction();
+
+    return () => {
+      alive = false;
+    };
+  }, [
+    lotteryKeySafe,
+    analysisYmd,
+    analysisHourBucket,
+    debugTop3,
+  ]);
+
+  useEffect(() => {
     if (loading) return undefined;
 
     if (
@@ -1122,7 +1246,13 @@ export function useTop3Controller() {
   }, [analytics]);
 
   useEffect(() => {
-    if (loading || !analyticsReady) return undefined;
+    if (
+      loading ||
+      !analyticsReady ||
+      !currentPersistedResolved
+    ) {
+      return undefined;
+    }
 
     let cancelled = false;
     let timeoutId = null;
@@ -1133,6 +1263,18 @@ export function useTop3Controller() {
       if (cancelled) return;
 
       try {
+        const persistedTop3 = hydratePersistedTop3(
+          currentPersistedPrediction
+        );
+
+        if (persistedTop3.length) {
+          if (cancelled) return;
+
+          setTop3(persistedTop3);
+          setPrimaryComputing(false);
+          return;
+        }
+
         const nextTop3 = buildTop3Predictions({
           analytics,
           build20,
@@ -1177,6 +1319,8 @@ export function useTop3Controller() {
     analyticsReady,
     analytics,
     build20,
+    currentPersistedResolved,
+    currentPersistedPrediction,
   ]);
 
   const timelineTop3 = useMemo(() => {
@@ -1225,6 +1369,8 @@ export function useTop3Controller() {
     });
 
     if (!analysisYmd || !analysisHourBucket) return;
+    if (!currentPersistedResolved) return;
+    if (currentPersistedPrediction) return;
     if (!Array.isArray(top3) || !top3.length) return;
     if (!isFutureTarget(analysisYmd, analysisHourBucket)) return;
 
@@ -1310,6 +1456,20 @@ export function useTop3Controller() {
             diagnostic
           );
         } else {
+          const persistedEntry = {
+            lotteryKey: lotteryKeySafe,
+            targetYmd: analysisYmd,
+            targetHour: analysisHourBucket,
+            targetKey,
+            picks,
+            snapshot,
+            engineVersion,
+            status: "predicted",
+          };
+
+          setCurrentPersistedPrediction(persistedEntry);
+          setCurrentPersistedResolved(true);
+
           console.info(
             "[TOP3 FIRESTORE SAVE OK]",
             diagnostic
@@ -1348,6 +1508,8 @@ export function useTop3Controller() {
     top3,
     lotteryKeySafe,
     debugTop3,
+    currentPersistedResolved,
+    currentPersistedPrediction,
   ]);
 
   useEffect(() => {
