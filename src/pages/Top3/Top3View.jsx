@@ -3656,6 +3656,16 @@ const list = Array.isArray(top3)
                       ""
                   );
 
+                const resultCentena =
+                  resultMilhar
+                    ? resultMilhar.slice(-3)
+                    : "";
+
+                const resultDezena =
+                  resultMilhar
+                    ? resultMilhar.slice(-2)
+                    : "";
+
                 const analysis =
                   item?.analysis &&
                   typeof item.analysis ===
@@ -3688,6 +3698,19 @@ const list = Array.isArray(top3)
                     -1
                 );
 
+                const hitType = String(
+                  analysis?.type ??
+                    analysis?.hitType ??
+                    item?.hitType ??
+                    ""
+                )
+                  .trim()
+                  .toLowerCase();
+
+                const isHit =
+                  hasResult &&
+                  matchedPredictionIndex >= 0;
+
                 const medal =
                   resultPosition === 1
                     ? "🥇"
@@ -3697,9 +3720,73 @@ const list = Array.isArray(top3)
                         ? "🥉"
                         : "";
 
-                const isHit =
+                const prizeColor =
+                  resultPosition === 1
+                    ? "#d4af37"
+                    : resultPosition === 2
+                      ? "#c0c0c0"
+                      : resultPosition === 3
+                        ? "#cd7f32"
+                        : "#d4af37";
+
+                const prizeGlow =
+                  resultPosition === 1
+                    ? "rgba(212,175,55,0.58)"
+                    : resultPosition === 2
+                      ? "rgba(192,192,192,0.46)"
+                      : resultPosition === 3
+                        ? "rgba(205,127,50,0.50)"
+                        : "rgba(212,175,55,0.38)";
+
+                const hasExactHit =
+                  hitType.includes("exact") ||
+                  hitType.includes("milhar") ||
+                  Boolean(
+                    analysis?.exact ||
+                    analysis?.exactHit ||
+                    analysis?.milharHit ||
+                    item?.exactHit
+                  );
+
+                const hasCentenaHit =
+                  hasExactHit ||
+                  hitType.includes("centena") ||
+                  Boolean(
+                    analysis?.centena ||
+                    analysis?.centenaHit ||
+                    item?.centenaHit
+                  );
+
+                const hasDezenaHit =
+                  isHit ||
+                  hasCentenaHit ||
+                  hasExactHit ||
+                  hitType.includes("grupo") ||
+                  hitType.includes("dezena") ||
+                  Boolean(
+                    analysis?.group ||
+                    analysis?.groupHit ||
+                    analysis?.dezenaHit ||
+                    item?.groupHit
+                  );
+
+                const hitDezena =
                   hasResult &&
-                  matchedPredictionIndex >= 0;
+                  hasDezenaHit
+                    ? resultDezena
+                    : "";
+
+                const hitCentena =
+                  hasResult &&
+                  hasCentenaHit
+                    ? resultCentena
+                    : "";
+
+                const hitMilhar =
+                  hasResult &&
+                  hasExactHit
+                    ? resultMilhar
+                    : "";
 
                 return (
                   <div
@@ -3721,23 +3808,19 @@ const list = Array.isArray(top3)
                       style={{
                         display: "grid",
                         gridTemplateColumns:
-                          "minmax(112px, 1.3fr) repeat(3, minmax(54px, 0.65fr)) minmax(90px, 0.95fr)",
+                          "minmax(118px, 1.1fr) repeat(3, minmax(62px, 0.55fr)) minmax(138px, 0.95fr) minmax(165px, 1.1fr)",
                         alignItems: "center",
-                        gap: 8,
-                        minWidth: 430,
-                        padding: "8px 10px",
+                        gap: 10,
+                        minWidth: 760,
+                        padding: "10px 12px",
                       }}
                     >
                       <div
                         style={{
-                          gridRow:
-                            "1 / span 2",
-                          alignSelf: "center",
                           fontSize: 12,
                           fontWeight: 900,
-                          lineHeight: 1.2,
-                          whiteSpace:
-                            "nowrap",
+                          lineHeight: 1.25,
+                          whiteSpace: "nowrap",
                         }}
                       >
                         {ymdToBR(y)} {h}
@@ -3778,10 +3861,9 @@ const list = Array.isArray(top3)
                             <div
                               key={`${y}_${h}_${idx}_${grupo}`}
                               style={{
-                                display:
-                                  "grid",
+                                display: "grid",
                                 gridTemplateRows:
-                                  "34px 18px",
+                                  "46px 18px",
                                 justifyItems:
                                   "center",
                                 alignItems:
@@ -3819,15 +3901,15 @@ const list = Array.isArray(top3)
                                       grupo
                                     )}`
                                   }
-                                  size={34}
+                                  size={40}
                                   style={{
-                                    borderRadius: 8,
-                                    outline:
-                                      isMatched
-                                        ? "2px solid rgba(201,168,62,0.95)"
-                                        : "none",
-                                    outlineOffset:
-                                      1,
+                                    borderRadius: 9,
+                                    border: isMatched
+                                      ? `4px solid ${prizeColor}`
+                                      : "1px solid rgba(201,168,62,0.36)",
+                                    boxShadow: isMatched
+                                      ? `0 0 17px ${prizeGlow}`
+                                      : "none",
                                   }}
                                 />
 
@@ -3838,12 +3920,13 @@ const list = Array.isArray(top3)
                                     style={{
                                       position:
                                         "absolute",
-                                      top: -8,
-                                      right: -13,
-                                      fontSize: 17,
+                                      top: -14,
+                                      right: -19,
+                                      zIndex: 3,
+                                      fontSize: 27,
                                       lineHeight: 1,
                                       filter:
-                                        "drop-shadow(0 1px 2px rgba(0,0,0,0.80))",
+                                        "drop-shadow(0 2px 4px rgba(0,0,0,0.95))",
                                     }}
                                   >
                                     {medal}
@@ -3858,6 +3941,9 @@ const list = Array.isArray(top3)
                                   lineHeight: 1,
                                   whiteSpace:
                                     "nowrap",
+                                  color: isMatched
+                                    ? prizeColor
+                                    : "inherit",
                                 }}
                               >
                                 G
@@ -3872,17 +3958,114 @@ const list = Array.isArray(top3)
 
                       <div
                         style={{
+                          minHeight: 70,
                           display: "grid",
-                          gridTemplateRows:
-                            "34px 18px",
-                          justifyItems:
-                            "center",
-                          alignItems:
-                            "center",
+                          alignContent: "center",
+                          gap: 4,
+                          padding: "7px 10px",
+                          borderRadius: 11,
+                          border: isHit
+                            ? `2px solid ${prizeColor}`
+                            : "1px solid rgba(255,255,255,0.10)",
+                          background: isHit
+                            ? `linear-gradient(180deg, ${prizeGlow}, rgba(0,0,0,0.20))`
+                            : "rgba(255,255,255,0.02)",
+                          boxShadow: isHit
+                            ? `0 0 13px ${prizeGlow}`
+                            : "none",
+                        }}
+                      >
+                        {!hasResult ? (
+                          <div
+                            style={{
+                              textAlign: "center",
+                              fontSize: 10,
+                              fontWeight: 900,
+                            }}
+                          >
+                            ⏳ PENDENTE
+                          </div>
+                        ) : isHit ? (
+                          <>
+                            <div
+                              style={{
+                                textAlign: "center",
+                                color: prizeColor,
+                                fontSize: 11,
+                                fontWeight: 1000,
+                                letterSpacing: 0.6,
+                              }}
+                            >
+                              {medal} ACERTO
+                            </div>
+
+                            <div
+                              style={{
+                                display: "grid",
+                                gridTemplateColumns:
+                                  "1fr auto",
+                                gap: "2px 8px",
+                                fontSize: 10,
+                                lineHeight: 1.2,
+                              }}
+                            >
+                              <span>Dezena</span>
+                              <strong>
+                                {hitDezena
+                                  ? `${hitDezena} ✓`
+                                  : "—"}
+                              </strong>
+
+                              <span>Centena</span>
+                              <strong>
+                                {hitCentena
+                                  ? `${hitCentena} ✓`
+                                  : "—"}
+                              </strong>
+
+                              <span>Milhar</span>
+                              <strong>
+                                {hitMilhar
+                                  ? `${hitMilhar} ✓`
+                                  : "—"}
+                              </strong>
+                            </div>
+                          </>
+                        ) : (
+                          <div
+                            style={{
+                              textAlign: "center",
+                              fontSize: 10,
+                              fontWeight: 900,
+                              color:
+                                "rgba(255,255,255,0.58)",
+                            }}
+                          >
+                            ❌ SEM ACERTO
+                          </div>
+                        )}
+                      </div>
+
+                      <div
+                        style={{
+                          minHeight: 76,
+                          display: "grid",
+                          gridTemplateColumns:
+                            "52px minmax(0, 1fr)",
+                          alignItems: "center",
+                          gap: 10,
                           minWidth: 0,
-                          paddingLeft: 8,
-                          borderLeft:
-                            "1px solid rgba(255,255,255,0.14)",
+                          padding: "8px 10px",
+                          borderRadius: 12,
+                          border: isHit
+                            ? `4px solid ${prizeColor}`
+                            : "1px solid rgba(255,255,255,0.14)",
+                          background: isHit
+                            ? `linear-gradient(180deg, ${prizeGlow}, rgba(0,0,0,0.22))`
+                            : "rgba(255,255,255,0.02)",
+                          boxShadow: isHit
+                            ? `0 0 18px ${prizeGlow}`
+                            : "none",
                         }}
                         title={
                           hasResult
@@ -3898,46 +4081,126 @@ const list = Array.isArray(top3)
                       >
                         {hasResult ? (
                           <>
-                            <ImgWithFallback
-                              srcs={
-                                resultImg
-                                  ? [resultImg]
-                                  : []
-                              }
-                              alt={
-                                resultAnimal
-                              }
-                              size={34}
+                            <div
                               style={{
-                                borderRadius: 8,
+                                position:
+                                  "relative",
+                                display:
+                                  "flex",
+                                alignItems:
+                                  "center",
+                                justifyContent:
+                                  "center",
                               }}
-                            />
+                            >
+                              <ImgWithFallback
+                                srcs={
+                                  resultImg
+                                    ? [resultImg]
+                                    : []
+                                }
+                                alt={
+                                  resultAnimal
+                                }
+                                size={48}
+                                style={{
+                                  borderRadius: 10,
+                                  border: isHit
+                                    ? `4px solid ${prizeColor}`
+                                    : "1px solid rgba(201,168,62,0.36)",
+                                  boxShadow: isHit
+                                    ? `0 0 16px ${prizeGlow}`
+                                    : "none",
+                                }}
+                              />
+
+                              {isHit &&
+                              medal ? (
+                                <span
+                                  aria-label="Resultado oficial premiado"
+                                  style={{
+                                    position:
+                                      "absolute",
+                                    top: -15,
+                                    right: -18,
+                                    zIndex: 3,
+                                    fontSize: 27,
+                                    lineHeight: 1,
+                                    filter:
+                                      "drop-shadow(0 2px 4px rgba(0,0,0,0.95))",
+                                  }}
+                                >
+                                  {medal}
+                                </span>
+                              ) : null}
+                            </div>
 
                             <div
                               style={{
-                                fontSize: 11,
-                                fontWeight: 900,
-                                lineHeight: 1,
-                                whiteSpace:
-                                  "nowrap",
+                                minWidth: 0,
+                                display: "grid",
+                                gap: 3,
                               }}
                             >
-                              G
-                              {formatGrupo(
-                                resultGrupo
-                              )}
-                              {resultMilhar
-                                ? ` • ${resultMilhar}`
-                                : ""}
+                              <div
+                                style={{
+                                  fontSize: 11,
+                                  fontWeight: 1000,
+                                  color: isHit
+                                    ? prizeColor
+                                    : "inherit",
+                                  whiteSpace:
+                                    "nowrap",
+                                  overflow: "hidden",
+                                  textOverflow:
+                                    "ellipsis",
+                                }}
+                              >
+                                G
+                                {formatGrupo(
+                                  resultGrupo
+                                )}{" "}
+                                {String(
+                                  resultAnimal ||
+                                    ""
+                                ).toUpperCase()}
+                              </div>
+
+                              <div
+                                style={{
+                                  fontSize: 9,
+                                  fontWeight: 800,
+                                  opacity: 0.7,
+                                  textTransform:
+                                    "uppercase",
+                                  letterSpacing:
+                                    0.45,
+                                }}
+                              >
+                                Milhar sorteada
+                              </div>
+
+                              <div
+                                style={{
+                                  fontSize: 15,
+                                  fontWeight: 1000,
+                                  letterSpacing: 1,
+                                  color: isHit
+                                    ? prizeColor
+                                    : "inherit",
+                                }}
+                              >
+                                {resultMilhar ||
+                                  "—"}
+                              </div>
                             </div>
                           </>
                         ) : (
                           <div
                             style={{
-                              gridRow:
-                                "1 / span 2",
-                              alignSelf:
-                                "center",
+                              gridColumn:
+                                "1 / -1",
+                              textAlign: "center",
                               fontSize: 10,
                               fontWeight: 900,
                             }}
@@ -3957,6 +4220,7 @@ const list = Array.isArray(top3)
     </div>
   );
 }
+
 
 
 
