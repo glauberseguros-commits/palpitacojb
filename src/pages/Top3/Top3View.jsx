@@ -3738,54 +3738,94 @@ const list = Array.isArray(top3)
                         ? "rgba(205,127,50,0.50)"
                         : "rgba(212,175,55,0.38)";
 
+                const matchedOfficialIndex =
+                  resultPosition >= 1 &&
+                  resultPosition <= 3
+                    ? resultPosition - 1
+                    : -1;
+
+                const matchedResultGrupoRaw =
+                  matchedOfficialIndex >= 0
+                    ? Number(
+                        item?.resultTop3Groups?.[
+                          matchedOfficialIndex
+                        ] ??
+                          analysis?.matchedGrupo ??
+                          NaN
+                      )
+                    : NaN;
+
+                const matchedResultGrupo =
+                  Number.isFinite(
+                    matchedResultGrupoRaw
+                  ) &&
+                  matchedResultGrupoRaw >= 1 &&
+                  matchedResultGrupoRaw <= 25
+                    ? matchedResultGrupoRaw
+                    : NaN;
+
+                const matchedResultMilhar =
+                  matchedOfficialIndex >= 0
+                    ? normalizeMilharStr(
+                        item?.resultTop3Milhares?.[
+                          matchedOfficialIndex
+                        ] ||
+                          (
+                            resultPosition === 1
+                              ? resultMilhar
+                              : ""
+                          )
+                      )
+                    : "";
+
+                const matchedResultCentena =
+                  matchedResultMilhar
+                    ? matchedResultMilhar.slice(-3)
+                    : "";
+
+                const matchedResultDezena =
+                  matchedResultMilhar
+                    ? matchedResultMilhar.slice(-2)
+                    : "";
+
                 const hasExactHit =
-                  hitType.includes("exact") ||
-                  hitType.includes("milhar") ||
-                  Boolean(
-                    analysis?.exact ||
-                    analysis?.exactHit ||
-                    analysis?.milharHit ||
-                    item?.exactHit
-                  );
+                  hitType === "hit_exact";
 
                 const hasCentenaHit =
-                  hasExactHit ||
-                  hitType.includes("centena") ||
-                  Boolean(
-                    analysis?.centena ||
-                    analysis?.centenaHit ||
-                    item?.centenaHit
-                  );
+                  hitType === "hit_centena" ||
+                  hasExactHit;
 
                 const hasDezenaHit =
-                  isHit ||
+                  hitType === "hit_grupo" ||
                   hasCentenaHit ||
-                  hasExactHit ||
-                  hitType.includes("grupo") ||
-                  hitType.includes("dezena") ||
-                  Boolean(
-                    analysis?.group ||
-                    analysis?.groupHit ||
-                    analysis?.dezenaHit ||
-                    item?.groupHit
-                  );
+                  hasExactHit;
+
+                const hitGrupo =
+                  isHit &&
+                  Number.isFinite(
+                    matchedResultGrupo
+                  )
+                    ? formatGrupo(
+                        matchedResultGrupo
+                      )
+                    : "";
 
                 const hitDezena =
-                  hasResult &&
+                  isHit &&
                   hasDezenaHit
-                    ? resultDezena
+                    ? matchedResultDezena
                     : "";
 
                 const hitCentena =
-                  hasResult &&
+                  isHit &&
                   hasCentenaHit
-                    ? resultCentena
+                    ? matchedResultCentena
                     : "";
 
                 const hitMilhar =
-                  hasResult &&
+                  isHit &&
                   hasExactHit
-                    ? resultMilhar
+                    ? matchedResultMilhar
                     : "";
 
                 return (
@@ -3996,7 +4036,7 @@ const list = Array.isArray(top3)
                                 letterSpacing: 0.6,
                               }}
                             >
-                              {medal} ACERTO
+                              ACERTO
                             </div>
 
                             <div
@@ -4009,6 +4049,13 @@ const list = Array.isArray(top3)
                                 lineHeight: 1.2,
                               }}
                             >
+                              <span>Grupo</span>
+                              <strong>
+                                {hitGrupo
+                                  ? `G${hitGrupo} ✓`
+                                  : "—"}
+                              </strong>
+
                               <span>Dezena</span>
                               <strong>
                                 {hitDezena
@@ -4051,21 +4098,18 @@ const list = Array.isArray(top3)
                           minHeight: 76,
                           display: "grid",
                           gridTemplateColumns:
-                            "52px minmax(0, 1fr)",
+                            "60px minmax(0, 1fr)",
                           alignItems: "center",
                           gap: 10,
                           minWidth: 0,
                           padding: "8px 10px",
                           borderRadius: 12,
-                          border: isHit
-                            ? `4px solid ${prizeColor}`
-                            : "1px solid rgba(255,255,255,0.14)",
-                          background: isHit
-                            ? `linear-gradient(180deg, ${prizeGlow}, rgba(0,0,0,0.22))`
-                            : "rgba(255,255,255,0.02)",
-                          boxShadow: isHit
-                            ? `0 0 18px ${prizeGlow}`
-                            : "none",
+                          border:
+                            "1px solid rgba(255,255,255,0.14)",
+                          background:
+                            "rgba(255,255,255,0.025)",
+                          boxShadow:
+                            "inset 0 0 0 1px rgba(255,255,255,0.025)",
                         }}
                         title={
                           hasResult
@@ -4102,37 +4146,22 @@ const list = Array.isArray(top3)
                                 alt={
                                   resultAnimal
                                 }
-                                size={48}
+                                size={
+                                  isHit &&
+                                  resultPosition === 1
+                                    ? 58
+                                    : 48
+                                }
                                 style={{
                                   borderRadius: 10,
-                                  border: isHit
-                                    ? `4px solid ${prizeColor}`
-                                    : "1px solid rgba(201,168,62,0.36)",
-                                  boxShadow: isHit
-                                    ? `0 0 16px ${prizeGlow}`
-                                    : "none",
+                                  border:
+                                    "1px solid rgba(201,168,62,0.36)",
+                                  boxShadow:
+                                    "none",
                                 }}
                               />
 
-                              {isHit &&
-                              medal ? (
-                                <span
-                                  aria-label="Resultado oficial premiado"
-                                  style={{
-                                    position:
-                                      "absolute",
-                                    top: -15,
-                                    right: -18,
-                                    zIndex: 3,
-                                    fontSize: 27,
-                                    lineHeight: 1,
-                                    filter:
-                                      "drop-shadow(0 2px 4px rgba(0,0,0,0.95))",
-                                  }}
-                                >
-                                  {medal}
-                                </span>
-                              ) : null}
+
                             </div>
 
                             <div
@@ -4146,9 +4175,7 @@ const list = Array.isArray(top3)
                                 style={{
                                   fontSize: 11,
                                   fontWeight: 1000,
-                                  color: isHit
-                                    ? prizeColor
-                                    : "inherit",
+                                  color: "inherit",
                                   whiteSpace:
                                     "nowrap",
                                   overflow: "hidden",
@@ -4185,9 +4212,7 @@ const list = Array.isArray(top3)
                                   fontSize: 15,
                                   fontWeight: 1000,
                                   letterSpacing: 1,
-                                  color: isHit
-                                    ? prizeColor
-                                    : "inherit",
+                                  color: "inherit",
                                 }}
                               >
                                 {resultMilhar ||
@@ -4220,8 +4245,3 @@ const list = Array.isArray(top3)
     </div>
   );
 }
-
-
-
-
-
