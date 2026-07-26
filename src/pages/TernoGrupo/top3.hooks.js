@@ -65,7 +65,7 @@ import {
 
 import { computeTop3Analytics } from "./modules/top3.analytics";
 
-import { buildTop3Predictions } from "./modules/top3.prediction";
+import { buildTernoGrupoPredictions } from "./modules/ternoGrupo.prediction";
 
 import { buildTop3TimelineViewModel } from "./modules/top3.timeline";
 
@@ -1307,7 +1307,7 @@ export function useTop3Controller() {
           return;
         }
 
-        const nextTop3 = buildTop3Predictions({
+        const nextTop3 = buildTernoGrupoPredictions({
           analytics,
           build20,
           safeStr,
@@ -1442,7 +1442,7 @@ export function useTop3Controller() {
     const engineVersion =
       safeStr(top3?.[0]?.meta?.explain?.engine) ||
       safeStr(top3?.[0]?.meta?.scenario) ||
-      "V3_STATISTICAL";
+      "TERNO_GRUPO_V1_TOP5";
 
     registerPrediction({
       targetKey,
