@@ -420,6 +420,7 @@ function analyzeTop3Hit(top3, resultSource, resultMilhar) {
       podiumMedal: "",
       matchedValue: "",
       matchedGrupo: null,
+      matchedMilhar: "",
     };
   }
 
@@ -448,6 +449,7 @@ function analyzeTop3Hit(top3, resultSource, resultMilhar) {
       podiumMedal: "",
       matchedValue: "",
       matchedGrupo: null,
+      matchedMilhar: "",
     };
   }
 
@@ -486,17 +488,11 @@ function analyzeTop3Hit(top3, resultSource, resultMilhar) {
       let score = 0;
       let matchedValue = "";
 
-      if (
-        milhar &&
-        milhares.includes(milhar)
-      ) {
+      if (milhar && milhares.includes(milhar)) {
         type = "hit_exact";
         score = 100;
         matchedValue = milhar;
-      } else if (
-        centena &&
-        centenas.includes(centena)
-      ) {
+      } else if (centena && centenas.includes(centena)) {
         type = "hit_centena";
         score = 66.67;
         matchedValue = centena;
@@ -526,6 +522,7 @@ function analyzeTop3Hit(top3, resultSource, resultMilhar) {
             podiumMedalFromPosition(resultPosition),
           matchedValue,
           matchedGrupo: grupoNum,
+          matchedMilhar: milhar,
         };
       }
     }
@@ -540,6 +537,7 @@ function analyzeTop3Hit(top3, resultSource, resultMilhar) {
     podiumMedal: "",
     matchedValue: "",
     matchedGrupo: null,
+    matchedMilhar: "",
   };
 }
 
@@ -1883,6 +1881,12 @@ const list = Array.isArray(top3)
           )
             ? entry.resultTop3Milhares
             : [],
+          matchedGrupo: Number(
+            entry?.matchedGrupo ?? NaN
+          ),
+          matchedMilhar: normalizeMilharStr(
+            entry?.matchedMilhar || ""
+          ),
           analysis: {
             type: String(entry?.hitType || ""),
             score: Number(entry?.hitScore || 0),
@@ -1902,6 +1906,12 @@ const list = Array.isArray(top3)
             ),
             matchedValue: String(
               entry?.matchedValue || ""
+            ),
+            matchedGrupo: Number(
+              entry?.matchedGrupo ?? NaN
+            ),
+            matchedMilhar: normalizeMilharStr(
+              entry?.matchedMilhar || ""
             ),
           },
         };
@@ -2026,6 +2036,22 @@ const list = Array.isArray(top3)
           getAnimalLabel(resultGrupo) ||
           "",
         resultMilhar,
+        resultTop3Groups: Array.isArray(
+          timelineRow?.resultTop3Groups
+        )
+          ? timelineRow.resultTop3Groups
+          : row?.resultTop3Groups || [],
+        resultTop3Milhares: Array.isArray(
+          timelineRow?.resultTop3Milhares
+        )
+          ? timelineRow.resultTop3Milhares
+          : row?.resultTop3Milhares || [],
+        matchedGrupo: Number(
+          analysis?.matchedGrupo ?? NaN
+        ),
+        matchedMilhar: normalizeMilharStr(
+          analysis?.matchedMilhar || ""
+        ),
         analysis,
         hit:
           analysis.type !== "miss" &&
@@ -3777,6 +3803,7 @@ const list = Array.isArray(top3)
                         item?.resultTop3Groups?.[
                           matchedOfficialIndex
                         ] ??
+                          item?.matchedGrupo ??
                           analysis?.matchedGrupo ??
                           NaN
                       )
@@ -3797,6 +3824,8 @@ const list = Array.isArray(top3)
                         item?.resultTop3Milhares?.[
                           matchedOfficialIndex
                         ] ||
+                          item?.matchedMilhar ||
+                          analysis?.matchedMilhar ||
                           (
                             resultPosition === 1
                               ? resultMilhar
