@@ -1000,8 +1000,6 @@ export default function Statistics() {
 
             if (!number && mode !== "animal") continue;
 
-            analyzedPrizes += 1;
-
             let key = "";
 
             if (mode === "dezena") {
@@ -1025,6 +1023,7 @@ export default function Statistics() {
 
             if (!key) continue;
 
+            analyzedPrizes += 1;
             occurrences += 1;
 
             const latestKey = buildLatestKey(
