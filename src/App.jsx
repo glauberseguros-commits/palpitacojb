@@ -20,6 +20,7 @@ import { doc, getDoc } from "firebase/firestore";
 
 const Results = lazy(() => import("./pages/Results/Results"));
 const Top3 = lazy(() => import("./pages/Top3/Top3"));
+const TernoGrupo = lazy(() => import("./pages/TernoGrupo/TernoGrupo"));
 const Late = lazy(() => import("./pages/Late/Late"));
 const Search = lazy(() => import("./pages/Search/Search"));
 const Admin = lazy(() => import("./pages/Admin/Admin"));
@@ -55,6 +56,7 @@ const ROUTES = {
   ACCOUNT: "account",
   RESULTS: "results",
   TOP3: "top3",
+  TERNO_GRUPO: "terno-grupo",
   LATE: "late",
   SEARCH: "search",
   PAYMENTS: "payments",
@@ -374,6 +376,8 @@ function screenToPath(screen) {
       return "/results";
     case ROUTES.TOP3:
       return "/top3";
+    case ROUTES.TERNO_GRUPO:
+      return "/terno-grupo";
     case ROUTES.LATE:
       return "/late";
     case ROUTES.SEARCH:
@@ -399,6 +403,7 @@ function pathToScreen(pathname) {
   if (p === "/account") return ROUTES.ACCOUNT;
   if (p === "/results") return ROUTES.RESULTS;
   if (p === "/top3") return ROUTES.TOP3;
+  if (p === "/terno-grupo") return ROUTES.TERNO_GRUPO;
   if (p === "/late") return ROUTES.LATE;
   if (p === "/search") return ROUTES.SEARCH;
   if (p === "/payments") return ROUTES.PAYMENTS;
@@ -679,6 +684,8 @@ export default function App() {
         return <Results />;
       case ROUTES.TOP3:
         return <Top3 />;
+      case ROUTES.TERNO_GRUPO:
+        return <TernoGrupo />;
       case ROUTES.LATE:
         return <Late />;
       case ROUTES.SEARCH:
