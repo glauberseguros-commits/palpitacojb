@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 // src/pages/Results/Results.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";

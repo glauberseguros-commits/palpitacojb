@@ -1,5 +1,3 @@
-"use strict";
-
 import { buildFrequencyEvidence } from "./frequencyEvidence";
 import { buildContextEvidence } from "./contextEvidence";
 

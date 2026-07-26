@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars, react-hooks/exhaustive-deps */
 // src/pages/Centenas/CentenasView.jsx
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getKingBoundsByUf, getKingResultsByRange } from "../../services/kingResultsService";

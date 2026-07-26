@@ -1,4 +1,4 @@
-﻿// src/pages/Account/Account.jsx
+// src/pages/Account/Account.jsx
 import React, { useEffect, useRef, useState } from "react";
 import LoginVisual from "./LoginVisual";
 import AccountView from "./AccountView";

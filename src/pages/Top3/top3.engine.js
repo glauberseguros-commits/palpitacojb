@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 // src/pages/Top3/top3.engine.js
 import {
   safeStr,

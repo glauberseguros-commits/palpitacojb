@@ -1,5 +1,3 @@
-"use strict";
-
 const scoreConfig = {
   version: "2.2.0",
 

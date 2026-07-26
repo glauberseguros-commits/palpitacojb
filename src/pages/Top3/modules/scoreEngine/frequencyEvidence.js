@@ -1,5 +1,3 @@
-"use strict";
-
 /**
  * Frequency Evidence V2
  *

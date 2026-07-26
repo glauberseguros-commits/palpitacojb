@@ -1,5 +1,3 @@
-"use strict";
-
 /**
  * Context Evidence V2
  *

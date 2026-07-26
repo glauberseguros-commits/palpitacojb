@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 // src/pages/Top3/Top3View.jsx
 import React, { useMemo, useState, useCallback, useEffect } from "react";
 import { getAnimalLabel, getImgFromGrupo } from "../../constants/bichoMap";

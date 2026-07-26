@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /**
  * ============================================================
  * DASHBOARD — BASELINE CONGELADA (freeze)

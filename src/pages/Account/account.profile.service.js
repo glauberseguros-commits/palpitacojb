@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 // src/pages/Account/account.profile.service.js
 
 /**

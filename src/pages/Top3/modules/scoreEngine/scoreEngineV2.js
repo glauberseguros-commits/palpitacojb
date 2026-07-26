@@ -1,5 +1,3 @@
-"use strict";
-
 import scoreConfig from "./scoreConfig";
 import { collectEvidence } from "./evidenceEngine";
 
