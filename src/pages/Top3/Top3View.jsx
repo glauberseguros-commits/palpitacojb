@@ -2065,7 +2065,27 @@ const list = Array.isArray(top3)
       });
     }
 
+    const todayYmd = todayYMDLocalView();
+
     return Array.from(rowsByTarget.values())
+      .filter((row) => {
+        const targetYmd = String(
+          row?.target?.ymd || ""
+        ).trim();
+
+        const hasResult = row?.result != null;
+
+        // Resultado existente sempre permanece no histórico.
+        if (hasResult) return true;
+
+        // Linha inválida não deve gerar card pendente.
+        if (!isYMD(targetYmd)) return false;
+
+        // Pendência só é legítima no dia atual ou em data futura.
+        // Datas anteriores sem resultado representam sorteio inexistente,
+        // cancelado ou definitivamente não publicado.
+        return targetYmd >= todayYmd;
+      })
       .sort((a, b) => {
         const ah = hourBucketToSortValue(
           a?.target?.hour
