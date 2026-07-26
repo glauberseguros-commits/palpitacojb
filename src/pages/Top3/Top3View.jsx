@@ -31,6 +31,32 @@ function extractPrizeMilharByPosition(slot, position) {
 }
 
 function extractResultMilhar(slot) {
+  const persistedMilhar = normalizeMilharStr(
+    slot?.resultMilhar ??
+      slot?.milhar ??
+      slot?.result?.milhar ??
+      slot?.resultado?.milhar ??
+      ""
+  );
+
+  if (persistedMilhar) {
+    return persistedMilhar;
+  }
+
+  const persistedTop3 = Array.isArray(
+    slot?.resultTop3Milhares
+  )
+    ? slot.resultTop3Milhares
+    : [];
+
+  const persistedPrimeira = normalizeMilharStr(
+    persistedTop3[0] ?? ""
+  );
+
+  if (persistedPrimeira) {
+    return persistedPrimeira;
+  }
+
   return extractPrizeMilharByPosition(slot, 1);
 }
 
