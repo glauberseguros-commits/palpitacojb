@@ -224,6 +224,44 @@ function normalizeHourLike(value) {
   return s0.trim();
 }
 
+/**
+ * Converte o horário técnico/original da Nacional para o horário
+ * comercial exibido e utilizado pelos filtros do sistema.
+ *
+ * Histórico da fonte:
+ * 01:49 -> 02:00
+ * 07:49 -> 08:00
+ * 09:49 -> 10:00
+ * 11:49 -> 12:00
+ * 14:49 -> 15:00
+ * 16:49 -> 17:00
+ * 20:49 -> 21:00
+ * 22:49 -> 23:00
+ */
+function normalizeCloseHourForLottery(lotteryInput, value) {
+  const normalized = normalizeHourLike(value);
+  if (!normalized) return "";
+
+  const lotteryKey = canonicalScopeKey(lotteryInput);
+
+  if (lotteryKey !== "NACIONAL") {
+    return normalized;
+  }
+
+  const nacionalHourMap = {
+    "01:49": "02:00",
+    "07:49": "08:00",
+    "09:49": "10:00",
+    "11:49": "12:00",
+    "14:49": "15:00",
+    "16:49": "17:00",
+    "20:49": "21:00",
+    "22:49": "23:00",
+  };
+
+  return nacionalHourMap[normalized] || normalized;
+}
+
 function mhxToInt(v) {
   const n = Number(v);
   return Number.isFinite(n) ? n : 0;
@@ -547,14 +585,16 @@ function mapDrawDoc(doc) {
   const d = doc.data();
 
   const ymd = d.ymd || normalizeToYMD(getDocDateRaw(d));
-  const hourNorm = normalizeHourLike(
+
+  const ufRaw = d.uf ?? null;
+  const lotteryKeyRaw = d.lottery_key ?? d.lotteryKey ?? d.lottery ?? null;
+
+  const hourNorm = normalizeCloseHourForLottery(
+    lotteryKeyRaw || ufRaw,
     d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? ""
   );
 
   const embeddedPrizes = Array.isArray(d.prizes) && d.prizes.length > 0 ? d.prizes : null;
-
-  const ufRaw = d.uf ?? null;
-  const lotteryKeyRaw = d.lottery_key ?? d.lotteryKey ?? d.lottery ?? null;
 
   const lotteryCodeRaw =
     d.lottery_code ??
