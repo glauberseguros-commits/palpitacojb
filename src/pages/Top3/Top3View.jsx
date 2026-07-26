@@ -2131,9 +2131,78 @@ const list = Array.isArray(top3)
     ? ymdSafe
     : todayForCalendar;
 
+  const availableHistoryDates = useMemo(() => {
+    const dates = new Set();
+
+    (Array.isArray(timeline) ? timeline : []).forEach(
+      (slot) => {
+        const ymd = String(
+          slot?.targetYmd || ""
+        ).trim();
+
+        if (isYMD(ymd) && ymd <= todayForCalendar) {
+          dates.add(ymd);
+        }
+      }
+    );
+
+    (
+      Array.isArray(persistedTop3History)
+        ? persistedTop3History
+        : []
+    ).forEach((entry) => {
+      const ymd = String(
+        entry?.targetYmd || ""
+      ).trim();
+
+      if (isYMD(ymd) && ymd <= todayForCalendar) {
+        dates.add(ymd);
+      }
+    });
+
+    return Array.from(dates).sort();
+  }, [
+    timeline,
+    persistedTop3History,
+    todayForCalendar,
+  ]);
+
+  const previousAvailableDate = useMemo(() => {
+    for (
+      let index = availableHistoryDates.length - 1;
+      index >= 0;
+      index -= 1
+    ) {
+      if (
+        availableHistoryDates[index] <
+        selectedHistoryYmd
+      ) {
+        return availableHistoryDates[index];
+      }
+    }
+
+    return "";
+  }, [
+    availableHistoryDates,
+    selectedHistoryYmd,
+  ]);
+
+  const nextAvailableDate = useMemo(() => {
+    return (
+      availableHistoryDates.find(
+        (date) => date > selectedHistoryYmd
+      ) || ""
+    );
+  }, [
+    availableHistoryDates,
+    selectedHistoryYmd,
+  ]);
+
+  const canGoPrevious =
+    isYMD(previousAvailableDate);
+
   const canGoNext =
-    isYMD(selectedHistoryYmd) &&
-    selectedHistoryYmd < todayForCalendar;
+    isYMD(nextAvailableDate);
 
   const goToHistoryDate = useCallback(
     (nextYmd) => {
@@ -3454,11 +3523,17 @@ const list = Array.isArray(top3)
             <button
               type="button"
               className="pp-btn"
-              onClick={() =>
-                goToHistoryDate(
-                  addDaysYMDLocal(selectedHistoryYmd, -1)
-                )
-              }
+              disabled={!canGoPrevious}
+              onClick={() => {
+                if (!canGoPrevious) return;
+                goToHistoryDate(previousAvailableDate);
+              }}
+              style={{
+                opacity: canGoPrevious ? 1 : 0.45,
+                cursor: canGoPrevious
+                  ? "pointer"
+                  : "not-allowed",
+              }}
             >
               ◀ Dia anterior
             </button>
@@ -3488,14 +3563,13 @@ const list = Array.isArray(top3)
               disabled={!canGoNext}
               onClick={() => {
                 if (!canGoNext) return;
-
-                goToHistoryDate(
-                  addDaysYMDLocal(selectedHistoryYmd, 1)
-                );
+                goToHistoryDate(nextAvailableDate);
               }}
               style={{
                 opacity: canGoNext ? 1 : 0.45,
-                cursor: canGoNext ? "pointer" : "not-allowed",
+                cursor: canGoNext
+                  ? "pointer"
+                  : "not-allowed",
               }}
             >
               Próximo dia ▶
