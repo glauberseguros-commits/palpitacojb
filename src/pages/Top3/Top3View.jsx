@@ -3580,107 +3580,372 @@ const list = Array.isArray(top3)
             </div>
           </div>
 
-          <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
+
+          <div
+            style={{
+              display: "grid",
+              gap: 8,
+              marginTop: 12,
+            }}
+          >
             {!historyRows.length ? (
-              <div className="top3-empty">Sem histórico para a data analisada.</div>
+              <div className="top3-empty">
+                Sem histórico para a data analisada.
+              </div>
             ) : (
               historyRows.map((item) => {
-                const y = String(item?.target?.ymd || "");
-                const h = String(item?.target?.hour || "");
+                const y = String(
+                  item?.target?.ymd || ""
+                );
 
-                const picks = Array.isArray(item?.picks) && item.picks.length
-  ? item.picks.map((g) => formatGrupo(g)).join(" - ")
-  : Array.isArray(item?.top3)
-    ? item.top3.map((t) => formatGrupo(t?.grupo)).join(" - ")
-    : "--- - --- - ---";
+                const h = String(
+                  item?.target?.hour || ""
+                );
+
+                const top3Items =
+                  Array.isArray(item?.top3) &&
+                  item.top3.length
+                    ? item.top3.slice(0, 3)
+                    : (
+                        Array.isArray(item?.picks)
+                          ? item.picks
+                          : []
+                      )
+                        .slice(0, 3)
+                        .map((grupo) => ({
+                          grupo: Number(grupo),
+                          animal:
+                            getAnimalLabel(
+                              Number(grupo)
+                            ) || "",
+                        }));
 
                 const resultGrupo = Number(
-                  item?.result ?? item?.grupo ?? item?.prizes?.[0]?.grupo
+                  item?.result ??
+                    item?.grupo ??
+                    item?.prizes?.[0]?.grupo
                 );
+
                 const hasResult =
-                  Number.isFinite(resultGrupo) && resultGrupo >= 1 && resultGrupo <= 25;
+                  Number.isFinite(resultGrupo) &&
+                  resultGrupo >= 1 &&
+                  resultGrupo <= 25;
 
                 const resultAnimal = hasResult
-                  ? (item?.animal || getAnimalLabel(resultGrupo))
-                  : "";
-                const resultImg = hasResult
-                  ? getImgFromGrupo(resultGrupo, 64)
+                  ? String(
+                      item?.animal ||
+                        getAnimalLabel(
+                          resultGrupo
+                        ) ||
+                        ""
+                    )
                   : "";
 
-                const hitType = String(item?.hitType || item?.analysis?.type || "").trim();
-                const matchedValue = String(item?.analysis?.matchedValue || "").trim();
+                const resultImg = hasResult
+                  ? getImgFromGrupo(
+                      resultGrupo,
+                      64
+                    )
+                  : "";
+
+                const resultMilhar =
+                  normalizeMilharStr(
+                    item?.resultMilhar ||
+                      item
+                        ?.resultTop3Milhares?.[0] ||
+                      ""
+                  );
+
+                const analysis =
+                  item?.analysis &&
+                  typeof item.analysis ===
+                    "object"
+                    ? item.analysis
+                    : {};
+
+                const predictionPosition =
+                  Number(
+                    analysis?.position ??
+                      analysis
+                        ?.predictionPosition ??
+                      item
+                        ?.predictionPosition ??
+                      item?.hitPosition ??
+                      -1
+                  );
+
+                const matchedPredictionIndex =
+                  Number.isFinite(
+                    predictionPosition
+                  ) &&
+                  predictionPosition >= 1
+                    ? predictionPosition - 1
+                    : -1;
 
                 const resultPosition = Number(
-                  item?.resultPosition ??
-                    item?.analysis?.resultPosition ??
+                  analysis?.resultPosition ??
+                    item?.resultPosition ??
                     -1
                 );
 
-                const podiumMedal = String(
-                  item?.podiumMedal ||
-                    item?.analysis?.podiumMedal ||
-                    podiumMedalFromPosition(resultPosition)
-                );
+                const medal =
+                  resultPosition === 1
+                    ? "🥇"
+                    : resultPosition === 2
+                      ? "🥈"
+                      : resultPosition === 3
+                        ? "🥉"
+                        : "";
 
-                const hitMark = !hasResult
-                  ? "⏳ PENDENTE"
-                  : podiumMedal === "gold"
-                    ? "🥇 OURO · 1º PRÊMIO"
-                    : podiumMedal === "silver"
-                      ? "🥈 PRATA · 2º PRÊMIO"
-                      : podiumMedal === "bronze"
-                        ? "🥉 BRONZE · 3º PRÊMIO"
-                        : "❌ ERRO";
+                const isHit =
+                  hasResult &&
+                  matchedPredictionIndex >= 0;
 
                 return (
                   <div
-                    key={String(item?.targetKey || `${y}_${h}`)}
-                    className="top3-historyRow"
+                    key={String(
+                      item?.targetKey ||
+                        `${y}_${h}`
+                    )}
+                    style={{
+                      width: "100%",
+                      overflowX: "auto",
+                      border:
+                        "1px solid rgba(255,255,255,0.08)",
+                      borderRadius: 12,
+                      background:
+                        "rgba(255,255,255,0.025)",
+                    }}
                   >
-                    <div style={{ fontWeight: 800 }}>
-                      {ymdToBR(y)} {h}
-                    </div>
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns:
+                          "minmax(112px, 1.3fr) repeat(3, minmax(54px, 0.65fr)) minmax(90px, 0.95fr)",
+                        alignItems: "center",
+                        gap: 8,
+                        minWidth: 430,
+                        padding: "8px 10px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          gridRow:
+                            "1 / span 2",
+                          alignSelf: "center",
+                          fontSize: 12,
+                          fontWeight: 900,
+                          lineHeight: 1.2,
+                          whiteSpace:
+                            "nowrap",
+                        }}
+                      >
+                        {ymdToBR(y)} {h}
+                      </div>
 
-                    <div style={{ letterSpacing: 1 }}>
-                      {picks}
-                    </div>
+                      {top3Items.map(
+                        (pick, idx) => {
+                          const grupo =
+                            Number(
+                              pick?.grupo
+                            );
 
-                    <div className="top3-historyResult">
-                      {hasResult ? (
-                        <>
-                          <ImgWithFallback
-                            srcs={[resultImg]}
-                            alt={resultAnimal}
-                            size={36}
-                            style={{ borderRadius: 8 }}
-                          />
-                          <div className="top3-historyResultText">
-                            <div className="top3-historyResultGroup">
-                              G{formatGrupo(resultGrupo)}
+                          const animal =
+                            String(
+                              pick?.animal ||
+                                getAnimalLabel(
+                                  grupo
+                                ) ||
+                                ""
+                            ).trim();
+
+                          const img =
+                            Number.isFinite(
+                              grupo
+                            )
+                              ? getImgFromGrupo(
+                                  grupo,
+                                  64
+                                )
+                              : "";
+
+                          const isMatched =
+                            isHit &&
+                            matchedPredictionIndex ===
+                              idx;
+
+                          return (
+                            <div
+                              key={`${y}_${h}_${idx}_${grupo}`}
+                              style={{
+                                display:
+                                  "grid",
+                                gridTemplateRows:
+                                  "34px 18px",
+                                justifyItems:
+                                  "center",
+                                alignItems:
+                                  "center",
+                                minWidth: 0,
+                              }}
+                              title={`${
+                                animal ||
+                                "Animal"
+                              } — G${formatGrupo(
+                                grupo
+                              )}`}
+                            >
+                              <div
+                                style={{
+                                  position:
+                                    "relative",
+                                  display:
+                                    "flex",
+                                  alignItems:
+                                    "center",
+                                  justifyContent:
+                                    "center",
+                                }}
+                              >
+                                <ImgWithFallback
+                                  srcs={
+                                    img
+                                      ? [img]
+                                      : []
+                                  }
+                                  alt={
+                                    animal ||
+                                    `G${formatGrupo(
+                                      grupo
+                                    )}`
+                                  }
+                                  size={34}
+                                  style={{
+                                    borderRadius: 8,
+                                    outline:
+                                      isMatched
+                                        ? "2px solid rgba(201,168,62,0.95)"
+                                        : "none",
+                                    outlineOffset:
+                                      1,
+                                  }}
+                                />
+
+                                {isMatched &&
+                                medal ? (
+                                  <span
+                                    aria-label="Palpite acertado"
+                                    style={{
+                                      position:
+                                        "absolute",
+                                      top: -8,
+                                      right: -13,
+                                      fontSize: 17,
+                                      lineHeight: 1,
+                                      filter:
+                                        "drop-shadow(0 1px 2px rgba(0,0,0,0.80))",
+                                    }}
+                                  >
+                                    {medal}
+                                  </span>
+                                ) : null}
+                              </div>
+
+                              <div
+                                style={{
+                                  fontSize: 12,
+                                  fontWeight: 900,
+                                  lineHeight: 1,
+                                  whiteSpace:
+                                    "nowrap",
+                                }}
+                              >
+                                G
+                                {formatGrupo(
+                                  grupo
+                                )}
+                              </div>
                             </div>
-                            <div className="top3-historyResultAnimal">
-                              {String(resultAnimal || "").toUpperCase()}
-                            </div>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <ImgWithFallback
-                            srcs={[]}
-                            alt="pendente"
-                            size={36}
-                            style={{ borderRadius: 8 }}
-                          />
-                          <div className="top3-historyResultText">
-                            <div className="top3-historyResultGroup">G—</div>
-                            <div className="top3-historyResultAnimal">PENDENTE</div>
-                          </div>
-                        </>
+                          );
+                        }
                       )}
-                    </div>
 
-                    <div style={{ textAlign: "center", fontSize: 16 }}>
-                      {hitMark}
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateRows:
+                            "34px 18px",
+                          justifyItems:
+                            "center",
+                          alignItems:
+                            "center",
+                          minWidth: 0,
+                          paddingLeft: 8,
+                          borderLeft:
+                            "1px solid rgba(255,255,255,0.14)",
+                        }}
+                        title={
+                          hasResult
+                            ? `${resultAnimal} — G${formatGrupo(
+                                resultGrupo
+                              )}${
+                                resultMilhar
+                                  ? ` — ${resultMilhar}`
+                                  : ""
+                              }`
+                            : "Resultado pendente"
+                        }
+                      >
+                        {hasResult ? (
+                          <>
+                            <ImgWithFallback
+                              srcs={
+                                resultImg
+                                  ? [resultImg]
+                                  : []
+                              }
+                              alt={
+                                resultAnimal
+                              }
+                              size={34}
+                              style={{
+                                borderRadius: 8,
+                              }}
+                            />
+
+                            <div
+                              style={{
+                                fontSize: 11,
+                                fontWeight: 900,
+                                lineHeight: 1,
+                                whiteSpace:
+                                  "nowrap",
+                              }}
+                            >
+                              G
+                              {formatGrupo(
+                                resultGrupo
+                              )}
+                              {resultMilhar
+                                ? ` • ${resultMilhar}`
+                                : ""}
+                            </div>
+                          </>
+                        ) : (
+                          <div
+                            style={{
+                              gridRow:
+                                "1 / span 2",
+                              alignSelf:
+                                "center",
+                              fontSize: 10,
+                              fontWeight: 900,
+                            }}
+                          >
+                            ⏳ PENDENTE
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
@@ -3692,6 +3957,7 @@ const list = Array.isArray(top3)
     </div>
   );
 }
+
 
 
 
