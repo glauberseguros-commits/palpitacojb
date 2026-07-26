@@ -81,6 +81,10 @@ import {
 
 const top3SaveRunKeys = new Set();
 const top3ReconcileRunKeys = new Set();
+const top3ReconcileRetryCounts = new Map();
+
+const TOP3_RECONCILE_MAX_RETRIES = 3;
+const TOP3_RECONCILE_RETRY_DELAY_MS = 1200;
 
 function emptyAnalytics() {
   return { top: [], meta: null };
@@ -340,6 +344,7 @@ export function useTop3Controller() {
 
   const [baseDrawState, setBaseDrawState] = useState(null);
   const [persistedTop3History, setPersistedTop3History] = useState([]);
+  const [reconcileRetryNonce, setReconcileRetryNonce] = useState(0);
 
   // TOP3_REF_02_DEFER_SECONDARY
   // Libera primeiro os dados e palpites essenciais.
@@ -1494,21 +1499,82 @@ export function useTop3Controller() {
       draws: targetDraws,
     })
       .then((result) => {
-        if (!alive) return;
-
         if (!result?.ok) {
           top3ReconcileRunKeys.delete(reconcileRunKey);
+          top3ReconcileRetryCounts.delete(reconcileRunKey);
           return;
         }
 
-        setPersistedTop3History(
-          Array.isArray(result?.history)
-            ? result.history
-            : []
+        const reconciledHistory = Array.isArray(result?.history)
+          ? result.history
+          : [];
+
+        if (alive) {
+          setPersistedTop3History(reconciledHistory);
+        }
+
+        const targetDrawKeys = new Set(
+          targetDraws
+            .map((draw) => drawKey(draw))
+            .filter(Boolean)
         );
+
+        const hasPendingResult = reconciledHistory.some((entry) => {
+          const y = safeStr(entry?.targetYmd);
+          const h = toHourBucket(entry?.targetHour);
+          const key = isYMD(y) && h ? `${y}|${h}` : "";
+
+          return (
+            key &&
+            targetDrawKeys.has(key) &&
+            safeStr(entry?.status).toLowerCase() !== "validated"
+          );
+        });
+
+        const updated = Number(result?.updated || 0);
+
+        if (updated > 0 || !hasPendingResult) {
+          top3ReconcileRetryCounts.delete(reconcileRunKey);
+          return;
+        }
+
+        const retryCount =
+          Number(top3ReconcileRetryCounts.get(reconcileRunKey) || 0) + 1;
+
+        if (retryCount > TOP3_RECONCILE_MAX_RETRIES) {
+          top3ReconcileRunKeys.delete(reconcileRunKey);
+          top3ReconcileRetryCounts.delete(reconcileRunKey);
+
+          if (debugTop3) {
+            console.warn(
+              "[TOP3 FIRESTORE RECONCILE RETRIES EXHAUSTED]",
+              {
+                reconcileRunKey,
+                retryCount: retryCount - 1,
+                historyLength: reconciledHistory.length,
+              }
+            );
+          }
+
+          return;
+        }
+
+        top3ReconcileRetryCounts.set(
+          reconcileRunKey,
+          retryCount
+        );
+
+        window.setTimeout(() => {
+          top3ReconcileRunKeys.delete(reconcileRunKey);
+
+          if (alive) {
+            setReconcileRetryNonce((value) => value + 1);
+          }
+        }, TOP3_RECONCILE_RETRY_DELAY_MS);
       })
       .catch((error) => {
         top3ReconcileRunKeys.delete(reconcileRunKey);
+        top3ReconcileRetryCounts.delete(reconcileRunKey);
 
         if (debugTop3) {
           console.warn("[TOP3 FIRESTORE RECONCILE]", error);
@@ -1527,6 +1593,7 @@ export function useTop3Controller() {
     debugTop3,
     loading,
     secondaryReady,
+    reconcileRetryNonce,
   ]);
 
   return {
