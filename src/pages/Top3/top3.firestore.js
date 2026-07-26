@@ -246,12 +246,20 @@ function analyzeSnapshotHit(snapshot, officialPodium) {
   }
 
   for (const officialPrize of podium) {
-    const resultGrupo = Number(officialPrize?.grupo);
+    const resultGrupo = Number(
+      officialPrize?.grupo
+    );
+
     const resultMilhar = normalizeMilhar(
       officialPrize?.milhar
     );
+
     const resultCentena = resultMilhar
       ? resultMilhar.slice(-3)
+      : "";
+
+    const resultDezena = resultMilhar
+      ? resultMilhar.slice(-2)
       : "";
 
     for (
@@ -260,7 +268,9 @@ function analyzeSnapshotHit(snapshot, officialPodium) {
       predictionIndex += 1
     ) {
       const prediction = top3[predictionIndex];
-      const predictionGrupo = Number(prediction?.grupo);
+      const predictionGrupo = Number(
+        prediction?.grupo
+      );
 
       const milhares = (
         Array.isArray(prediction?.milhares20)
@@ -274,6 +284,10 @@ function analyzeSnapshotHit(snapshot, officialPodium) {
 
       const centenas = milhares.map(
         (value) => value.slice(-3)
+      );
+
+      const dezenas = milhares.map(
+        (value) => value.slice(-2)
       );
 
       let hitType = "miss";
@@ -295,14 +309,21 @@ function analyzeSnapshotHit(snapshot, officialPodium) {
         hitScore = 66.67;
         matchedValue = resultCentena;
       } else if (
+        resultDezena &&
+        dezenas.includes(resultDezena)
+      ) {
+        hitType = "hit_dezena";
+        hitScore = 33.33;
+        matchedValue = resultDezena;
+      } else if (
         Number.isFinite(resultGrupo) &&
         predictionGrupo === resultGrupo
       ) {
         hitType = "hit_grupo";
         hitScore = 33.33;
-        matchedValue = resultMilhar
-          ? resultMilhar.slice(-2)
-          : String(resultGrupo).padStart(2, "0");
+        matchedValue = String(
+          resultGrupo
+        ).padStart(2, "0");
       }
 
       if (hitType !== "miss") {

@@ -458,8 +458,13 @@ function analyzeTop3Hit(top3, resultSource, resultMilhar) {
     const milhar = normalizeMilharStr(
       officialPrize?.milhar
     );
+
     const centena = milhar
       ? milhar.slice(-3)
+      : "";
+
+    const dezena = milhar
+      ? milhar.slice(-2)
       : "";
 
     for (
@@ -481,30 +486,45 @@ function analyzeTop3Hit(top3, resultSource, resultMilhar) {
         .filter((value) => /^\d{4}$/.test(value));
 
       const centenas = milhares
-        .map((value) => centenaFromMilhar(value))
+        .map((value) => value.slice(-3))
         .filter((value) => /^\d{3}$/.test(value));
+
+      const dezenas = milhares
+        .map((value) => value.slice(-2))
+        .filter((value) => /^\d{2}$/.test(value));
 
       let type = "miss";
       let score = 0;
       let matchedValue = "";
 
-      if (milhar && milhares.includes(milhar)) {
+      if (
+        milhar &&
+        milhares.includes(milhar)
+      ) {
         type = "hit_exact";
         score = 100;
         matchedValue = milhar;
-      } else if (centena && centenas.includes(centena)) {
+      } else if (
+        centena &&
+        centenas.includes(centena)
+      ) {
         type = "hit_centena";
         score = 66.67;
         matchedValue = centena;
+      } else if (
+        dezena &&
+        dezenas.includes(dezena)
+      ) {
+        type = "hit_dezena";
+        score = 33.33;
+        matchedValue = dezena;
       } else if (
         Number.isFinite(grupoNum) &&
         grupo === grupoNum
       ) {
         type = "hit_grupo";
         score = 33.33;
-        matchedValue = milhar
-          ? milhar.slice(-2)
-          : formatGrupo(grupoNum);
+        matchedValue = formatGrupo(grupoNum);
       }
 
       if (type !== "miss") {
@@ -2138,7 +2158,9 @@ const list = Array.isArray(top3)
     ).length;
 
     const grupo = validated.filter(
-      (item) => item?.hitType === "hit_grupo"
+      (item) =>
+        item?.hitType === "hit_grupo" ||
+        item?.hitType === "hit_dezena"
     ).length;
 
     const misses = validated.filter(
@@ -3982,7 +4004,7 @@ const list = Array.isArray(top3)
                   hasExactHit;
 
                 const hasDezenaHit =
-                  hitType === "hit_grupo" ||
+                  hitType === "hit_dezena" ||
                   hasCentenaHit ||
                   hasExactHit;
 
@@ -4237,30 +4259,22 @@ const list = Array.isArray(top3)
                             >
                               <span>Grupo</span>
                               <strong>
-                                {hitGrupo
-                                  ? `G${hitGrupo} ✓`
-                                  : "—"}
+                                {hitGrupo || "—"}
                               </strong>
 
                               <span>Dezena</span>
                               <strong>
-                                {hitDezena
-                                  ? `${hitDezena} ✓`
-                                  : "—"}
+                                {hitDezena || "—"}
                               </strong>
 
                               <span>Centena</span>
                               <strong>
-                                {hitCentena
-                                  ? `${hitCentena} ✓`
-                                  : "—"}
+                                {hitCentena || "—"}
                               </strong>
 
                               <span>Milhar</span>
                               <strong>
-                                {hitMilhar
-                                  ? `${hitMilhar} ✓`
-                                  : "—"}
+                                {hitMilhar || "—"}
                               </strong>
                             </div>
                           </>
