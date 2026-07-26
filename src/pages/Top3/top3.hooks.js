@@ -346,6 +346,14 @@ export function useTop3Controller() {
   // Timeline e persistência são processadas depois, fora do caminho crítico.
   const [secondaryReady, setSecondaryReady] = useState(false);
 
+  // PERF-05 — pipeline primário progressivo
+  // Analytics e geração dos palpites deixam de bloquear
+  // a primeira renderização após a carga do histórico.
+  const [analytics, setAnalytics] = useState(() => emptyAnalytics());
+  const [analyticsReady, setAnalyticsReady] = useState(false);
+  const [top3, setTop3] = useState([]);
+  const [primaryComputing, setPrimaryComputing] = useState(true);
+
   const lotteryKeySafe = useMemo(
     () => safeStr(lotteryKey).toUpperCase() || DEFAULT_LOTTERY,
     [lotteryKey]
@@ -442,6 +450,11 @@ export function useTop3Controller() {
 
   const resetStateForNoData = useCallback(() => {
     analyticsCacheRef.current = { key: "", value: emptyAnalytics() };
+
+    setAnalytics(emptyAnalytics());
+    setAnalyticsReady(false);
+    setTop3([]);
+    setPrimaryComputing(true);
 
     setLoadedYmd("");
     setLastHourBucket("");
@@ -875,6 +888,7 @@ export function useTop3Controller() {
   useEffect(() => {
     if (
       loading ||
+      primaryComputing ||
       !baseDrawState ||
       !Array.isArray(rangeDraws) ||
       !rangeDraws.length
@@ -920,7 +934,12 @@ export function useTop3Controller() {
         clearTimeout(timeoutId);
       }
     };
-  }, [loading, baseDrawState, rangeDraws]);
+  }, [
+    loading,
+    primaryComputing,
+    baseDrawState,
+    rangeDraws,
+  ]);
 
   useEffect(() => {
     debugTop3Effect("02_ensure_timeline", {
@@ -934,20 +953,80 @@ export function useTop3Controller() {
     });
   }, [timelineYmd, lotteryKeySafe]);
 
-  const analytics = useMemo(() => {
-    return computeTop3Analytics({
-      rangeDraws,
-      baseDrawState,
-      analyticsCacheRef,
-      lotteryKeySafe,
-      lookback,
-      rangeInfo,
-      todayDraws,
-      sanitizeHistoricalDraws,
-      targetYmd: analysisYmd,
-      targetHourBucket: analysisHourBucket,
-    });
+  useEffect(() => {
+    if (loading) return undefined;
+
+    if (
+      !baseDrawState ||
+      !Array.isArray(rangeDraws) ||
+      !rangeDraws.length
+    ) {
+      setAnalytics(emptyAnalytics());
+      setAnalyticsReady(false);
+      setTop3([]);
+      setPrimaryComputing(false);
+      return undefined;
+    }
+
+    let cancelled = false;
+    let timeoutId = null;
+
+    setAnalyticsReady(false);
+    setPrimaryComputing(true);
+
+    const computeAnalytics = () => {
+      if (cancelled) return;
+
+      try {
+        const nextAnalytics = computeTop3Analytics({
+          rangeDraws,
+          baseDrawState,
+          analyticsCacheRef,
+          lotteryKeySafe,
+          lookback,
+          rangeInfo,
+          todayDraws,
+          sanitizeHistoricalDraws,
+          targetYmd: analysisYmd,
+          targetHourBucket: analysisHourBucket,
+        });
+
+        if (cancelled) return;
+
+        setAnalytics(
+          nextAnalytics && typeof nextAnalytics === "object"
+            ? nextAnalytics
+            : emptyAnalytics()
+        );
+        setAnalyticsReady(true);
+      } catch (error) {
+        if (cancelled) return;
+
+        setAnalytics(emptyAnalytics());
+        setAnalyticsReady(false);
+        setTop3([]);
+        setPrimaryComputing(false);
+        setError(
+          String(
+            error?.message ||
+              error ||
+              "Falha ao calcular analytics do TOP3."
+          )
+        );
+      }
+    };
+
+    timeoutId = setTimeout(computeAnalytics, 0);
+
+    return () => {
+      cancelled = true;
+
+      if (timeoutId != null) {
+        clearTimeout(timeoutId);
+      }
+    };
   }, [
+    loading,
     rangeDraws,
     baseDrawState,
     lotteryKeySafe,
@@ -1037,18 +1116,63 @@ export function useTop3Controller() {
     return resolveLayerMetaText(analytics);
   }, [analytics]);
 
-  const top3 = useMemo(() => {
-    return buildTop3Predictions({
-      analytics,
-      build20,
-      safeStr,
-      getAnimalLabel,
-      build4ColsFromEngineOut: buildTop3MilharesCols,
-      resolveProbValue: resolveTop3ProbValue,
-      getGrupoImgSrc,
-      buildResultStyleImgVariants,
-    });
-  }, [analytics, build20]);
+  useEffect(() => {
+    if (loading || !analyticsReady) return undefined;
+
+    let cancelled = false;
+    let timeoutId = null;
+
+    setPrimaryComputing(true);
+
+    const computePredictions = () => {
+      if (cancelled) return;
+
+      try {
+        const nextTop3 = buildTop3Predictions({
+          analytics,
+          build20,
+          safeStr,
+          getAnimalLabel,
+          build4ColsFromEngineOut: buildTop3MilharesCols,
+          resolveProbValue: resolveTop3ProbValue,
+          getGrupoImgSrc,
+          buildResultStyleImgVariants,
+        });
+
+        if (cancelled) return;
+
+        setTop3(Array.isArray(nextTop3) ? nextTop3 : []);
+        setPrimaryComputing(false);
+      } catch (error) {
+        if (cancelled) return;
+
+        setTop3([]);
+        setPrimaryComputing(false);
+        setError(
+          String(
+            error?.message ||
+              error ||
+              "Falha ao gerar os palpites do TOP3."
+          )
+        );
+      }
+    };
+
+    timeoutId = setTimeout(computePredictions, 0);
+
+    return () => {
+      cancelled = true;
+
+      if (timeoutId != null) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [
+    loading,
+    analyticsReady,
+    analytics,
+    build20,
+  ]);
 
   const timelineTop3 = useMemo(() => {
     if (!secondaryReady) return [];
@@ -1414,7 +1538,8 @@ export function useTop3Controller() {
     ymdSafe,
     loadedYmd,
     lookback,
-    loading,
+    loading: loading || primaryComputing,
+    primaryComputing,
     loadingStage,
     error,
     dateBR,
