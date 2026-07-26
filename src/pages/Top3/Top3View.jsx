@@ -2068,6 +2068,28 @@ const list = Array.isArray(top3)
     const todayYmd = todayYMDLocalView();
 
     return Array.from(rowsByTarget.values())
+      // TOP3_NODRAW_07_FILTER
+      .filter((row) => {
+        const targetYmd = String(
+          row?.target?.ymd || ""
+        ).trim();
+
+        const hasResult =
+          row?.result != null;
+
+        // Resultado oficial existente sempre permanece.
+        if (hasResult) return true;
+
+        // Registro sem data válida não pode gerar card pendente.
+        if (!isYMD(targetYmd)) return false;
+
+        const todayYmd = todayYMDLocalView();
+
+        // Pendência só permanece para o dia atual ou data futura.
+        // Datas anteriores sem resultado representam sorteio
+        // inexistente, cancelado ou definitivamente não publicado.
+        return targetYmd >= todayYmd;
+      })
       .filter((row) => {
         const targetYmd = String(
           row?.target?.ymd || ""
