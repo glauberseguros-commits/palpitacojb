@@ -512,17 +512,7 @@ const [quantityInput, setQuantityInput] =
             </p>
           </div>
 
-          <div className="terno-grupo-hero__limit">
-            <strong>
-              {activeMaxQuantity.toLocaleString(
-                "pt-BR"
-              )}
-            </strong>
-            <span>
-              combinações possíveis
-            </span>
-          </div>
-        </section>
+          </section>
 
         <section className="terno-grupo-panel">
           <div className="terno-grupo-filters">
@@ -791,5 +781,6 @@ const [quantityInput, setQuantityInput] =
     </main>
   );
 }
+
 
 
